@@ -18,6 +18,7 @@ which serve 2016 and 2026).*
 | **v1**, the orientation tape | 13 Nov, job 23 (S385) | "TriedPath Fellowship · Orientation · Tape 1 of 3: Your First Steps", 74 s: the programme's procedure on a felt board | `output/orientation-tape/` | https://claude.ai/artifact/6yjAXiFHXLietqp38MFfuK | `ORIENTATION_TAPE_2026-11-13.md` | the content was good, "minus the abusive use of static and noise", but its message was "very similar to the initiation video from the start" |
 | **v2** and **the scripts** | 14 Nov, job 24 (S387) | 1997 "Understanding Your Roots", 3:42.9, a video; 2016 "Heartwood" and 2026 "HEDGE™", scripts and six storyboard frames each | `output/teaching-tapes/1997/`, `2016/storyboard/`, `2026/storyboard/`, `storyboard-src/` | https://claude.ai/artifact/MCXWDErFNWx51FMvzbeSyy | this file, §1–§3 | 1997: "I did like very much the education aspect of the 1997 video … really great job in creating the content based on the documents", but "I do wonder if they need to have some more clear dissonances, and like a contradicting element that helps understand that these theories aren't actually truthful." 2016 and 2026: "they both looked really good, would love to see them". 2003: "it has the new you, so it makes sense to not have a video". The music: "You can make new music, like it wasn't that great" |
 | **v3** and **the two videos** | 14 Nov, job 25 (S389) | 1997 v3 (v2 + the record's cards + music made in code), 2016 "Heartwood" and 2026 "HEDGE™" as videos, each with a short tape for the room's TV | `output/teaching-tapes/1997-v3/`, `2016/video/`, `2026/video/` | https://claude.ai/artifact/4auxHygUfkgCHqQEKHdb5K | this file, §4–§8 | — (waits on his eye) |
+| **v4**, the label, the margin and the break | 15 Nov, job 26 (S391) | 1997 "Understanding Your Roots" v4 (4:29.7; Part 1 the handbook's computer, Part 3 its chapter "Displacement"), 2016 "Heartwood" v4 (4:11.4; a DVD course, the 1993 floppy at its centre), 2026 "HEDGE™" v4 (4:33.9; the course's own history of its reasons, 1988 → today); each: a label, the tape played straight, the margin as data (drawn live in the room, burned into the web copy), the break; End of Part 1 for the room's TV (job 26 B, S392) | `output/teaching-tapes/1997-v4/`, `2016-v4/`, `2026-v4/`, `page-v4/` | https://claude.ai/artifact/HwYCTvoLf6xwwfySSywDzy | this file, §9 | — (waits on his eye; T85) |
 
 ## The three tapes
 
@@ -1615,3 +1616,697 @@ To swap: in `audio.py`, `variant=1` → `variant=2` (1997: `M.lesson_bed(...)`; 
 - **Fonts on the 2026 tape** are macOS system fonts rendered into the frames (DIN Condensed, Inter, SignPainter, Neucha,
   Lato, Playfair Display), as the storyboard; fine for a draft video, a built-in version would use the piece's fonts.
 - **Sources:** §1.4 (1997), §3.4 (2026), §7.2 (the cards).
+
+## 9. v4: the label, the tape straight, the margin, the break (15 Nov 2026, S391, UiB job 26 Part A)
+
+*His notes on v3 (`TEACHING_TAPES_V4_PLAN_2026-11-15.md` §1) made into three new tapes, built by three Opus helpers in
+parallel and checked by the orchestrator. §1–§8 are untouched research states; v3's, v2's and v1's folders and pages are
+untouched. The interface Part B reads is `output/teaching-tapes/V4_INTERFACE.md` (git-ignored, beside the tapes).
+Page: https://claude.ai/artifact/HwYCTvoLf6xwwfySSywDzy (the three web copies, the label, End of Part 1 and break stills,
+the contact sheets and every margin line with its source). Everything a taste call decided is in TODO T85 (list A) and
+in each folder's `HIS_EYE.md`.*
+
+**The shape, for all three** (plan §3; UIB_JOB_26 A1):
+1. **The label**, the piece's voice, silent, in the record's palette and face, before the tape's first frame: what this
+   is (made from real programmes' teaching, with the years of the documents actually quoted), that every reason in it
+   was taught to real people, and that you can stop it.
+2. **The tape, straight**: the programme in its own grammar. No pause cards, no "THE SAME SOURCE SAYS", no 2009 APA
+   report. Satire only inside the programme's self-presentation, and it collapses.
+3. **The margin** (`web/margin.json`): TAUGHT IN (where this exact teaching was printed) and WHAT IS KNOWN (one
+   uncontested dated fact: a classification, a professional body's statement, what became of the programme). Never
+   pausing, at most one line, each ≥ 6 s. Drawn live in the room (job 26 B, `src/room/teachingTv.ts`), burned into
+   `web.mp4` as a strip under the picture for the era websites.
+4. **The break**: after the collapse the colour, music and grammar drain away; silent large type says what this
+   teaching asked of people, every sentence sourced; then the sources roll. No testimony, no names, no death or
+   suicide figures.
+
+**End of Part 1** (option A): each tape stops on its own end card at `partOneEnd` (1997 1:12.5, 2016 1:13.9, 2026
+1:13.4), a still held ≥ 3 s after it; the room's TV stops there by itself (job 26 B).
+
+**Sound** (measured; nobody here can listen): all three at −14 LUFS integrated (±0.1), true peak ≤ −1.4 dBTP; the music
+11.0 (1997), 11.0 (2016) and 11.6 dB (2026) under the voice. Music made in code (v3's `music.py`, candidate 1).
+Credit: "Music: made in code for this tape by Claude (Anthropic, Opus 5.5)".
+
+### 9.1 1997 v4: "Understanding Your Roots", the update at its centre (UiB job 26 Part A, S391)
+
+**What it is.** A reconstruction of a 1997 teaching tape by an invented fellowship (TriedPath), made of the real
+programmes' teaching, 1993–1996. It has v4's four movements. **The label** comes first: the piece's voice, silent, in the
+record's style. **The tape** is played straight: the title; Part 1, "How Your Mind Works", the Love in Action
+handbook's own computer ("Our mind works like a computer"), which is the part everyone is taken to; an over-the-top
+commercial for an invented Scripture-memory cassette set ("Mountains of Material", the handbook's phrase); END OF PART 1,
+the handbook's workbook question as a still; Part 2, "Your Roots", v2/v3's lessons shortened; Part 3, "Displacement",
+the handbook's chapter thirteen, the programme's own procedure for overwriting a person; the collapse, kept ("something
+they never chose"). **The break**: the tape drains away, then silent large type says what the teaching asked of people,
+starting from the programme's own admission. Then the sources. **The margin** runs beside it as data (`margin.json`): it
+is drawn live in the room and burned into `web.mp4` only. No pause cards, no record cards, no 2009 APA report, and the
+programme is never used to answer the programme (the one booklet line at the collapse is the collapse, kept from v2).
+
+**Folder** (git-ignored): `output/teaching-tapes/1997-v4/`. v3, v2 and v1 are untouched.
+- `web/`: `room.mp4`, `web.mp4`, `chapters.json`, `margin.json`, `captions.vtt`, `screen_text.vtt`, `sources.json`,
+  `break.json`, `READY` (V4_INTERFACE.md).
+- `teaching_tape_1997_v4_room.mp4` and `teaching_tape_1997_v4_web.mp4` (full quality, 1440×1080);
+  `contact_sheet.jpg` (12 frames decoded from `web.mp4`); `stills/label.jpg`, `stills/break.jpg`, `stills/endcard.jpg`;
+  `tts/` (35 masters: 24 new, 11 v2/v3 reused); `source/` (the build, `source/README.md`); `HIS_EYE.md`; `REPORT.md`.
+
+**Running order** (room.mp4's timeline; web.mp4 is the same to the frame):
+
+| chapter | time | length | kind | title |
+|---|---|---|---|---|
+| `label` | 0:00.0–0:08.2 | 8.2 s | label | Before you watch |
+| `title` | 0:08.2–0:13.7 | 5.5 s | title | Understanding Your Roots |
+| `p1` | 0:13.7–0:45.2 | 31.5 s | lesson | Part 1 · How Your Mind Works |
+| `c1` | 0:45.2–1:00.1 | 15.0 s | commercial | Ad · Mountains of Material |
+| `end1` | 1:00.1–1:15.8 | 15.7 s | endcard | End of Part 1 |
+| `p2` | 1:15.8–2:10.8 | 55.0 s | lesson | Part 2 · Your Roots |
+| `p3` | 2:10.8–3:31.4 | 80.7 s | lesson | Part 3 · Displacement |
+| `x` | 3:31.4–3:47.1 | 15.7 s | collapse | For Further Study |
+| `break` | 3:47.1–4:18.1 | 30.9 s | break | What this asked of people |
+| `credits` | 4:18.1–4:29.7 | 11.6 s | credits | Sources |
+
+**partOneEnd = 72.496 s (1:12.5)**: inside the end card; the card is a still from 70.796 s to the chapter's end (75.796 s), checked on the decoded files (room: 143 frames, mean change ≤ 0.306).
+
+**The label** (0:00–0:08.2, silent, two frames; RECORD palette, Fixedsys Excelsior 96 px = 1/11.25 of the picture height):
+
+1. "This tape is a reconstruction."
+2. "Its teaching comes from real ministries' handbooks and booklets, 1993–1996."
+3. "Every reason in it was taught to real people."
+4. "You can stop it at any time."
+
+Sources: the dates are those of the documents quoted (PR-02 © 1993; the class manual c. 1994; the handbook's revised edition © 1995; PR-01 © 1996), read on their page images; "a reconstruction" because the fellowship, its products and its phone numbers are invented (sources.json `invented`). "You can stop it at any time" is the piece's promise (the TV's controls, Part B).
+
+**The script** (N = narrator, Supertonic F1 0.94; A = announcer, M1 1.0; Lamby is silent; HB = Love in Action, *Helping People Step Out of Homosexuality*, rev. © 1995, first published © 1984, NMAH.AC.1428 B2 F13; PR-02 / PR-01 = Exodus booklets © 1993 / © 1996, B2 F12; SO = Love in Action, *Steps Out* class manual, c. 1994, B13 F1). **Every page cited here was read on its page image (Ghostscript → PNG), 15 Nov 2026.**
+
+| time | who | line | source (document, page) | invented, paraphrase, notes |
+|---|---|---|---|---|
+| 0:09.1 | N (narrator) | TriedPath Fellowship presents: Understanding Your Roots. | Reads the title. | Invented mark (TriedPath Fellowship is 1997 canon); the title echoes PR-02's back-cover line 'Understanding the Roots of Homosexuality' (v2 §1.4). |
+| 0:14.2 | N (narrator) | Part one. How your mind works. | Part one. How your mind works. | Invented part title; the claim follows. |
+| 0:14.7 | board | A felt head with two stacks, NEW and OLD; a felt computer; "="; its screen: C:\> · STACK: OLD · POWER · GARBAGE IN · GARBAGE OUT | HB printed pp. 131, 135 | Staging of the spoken lines. Invented drawing. |
+| 0:16.3 | N (narrator) | Our mind works like a computer. It is constantly placing information into categories. | HB printed p. 135 (PDF p. 143), 'Interference – How It Works': "Our mind works like a computer; it is constantly placing information into categories." | Verbatim (the semicolon spoken as a full stop). |
+| 0:16.8 | board | OUR MIND WORKS LIKE A COMPUTER | HB printed p. 135 | The claim, plainly. |
+| 0:22.4 | N (narrator) | If you feed something destructive into your mind, it will add this to a stack of similar material already there. | HB printed p. 135 (PDF p. 143): "If you feed something destructive into your mind, it will add this to a stack of similar material already there." | Verbatim. |
+| 0:29.8 | N (narrator) | As the stack grows larger, it gains in power. | HB printed p. 135 (PDF p. 143): "As the stack grows larger, it gains in power." | Verbatim. |
+| 0:32.6 | N (narrator) | In the computer industry, the saying is: garbage in, garbage out. | HB printed p. 131 (PDF p. 139): "In the computer industry the saying is: garbage in/garbage out." | Verbatim. |
+| 0:37.1 | Lamby | "Watch what goes in!" | — | Invented. Aimed at the teaching (it repeats its demand), never at the viewer. |
+| 0:37.9 | N (narrator) | It is our responsibility to see that the new information we receive is consistent with our new life. | HB printed p. 130 (PDF p. 138), 'Our Responsibility': "It is our responsibility to see that the new information we receive is consistent with our new life." | Verbatim. |
+| 0:39.5 | board | IT IS OUR RESPONSIBILITY. | HB printed p. 130 |  |
+| 0:45.2 | screen | TriedPath presents · MOUNTAINS OF MATERIAL! · 12 TAPES! · ✓ IN THE CAR · ✓ IN THE KITCHEN · ✓ AT YOUR BEDSIDE · 1-800-555-0127 · Operators are standing by! · the cases read "Scripture Memory on cassette"; an OLD case is popped out of the pile | HB printed pp. 130, 132, 133 | Invented spot; the prescription is documented. No price. |
+| 0:45.6 | A (announcer) | New from TriedPath: Mountains of Material! | Invented product. HB printed p. 132 (PDF p. 140): 'adding mountains of material to your memory tapes'. | The product's name is the handbook's phrase. Over the top by design (satire inside the programme's self-presentation). |
+| 0:48.3 | A (announcer) | Scripture memory, on twelve cassettes. In the car. In the kitchen. At your bedside. | HB printed p. 130 (PDF p. 138): the new material is 'Bible study, prayer, … and Scripture memorization'; printed p. 133 (PDF p. 141): the mind 'operates 24 hours a day. Even when we sleep'. | Invented copy in the documented prescription. No price (none documented). Phone 1-800-555-0127, fictional. |
+| 0:54.3 | A (announcer) | Fill your memory tapes, and push the old material out! | HB printed p. 132 (PDF p. 140): 'mountains of material to your memory tapes. It will be this bulk of the material that ejects the desires and temptations of the old way of life.' | Paraphrase. |
+| 0:57.5 | A (announcer) | Operators are standing by! | — | Invented (the genre's line). |
+| 1:00.1 | CG | END OF PART ONE · 2. Have you ever been able to stop thinking about something? Did you succeed? · PAUSE THE TAPE / and write your answer | HB printed p. 129 (question 2) | A still from 1.7 s before partOneEnd to the chapter end. |
+| 1:00.9 | N (narrator) | End of part one. Question two. Have you ever been able to stop thinking about something? Did you succeed? Pause the tape, and write your answer. | HB printed p. 129 (PDF p. 137), the workbook column, question 2: "Have you ever been able to stop thinking about something? Did you succeed?" | The question verbatim; 'End of part one', 'Question two' (its number in the chapter) and 'Pause the tape, and write your answer' are the tape's frame (v2's Part 4 form). |
+| 1:15.8 | board | UNDERSTANDING YOUR ROOTS · YOU WERE NOT BORN THIS WAY. · a sprout grows, its roots below | HB printed pp. 11, 18 | The lesson's claim, plainly. |
+| 1:16.4 | N (narrator) | Part two. Your roots. | Part two. Your roots. | Invented part title. |
+| 1:18.3 | N (narrator) | You were not born this way. It grew, one response at a time. And what was learned can be unlearned. | HB printed p. 11 (PDF p. 19): 'Scientific evidence does not support the theory of constitutional homosexuality'; printed p. 18 (PDF p. 26): 'the pattern of homosexuality develops over a long time span from infancy to adolescence'; printed p. 80 (PDF p. 88): 'nothing more than a deeply ingrained habit. It has been learned from an early age'. | Paraphrase; v2's master (v2 also cited the 1989 outline, not used here). |
+| 1:25.6 | CG / board | PART 2 · YOUR ROOTS / BIRTH TO THREE · THE TRIANGLE · MOTHER, FATHER, CHILD and red yarn; the father–mother yarn snaps; REAL = PERCEIVED; a ruler BIRTH · 6 MO. · 18 MO. · 3 YRS | HB printed pp. 12–13 | v3's board without the "by three" pin. |
+| 1:26.5 | N (narrator) | A child's security rests on three bonds: mother to child, father to child, and father to mother. | HB printed p. 13 (PDF p. 21): 'The security of a child depends on a three-way bond: mother to child, father to child and … father to mother.' | Close paraphrase; v2 master. |
+| 1:33.3 | N (narrator) | Any break in this triangle produces insecurity. Real, or only perceived, the results are the same. | HB printed p. 13 (PDF p. 21): 'Any break in this triangle will produce insecurity in the child … whether the break is real or only perceived by the child, the results are the same.' | Close paraphrase; v2 master. |
+| 1:40.1 | Lamby | "Even if nothing happened!" | — | v2's bubble: what "real or only perceived" means. |
+| 1:42.1 | CG / board | TWO TO SIX · THE FATHER'S WELCOME · the door opens, the boy crosses to his father | PR-02 printed pp. 7, 9 | v2's 2001 'Words to Hear / Words to Fear' strips are left out (later than 1997). |
+| 1:42.9 | N (narrator) | Between two and six, a boy must leave his mother's world, and his father must welcome him into his own. | PR-02 printed p. 7 (PDF p. 5): 'The boy needs to transfer his identification with "mom" to a very new and different relationship with "dad."'; printed p. 9 (PDF p. 6): 'This period of ages two to six … He needs his father to welcome him into the male world.' | Paraphrase; v2 master. Correction: v2 gave printed p. 8 for the transfer; the page image shows printed p. 7. |
+| 1:50.4 | CG / board | SIX TO TWELVE · THE SAFE YEARS · the bracket, the boys move off, the kitchen | PR-02 printed pp. 11, 13 | v2's name tags are left out (they needed p3d). |
+| 1:51.4 | N (narrator) | But a boy with no welcome from his father finds none among the boys. So he stays in the kitchen, with his mother. | PR-02 printed p. 13 (PDF p. 8): 'If a father figure is absent, a little boy will look to other boys for validation. If these boys are full of rejection and ridicule … the little boy stays in the kitchen with mom.' | Paraphrase; v2 master. |
+| 1:59.3 | CG / board | PUBERTY · ENVY · COMPARISON = ADMIRATION = ENVY · = INAPPROPRIATE RESPONSE | HB printed pp. 17–18; SO printed p. 285 | The manual prints the equation with dashes (v3 §7.4); the board keeps "=". |
+| 2:00.0 | N (narrator) | He compares himself with other boys. Comparison becomes admiration. Admiration slips into envy. | HB printed p. 17 (PDF p. 25): 'simple COMPARISON of one's self with others', 'ADMIRATION', 'this admiration slips into ENVY'. | Close paraphrase; v2 master. |
+| 2:07.3 | N (narrator) | At puberty, the envy becomes eroticized. | HB printed p. 18 (PDF p. 26): 'In puberty … Thus, envy becomes eroticized.' | Close paraphrase; v2 master. |
+| 2:10.8 | board | DISPLACEMENT · PUTTING OFF / PUTTING ON · OLD pushed out by NEW · NO NEUTRAL GROUND · VACANCY (a hanging sign) and a dark felt shape · INTERFERENCE = DISPLACEMENT · DAY ONE / 30 / DAYS LATER · 80% FORGOTTEN · A BLESSING | HB printed pp. 128–129 | Staging of the spoken lines. |
+| 2:11.3 | N (narrator) | Part three. Displacement. Putting off, putting on. | HB printed p. 128 (PDF p. 136): 'Chapter Thirteen · DISPLACEMENT · Putting Off/Putting On'. | The chapter's own title. |
+| 2:14.7 | N (narrator) | Displacement is the idea that one thing pushes out another. There is no neutral ground. | HB printed p. 128 (PDF p. 136): 'Displacement is the idea that one thing pushes out or dislodges another.' 'There is no neutral ground'. | Verbatim, 'or dislodges' left out. |
+| 2:20.8 | N (narrator) | If there is a vacancy there, evil will fill it. | HB printed p. 129 (PDF p. 137): 'If there is a vacancy there, evil will fill it.' | Verbatim. |
+| 2:23.7 | N (narrator) | Interference is the technical name for displacement. New material coming into your mind pushes the old material out. | HB printed p. 129 (PDF p. 137): 'Interference is the technical name for displacement. What it implies is that new material coming into your mind interferes with the old material that is there and pushes it out of your mind.' | First sentence verbatim; the second shortened. |
+| 2:31.4 | N (narrator) | In thirty days, we forget eighty percent of what we learned. For you, that is a blessing. | HB printed p. 129 (PDF p. 137): 'At the end of a thirty-day period, we forget about 80 percent of everything we learned on day one … for the person who has come out of involvement in the gay lifestyle, this principle can be a blessing.' | Paraphrase; v2 master. The handbook cites unnamed 'learning surveys … in colleges' [VERIFY SOURCE]: shown as the teaching, not as fact. |
+| 2:37.9 | board | A felt TV: a figure on a pedestal "1"; NEW MORALITY PROPAGANDA; a NO stamp; GARBAGE IN (an arrow to the head); the plug pulled, the set goes off | HB printed pp. 130–131 | Invented staging. |
+| 2:38.7 | N (narrator) | Turn on any radio or television, and you will find a mind-boggling barrage of new morality propaganda. | HB printed pp. 130–131 (PDF pp. 138–139): 'Turn on any radio or television and you will find a mind-boggling barrage of new morality propaganda.' | Verbatim. |
+| 2:45.9 | N (narrator) | Gays on television are shown as superior people. | HB printed p. 131 (PDF p. 139): 'Gays on television are shown as superior people'. | Verbatim. A tape on a TV, warning against TV. |
+| 2:49.4 | Lamby | "Unplug it!" | — | Invented: a tape, on a TV, telling you to switch the TV off. |
+| 2:51.4 | board / CG | WHAT DO WE LOSE? · MUSIC (a record) · CLOTHING (a jacket) · THE BARS (a door, OPEN → CLOSED) · THE SCENE (a street) — then each falls off the board · 5. What do you do when associations from the past overwhelm you? · PAUSE THE TAPE | HB printed p. 132 | The heading verbatim. |
+| 2:52.1 | N (narrator) | What do we lose? The associations, triggered by music, clothing, and many other things. Bars will close. The scene will change. | HB printed p. 132 (PDF p. 140), 'What Do We Lose?': 'We lose the associations, triggered by music, clothing and many other things.' 'Naturally as time passes, bars will close, the scene will change'. | Verbatim, 'naturally as time passes' left out. |
+| 3:02.3 | N (narrator) | Question five. What do you do when associations from the past overwhelm you? Pause the tape, and write your answer. | HB printed p. 132 (PDF p. 140), the workbook column, question 5: 'What do you do when associations from the past overwhelm you?' | The question verbatim; 'Pause the tape …' is the tape's frame. Two quiet seconds follow. |
+| 3:12.2 | board | MOUNTAINS OF MATERIAL · tapes BIBLE STUDY, PRAYER, FELLOWSHIP, SERVICE, SCRIPTURE stack into the head; the OLD tape is ejected · “WE FORGET THINGS THAT ARE CONTRARY TO OUR OPINIONS.” · a NEW tape bounces off · AMBIVALENT? · NO PERMANENT HOME (stamp) · THIS PLACES THE BURDEN DIRECTLY ON US. | HB printed pp. 130, 132–133 |  |
+| 3:12.8 | N (narrator) | So fill your memory tapes with new material, until the bulk of it ejects the old. | HB printed p. 132 (PDF p. 140): 'you will be adding mountains of material to your memory tapes. It will be this bulk of the material that ejects the desires and temptations of the old way of life.' | Paraphrase; v2 master. |
+| 3:18.1 | Lamby | "Record over it!" | — | v2's bubble. |
+| 3:18.8 | N (narrator) | We forget things that are contrary to our opinions. | HB printed p. 132 (PDF p. 140), 'A Second Principle': '"We forget things that are contrary to our opinions." (24)' — the handbook quoting a study guide. | Verbatim. |
+| 3:22.0 | N (narrator) | If we are ambivalent, the new information will find no permanent home in our minds. This places the burden directly on us. | HB printed p. 133 (PDF p. 141): 'If we are ambivalent or even opposed to God's position, the new information will find no permanent home in our minds'; printed p. 130 (PDF p. 138): 'This places the burden directly on us.' | Verbatim, shortened ('or even opposed to God's position' left out). |
+| 3:31.4 | screen / CG | The booklet PR-1 'Born That Way?' pinned; its page 17 (paraphrase around the quoted words); the highlighter; the CG returns: PART 3 · DISPLACEMENT / THIS PLACES THE BURDEN DIRECTLY ON US. | PR-01 printed p. 17; HB printed p. 130 | The booklet's title on the cover is invented; its page number is the real page's. |
+| 3:31.8 | N (narrator) | For further study: booklet one, from our Pocket Library. | — | Invented link: the booklet's own cover names the Pocket Library (invented). |
+| 3:36.2 | N (narrator) | Homosexual people say they never asked for their orientation. In most cases, that is true. | PR-01 printed p. 17 (PDF p. 34): 'Their claim of not having asked for their orientation is, in most cases, true'. | Paraphrase; v2 master. |
+| 3:43.0 | N (narrator) | Something they never chose. | PR-01 printed p. 17 (PDF p. 34): '… something they never chose.' | The booklet's own four words. THE COLLAPSE (kept from v2 §1.6). |
+
+**The margin** (`web/margin.json`, `"prefixed": false`; one line at a time; ≥ 6 s; none in the label, the end card, the break or the sources):
+
+| time | kind | text | source |
+|---|---|---|---|
+| 0:16.0–0:32.4 | TAUGHT_IN | Love in Action's handbook, revised 1995: “Our mind works like a computer.” | Love in Action, Helping People Step Out of Homosexuality, rev. © 1995 (first publ. 1984), NMAH.AC.1428 B2 F13, printed p. 135 (PDF p. 143) |
+| 0:32.4–0:45.0 | WHAT_IS_KNOWN | December 1973: the American Psychiatric Association voted homosexuality out of its manual. | Behavioral Sciences 5(4):565–575, 2015, 'Out of DSM' (PMC4695779): 'in December 1973, APA's Board of Trustees (BOT) voted to remove homosexuality from the DSM'; https://pmc.ncbi.nlm.nih.gov/articles/PMC4695779/ read 15 Nov 2026 |
+| 0:46.4–1:00.0 | TAUGHT_IN | The product is invented. The handbook (1995) prescribed “mountains of material”. | Love in Action, Helping People Step Out of Homosexuality, rev. © 1995 (first publ. 1984), NMAH.AC.1428 B2 F13, printed p. 130 (Scripture memorization as new material) and p. 132 ('adding mountains of material to your memory tapes') |
+| 1:16.4–1:25.1 | WHAT_IS_KNOWN | 1987: “ego-dystonic homosexuality” was removed from the psychiatric manual (DSM-III-R). | Behavioral Sciences 5(4), 2015, 'Out of DSM' (PMC4695779): 'ego-dystonic homosexuality was removed from the next revision, DSM-III-R, in 1987'; read 15 Nov 2026 |
+| 1:25.9–1:42.0 | TAUGHT_IN | Love in Action's handbook (1995): a break in the family “triangle” as the deepest root. | Love in Action, Helping People Step Out of Homosexuality, rev. © 1995 (first publ. 1984), NMAH.AC.1428 B2 F13, printed p. 13 (PDF p. 21) |
+| 1:42.4–1:59.2 | TAUGHT_IN | An Exodus booklet, 1993 (PR-02): the father's welcome, and the boy left “in the kitchen”. | Exodus International resource booklet PR-02, Are People Born Gay?, © 1993, printed pp. 7, 9, 13 (PDF pp. 5, 6, 8); NMAH.AC.1428 B2 F12 |
+| 1:59.5–2:10.7 | TAUGHT_IN | Love in Action's handbook (1995): comparison, admiration, then envy, “eroticized”. | Love in Action, Helping People Step Out of Homosexuality, rev. © 1995 (first publ. 1984), NMAH.AC.1428 B2 F13, printed pp. 17–18 (PDF pp. 25–26) |
+| 2:11.3–2:31.2 | TAUGHT_IN | Love in Action's handbook (1995), chapter 13: “Displacement: Putting Off / Putting On”. | Love in Action, Helping People Step Out of Homosexuality, rev. © 1995 (first publ. 1984), NMAH.AC.1428 B2 F13, chapter thirteen, printed pp. 128–133 (PDF pp. 136–141) |
+| 2:31.2–2:37.8 | TAUGHT_IN | The same chapter: forgetting 80% in thirty days “can be a blessing”. | Love in Action, Helping People Step Out of Homosexuality, rev. © 1995 (first publ. 1984), NMAH.AC.1428 B2 F13, printed p. 129 (PDF p. 137) |
+| 2:38.2–2:51.3 | TAUGHT_IN | The same handbook, 1995: “Gays on television are shown as superior people.” | Love in Action, Helping People Step Out of Homosexuality, rev. © 1995 (first publ. 1984), NMAH.AC.1428 B2 F13, printed p. 131 (PDF p. 139) |
+| 2:51.6–3:12.8 | WHAT_IS_KNOWN | May 1990, WHO ICD-10: “Sexual orientation by itself is not to be regarded as a disorder.” | World Health Organization, ICD-10 (browser, 2019 version), block F66, Note: https://icd.who.int/browse10/2019/en/GetConcept?ConceptId=F66 read 15 Nov 2026; adoption 'May 1990 (WHA43.24)': https://www.who.int/standards/classifications/classification-of-diseases read 15 Nov 2026 |
+| 3:13.0–3:31.3 | TAUGHT_IN | The same chapter: if you are “ambivalent”, the new material finds “no permanent home”. | Love in Action, Helping People Step Out of Homosexuality, rev. © 1995 (first publ. 1984), NMAH.AC.1428 B2 F13, printed pp. 132–133 (PDF pp. 140–141) |
+| 3:31.8–3:47.0 | TAUGHT_IN | An Exodus booklet, 1996 (PR-01), in the same series as the 1993 roots booklet (PR-02). | Exodus International resource booklet PR-01, Is Homosexuality Inborn?, © 1996, printed p. 17 (PDF p. 34); the series' back page lists #PR-01 to #PR-13; NMAH.AC.1428 B2 F12 |
+
+Together the three WHAT IS KNOWN lines say the floor had already moved under the tape: in 1997 the programme taught a cause, and a cure, for something the American manual had stopped calling a disorder in 1973 (and its last trace in 1987), and the WHO's classification in 1990. F17 is quoted word for word from the WHO's own ICD-10 browser (raw HTML read); its adoption date is WHO's own table.
+
+**The break** (silent, the record's style, 96 px; after the drain: the page turns grey, the tracking goes, the eject, the deck's blue, the record's dark). The programme's own admission first:
+
+- "The more we fight against homosexual thoughts, the more intense they become." — Love in Action, Helping People Step Out of Homosexuality, rev. © 1995, printed p. 133 (PDF p. 141); NMAH.AC.1428 B2 F13
+- "They can't “just stop”. … the most difficult task of your entire life." — Love in Action, Helping People Step Out of Homosexuality, rev. © 1995, printed p. 133 (PDF p. 141): 'leaving the gay lifestyle and the gay orientation may be the most difficult task of your entire life'
+
+Then the plain words:
+
+- "This teaching asked people to forget their music, their friends, their places." — Handbook rev. 1995: 'What Do We Lose?' (music, clothing, bars, the scene), printed p. 132; 'cut off relationships', p. 133; 'returning to old haunts … the old associations that music brings forth', p. 135
+- "To guard every thought that went in, keep a journal, and report each week." — Handbook rev. 1995, printed pp. 130–131 ('It is our responsibility…'; workbook question 4, 'protecting your mind'); Steps Out class manual (Love in Action, c. 1994), p. iii ('KEEP A JOURNAL!', 'TAKE NOTES at each session', 'Spend time each week reflecting on last week's session. Share at the next meeting')
+- "It made their families the cause." — Handbook rev. 1995, printed p. 13: 'the deepest root of homosexuality is a break in the relational bonds within the family'; Exodus booklet PR-02 (1993), printed pp. 7, 9, 13
+- "When it did not work, it told them the failure was theirs." — Handbook rev. 1995, printed p. 130 ('This places the burden directly on us'), pp. 132–133 (the ambivalent: 'no permanent home in our minds'), p. 135 ('when an ex-gay person stumbles'; 'a feeling of failure')
+- "It was written for pastors, counselors and lay workers." — Handbook rev. 1995, cover (PDF p. 2): 'A handbook for pastors, counselors, lay workers'
+
+No testimony, no names, no death or suicide figures. Then the sources (two silent pages): the four documents with their pages, the archive, the margin's sources, what is invented, the voices and the music.
+
+**screen_text.vtt** (added 15 Nov on Part B's measurement: from the seat the 1997 picture is ~8.5° tall, so the in-video type is ~0.7°): every frame of the label, the end card's three states and the break's seven frames, word for word, with their on-screen times. The in-video type stays.
+
+**The music and the sound.** v3's music made in code (`music.py`, seed 1997): candidate 1 "Fellowship Hall" (F major, 76 bpm, FM e-piano broken chords, pad, bass) under the title, Part 1, the end card's voice, Part 2 and Part 3; the C1 jingle (C major, 116 bpm, glockenspiel and a drum box) under the commercial. No music under the collapse, the break or the sources; the label, the end card's still, the break and the sources are silent. Measured on the stems (integrated, gated, at the master's gain): narrator -13.7 LUFS, bed -24.7 LUFS = **11.0 dB under the voice** (A2: 10–12; v3 was 13–18); announcer -12.7, jingle -17.7 = 5.0 dB under. Master: room.mp4 **-14.1 LUFS, true peak -1.8 dBTP**; web.mp4 -14.1 LUFS, -1.8 dBTP. **Nobody listened**: checked by measurement only.
+
+**Credits.** Script, storyboard, animation, sound design and edit: Claude (Anthropic, Opus 5.5), UiB job 26 (S391), for *YOUR UPDATE HAS FAILED* (SurvivingSOGICE, University of Bergen, Center for Digital Narrative); v2's script, felt board and masters (job 24, S387), v3's music and build (job 25, S389), v1's felt Lamby and VHS layer (job 23, S385). "Music: made in code for this tape by Claude (Anthropic, Opus 5.5)". Voices: build-time Supertonic 3 through `tools/tts/render.py`, register apparatus only (narrator F1 0.94, announcer M1 1.0). The record's face: Fixedsys Excelsior 3.022 (public domain / CC0). Other faces are macOS system fonts rendered into the frames (as v2/v3).
+
+**The files, measured.**
+
+- `web/room.mp4`: 720×540, h264 Main, yuv420p, aac 2ch 100k, **11.48 MB**, 269.692 s, keyframe gap ≤ 2.0 s, faststart True, -14.1 LUFS, -1.8 dBTP. No margin, no captions.
+- `web/web.mp4`: 960×720 (the picture 720×540 on top, the margin strip 960×180 below, line-21 captions in the picture), h264 Main, aac 2ch 100k, **14.63 MB**, 269.692 s, keyframe gap ≤ 2.0 s, -14.1 LUFS, -1.8 dBTP.
+- Every V4_INTERFACE check passed (`source/make_web.py`; `work/checks.json`).
+
+**What I could not verify.**
+
+1. **The ICD-10 note in 1990.** F66's wording was read on the WHO ICD-10 browser's 2019 version, not on a 1990 or 1992 print; the margin dates the adoption (May 1990, WHO's table) and quotes the note as the browser gives it.
+2. **F15/F16 rest on a secondary source** (the 2015 *Behavioral Sciences* article, read); the American Psychiatric Association's own 1973 statement was not opened (as the research file says).
+3. **The 1984 text.** The handbook's 1995 revision is quoted; whether the 1984 first edition already carried the computer and Displacement passages is unknown, so the label says 1993–1996, not 1984.
+4. **The handbook's "80 percent"** cites unnamed college "learning surveys" [VERIFY SOURCE]; it is shown as the teaching, never as fact.
+5. **Nobody listened or watched in a headset.** Levels by measurement; readability by arithmetic (96 px type = 1/11.25 of the picture; ~0.75° from the seat by Part B's figure, hence screen_text.vtt).
+6. **Fonts and glyphs.** The record's face draws the en dash in "1993–1996" as a short dash.
+
+**Corrections found while reading the page images** (for whoever keeps the v2 table and the Lexicon): PR-02's "transfer his identification with mom … to dad" is on printed p. 7 (PDF p. 5), not p. 8; "the 'safe' years" sentence is on printed p. 11 (PDF p. 7), as v2 says; the handbook's workbook question 2 is on printed p. 129 (PDF p. 137); "If there is a vacancy there, evil will fill it" is printed p. 129, not 128 (the plan's §5 gives 128–129).
+
+**How to rebuild**: `output/teaching-tapes/1997-v4/source/README.md` (manifest → TTS → measure → timeline → audio → render → overlays → encode → script table → make_web → make_doc). Nothing touches the network.
+
+### 9.2 2016 "Heartwood" v4: a DVD course, rich, with the floppy at its centre (S391)
+
+*UiB job 26 Part A, the 2016 builder. Built from v3 (§5), which stays untouched as a research state. A video only: nothing
+in `src/`, `data/` or `public/` changed. Every line of display text is a draft for his eye. Folder (git-ignored):
+`output/teaching-tapes/2016-v4/`.*
+
+#### What it is
+
+*Heartwood* is an invented 2016 small-group DVD course for women, **Leader's Edition**. The tape is the disc as it
+plays: the ministry's logo and copyright card, a trailer you cannot skip, the main menu, Session Two's chapters, the
+workbook's "Pause the DVD here" page, a second trailer mid-session, the floppy, the collapse. Then the disc fails, and
+the piece says plainly what this teaching asked of women. Then the sources.
+
+His notes on v3, and what v4 does with them:
+- "this was a DVD": no platform player, no skip button, no streaming chrome anywhere. The trailers are the disc's own.
+- "a bit bare": a styled set (a desk under a window, sheer curtains, fairy lights, a mason jar of flowers, a candle,
+  a mug, the journal, the workbook), the presenter as a silhouette from behind against the window or as her hands and
+  shoulder, hand-lettering and watercolour washes that animate, light leaks, a warm grade, kinetic type, cutaways.
+  Every shot moves (a slow push, a drift, the hand, the lights), except the End-of-Part-1 page, which must hold still.
+- "the audio of the writing is not great": there is no writing sound at all.
+- the information breaks: gone. The margin replaces them (data; burned only into the web copy).
+- "the computer analogy is amazing": chapter 3 reads the 1993 Exodus booklet's analogy **word for word**, and the
+  margin says where it came from: "an Exodus booklet, 1993 — re-issued here, word for word, 2016".
+
+**Period-true.** A DVD "video curriculum" sold in a Regular and a **Leader's Edition** with a discussion guide is
+documented for 2014 (*Such Were Some of You*: a ministry network's list, Aug 2014, p. 1; the Dove review, read 15 Nov
+2026: "a Regular Edition and a Leader's Edition that contains a discussion guide"). A women's course is a member
+workbook for a small group with timed discussion (Harvest USA, *Sexual Sanity for Women*, 2012). The look of the set
+is a design argument about 2015–2016 lifestyle video, not a documented course set (as v3 said).
+
+#### Files
+
+- `web/` (the interface, V4_INTERFACE.md): `room.mp4` (960×540, 11.6 MB), `web.mp4` (1280×720, 14.5 MB),
+  `chapters.json`, `margin.json`, `captions.vtt`, `screen_text.vtt`, `sources.json`, `break.json`, `READY`.
+- `web/sources.json`, `margin.json` and `break.json` are printed on the public era sites, so they carry public locations
+  only (institution and collection, publisher, or a public URL with the date read): no local path, no private folder.
+- `heartwood_2016_v4_room_1080.mp4` and `heartwood_2016_v4_web_720.mp4`: the full-quality copies.
+- `contact_sheet.jpg` (12 frames decoded from `web.mp4`), `frames/`, `stills/label.jpg`, `stills/break.jpg`,
+  `stills/endcard.jpg` (decoded from `room.mp4`).
+- `tts/` (28 masters: 21 copied from v3, 7 new), `music/` (the two 30 s candidates), `source/` (the build; its
+  `README.md` says how to rebuild), `checks.json` (every interface check, measured on the delivered files).
+
+#### Running order (4:11.4; 24 fps)
+
+| time | chapter (`chapters.json` kind) | what |
+|---|---|---|
+| 0:00.0–0:09.9 | Before you watch (`label`) | the piece's voice, silent: four frames of large type |
+| 0:09.9–0:16.3 | Heartwood Ministries · Leader's Edition (`title`) | the logo blooms; the copyright card |
+| 0:16.3–0:28.9 | Trailer · Too Close? five-pack (`trailer`) | "ALSO FROM HEARTWOOD"; the booklet with the checklist |
+| 0:28.9–0:37.5 | Main menu · Leader's Edition (`menu`) | Play All · Sessions · Leader Resources → Session Two → its four chapters |
+| 0:37.5–1:06.3 | Chapter 1 · Welcome · The Big Three (`lesson`) | the window; the tree; over the shoulder; the jar; "identity crisis" |
+| 1:06.3–1:17.5 | End of Part 1 · Pause the DVD here (`endcard`) | the workbook's p. 31 lands and holds; **partOneEnd 1:13.89** |
+| 1:17.5–1:44.9 | Chapter 2 · Mothers & Fathers (`lesson`) | defensive detachment; the score card; the workbook's fill-ins |
+| 1:44.9–1:57.5 | Trailer · Deep Roots, 20 weeks (`trailer`) | "A WORD FROM HEARTWOOD"; 20 Mondays, $150, "Groups fill up in days!" |
+| 1:57.5–2:31.4 | Chapter 3 · No File to Put It In (`lesson`) | "1993"; a real disc on the desk; the booklet word for word; the Save dialog |
+| 2:31.4–2:52.0 | Chapter 4 · When Friendship Becomes Everything (`lesson`) | "necessary for my security"; GOD and the blank slip; the signs |
+| 2:52.0–3:10.8 | The three boxes (the collapse) (`collapse`) | the page turns; the marriage box; the pen set down; a held, silent page |
+| 3:10.8–3:47.8 | What this asked of women (`break`) | the disc fails (2.6 s); eight silent frames of large type |
+| 3:47.8–4:11.4 | Sources (`credits`) | four pages |
+
+Part 1 (what everyone is taken to in the room) is the label, the disc's start, the first trailer, the menu and
+chapter 1, then the workbook page: 73.9 s. The card is fully drawn at 1:07.6 and does not change after that; the
+presenter's pause line ends at 1:13.1; the sound is silent from 1:13.4; the card holds to 1:17.5.
+
+#### The script, with sources
+
+*N = the presenter (Supertonic F5, 0.95; spoken, captioned). A = the trailers' announcer (F4, 1.05). PAGE = lettered or
+painted on the journal. KIN = kinetic type over a shot. CARD = the disc's own still text. Source keys: **R87 / R90** =
+*Emotional Dependency* (Love in Action newsletter 1984; Exodus International–North America reprint 1987; IVP 1990), NMAH.AC.1428
+B2 F9 (1987 copy PDF pp. 1–15; 1990 copy PDF pp. 17–34; printed pages given). **PR-02** = Exodus booklet *Are People Born
+Gay?* (© 1993), B2 F12. **FOF-F** = Focus on the Family, *The Heart of the Matter* (© 2001), B6 F4. **SSW12** = Harvest
+USA, *Sexual Sanity for Women* (2012), via RESEARCH_DYKAS. **LR16** = "Lesbian Roots", June 2016 copy. Pages marked
+"read 15 Nov" were read on the page image for v4; the rest were read on the page image for v3 (§5.5).*
+
+| time | who | line | source (document, page) · notes |
+|---|---|---|---|
+| 0:00.1 | label | This DVD is invented. / Its teaching is not. | the piece's voice; true of this tape (§9.2 "invented") |
+| 0:02.5 | label | It comes from real / ministries' booklets / and courses, / 1987–2016. | R87 (© 1984, 1987, Exodus reprint; PDF p. 3, read 15 Nov) to the June 2016 sale (Exodus Global Alliance) and LR16 |
+| 0:05.3 | label | Every reason in it / was taught to / real women. | every reason on the tape is cited below to a booklet sold to or taught in women's groups |
+| 0:07.6 | label | You can stop it / at any time. | the piece's promise |
+| 0:10.4 | CARD | Heartwood · MINISTRIES (the logo: a tree with a heart in its grain) | invented |
+| 0:12.8 | CARD | LEADER'S EDITION · © 2016 Heartwood Ministries. All rights reserved. · This Leader's Edition is licensed for use in one church's small groups. · Every copy you buy plants another seed. Thank you for not copying this disc. | invented, in a ministry's voice; the form: a Leader's Edition DVD (Dove review). Warm paper, no seal, no warning: never a government card |
+| 0:16.3 | KIN | ALSO FROM HEARTWOOD | invented (a disc's trailer bumper) |
+| 0:17.8 | A | Is a friendship getting too close? | v3 §2.6: the booklet at $1 (R87 PDF p. 15); FOF-F order page "With a checklist", $1 (PDF p. 21) |
+| 0:19.7 | A | The little booklet with the checklist. | as above |
+| 0:21.6 | A | Order a five-pack for your group. | "Emotional Dependency, 5 Pack … Package of 5": Exodus Global Alliance "Women" page, archived 11 June 2016 (read 15 Nov, from the archive) |
+| 0:17.8–0:28.9 | screen | Too Close? · when a friendship becomes everything · with a checklist · ✓ wanting time alone together · jealous when she sees others · no plans without her · "our song" · $1 each · sold in fives · Ask your group leader! | the ticks: R90 printed pp. 8, 9, 15 (read 15 Nov); the cover: two women from behind, after the 1987 cover, never a copy (v3); "Ask your group leader!" invented (it replaces v3's platform store) |
+| 0:28.9 | menu | Heartwood · a course for women · six sessions · LEADER'S EDITION · Play All · Sessions · Leader Resources · SESSIONS: One · The Heart … Six · New Growth · SESSION TWO · THE ROOTS: 1 Welcome · The Big Three, 2 Mothers & Fathers, 3 No File to Put It In, 4 When Friendship Becomes Everything | invented; DVD menu grammar (the brief) |
+| 0:38.0 | KIN | SESSION TWO · The Roots | invented title |
+| 0:38.5 | N | Grab your journal and your workbook, friend. Today we go underneath. | invented; form: SSW12 session openings. v3's "viewer guide" is now "workbook" |
+| 0:43.3 | PAGE | Out of the heart · Luke 6:45 · the tree (canopy, fruit, trunk, roots, soil) · fruit: same-sex attraction · in the soil: a mother who seemed distant · a father's score card · words from other kids · media & schools · RELATIONSHIPS · IDENTITY · A PICTURE OF GOD | v3's page: SSW12 pp. 9–10, 14–18 (the Tree Model); FOF-F printed pp. 10–13 (PDF pp. 8–9, the "preconditioning factors"); LR16 l. 53 |
+| 0:43.9 | N | Every tree is known by its fruit. But fruit grows from roots, and roots grow in soil. | SSW12 pp. 9–10, 14–18 (paraphrase; not re-read on the page for v4) |
+| 0:52.3 | N | For women, the classic teaching names three things in the soil: our relationships, our identity, and how we picture God. | FOF-F printed p. 10 (PDF p. 8): "Lesbianism results from three primary conditions: Relationship issues, An identity struggle, A spiritual fallacy" (read 15 Nov) |
+| 1:01.0 | N / KIN / PAGE | It's not a sexual orientation problem. It's an identity crisis. (KIN: "not a sexual / orientation problem"; PAGE: *identity crisis* on the trunk) | **verbatim** FOF-F printed **p. 14** (PDF p. 10): "The lesbian struggle is not a sexual orientation problem; it is an identity crisis." (read 15 Nov; v3 gave p. 15; the page image shows p. 14) |
+| 1:06.3 | CARD | HEARTWOOD · MEMBER WORKBOOK · p. 31 · Session Two · The Roots · ❚❚ Pause the DVD here. · TALK IT THROUGH · 10 minutes · 1. Look at the tree on page 22. What is in your soil? · 2. Which of the Big Three do you recognise in your own story? · 3. Pray for one another before you press play. · NOTES | invented, in the grammar of a member workbook (SSW12: sessions with timed discussion blocks) and a Leader's Edition discussion guide (Dove review). "The Big Three": FOF-F printed p. 10 |
+| 1:07.0 | N | Let's pause the DVD here, friend. Turn to page thirty-one, and talk it through with your group. | invented (DVD curriculum grammar) |
+| 1:17.5 | KIN | CHAPTER 2 · Mothers & Fathers · Session Two · The Roots | invented |
+| 1:18.0 | PAGE | DEFINITION · *defensive detachment* (n.) · a doormat: the mother's shoes; the toddler's shoes turned away; *she pulls back →* | FOF-F printed p. 17 (the DEFINITION box form, the term); the drawing is v3's |
+| 1:20.0 | N | A little girl first learns who she is from her mother. | FOF-F printed p. 16 (PDF p. 11): attachment to mother "is the foundation of her complete feminine identity" (paraphrase; read 15 Nov) |
+| 1:23.6 | N | If Mom seems distant, critical or overbearing, she may pull back to protect herself. The teaching calls it defensive detachment. | FOF-F printed p. 17 (PDF p. 11): "If mother is perceived as distant, bitter, critical, overbearing and unloving … When the little girl pulls back, she engages in what is known as defensive detachment" (read 15 Nov); LR16 l. 141 |
+| 1:32.4 | PAGE | REPORT CARD · *a little girl* · from Mother: the MODEL ♡ · from Father: the GRADE ? · passing ☐ failing ☐ · a gold star | PR-02 printed p. 8; FOF-F; the drawing is v3's |
+| 1:32.9 | N | A girl looks to her mother for the model, and to her father for the grade. | PR-02 printed p. 8 (PDF p. 6): "She will look to her mother for role modeling, but to her father for how well she is doing" (paraphrase; read 15 Nov) |
+| 1:37.4 | N | His words become her score card: passing or failing as a little girl. | PR-02 printed p. 8: "The responses from her father produce the score card of passing or failing as a little girl" (read 15 Nov) |
+| 1:42.3 | PAGE | MEMBER WORKBOOK · Session Two · The Roots · p. 33 · 1. A girl looks to her mother for the ____ and to her father for the ____. 2. His responses become her ____ ____ of passing or failing as a little girl. 3. Fathers should come alongside at ___ months. | v3's fill-in page (now the member workbook, p. 33). Item 3: FOF-F printed p. 18 (v3; the "18 months" line is not voiced in v4, so it stays only as a printed blank) |
+| 1:44.9 | KIN | A WORD FROM HEARTWOOD | invented (the disc's mid-session trailer) |
+| 1:46.4 | A | Twenty Monday evenings. | a church's Living Waters group page, posted 29 March 2016: "Monday evenings at 7 p.m. for 20 weeks" (read 15 Nov) |
+| 1:48.1 | A | A hundred and fifty dollars covers your materials. | same page: "The cost is $150 … This covers the cost of your materials" |
+| 1:51.0 | A | Ask about payment plans. | same page: "(payment plans are available)" |
+| 1:52.7 | A | Groups fill up in days! | same page: "Groups fill up in a matter of days" (near-verbatim) |
+| 1:44.9–1:57.5 | screen | DEEP ROOTS · 20 WEEKS · Monday evenings · $150 covers your materials · Ask about payment plans! · Groups fill up in days! · women and men welcome · Heartwood MINISTRIES | same page ("Men and women"); *Deep Roots* is invented (v3); the mark is now Heartwood's |
+| 1:57.5 | KIN | CHAPTER 3 · No File to Put It In | invented |
+| 1:59.8 | N | Here's a picture from an older teaching. Nineteen ninety-three. Remember floppy disks? | PR-02 © 1993 (its back matter: "Copyright © 1993"); the question is the course's (v3) |
+| 2:01.5 | KIN | 1993 · *an older teaching* | as above |
+| 2:04.1 | cutaway | a real 3.5" disc lies on the desk, its label blank | design |
+| 2:05.9 | PAGE | *a computer analogy* (an old teaching, 1993) · the floppy drawn, labelled *woman* · *every affirmation is saved here* | PR-02 printed p. 19 (PDF p. 11): "To use a computer analogy" (read 15 Nov); "every affirmation is saved here" is v3's note |
+| 2:06.7 | N | To use a computer analogy, a heterosexual woman has a floppy disc that is titled woman, so each experience that is related to her femaleness can be stored in that file. | **verbatim** PR-02 printed p. 19 (PDF p. 11), read on the page image 15 Nov |
+| 2:18.2 | N | The lesbian woman receives information relating to femininity, but she has no file to put it in. | **verbatim**, same page |
+| 2:18.2 | PAGE / KIN | Save to… church · work · family · friends · "woman" — no folder · *no file to put it in* (KIN, large) | the drawing is v3's; the words: same page |
+| 2:24.7 | N | The information and experiences that should affirm her get lost. | **verbatim**, same page (the booklet puts "information" in quotation marks; the caption keeps them) |
+| 2:27.2 | PAGE | → lost; the real disc is laid on the page | v3 |
+| 2:29.1 | N | Save that one, friend. | invented (the course's wink at the Save icon) |
+| 2:31.4 | KIN | CHAPTER 4 · When Friendship Becomes Everything | invented title (v3) |
+| 2:34.5 | KIN | "necessary for / my security" | R90 printed p. 7 (below) |
+| 2:33.8 | N | Emotional dependency is when someone else's presence feels necessary for your security. | R90 printed p. 7 (PDF p. 21): "Emotional dependency occurs when the ongoing presence and nurturing of another is believed to be necessary for personal security" (paraphrase; read 15 Nov) |
+| 2:39.5 | N / PAGE | When anyone takes the centre that belongs to God, the old booklet calls it idolatry. (a circle lettered GOD; a blank slip of washi tape over its centre; *idolatry*) | R90 printed p. 13 (PDF p. 24): "the idolatry which takes place when something or someone, other than God, is at the center of our lives" (read 15 Nov); R87 p. 4. The slip never carries a name |
+| 2:45.2 | N | Here are the signs. | R90 printed p. 8 ("let's look at the signs"; read 15 Nov) |
+| 2:46.6 | PAGE | DEPENDENCY · *warning signs* · ☑ time alone together · jealous of others · no plans without her · pet names, private jokes · wearing her clothes · poetry, "our song" · moving in together | R90 printed pp. 8–9 (time alone, jealousy, no plans without her), p. 15 (nicknames, clothing, "poetry, music or other romanticisms", "moving in together"); "our song": p. 25 (read 15 Nov) |
+| 2:47.3 | N | Whether or not anything physical happens, sin has entered the friendship. | R90 printed p. 8: "Whether or not physical involvement exists, sin takes place when a friendship becomes a dependent relationship" (paraphrase; read 15 Nov) |
+| 2:52.0 | PAGE | the page turns: FRIENDSHIP (*healthy*) · DEPENDENCY (the seven, ticked) · MARRIAGE (*appropriate*: the same seven, each with a heart) | R90 printed p. 9 (a healthy friendship), pp. 16–17 for the third box |
+| 2:53.0 | N | Now, many of these things aren't sinful in themselves. | **verbatim** R90 printed p. 16 (PDF p. 26), read 15 Nov |
+| 2:56.4 | N / PAGE | Romantic gestures and certain kinds of exclusivity are completely appropriate in marriage and engagement. | **verbatim** R90 printed p. 17 (PDF p. 26), read 15 Nov |
+| 3:03.6 | N / PAGE | …and sometimes even in a serious dating relationship. | **verbatim**, same page. **THE COLLAPSE** (v3 §2.7). The music stops; the pen is set down; the page holds, silent |
+| 3:10.8 | — | the disc fails: the picture freezes, breaks into blocks, loses its colour; a short spin-down; silence | "the way an era's update fails" (A1); DVD-true |
+| 3:13.6 | break | "Prepare for grief / and depression." · *Emotional Dependency (1990), printed p. 25 — the booklet itself* | **verbatim** R90 printed p. 25 (PDF p. 30), read 15 Nov: the programme's own admission |
+| 3:17.7 | break | "…as painful as / going through / a divorce." · *the same page: letting go of the friendship* | **verbatim**, same page: "Letting go of a dependent relationship can be as painful as going through a divorce." |
+| 3:21.8 | break | It asked women to / end their closest / friendships. | R90 printed p. 24: "A parting of the ways must take place"; p. 20: "ties need to be broken with all past partners as well" (read 15 Nov) |
+| 3:26.0 | break | To throw away / the songs they / shared. | R90 printed p. 25: "get rid of certain record albums or tapes (the ones containing 'our song')" |
+| 3:30.1 | break | To confess their / feelings, and be / asked about them / again and again. | R90 printed p. 23: "hold us accountable, especially if we give him or her the freedom to periodically ask how things are going" (read 15 Nov) |
+| 3:34.5 | break | To look for / the cause in their / mothers and fathers. | FOF-F printed p. 14 (PDF p. 10): attractions "developed and pursued largely because of the breakdown in a girl's initial relationship with her family—mother and father" (read 15 Nov); PR-02 printed p. 8 (the father's score card) |
+| 3:38.7 | break | When the feelings / stayed, it said / they had not truly / wanted to change. | R90 printed p. 20 (PDF p. 28): counsellors find "this individual has no true interest in changing" (read 15 Nov) |
+| 3:43.1 | break | In June 2016 it / was still sold / in packs of five. | Exodus Global Alliance, "Women" page, archived 11 June 2016: "Emotional Dependency, 5 Pack … Package of 5" (read 15 Nov) |
+| 3:47.8 | sources | four pages (below) | |
+
+Each break frame carries its short source in small type at its foot (the room's large type is 160 px Fixedsys, cap
+height 90 px = 1/12 of the picture; measured: the face's cap height is 0.5625 em).
+
+#### The margin (`web/margin.json`; text written without its prefix, `"prefixed": false`)
+
+| on screen | kind | text | source |
+|---|---|---|---|
+| 0:17.5–0:28.7 (trailer 1) | TAUGHT IN | a ministry booklet, 1987 — sold in five-packs by an Exodus network, June 2016 | R87 (© 1984, 1987, Exodus International–North America; PDF p. 3); Exodus Global Alliance "Women" page, archived 11 June 2016 (read 15 Nov 2026, from the archive) |
+| 0:38.1–0:51.9 (ch. 1) | TAUGHT IN | a Focus on the Family booklet for women, 2001: "it is an identity crisis" | FOF-F printed p. 14 (PDF p. 10) |
+| 0:51.9–1:06.1 (ch. 1) | WHAT IS KNOWN | May 2012, the WHO's office for the Americas: homosexuality "requires no cure" | PAHO (WHO Regional Office for the Americas), "'Cures' for an illness that does not exist", position statement, May 2012, p. 1: "…does homosexuality constitute a disorder or an illness, and therefore it requires no cure" (the PDF read on its page image 15 Nov; the news release of 17 May 2012 read too: "Since homosexuality is not a disorder or a disease, it does not require a cure") |
+| 1:18.1–1:30.7 (ch. 2) | TAUGHT IN | the same 2001 booklet: a mother "perceived as distant"; "defensive detachment" | FOF-F printed p. 17 (PDF p. 11) |
+| 1:30.7–1:44.7 (ch. 2) | TAUGHT IN | an Exodus booklet, 1993: the father's responses as "the score card" | PR-02 printed p. 8 (PDF p. 6) |
+| 1:46.1–1:57.3 (trailer 2) | TAUGHT IN | a church's Living Waters group, 2016: 20 Monday evenings, $150, payment plans | a church counselling centre's Living Waters page, posted 29 March 2016, read 15 Nov 2026 (its URL carries a counsellor's name, so it is kept out of `web/`: craig-morrisette-bjps.squarespace.com/group-counseling/2016/3/29/7x7emenskh6qmx0utkeydjbsfxkdvr) |
+| 1:58.1–2:24.5 (ch. 3) | TAUGHT IN | an Exodus booklet, 1993 — re-issued here, word for word, 2016 | PR-02 printed p. 19 (PDF p. 11) |
+| 2:24.5–2:31.2 (ch. 3) | WHAT IS KNOWN | 19 June 2013: Exodus closed at its own conference, and its president apologised | RNS in *The Christian Century* (24 July 2013 issue), "'Ex-gay' group closes as its president apologizes": announced June 19 at the 38th annual conference (read 15 Nov 2026) |
+| 2:32.0–2:52.0 (ch. 4) | TAUGHT IN | an Exodus booklet on "emotional dependency", 1987; reprinted 1990 | R87 PDF p. 3; R90 printed pp. 7–8, 13, 15 |
+| 2:52.0–3:10.6 (the collapse) | WHAT IS KNOWN | 2014, Royal College of Psychiatrists: no sound evidence that orientation can change | RCPsych Position Statement PS02/2014 (April 2014), p. 2: "There is no sound scientific evidence that sexual orientation can be changed." (read on its page 15 Nov) |
+
+None during the label, the End-of-Part-1 card, the break or the sources. Each holds at least 6.7 s. In the web copy the
+strip sits under the picture (the picture is 1120×630, the strip 1280×90): a kind tag in 16 px, the line in 24 px
+Fixedsys, and its source's first 150 characters in 12 px.
+
+**On "re-issued here".** The floppy analogy is documented in 1993 (PR-02) and in a c. 1994 class manual (ARTICLE_COMPANION
+§7v); its use in a 2016 course is this tape's invention. What is documented for 2014–2016 is the same network re-issuing
+its old women's teaching: the 1987/1990 dependency booklet sold in five-packs in June 2016 and still on a ministry
+network's reading list in 2014; the 2001 women's booklet reposted in June 2016 (LR16). The margin line says "here" (this
+disc) for that reason.
+
+#### The label, the break and the sources (all silent, RECORD palette, Fixedsys Excelsior)
+
+- The label and the break: as in the table. `web/break.json` carries the same words (label; admission; sentences;
+  the End-of-Part-1 page) with their sources; `web/screen_text.vtt` carries every frame of that large type with its
+  on-screen times (each cue from the middle of its fade-in to the middle of its fade-out).
+- The sources (four pages, 48 px): **The teaching** (R87/R90 with printed pages; PR-02 pp. 8, 19; FOF-F pp. 10, 14,
+  16–17; NMAH.AC.1428 B2 F9, F12, B6 F4). **How it was sold, 2014–2016** (the Leader's Edition DVD; the 5 Pack; the
+  20-week group; the Tree Model). **What is known** (PAHO 2012 p. 1; Exodus's closing, RNS 2013; RCPsych PS02/2014 p.
+  2; read 15 Nov 2026). **This disc** (the invented marks; no real person shown or named; voices; the music credit;
+  the piece).
+
+#### Music and sound (measured; nobody here can listen)
+
+- Made in code (`source/music.py`, seed 2016, numpy only): **candidate 1** (C major, 100 BPM: Karplus–Strong ukulele,
+  felt piano, light claps). The menu loop is the same tune's lift (bar 8 on); the logo sting is a rolled felt-piano chord,
+  a ukulele strum and a glockenspiel; the two trailers keep v3's flat "corporate ukulele" beds (D and A major).
+- Levels (ffmpeg ebur128 on the stems, at the master's gain): presenter −13.3 LUFS; announcer −12.3; **course bed
+  −24.3 = 11.0 LU under the presenter** (ducked a further 3 dB while she speaks); trailer beds −19.3 = 7.0 LU under the
+  announcer (bright); menu loop −22.3 (alone); logo −19.3.
+- Master: **−14.0 LUFS integrated, true peak −1.4 dBTP** (`work/mix.wav`); the delivered `room.mp4` and `web.mp4`
+  measure −14.0 LUFS, −1.5 dBTP (AAC 144 kb/s stereo, dual mono; its average reads 98 kb/s because about 70 s of the
+  tape are digital silence). LRA 9.5 LU.
+- No writing sound. The remaining sounds: remote ticks in the menu, the workbook page landing, the page turn, the pen
+  set down, the disc's spin-down at the break. Silent: the label, the card once its line is said, the collapse's held
+  page, the break, the sources.
+- Credit (in `chapters.json`, `sources.json`, the MP4s' metadata and the last sources page): **"Music: made in code for
+  this tape by Claude (Anthropic, Opus 5.5)"**.
+
+#### Credits
+
+Script, design, animation, sound and music: Claude (Anthropic, Opus 5.5), UiB job 26 (S391), from v3 (job 25, S389) and
+the job 24 storyboard. Voices: build-time Supertonic through `tools/tts/render.py`, `register: apparatus` only: the
+presenter F5 (0.95), the announcer F4 (1.05); 21 masters are v3's, 7 are new (op4, e1, f1–f4, a3d). Fonts: Fixedsys
+Excelsior 3.022 (the record), Roboto (captions; the project's copies), and the macOS faces v3 used for the course
+(SignPainter, Neucha, Lato, Playfair Display). Every colour is a token from `src/desktop/theme/` (RECORD from
+`witness.ts`).
+
+#### What I could not verify
+
+1. *Sexual Sanity for Women* (2012), the Tree Model pages: cited through RESEARCH_DYKAS as in v2/v3, not re-read on a
+   page for v4 (no local page image of the women's workbook; only a men's excerpt is in his folder).
+2. LR16 line numbers (the June 2016 copy) are v3's; not re-read.
+3. The 5 Pack page and the Living Waters page were read as live/archived web pages (curl of the Wayback capture; the
+   Living Waters page is still live); neither is saved as a PDF in his folder (SOURCES_TO_FETCH §1 items 5–6 ask for it).
+4. The Leader's Edition is documented by a review page (Dove), not by the disc itself.
+5. Nobody listened: the voices, the music and the levels are checked by measurement only.
+
+#### How to rebuild
+
+`source/README.md` (from `make_manifest.py` to `check_web.py`; the picture renders in about 2 minutes at 24 fps).
+
+### 9.3 2026 v4: "HEDGE™", rebuilt on the research (S391)
+
+*UiB job 26 Part A. Built from v3 (`2026/video/`, untouched) on `RESEARCH_TRANS_CAUSES_1997_2026_2026-11-15.md` §6 (the
+spine), §3, §4A, §7, §9. Folder: `output/teaching-tapes/2026-v4/` (git-ignored). Every line of display text is a
+draft for his eye (`HIS_EYE.md`, 34 items).*
+
+#### What it is
+
+A parents' course, HEDGE™ ("a course for parents in a confused age · Free. Donor-supported."), that teaches its own
+history of "how it happens", 1988 → today, as escalation. A red line along the bottom bar, THE THREAT · 1988 → TODAY,
+fills lesson by lesson. Each lesson opens on a year stamp, names one reason in the course's words, slaps one dated
+sticker on the 2016 tree (never removed) and sets one piece of homework (never removed). Lesson 6 is the daughter at 18:
+every tool on the list is a minors' tool, and the course's own source grants her "the liberty to make their own
+choices"; the course offers time instead (seven to ten years), a chat and a free call, and ends on "If you care about your daughter, finish the
+course." Then the satire drains away, and the piece says plainly what this asked of people.
+
+Four movements: the **label** (silent, the record's style) → the **tape** straight (campaign-film grammar: letterbox,
+night, the countdown, the red word, the share counter, an invented faceless expert, an invented news montage, a chart
+with no numbers, the call to action) → the **margin** (`web/margin.json`, 23 lines, never burned into `room.mp4`) → the
+**break** (eight silent frames of large type, then the sources roll).
+
+Kept from v3: the sting, the swing, the house (now twice only), the 2016 tree scan, LAST LINE LIVE, the Prayer Wall,
+the outbreak map and SHARE ×5, the UNDER 18 / 18 AND OVER slide, Ask Hedge with 60 minutes becoming 40. Gone: the
+record's cards, GateKeep™, the six house shots, Lessons 2–4 of v3 as lessons.
+
+#### Files
+
+In `output/teaching-tapes/2026-v4/` (git-ignored):
+- `web/` (V4_INTERFACE): `room.mp4` (960×540, H.264 Main, 11.71 MB, 273.867 s,
+  -14.1 LUFS, true peak -1.6 dBTP, keyframe gap ≤ 2.0 s, faststart), `web.mp4` (1280×720: the
+  picture 1120×630 with the margin strip 1280×90 below it and the tape's own subtitles; 14.59 MB, -14.1 LUFS,
+  -1.6 dBTP), `chapters.json` (13 chapters; **partOneEnd 73.406 s**), `margin.json` (23 lines), `captions.vtt`
+  (44 cues), `screen_text.vtt` (12 cues: the label, End of Part 1, the break), `sources.json`,
+  `break.json`, `READY`.
+- `hedge_v4_room_1080.mp4` and `hedge_v4_web_1080.mp4` (1920×1080, H.264 high CRF 19, AAC 160k stereo from `work/mix.wav`:
+  −14.1 LUFS, true peak −1.1 dBTP). The two web copies carry mono AAC (128k nominal, ≈ 98k) from a mono master
+  normalised on its own (`work/mix_mono.wav`; a mono file is measured as one channel).
+- `contact_sheet.jpg` (12 frames decoded from `web/web.mp4`), `stills/label.jpg`, `stills/break.jpg`,
+  `stills/endcard.jpg` (from `web/room.mp4`), `tts/` (41 masters + manifest), `source/` (README: how to rebuild).
+
+#### Running order
+
+| chapter | kind | start | end | length |
+|---|---|---|---|---|
+| Before you watch | label | 0:00.0 | 0:09.0 | 9.0 s |
+| HEDGE™ · We Saw It Coming | title | 0:09.0 | 0:28.2 | 19.2 s |
+| Lesson 1 · The Old Wound | lesson | 0:28.2 | 0:54.9 | 26.7 s |
+| Ad · LAST LINE LIVE | commercial | 0:54.9 | 1:07.9 | 13.0 s |
+| End of Part 1 | endcard | 1:07.9 | 1:17.0 | 9.1 s |
+| Lesson 2 · Catch It Early | lesson | 1:17.0 | 1:40.3 | 23.3 s |
+| Lesson 3 · The Culture Moved In | lesson | 1:40.3 | 2:03.1 | 22.9 s |
+| Ad · The Prayer Wall | commercial | 2:03.1 | 2:15.1 | 12.0 s |
+| Lesson 4 · It Spreads | lesson | 2:15.1 | 2:36.8 | 21.7 s |
+| Lesson 5 · It Has a Name | lesson | 2:36.8 | 2:58.0 | 21.2 s |
+| Lesson 6 · When She Is 18 | collapse | 2:58.0 | 3:44.8 | 46.8 s |
+| What this asked of people | break | 3:44.8 | 4:19.9 | 35.1 s |
+| Sources | credits | 4:19.9 | 4:33.9 | 14.0 s |
+
+partOneEnd = 73.406 s (1:13.4); duration 273.867 s (4:33.9).
+
+#### Script
+
+| time | who | line (as captioned) | kind | source (document, page) |
+|---|---|---|---|---|
+| 0:09.9 | HOST | HEDGE™. A course for parents, in a confused age. | the course's title (invented reading) | invented; "donor-supported": Harvest USA 2022 p. 165 and the Love & Truth About page (v3 §3.4) |
+| 0:15.3 | PARENT | I thought I'd know. I thought I'd see it coming. | invented (an actor; "Dramatisation" on screen) | echoes The Federalist, 28 Nov 2016, title "Why We Should Have Seen The Transgender Craze Coming" |
+| 0:18.8 | HOST | Your child is not confused. Your child is being confused. | invented | rests on Love & Truth Network family post "18 - Responding to Family Members Who Have Embraced Gender Ideology" (dated 31 Oct 2025; read 15 Nov 2026): "a culture that has been swept up by gender ideology"; and the ministry shop's 2026 blurb "ward off recruitment into transgender ideology" |
+| 0:23.3 | HOST | We saw it coming. For almost forty years, we have watched it grow. | invented (the frame "We saw it coming") | device: The Federalist 2016 title; ministries telling the threat as history (research §3B); "almost forty years" = 1988 (Exodus Telephone Counseling Manual (Exodus International North America, © 1988; NMAH.AC.1428 B2 F10), © page PDF p. 3) to 2026 |
+| 0:28.6 | HOST | Lesson one. 1988. The Old Wound. | the lesson's title (invented reading) | year: Exodus Telephone Counseling Manual (Exodus International North America, © 1988; NMAH.AC.1428 B2 F10), © 1988 (PDF p. 3) |
+| 0:32.0 | HOST | We were answering these calls in 1988. | invented lineage (HEDGE is invented) | Exodus Telephone Counseling Manual (Exodus International North America, © 1988; NMAH.AC.1428 B2 F10), title page: "How to Minister Hope … Through Telephone Counseling" |
+| 0:35.3 | EXPERT | We called it a false identity. Find the hurt, and you find the root. | paraphrase; "a false identity" verbatim | Exodus Telephone Counseling Manual (Exodus International North America, © 1988; NMAH.AC.1428 B2 F10), "Transsexuality" tab, printed p. 46 (PDF p. 50): "how the caller came to assume a false identity"; "As specific instances of hurt, rejection and sin emerge"; "Focus on healing the roots" — page image read |
+| 0:39.8 | HOST | And we still call it a false identity. | paraphrase | Love & Truth Network family post "18 - Responding to Family Members Who Have Embraced Gender Ideology" (dated 31 Oct 2025; read 15 Nov 2026): "taking on a new, false gender identity" |
+| 0:42.4 | HOST | Usually, the hurt was in the family. | paraphrase | Exodus Telephone Counseling Manual (Exodus International North America, © 1988; NMAH.AC.1428 B2 F10), printed p. 47 (PDF p. 51): "forgive those who have hurt them (usually family members)" — page image read |
+| 0:44.7 | PARENT | Was it us? | invented (the dramatised parent) | the blame placed on parents: FOF 2002 p. 43 ("parental contributions to the child's pain"), Exodus 1988 p. 47 |
+| 0:46.3 | HOST | The same roots as homosexuality. Only deeper. | paraphrase | The Building Blocks of Gender Confusion (Reconciliation Ministries of Michigan, © 2019), p. 2: "Many of the building blocks of transgender issues are similar to those of homosexuality, yet they go much deeper" — page image read |
+| 0:52.0 | HOST | Your homework: find the root. | paraphrase; "homework" invented | Exodus Telephone Counseling Manual (Exodus International North America, © 1988; NMAH.AC.1428 B2 F10), p. 46: "Focus on healing the roots"; The Building Blocks of Gender Confusion (Reconciliation Ministries of Michigan, © 2019), p. 4: "explore the roots of their gender confusion" |
+| 0:56.5 | PARENT | Someone has a plan for your child. Have yours. Free. Live. Tonight. | invented ad line (v3) | the ministry's half-day parents' summit and its shop's "recruitment" blurb (SRC §7A1; the blurb re-read 15 Nov 2026) |
+| 1:08.4 | HOST | Module one, complete. Module two unlocks when you're ready. | invented (the course's module grammar) | — |
+| 1:17.4 | HOST | Lesson two. 2003. Catch It Early. | the lesson's title (invented reading) | year: The Christian Post, 5 Aug 2003 |
+| 1:20.9 | HOST | Are you afraid your child may be struggling with gender identity? | verbatim, cut | Focus on the Family, When a Loved One Says "I'm Gay", © 2002, printed p. 43 (PDF p. 24): "Are you afraid your child may be struggling with gender identity or otherwise heading in a wrong direction?" — page image read |
+| 1:24.7 | EXPERT | We told the churches: a young girl in Sunday school that might have some gender identity deficits can be helped. | near-verbatim, cut to the girl; voiced by the invented expert | The Christian Post, 5 Aug 2003, quoting Exodus's board chair: "when we see a young boy in our Sunday School classes or a young girl in our Sunday School classes that might have some gender identity deficits that they will be given accurate information and can be helped" (read 15 Nov 2026) |
+| 1:33.8 | HOST | Prevention tops the list. | verbatim, cut | The Christian Post, 5 Aug 2003: "Prevention tops the list of ministry helps" |
+| 1:36.9 | HOST | Your homework: watch for the early signs. | paraphrase | FOF 2002 p. 43 ("defuse problems early on"); The Christian Post 2003 ("when we see …") |
+| 1:40.6 | HOST | Lesson three. 2014. The Culture Moved In. | the lesson's title (invented reading) | year: ERLC, Sexual Brokenness and the Hope of the Gospel, © 2014 |
+| 1:44.4 | HOST | Then it wasn't one family any more. It came through public education, popular culture and social media. | first sentence invented; second near-verbatim | ICCEC U.S. Theological Commission, "Sexual Brokenness and Gender Issues", 2021, p. 4: "Most of what people are taught today comes through public education, popular culture, and social media." — page image read |
+| 1:50.6 | HOST | If your children have unmonitored access to the internet, you are a negligent parent. | verbatim | ERLC 2014, p. 108: "If your children have unmonitored access to the Internet, you are a negligent parent." — page image read |
+| 1:59.2 | HOST | Your homework: know how many times she texts. | paraphrase | ERLC 2014, p. 127: "I actually have software on their phones, and I know how many times they text." — page image read |
+| 2:04.5 | AD | Add her name. Every member prays for her, at least once a day. | near-verbatim ad line (v3) | Sorrowful Hearts, Parents page (live): "they will be prayed for by all the members at least once a day" (read 15 Nov 2026) |
+| 2:15.5 | HOST | Lesson four. 2016. It Spreads. | the lesson's title (invented reading) | years: The Federalist 2016; The Building Blocks of Gender Confusion (Reconciliation Ministries of Michigan, © 2019) |
+| 2:18.8 | HOST | It arrived decades ago as a tiny seed. Now it's in our homes. | first sentence verbatim (cut); second adapted ("their" → "our") | The Federalist, 28 Nov 2016: "It arrived decades ago as a tiny seed, a mere spore." "It's in their homes, …" (read 15 Nov 2026) |
+| 2:22.8 | HOST | One friend comes out. Then the group. Then your daughter. | paraphrase | The Building Blocks of Gender Confusion (Reconciliation Ministries of Michigan, © 2019), p. 4: "one person in a social group coming out as transgender prompts many more in that social group to come out as transgender" — page image read |
+| 2:28.9 | HOST | Your homework: share this lesson with five families. | invented (the give-way: the course spreads the way it says the cause spreads) | UN A/76/152 (2021) p. 5 para. 11: "vigorous social media messaging, simple, catchy slogans" |
+| 2:37.1 | HOST | Lesson five. 2025. It Has a Name. | the lesson's title (invented reading) | year: Love & Truth Network family post "18 - Responding to Family Members Who Have Embraced Gender Ideology" (dated 31 Oct 2025; read 15 Nov 2026) |
+| 2:40.8 | HOST | A culture swept up by gender ideology. | verbatim fragment | Love & Truth Network family post "18 - Responding to Family Members Who Have Embraced Gender Ideology" (dated 31 Oct 2025; read 15 Nov 2026): "… a culture that has been swept up by gender ideology" |
+| 2:45.3 | HOST | Now even governments use our word. | invented boast; no name, no country, no flag | Executive Order 14168 of 20 Jan 2025, title "Defending Women From Gender Ideology Extremism and Restoring Biological Truth to the Federal Government", 90 FR 8615 (govinfo, read 15 Nov 2026); UN A/76/152 p. 5 para. 11: narratives "employed by actors in State and diplomatic spheres" (page image read) |
+| 2:48.8 | HOST | The numbers speak for themselves. | invented (over a chart that has no numbers) | device: the stat graphic with no values (research §3B, a design genre, [VERIFY SOURCE] as a dossier claim) |
+| 2:52.6 | HOST | Your homework: pray for her protection from the negative influence of others. | near-verbatim | Love & Truth Network family post "18 - Responding to Family Members Who Have Embraced Gender Ideology" (dated 31 Oct 2025; read 15 Nov 2026), step 1 Prayer: "Pray for your loved one to be open to questions about these ideas and for protection from the negative influence of others." |
+| 2:58.3 | HOST | Lesson six. Today. When She Is 18. | the lesson's title (invented reading) | — |
+| 3:06.6 | HOST | Those under 18 can involve a full-court press approach, | verbatim | Love & Truth Network family post "18 - Responding to Family Members Who Have Embraced Gender Ideology" (dated 31 Oct 2025; read 15 Nov 2026): "Those under 18 can involve a full-court press approach, …" |
+| 3:10.1 | HOST | while young adults will have the liberty to make their own choices. | verbatim | Love & Truth Network family post "18 - Responding to Family Members Who Have Embraced Gender Ideology" (dated 31 Oct 2025; read 15 Nov 2026): "… while young adults will have the liberty to make their own choices." |
+| 3:13.9 | HOST | The liberty to make their own choices. | verbatim, read a second time | the same sentence |
+| 3:16.7 | PARENT | She's eighteen now. | invented | Maya is 18 (the room's Era 4 is her 18th birthday) |
+| 3:18.4 | HOST | So love her over the long term. It can take seven to ten years. | step title + verbatim fragment | Love & Truth Network family post "18 - Responding to Family Members Who Have Embraced Gender Ideology" (dated 31 Oct 2025; read 15 Nov 2026), step 6 "Love Over the Long Term"; "It can take 7-10 years for individuals to work through …" |
+| 3:30.4 | HOST | Ask anything, any hour. And when you're ready, a real person. Free. | paraphrase (v3) | Love & Truth AI Assistant page, printed 14 Nov 2026, p. 1: "easily connect with a human for FREE" (page image read) |
+| 3:40.1 | HOST | If you care about your daughter, finish the course. | invented | device: Associated Press, 28 Oct 2026 — a 2026 campaign ad closes "If you care about your children, …" (read 15 Nov 2026) |
+
+#### Margin
+
+| on screen | kind | text | source |
+|---|---|---|---|
+| 0:14.6–0:28.2 | TAUGHT IN | an opinion piece, 2016: 'Why We Should Have Seen The Transgender Craze Coming' | The Federalist, 28 Nov 2016, the article's title — thefederalist.com/2016/11/28/seen-transgender-craze-coming/ (read 15 Nov 2026) |
+| 0:28.2–0:39.3 | TAUGHT IN | Exodus's phone manual, 1988 — 'how the caller came to assume a false identity' | Exodus International North America, Exodus Telephone Counseling Manual, © 1988, 'Transsexuality' tab, printed p. 46 (PDF p. 50); Smithsonian NMAH.AC.1428, Box 2, Folder 10 — page image read |
+| 0:39.3–0:45.8 | TAUGHT IN | a ministry's family post, 2025 — 'taking on a new, false gender identity' | Love & Truth Network, '18 - Responding to Family Members Who Have Embraced Gender Ideology', blog dated 31 Oct 2025 — narrow-way.loveandtruthnetwork.com/post/responding-to-family-members-who-have-embraced-gender-ideology (read 15 Nov 2026) |
+| 0:45.8–0:54.9 | WHAT IS KNOWN | Homosexuality left the US psychiatric manual in 1973 and the WHO's in 1990. | 'Out of DSM: Depathologizing Homosexuality', Behavioral Sciences 5(4), 2015, pmc.ncbi.nlm.nih.gov/articles/PMC4695779/ (Dec 1973 Board vote; 1990 WHO removed homosexuality per se from the ICD) — read 15 Nov 2026; WHO ICD-10 F66: 'Sexual orientation by itself is not to be regarded as a disorder' — icd.who.int/browse10/2019/en (read 15 Nov 2026) |
+| 0:54.9–1:07.9 | TAUGHT IN | a ministry shop's book, 2026 — 'ward off recruitment into transgender ideology' | Love & Truth Network, transgender & gender dysphoria shelf, a publisher's blurb for a parents' book — loveandtruthnetwork.com/transgender-gender-dysphoria (read 15 Nov 2026) |
+| 1:17.0–1:24.3 | TAUGHT IN | a parents' booklet, 2002 — 'the skills to prevent a life of heartbreak' | Focus on the Family, When a Loved One Says 'I'm Gay' (Love Won Out series), © 2002, resources pp. 42–43 (PDF p. 24), the father's book's blurb; Smithsonian NMAH.AC.1428, Box 8, Folder 5 — page image read |
+| 1:24.3–1:31.1 | TAUGHT IN | a news report on Exodus, 2003 — 'gender identity deficits' in Sunday school | The Christian Post, 5 Aug 2003, quoting Exodus's board chair on the July 2003 assembly — christianpost.com/news/exodus-ministries-plans-for-direct-assistance-to-147-heal-and-prevent-148-homosexuality.html (read 15 Nov 2026) |
+| 1:31.1–1:40.3 | WHAT IS KNOWN | DSM-5, 2013: 'gender non-conformity is not in itself a mental disorder' | American Psychiatric Association, 'Gender Dysphoria Diagnosis' (Nov 2017): 'With the publication of DSM–5 in 2013, "gender identity disorder" was eliminated and replaced with "gender dysphoria"'; 'gender non-conformity is not in itself a mental disorder' — psychiatry.org/Psychiatrists/Diversity/Education/Transgender-and-Gender-Nonconforming-Patients/Gender-Dysphoria-Diagnosis (read 15 Nov 2026) |
+| 1:40.3–1:50.3 | TAUGHT IN | a church paper, 2021 — 'public education, popular culture, and social media' | ICCEC U.S. Theological Commission, 'Sexual Brokenness and Gender Issues' (Human Sexuality Addendum 1), 2021, p. 4 — published by the ICCEC U.S. Theological Commission (page image read) |
+| 1:50.3–1:56.3 | TAUGHT IN | a Southern Baptist book for churches, 2014 — 'you are a negligent parent' | ERLC, Sexual Brokenness and the Hope of the Gospel, © 2014, p. 108 — published by the ERLC (page image read) |
+| 1:56.3–2:03.1 | WHAT IS KNOWN | June 2013: Exodus International shut down; its president apologised. | RNS in The Christian Century, issue of 24 July 2013 ('announced June 19 that it was shutting its doors'; a statement 'apologizing to the gay community') — christiancentury.org/article/2013-06/ex-gay-group-exodus-international-shuts-down-president-apologizes (read 15 Nov 2026) |
+| 2:03.1–2:15.1 | TAUGHT IN | a prayer list, 2026 — 'prayed for by all the members at least once a day' | Sorrowful Hearts, 'Parents' page (first archived Dec 2013, live) — sorrowfulhearts.com/parents.html (read 15 Nov 2026) |
+| 2:15.1–2:22.5 | TAUGHT IN | a ministry newsletter, 2019 — 'This is called rapid-onset gender dysphoria.' | Reconciliation Ministries of Michigan, 'The Building Blocks of Gender Confusion', © 2019, p. 4 — recmin.org newsletter (page image read) |
+| 2:22.5–2:29.7 | WHAT IS KNOWN | 2021: ROGD 'is not a diagnostic classification or subtype' in the DSM or the ICD | CAAPS (Coalition for the Advancement & Application of Psychological Science) Position Statement on ROGD, published 26 Jul 2021; signatories include the American Psychological Association and the American Psychiatric Association — caaps.co/rogd-statement (read 15 Nov 2026) |
+| 2:29.7–2:36.8 | WHAT IS KNOWN | …'nor is it under consideration for inclusion in future editions.' (CAAPS, 2021) | CAAPS Position Statement on ROGD, 26 Jul 2021 — caaps.co/rogd-statement (read 15 Nov 2026) |
+| 2:36.8–2:44.0 | TAUGHT IN | a ministry's post, 2025 — 'a culture that has been swept up by gender ideology' | Love & Truth Network, family post dated 31 Oct 2025 (the text already archived 10 Apr 2025) — narrow-way.loveandtruthnetwork.com/post/responding-to-family-members-who-have-embraced-gender-ideology (read 15 Nov 2026) |
+| 2:44.0–2:50.6 | WHAT IS KNOWN | Origin of the term: opposing UN conferences in Cairo (1994) and Beijing (1995) | UN Independent Expert on SOGI, report A/76/152, 15 Jul 2021, p. 5, para. 10 — United Nations document A/76/152 (page image read) |
+| 2:50.6–2:58.0 | WHAT IS KNOWN | UN, 2021: 'a linguistic formula used symbolically to refer in an accusatory manner' | UN Independent Expert on SOGI, report A/76/152, 15 Jul 2021, p. 4, para. 9 — United Nations document A/76/152 (page image read) |
+| 2:58.0–3:06.1 | WHAT IS KNOWN | ICD-11, in force 1 Jan 2022: gender incongruence moved out of mental disorders | WHO, 'Gender incongruence and transgender health in the ICD' (FAQ): moved out of the 'Mental and behavioural disorders' chapter into 'Conditions related to sexual health'; WHO news, 11 Feb 2022 (ICD-11 came into effect; adopted May 2019) — who.int (both read 15 Nov 2026) |
+| 3:06.1–3:13.5 | TAUGHT IN | a ministry's family post, 2025 — under 18, 'a full-court press approach' | Love & Truth Network, family post dated 31 Oct 2025, step 4 — narrow-way.loveandtruthnetwork.com/… (read 15 Nov 2026) |
+| 3:13.5–3:23.6 | TAUGHT IN | the same post — young adults 'will have the liberty to make their own choices' | Love & Truth Network, family post dated 31 Oct 2025 — the same sentence (read 15 Nov 2026) |
+| 3:23.6–3:36.5 | TAUGHT IN | a ministry's AI page, 2026 — 'easily connect with a human for FREE' | Love & Truth Network, AI Assistant page, printed 14 Nov 2026 — loveandtruthnetwork.com/ai, p. 1 of the printout (page image read); free coaching '40 minutes' (/free-coaching) and '1 hour' (/friends-and-family), read 15 Nov 2026 |
+| 3:36.5–3:44.8 | TAUGHT IN | an election ad, October 2026 — 'If you care about your children, …' | Associated Press, 28 Oct 2026 (via News4JAX): a 2026 campaign ad's closing line — news4jax.com/news/politics/2026/10/28/… (read 15 Nov 2026) |
+
+#### Break
+
+| on screen | sentence (as drawn, 96 px) | source |
+|---|---|---|
+| 3:48.2–3:52.9 | In their own words, 2019: / “No one is certain what / causes gender confusion.” / Then they listed causes. | Reconciliation Ministries of Michigan, The Building Blocks of Gender Confusion, © 2019, p. 1 (the admission), pp. 2–4 (the causes it then lists) — page images read |
+| 3:53.2–3:56.4 | First the family. / Then her friends. / Then the whole culture. | Exodus Telephone Counseling Manual, © 1988, printed p. 47 ("usually family members"); Building Blocks 2019, p. 4 ("one person in a social group"); ICCEC 2021, p. 4 and Love & Truth family post 2025 ("swept up by gender ideology") |
+| 3:56.8–3:60.0 | Nothing was dropped. / Each reason was added / to the ones before. | Exodus manual 1988, p. 46 ("a false identity") and the Love & Truth family post 2025 ("a new, false gender identity"); Building Blocks 2019 keeps the family roots (p. 3) beside "social contagion" (p. 4) |
+| 4:00.3–4:04.1 | Parents were told / to find the wound, / to watch for signs, / to monitor her phone. | The wound: Focus on the Family 2002, p. 43 ("takes responsibility for one's parental contributions to the child's pain") and the 2019 newsletter, p. 4 (a caregiver to "explore the roots"); the signs: Focus on the Family 2002, p. 43 ("afraid your child may be struggling with gender identity", "defuse problems early on"); the phone: ERLC 2014, p. 108 ("If your children have unmonitored access to the Internet, you are a negligent parent") |
+| 4:04.5–4:08.3 | Parenthood was made / a political identity; / the child, a figure to / build coalitions around. | Transnational Institute, State of Power 2026, ch. 9, printed p. 83: movements "elevated parenthood as a political identity and the child as a sacred figure around which coalitions can be built" |
+| 4:08.6–4:11.5 | At 18, their own post says, / she is free to choose. | Love & Truth Network family post, 2025: "young adults will have the liberty to make their own choices" (paraphrased) |
+| 4:11.9–4:15.0 | Her parents were told: / it can take / seven to ten years. | The same post: "It can take 7-10 years for individuals to work through the implications…" |
+| 4:15.3–4:19.3 | The WHO: trans-related / identities are not / conditions of / mental ill-health. | WHO, FAQ on gender incongruence in the ICD: "trans-related and gender diverse identities are not conditions of mental ill-health" (paraphrased into four lines; "trans-related … identities" kept) |
+
+#### The course's on-screen words that are not spoken (each a deliberate silent beat, or shown while its line is spoken)
+
+| where | words | source |
+|---|---|---|
+| every course frame | HEDGE™ · LESSON n OF 6 · the lesson's title · FREE WEBINAR · LIVE IN 00:mm:ss · THE THREAT · 1988 → TODAY (1988 · 2003 · 2014 · 2016 · 2019 · 2025 · TODAY) · "Dramatisation. Voices are actors. HEDGE is free and donor-supported." | invented chrome; the timeline is the research spine's device (§6); "donor-supported" as v3 |
+| year stamps | 1988 · 2003 · 2014 · 2016 → 2019 · 2025 · TODAY | the dated documents in the script table |
+| L1 archive | ARCHIVE · 1988 · OUR PHONE LINE; the typed page "Pray that God will help them be willing to forgive those who have hurt them (usually family members)" | Exodus manual © 1988, printed p. 47 (verbatim; the sentence goes on "and to let go of bitterness and resentment") |
+| L1 echo | 1988: "…how the caller came to assume a false identity." · 2025: "It can take 7-10 years … taking on a new, false gender identity." | Exodus 1988 p. 46; the Love & Truth family post 2025 (both verbatim, cut) |
+| the tree | stickers 1988 · THE WOUND · 2003 · EARLY SIGNS · 2014 · SCREENS · 2019 · CONTAGION · 2025 · IDEOLOGY · 2022 · TRAUMA (silent) | Exodus 1988 pp. 46–47; Christian Post 2003; ERLC 2014 p. 108 / ICCEC 2021 p. 4; Building Blocks 2019 p. 4; Love & Truth 2025; Building Blocks 2019 p. 3, ICCEC 2021 p. 1, IFTCC 2022 (B) |
+| homework card | YOUR HOMEWORK n / 6: FIND THE ROOT · WATCH FOR THE EARLY SIGNS · KNOW HOW MANY TIMES SHE TEXTS · SHARE WITH FIVE FAMILIES · PRAY FOR HER PROTECTION | as the spoken homework lines |
+| L1 expert | A PHONE-LINE COUNSELLOR · ON THE LINES SINCE 1988 · HEDGE™ EXPERT | invented, faceless |
+| L2 | Sunday School (chalkboard) · SCANNING · EARLY SIGNS · EARLY SIGN? · CATCH IT EARLY. | Christian Post 2003 ("when we see … in our Sunday School classes"); FOF 2002 ("to prevent") |
+| L3 | PUBLIC EDUCATION · POPULAR CULTURE · SOCIAL MEDIA · ENTRY POINT · UNMONITORED · TEXTS SINCE MONDAY 216 AND COUNTING · YOU ARE A NEGLIGENT PARENT. | ICCEC 2021 p. 4; ERLC 2014 p. 108; ERLC 2014 p. 127 ("has texted the same girl 216 times since Monday") |
+| L4 | IT SPREADS THROUGH THE GROUP · SOCIAL CONTAGION. · SHARE HEDGE ×5 · SHARED BY 5 → 25 → 125 FAMILIES · ✓ SHARED · 125 FAMILIES | Building Blocks 2019 p. 4; the share counter invented (v3) |
+| L5 news | NATIONAL 24 · THE MORNING DESK · FAMILY NEWS NOW · METRO 7 · THE EVENING HOUR · NEWSLINE · ● LIVE · BREAKING · "WHAT IS 'GENDER IDEOLOGY'?" · "IS IT IN YOUR CHILD'S CLASSROOM?" · "THE WORD EVERY PARENT IS HEARING" · "PARENTS ASK: WHO DECIDES?" · "'GENDER IDEOLOGY': A SPECIAL REPORT" · "WHAT SCHOOLS ARE NOT TELLING YOU" · GOVERNMENTS ADOPT THE TERM · a ticker | all invented (outlets, headlines); the frame: UN A/76/152 p. 5 para. 11 ("print and social media"; "State and diplomatic spheres"); no country, flag, map, anchor or face |
+| L5 chart | THE THREAT, BY YEAR · 1988 2003 2014 2019 2025 · no values · Source: HEDGE | invented; the "stat graphic with no values" device (research §3B) |
+| L6 slide | UNDER 18: FULL-COURT PRESS · FIND THE ROOT · WATCH FOR THE EARLY SIGNS · COUNT HER TEXTS · SHARE WITH FIVE FAMILIES · PRAY FOR HER PROTECTION · 18 AND OVER: "young adults will have the liberty to make their own choices" | Love & Truth 2025 (verbatim), the homework above |
+| L6 door | Ask Hedge · here 24/7 · biblically grounded · "My daughter just turned 18. She says this is who she is. What do I do now?" · the reply · ✓ Memory updated · her age: 18 · Book my free call · Paste a message from her · Write what I should say · YOUR FREE COACHING CALL 60 MINUTES · BOOKED ✓ TUE 10:00 40 MINUTES | as v3 §3.4 (LTAI p. 1; the 60/40: Love & Truth /friends-and-family "1 hour", /free-coaching "40 minutes", re-read 15 Nov 2026; RB26, B, the look only) |
+| the end | LIVE NOW · JOIN · ● LIVE · HEDGE™ Free. Donor-supported. · IF YOU CARE ABOUT YOUR DAUGHTER, FINISH THE COURSE. | invented; AP 28 Oct 2026 (the device) |
+| End of Part 1 | MODULE 1 COMPLETE · THE OLD WOUND · 1988 · Module 2 · Catch It Early · unlocks when you're ready. · ▶ CONTINUE TO MODULE 2 | invented (the course's module grammar) |
+| ads | v3's LAST LINE LIVE and The Prayer Wall, unchanged | v3 §3.6 |
+
+#### The label and the break (the piece's voice)
+
+Silent, the record's style (`witness.ts` RECORD: panel #0d0d1a, ink #aabbcc, dim #556677; Fixedsys Excelsior), main
+lines 96 px (≥ 1/12 of the picture), static frames with hard cuts. `web/screen_text.vtt` carries every frame's words
+and times for the room's panel (Part B measured the 2026 screen at ~8.8° tall from the seat).
+
+| frame | words | source |
+|---|---|---|
+| label 1 (0:00–0:03.1) | This tape is made from real teaching, 1988–2026. · From manuals, booklets, books, newsletters, posts and news reports. The name HEDGE™ is invented. The reasons are theirs. | the documents in `sources.json`, 1988 (Exodus manual ©) to 2026 (the ministry's AI page, printed 14 Nov 2026; its live shelf) |
+| label 2 (0:03.1–0:06.2) | Every reason in it was taught to real people. Some were first taught about gay people. | each lesson's documents; Lessons 2–3 quote teaching written about homosexuality and sexuality (FOF 2002 p. 43; The Christian Post 2003; ERLC 2014 p. 108; ICCEC 2021 p. 4), and Lesson 1's "same roots" is the 2019 newsletter's own claim (p. 2) |
+| label 3 (0:06.2–0:09.0) | You can stop it at any time. | the piece's controls (Part B) |
+
+#### The laws, checked (A6, research §9)
+
+- **No real names, faces, testimony, slurs or deadnames** on the tape: the expert is a silhouette with a role, never a
+  name; every hand and head is a shape; the news has empty desks; the Prayer Wall's names are invented girls' names
+  (never Maya). Authors' and staff names stay out of the margin and the roll (the roll cites a 2015 DSM history by
+  journal, not author). Organisations are named only in the roll, `sources.json` and the margin: Exodus (twice: its 1988 manual, its 2013 closure; the knowledge base documents it) and the bodies behind the facts (CAAPS, the UN, the WHO, the DSM).
+- **The 1988 manual:** its model is voiced ("a false identity", the hurt, "usually family members"); its conditions on a
+  caller's name and clothes appear nowhere (the archive page drawn shows only the prayer sentence).
+- **Abuse taught as a cause** is one silent sticker ("2022 · TRAUMA") — no word, no figure, no joke.
+- **B material** (the 2019 newsletter's "rapid-onset", desistance and blockers; *Gender Identity 101*; IFTCC as text) is
+  not tape text. "Rapid-onset gender dysphoria" appears only in a margin TAUGHT IN line, quoting where the course's
+  2019 source named its "social contagion", beside CAAPS's statement.
+- **The clinical debate is never satirised; medical fear does not appear** (his 10 Nov ruling). No clinic, doctor,
+  surgery or medicine is drawn or named.
+- **No death or suicide figures, no country, no flag, no map.** "Governments" carries no name; the roll says "a
+  government's executive order".
+- **No 2009 APA report; never the programme answering itself** in the margin: every WHAT IS KNOWN line is a
+  classification (APA DSM, WHO ICD), a professional coalition's statement (CAAPS), a UN report, or what became of the
+  programme (Exodus, 2013). The programme's own admission appears once, in the break, as the brief asks.
+- **1977's "recruit" campaign** stays in the research file; "recruitment" appears only as the 2026 shop's own word, in
+  the margin.
+- **Maya stays an adult of 18**; no deadname; the jar scene is gone.
+- **The house:** twice (the cold open, the end). **Every caption** is voiced, or a deliberate silent beat (the
+  stickers' slaps; the chart's bars; the label; End of Part 1's hold; the break).
+
+#### The music and the credits
+
+- **Music:** v3's `music.py` (seed 2026), candidate 1 "Last Line" kept (drone on D, a heartbeat sub at 62 bpm, string
+  swells Dm–B♭–F–C), the clock, the hard cuts to silence under every big caption, the countdown pulse (LAST LINE LIVE),
+  the prayer pad (the Prayer Wall), the strings stopping at the collapse with only the clock left, the lower bed for
+  the door, LIVE NOW's riser and hit. **New in v4:** a stamp hit on every year, a news-graphics sting on every cut of
+  the montage, the chart's pulse, End of Part 1's two-note chime (then silence: the room stops there), the 1988
+  "archive" phone ringing (two tones, band-limited like an old recording), a felt marker under the highlights, and the
+  tape-stop the course's last sound slows into before the break.
+- **Levels, measured** (ffmpeg ebur128; `work/levels.json`): master -14.1 LUFS integrated (room.mp4) / -14.1 (web.mp4), true peak -1.6 / -1.6 dBTP; the music 11.6 dB under the voice while a voice speaks (voice stem -16.5 LUFS, music stem -28.1 LUFS over the same samples; v3 was ~16 dB); the ads' jingles 8.0 dB under their announcer. Line by line the voice stands 7.3–33.6 dB over everything else under it (median 10.1; `work/levels_per_line.json`); a first pass found the year-stamp hits and LIVE NOW's swell only 5 dB under the titles and the call to action, so those cues now duck under the voice too. The label, End of Part 1's hold, the break and the sources are silent.
+- **Credits:** "Music: made in code for this tape by Claude (Anthropic, Opus 5.5)" (in `chapters.json`, `sources.json`,
+  the MP4s' metadata and the sources roll). Voices: build-time Supertonic 3 through `tools/tts/render.py`, `register:
+  apparatus` only — host F4 (0.96), parent M4 (0.92), the Prayer Wall's announcer M2 (1.02), and, new, the faceless
+  expert M3 (0.95; no line in the piece's `data/` uses M3, nor did the 1997 and 2016 v3 tapes; their v4 voices were not checked). 31 lines rendered new; 10 v3 masters
+  copied (`tts/`). Maya and her family have no voice. Fonts: macOS system fonts in the course (DIN Condensed, Inter,
+  Courier New for the 1988 pages; the 2016 tree's SignPainter/Neucha/Lato), Fixedsys Excelsior 3.022 (CC0) for the
+  piece's own voice. Script, animation, sound, music and edit: Claude (Anthropic, Opus 5.5), UiB job 26 (S391).
+
+#### Checks run on the picture
+
+- `check_web.py` (writes READY only if all pass): codecs, sizes, keyframes, faststart, loudness and true peak on the
+  MP4s' own audio, equal durations, contiguous chapters, partOneEnd inside a still end card (frame differences
+  decoded from both MP4s), captions ≤ 2 × 42, no caption in the label or the break, the margin's rules, and no
+  private path in the three public JSON files. Its report: `work/checks.json`.
+- ffmpeg `blackdetect` over the room master: the only black is the sting's own fade (14.5–14.7 s). `freezedetect`
+  (1.5 s, n = 0.001): the three label frames, the sting's held logo (12.5–14.3 s), End of Part 1 (68.8–77.0 s,
+  as designed), a 2 s beat on the outbreak map while "Now it's in our homes" is spoken (140.2–142.5 s), the slide after "7–10 YEARS"
+  while only the clock ticks (200.9–202.5 s, the collapse's stop), and the
+  break's eight static frames (the drain and the roll move).
+
+#### Where the archive copies are (not public)
+
+`web/sources.json`, `margin.json` and `break.json` carry public locations only (the institution and collection, the
+publisher, or a URL with the date read; the coordinator's rule of 15 Nov). The copies read for this tape are in his
+folder: the 1988 Exodus manual `~/Pc_Simulation/Sources/Boy Erased/New/NMAH-AC1428-B002-F010-000001.pdf` (pp. 45–47 =
+PDF 49–51; © on PDF p. 3); the 2002 Focus on the Family booklet `…/New/NMAH-AC1428-B008-F005 (1).pdf` (PDF pp. 24–25);
+and in `~/Pc_Simulation/Sources/Boy Erased/Nov additions/`: `Building+Blocks+of+Gender+Confusion.pdf` (pp. 1–4),
+`Sexual-Brokenness-Book.pdf` (ERLC 2014, pp. 108, 127), `Human-Sexuality-Addendum-1-Sexual-Brokenness.pdf` (ICCEC
+2021, p. 4), `n2119214.pdf` (A/76/152, pp. 1, 4, 5), `State-of-Power-2026-Chapter9.pdf` (TNI, PDF p. 4 = printed p. 83),
+`Love & Truth Network _ AI Assistant.pdf` (p. 1). Rasterised pages: `output/teaching-tapes/2026-v4/work/pages/`.
+
+#### What I could not verify (and what I did instead)
+
+1. **The APA's 2013 DSM-5 fact sheet** (S22) returns 404 and the Wayback Machine refused this machine's fetch. The
+   2013 facts come from the APA's live page "Gender Dysphoria Diagnosis" (Nov 2017), read 15 Nov 2026.
+2. **The Federalist piece's author's ministry affiliation** (research: Help 4 Families) was not re-checked; the margin
+   says only "an opinion piece, 2016".
+3. **A/76/152** pp. 4–5 (paras 9–11) and its date (15 July 2021) were read on the page images today.
+4. **The Love & Truth family post** was read with a fetch tool that quotes at most 125 characters at a time: the
+   collapse's sentence, "7-10 years … a new, false gender identity", the six step titles and the prayer step were
+   read whole; the "swept up" sentence only as its fragment ("a culture that has been swept up by gender ideology"),
+   which is all the tape uses.
+5. **The Hate Review (Forbidden Colours, Sept 2026)**: only a markdown copy here; its page number for "accumulates
+   rather than rotates" could not be confirmed, so it is not quoted on the tape (break sentence 3 rests on the
+   documents themselves).
+6. **The hedge-of-thorns prayer** (SSA Hope, the course's name) was not re-read; the name stays from v3, and the
+   prayer homework quotes the 2025 post instead.
+7. **The year on the trauma sticker** (2022) rests on the IFTCC declaration (B, contested); the CP sources for abuse
+   and "identity damaging events" are 2019 (Building Blocks p. 3, page image read) and 2021 (ICCEC p. 1, read in
+   the research's OCR only). No word is spoken, so nothing of either is quoted.
+8. **The research's SEARCH-only rows** not used: Moberly 1983, *Straight Answers* 2000, the 2009 Exodus workshop, the
+   1996 referral list, the 2024 ad total; "Kids are confused" (2003) left out (research §7.12).
+9. **The ministry's chat** was never opened (by rule). Ask Hedge's words are invented and make no claim.
+10. **Nobody listened.** The voices, the music level and the mix are checked by measurement only.
+
+#### How to rebuild
+
+`output/teaching-tapes/2026-v4/source/README.md` (one command per step; the drawing lives in `source/parts/`,
+assembled into `hedge.js`).
