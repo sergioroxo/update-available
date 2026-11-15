@@ -1,4 +1,6 @@
-STATUS: live (a plan; waits on his answers in §6 and on the 2026 research)
+STATUS: live
+
+*(A plan. His answers in §6 are in; the 2026 research is in; built by UIB_JOB_26. The status line was made plain by S392 so `npm test`'s C5 check reads it.)*
 
 # Teaching Tapes v4: how they work here (15 Nov 2026, S357cp)
 

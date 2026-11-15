@@ -1,0 +1,33 @@
+{
+ "_doc": "⚑ S394 (UiB job 27 Part B1–B3; S392, S390 before it) — THE LAMBY SET (LambyVision, src/room/lambyVision.ts) in its three places, how it is brought close, the bar under its picture, Lamby's line in view, and the moment's clock. One set, the same in all three rooms: the tapes change, the set does not. `place.pos` is the floor point under its hooves (world metres), `place.yaw` the turn about Y (0 = its glass faces +z/south; 180 north; −90 west). `seat` is the seat's eye (the probes' seat poses). Measured from the seat (tools/s394-lamby-tv-probe.mjs): 1997 on the chest of drawers behind Daniel's seat, ~120° right of the desk, ~2 m; 2016 on the low white unit by Vera's door (the south wall), ~90° left of the desk, ~1.4 m; 2026 on Maya's shelf plank where her old CRT stood, ahead and a little up, ~1.4 m.",
+ "tvs": {
+  "1997": {
+   "era": "e1", "place": { "pos": [1.87, 0.58, 1.75], "yaw": -90 }, "style": "vcr", "seat": [0, 1.16, 0.7],
+   "_docPlace": "on tvDresser (top y 0.58), facing into the room (west), where job 26 B put the TV; the VCR, the CRT, its panel and the VHS sleeve are gone from r1 (the set is all of them now)"
+  },
+  "2016": {
+   "era": "e3", "place": { "pos": [-4.45, 0.45, 2.23], "yaw": 180 }, "style": "dvd", "seat": [-4.4, 1.16, 0.7],
+   "_docPlace": "on wallTvUnit (top y 0.45), facing the seat (north); the wall TV, its DVD player, tray, light and the course's case are gone from r3"
+  },
+  "2026": {
+   "era": "e4", "place": { "pos": [4.85, 1.14, -0.81], "yaw": 0 }, "style": "hedge", "seat": [4.6, 1.16, 0.7],
+   "_docPlace": "on e_shelfPlank (top y 1.14), facing the seat (south): Maya's shelf CRT (e_crtBody/e_crtBezel/e_crtScreen) is transformed into the set — her object kept, made an object of the time; the cream 2026 display on its arm (e26Display…) is gone from r4"
+  }
+ },
+ "held": {
+  "_doc": "BROUGHT CLOSE (heldDevice's grammar). In a headset the glass comes `xrDist` m before the eyes (Meta's 0.5 m floor for anything looked at for long; ⚑ the headset seat's own monitor is 0.56 m from the eye — S374 — so at 0.6 the 1997 CRT stood in front of the set's glass in the probe's photographs: at 0.5 the set's face is the nearest thing), and the set grows until its PICTURE is `pictureDeg` tall (the brief: 25–30°). On a computer or a phone the set keeps its size and comes to the distance where its face — the glass's top to the keys' foot, 0.374 m — fills `flatFill` of the view's height (⚑ S394 fix: a phone `phoneFill`, the glass, the bar and the keys filling the height so its capitals reach 12 px, the keys whole on screen), never more than `flatMaxW` of its width (a portrait phone). The travel keeps `clearance` m from the eye and takes liftBase + liftPerMetre × the distance, at most liftMax s (smoothstep). `glowRest`/`glowHeld`: the body's self-light share (the 'system' tier's 0.34 in the room; more in the hand, its face turned from the lamp). `xrKey`: a key catches a headset's ray within this many metres (heldDevice's XR_BUTTON, wider for a larger key).",
+  "xrDist": 0.5, "pictureDeg": 28, "flatFill": 0.92, "phoneFill": 0.98, "flatMaxW": 0.94, "liftBase": 0.45, "liftPerMetre": 0.22, "liftMax": 1.15, "clearance": 0.55, "glowRest": 0.3, "glowHeld": 0.55, "xrKey": 0.03
+ },
+ "bar": {
+  "_doc": "THE BAR UNDER THE PICTURE (B2; Part A's A1; ⚑ S394 fix, his \"FIX first\": the 2026 margin line ran off the bar's foot). The glass is 960 × 720 canvas px; the bar is at least `baseH` (a quarter of the glass) and as tall as the tape's tallest moment needs in this look-mode (wrapped first: every caption and margin line whole), at most `maxH`, the picture above it taking the rest. Capitals are asked for at `captionCap` / `marginCap` canvas px and never fall under the look-mode's floor: `floorDeg` in a headset, `floorPxComputer` CSS px on a computer, `floorPxPhone` on a phone (src/room/teachingTv.ts readingScale turns each into canvas px). `pad` above and below, `gap` between the caption and the margin, `lineK` the line height (× the font size).",
+  "captionCap": 25, "marginCap": 20.5, "floorDeg": 1.0, "floorPxComputer": 14, "floorPxPhone": 12, "baseH": 180, "maxH": 300, "pad": 10, "gap": 8, "lineK": 1.2
+ },
+ "call": {
+  "_doc": "LAMBY'S LINE IN VIEW (B3): a card `w` m wide, `drop` degrees under the line of sight, `flatDist` m from the camera / `xrDist` m from the eyes (drawn over the room: nothing cuts it); turned more than `followDeg` away, it glides back into view over `follow` s.",
+  "w": 0.4, "xrDist": 0.68, "flatDist": 0.62, "drop": 10, "followDeg": 30, "follow": 0.5
+ },
+ "moment": {
+  "_doc": "The moment's clock (no turns, no fades): `callHold` = the longest Lamby's line is given to be read before the set comes anyway (its yes sends it at once); `dismissBreath` = after × the set comes this long after; `noCall` = a call that never showed (the era's cap) lets the set come after this; `afterHold` = the end card held, the set in the hand, before the floor is free again; `afterDad` = the seconds Dad's two lines are given before his link; `noPlayRelease` = a tape that will not start lets the moment go after this.",
+  "callHold": 7, "dismissBreath": 1.2, "noCall": 2.5, "afterHold": 6, "afterDad": 4.5, "noPlayRelease": 8
+ }
+}

@@ -38,6 +38,58 @@ const words = read('data/strings/status_words.json');
 const links = read('data/dossier/links.json').links;
 const eraLinks = read('data/dossier/era_links.json').links;
 const S = read('data/strings/era_sites.json');
+/**
+ * ⚑ S392 (UiB job 26 Part B4; S390 before it) — THE TEACHING TAPES ON THE ERA WEBSITES (his 15 Nov: "they should all be at the
+ * html"). A media entry with `"tape": "1997"` (2016, 2026) is that era's whole tape: its WEB copy (the margin burned in as a
+ * lower strip, the captions burned in), its length (`{length}` in `what`) and its credit from data/room/teaching_tapes.json
+ * (tools/teaching-tapes-import.mjs, from Part A's v4 web/ folders), so the site credits each tape the way it credits
+ * everything else — the makers, the music, and the documents it teaches from, by archive location, no person named. Under
+ * the player: THE BREAK AS TEXT (the label, the programme's own admission, the plain sentences — the same words as in the
+ * tape, selectable) and THE SOURCES (each line of the margin with its source, then the documents). In the piece the site
+ * viewer resumes the tape where the visitor left it on the TV (one timeline for both copies).
+ */
+const TAPES = existsSync(join(ROOT, 'data/room/teaching_tapes.json')) ? read('data/room/teaching_tapes.json').tapes : {};
+const lengthOf = (sec) => { const m = Math.floor(sec / 60), s = Math.round(sec - m * 60); return s ? `${m} minute${m === 1 ? '' : 's'} ${s}` : `${m} minute${m === 1 ? '' : 's'}`; };
+const docLine = (d) => `${d.title}${d.organisation ? `, ${d.organisation}` : ''}${d.year ? ` (${d.year})` : ''}${d.pages ? `, ${d.pages}` : ''}`;
+function tapeCredit(t) {
+  const src = t.sources ?? {};
+  const docs = (src.documents ?? []).map(docLine);
+  const archive = src.archive ?? (src.documents ?? []).map((d) => d.archive || d.location || '').find((a) => /NMAH/.test(a)) ?? '';
+  const parts = [src.made ?? 'Made for this project by Claude (Anthropic, Opus 5.5), UiB jobs 24–26.', t.music || src.music, src.voices].filter(Boolean);
+  if (docs.length) parts.push(`Taught from: ${docs.join('; ')}${archive ? ` — ${/Collection/.test(archive) ? 'in the ' : ''}${archive.replace(/, Box.*$/, '')}` : ''}.`);
+  parts.push('Project-owned.');
+  return parts.map((p) => String(p).trim().replace(/([^.!?])$/, '$1.')).join(' ');
+}
+const mmss = (sec) => `${Math.floor(sec / 60)}:${String(Math.floor(sec % 60)).padStart(2, '0')}`;
+/** ⚑ S394 (job 27 B4/B6) — the tape's text blocks, as data: the margin (time, head, text), the long break (title, intro,
+ *  sections of sourced items) and the sources (the break's, then any margin source not yet in the list). The HTML and the
+ *  in-piece viewer both read this; the viewer gets each as { title, lines }. */
+function tapeNotes(t) {
+  const T = S.common.tape ?? {};
+  const bl = t.breakLong ?? { title: '', intro: '', sections: [], sources: [] };
+  const margin = (t.margin ?? []).map((m) => ({ time: mmss(m.start), head: m.head, text: m.text || '', source: m.source || '' }));
+  // ⚑ S394 — v5's short break: the bar under the programme's own admission (barHead + bar, during `on`) is drawn by the set
+  //   and printed here with the margin's lines, at its time; its source joins the list
+  const b = t.break ?? {};
+  if (b.barHead && Array.isArray(b.on)) margin.push({ time: mmss(b.on[0]), head: b.barHead, text: b.bar || '', source: b.barSource || '' });
+  const sources = [...(bl.sources ?? [])];
+  for (const m of margin) if (m.source && !sources.includes(m.source)) sources.push(m.source);
+  return [
+    { kind: 'margin', title: T.marginTitle ?? 'The margin, as text', margin,
+      lines: margin.map((m) => `${m.time}  ${m.head}${m.text ? ` — ${m.text}` : ''}`) },
+    { kind: 'break', title: bl.title, intro: bl.intro || '', sections: bl.sections ?? [],
+      lines: [...(bl.intro ? [bl.intro, ''] : []), ...(bl.sections ?? []).flatMap((sec) => [`# ${sec.heading}`, ...sec.items.map((i) => `${i.text} — ${i.source}`), ''])] },
+    { kind: 'sources', title: T.sourcesTitle ?? 'Sources', sources, lines: sources }
+  ];
+}
+for (const year of Object.keys(S.eras)) {
+  S.eras[year].media = (S.eras[year].media ?? []).map((m) => {
+    const t = m.tape ? TAPES[m.tape] : null;
+    if (!m.tape) return m;
+    if (!t) return { ...m, file: '', credit: m.credit ?? '' };
+    return { ...m, file: t.room.file, type: 'video', what: m.what.replace('{length}', lengthOf(t.duration)), credit: tapeCredit(t), notes: tapeNotes(t) };
+  });
+}
 const map = read('data/strings/map.json');
 const lex = read('data/strings/lexicon.json');
 const about = read('data/strings/about.json');
@@ -189,14 +241,22 @@ function mediaHtml(m, up, tag = 'article') {
   const credit = `<p class="credit">${esc(C.creditLabel)}: ${esc(m.credit)}</p>`;
   if (!m.file) return `<${tag} class="media nofile"><h3>${esc(m.title)}</h3><p>${esc(m.what)}</p>${credit}</${tag}>`;
   const el = m.type === 'video'
-    ? `<video controls preload="none" src="${up}${m.file}">`
+    ? `<video controls preload="none" src="${up}${m.file}">${m.tape ? `<track kind="captions" src="${up}${m.file.replace(/[^/]+$/, 'captions.vtt')}" srclang="en" label="English" default>` : ''}`
     : `<audio controls preload="none" src="${up}${m.file}">`;
   const close = m.type === 'video' ? '</video>' : '</audio>';
   const lyr = m.lyrics ? `<details><summary>${esc(C.lyricsTitle)}</summary><p class="lyrics">${lyricsOf(m.lyrics).map(esc).join('<br>')}</p></details>` : '';
-  return `<${tag} class="media"><h3>${esc(m.title)}</h3><p>${esc(m.what)}</p>${el}<a href="${up}${m.file}">${esc(m.title)}</a>${close}${lyr}${credit}</${tag}>`;
+  // S394 — a teaching tape's three text blocks under the player: the margin, the long break, the sources (visible, selectable)
+  const blk = (n) => {
+    if (n.kind === 'margin') return `<section class="tapemargin"><h4>${esc(n.title)}</h4><ol>${n.margin.map((x) => `<li><span class="t">${esc(x.time)}</span> <b>${esc(x.head)}</b>${x.text ? ` — ${esc(x.text)}` : ''}</li>`).join('')}</ol></section>`;
+    if (n.kind === 'break') return `<section class="tapebreak"><h4>${esc(n.title)}</h4>${n.intro ? `<p>${esc(n.intro)}</p>` : ''}${n.sections.map((sec) => `<h5>${esc(sec.heading)}</h5><ul>${sec.items.map((i) => `<li>${esc(i.text)}<span class="src"> — ${esc(i.source)}</span></li>`).join('')}</ul>`).join('')}</section>`;
+    return `<section class="tapesources"><h4>${esc(n.title)}</h4><ul>${n.sources.map((x) => `<li>${esc(x)}</li>`).join('')}</ul></section>`;
+  };
+  const notes = (m.notes ?? []).map(blk).join('');
+  return `<${tag} class="media"><h3>${esc(m.title)}</h3><p>${esc(m.what)}</p>${el}<a href="${up}${m.file}">${esc(m.title)}</a>${close}${lyr}${notes}${credit}</${tag}>`;
 }
 /** the same card as the in-piece site viewer reads it (data/strings/era_sites_model.json) */
-const mediaModel = (m) => ({ k: 'media', title: m.title, what: m.what, file: m.file || '', type: m.type || 'audio', credit: `${S.common.creditLabel}: ${m.credit}`, lyrics: m.lyrics ? lyricsOf(m.lyrics) : [], lyricsTitle: S.common.lyricsTitle });
+const mediaModel = (m) => ({ k: 'media', title: m.title, what: m.what, file: m.file || '', type: m.type || 'audio', credit: `${S.common.creditLabel}: ${m.credit}`, lyrics: m.lyrics ? lyricsOf(m.lyrics) : [], lyricsTitle: S.common.lyricsTitle,
+  ...(m.notes ? { notes: m.notes.map((n) => ({ title: n.title, lines: n.lines })) } : {}) });
 
 // ── the seven tab panels (the same content, whatever the skin) ──────────────────────────────────────────────
 function panelsFor(year, up) {
@@ -348,7 +408,7 @@ figure img{display:block;width:100%}figcaption{margin-top:8px;font-size:.92rem}
 .media{background:var(--card);border:1px solid var(--rule);padding:12px 16px;margin:14px 0}
 .media h3{margin:0 0 4px}.media audio,.media video{display:block;width:100%;margin:10px 0}
 .media a{font-size:.85rem}details{margin:8px 0}summary{cursor:pointer;font-weight:700}
-.lyrics{line-height:1.8}
+.lyrics{line-height:1.8}.tapebreak,.tapesources,.tapemargin{margin-top:12px}.tapebreak p{margin:.2em 0}.tapebreak h5{margin:.8em 0 .2em}.tapemargin ol{padding-left:1.4em}.tapemargin li{margin:.2em 0;font-size:.92rem}.src{font-size:.82em;opacity:.7}.tapesources li{margin:.25em 0;font-size:.92rem}
 .terms dt{font-weight:700;margin-top:14px}.terms dd{margin:2px 0 0}
 .lexstat{font-weight:400;font-size:.78rem;border:1px solid var(--rule);padding:0 6px;border-radius:3px}
 .reasons li{margin:6px 0}.arcline{font-style:normal;border-left:4px solid var(--rule);padding:4px 12px}

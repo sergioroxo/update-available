@@ -1,6 +1,17 @@
 {
  "_doc": "Session 15 (Sérgio Round 24), restructured Session 27 (R28-0c, D14/D15): THREE INTIMATE ROOMS THAT AGE, one shell. r1 = reinterp E1 (witness furniture out; spine door + record terminal). r2 = E2, HOMECOMING (D15): Daniel comes back to the SAME closed Room 1, aged — the walls do NOT open here (Sérgio: \"at Era 2 the room ages but stays CLOSED\"). r3 = T2 \"the room OPENS, it does not explode\" (moved from T1/E2): Room 1 (Daniel, gay) keeps its EXACT E1 walls/desk/front-wall distance; its side walls become DOORWAYS revealing Room 2 (west/Vera, lesbian) and Room 3 (east/Maya, trans) — two adjacent intimate bedrooms at the SAME scale, axis-aligned (90° only), each read at E1 desk-intimacy when the camera dollies in — AND Room 1 closes (Daniel \"transferred\") in the same state. r4 = E4: the focus is Room 3 (Maya = the trans room evolved — NOT a separate desk; ◆N3 TURN retargets here); windows go dark for good. Rooms built from ONE local bedroom template (scratchpad/gen_rooms.mjs) placed per room — bed on a side wall, door away from the bed, clean CRT. COLOR LAW: every hex from era1.json family.",
  "r1": {
+  "_docRetiredS394": "⚑ S394 (UiB job 27 B1) — 1997's TV, VCR, panel, light and VHS sleeve (S392) are retired here, one line each to restore: the Lamby set (src/room/lambyVision.ts, data/room/teaching_tvs.json) stands on tvDresser in their place — one old-time set, the same in all three rooms.",
+  "_retiredS394": [
+   {"id": "tvVcr", "pos": [1.91, 0.625, 1.75], "size": [0.32, 0.09, 0.43], "color": "#2C2C34"},
+   {"id": "tvVcrSlot", "pos": [1.748, 0.635, 1.71], "size": [0.004, 0.018, 0.24], "color": "#15151F"},
+   {"id": "tvVcrClock", "pos": [1.748, 0.635, 1.91], "size": [0.004, 0.02, 0.06], "color": "#008000", "emissive": true},
+   {"id": "tvBody", "pos": [1.92, 0.9, 1.75], "size": [0.44, 0.46, 0.56], "color": "#44464F"},
+   {"id": "tvTube", "pos": [1.697, 0.92, 1.75], "size": [0.006, 0.325, 0.43], "color": "#15151F"},
+   {"id": "tvPanel", "pos": [1.697, 0.715, 1.75], "size": [0.006, 0.03, 0.3], "color": "#2C2C34"},
+   {"id": "tvLed", "pos": [1.696, 0.715, 1.98], "size": [0.006, 0.012, 0.012], "color": "#008000", "emissive": true},
+   {"id": "tvVhsSleeve", "pos": [1.95, 0.675, 2.01], "size": [0.105, 0.19, 0.03], "color": "#000080"}
+  ],
   "props": {
    "cdStack": {
     "_doc": "Session 49 logged this and left it (its own finding-2 note, verbatim): 'cdStack (era1.json, pos y0.71 / half-height 0.07) still sits at the OLD box-shelf height and is now ~12cm sunk into the bookcase model's shelf — the same class of bug as the tapes' y0.646.' Session 54 fixes it: cdStack's base (0.71-0.07=0.64) targeted the OLD box shelfBoard1's top; the REAL bookcaseModel's bottom shelf surface is y0.76 (the same shared shelf boombox/tapeA/tapeB/mixtape already measure against — one shelf run, several props). New y0.83 puts cdStack's base back at 0.76, +0.12 from the old 0.71, matching the ~12cm S49 estimated by eye. teddyBox sits on the same old shelfBoard1 baseline and had the identical sink — flagged then, fixed now below (Session 55), since this session is already re-measuring this exact shelf. Session 55 ALSO moved x/z (1.98,0.9 → 2.02,0.62): its old z0.9 sat squarely in the middle of the three shelf tapes' new z-run (0.87-1.07 — the boombox's own Session 55 re-rotation widened its footprint and pushed the tapes into that space, see tapeA's _doc), and cdStack's box very nearly fully occluded tapeA from the seat (confirmed live: toggling cdStack.enabled off/on in-browser made tapeA go from invisible to visible). The shelf run only has ~0.3m free after the boombox — not enough for 3 legible tapes AND a 0.12m cdStack side by side — so cdStack moves to a second depth track instead, tucked behind the boombox (x2.02, near the bookcase's own back wall at x2.098, z0.62 matching the boombox's own z-centre) rather than competing for the same front row. It is not belongings-eligible (unlike teddyBox) so sitting mostly hidden behind the boombox costs no interaction, only its own visibility as background dressing.",
@@ -424,7 +435,12 @@
    {"id": "inst_floorEdgeFront", "pos": [-1.2, 0.009, 2.935], "size": [1.82, 0.018, 0.02], "color": "#2A2C34"},
    {"id": "inst_floorEdgeSide", "pos": [-0.28, 0.009, 3.32], "size": [0.02, 0.018, 0.78], "color": "#2A2C34"},
    {"id": "danielHandheld", "model": "handheld1997", "pos": [-1.36, 0.5, 1.62], "size": [0.09, 0.02, 0.15], "color": "#C9C6BE", "yaw": 24, "_docS187": "⚑ S187 (2026-09-28) — Phase 4's models (PLAN_PHASE4_GAMES; credited in assets/LICENSES.md and docs/reinterp/ATTRIBUTIONS.md). Daniel's own Game Boy-like handheld, face-up on his bed, 1997 — FIT IN's device (the cartridge will come with the starter kit). His, so it is there from the start."},
-   {"id": "inst_referral", "pos": [0.12, 1.3, 3.695], "size": [0.21, 0.28, 0.004], "color": "#EFE9D6", "yaw": 180, "print": "referral1997", "_docS182": "⚑ S182 / R5-03 — from his intake research (~/Pc_Simulation/Sources/Deep Research/intake.md, 2026-09-27): in 1997 the documented path was a parent calling the pastor, and the pastor using a ministry referral directory (Exodus had no youth programme until 1999). So the institution's first object is this: a photocopied referral list pinned beside the record, one listing underlined and a number written on it in his mother's biro. Gone at r2."}
+   {"id": "inst_referral", "pos": [0.12, 1.3, 3.695], "size": [0.21, 0.28, 0.004], "color": "#EFE9D6", "yaw": 180, "print": "referral1997", "_docS182": "⚑ S182 / R5-03 — from his intake research (~/Pc_Simulation/Sources/Deep Research/intake.md, 2026-09-27): in 1997 the documented path was a parent calling the pastor, and the pastor using a ministry referral directory (Exodus had no youth programme until 1999). So the institution's first object is this: a photocopied referral list pinned beside the record, one listing underlined and a number written on it in his mother's biro. Gone at r2."},
+   {"id": "tvDresser", "pos": [1.89, 0.29, 1.75], "size": [0.44, 0.58, 0.62], "color": "#8A5A3B", "_docS392": "⚑ S392 (UiB job 26 Part B0; his note on job 25 B's page, 15 Nov: \"Daniel TV makes no sense there … like you have a whole background … this is about Lamby saying that you need to go behind\") — THE 1997 TV STANDS BEHIND THE SEAT: a low chest of drawers against the east wall, between the bookcase and the corner, with the VCR and the 21-inch CRT on it, facing into the room (west). From the seat it is 122° to the right of the desk and 2.0 m away — behind and to one side, clear of the flip (which turns to the south wall, 180°). Nobody is asked to look for it: the programme's kit sends the tape, Lamby says it is behind you and the piece turns the visitor to it (src/room/teachingTv.ts). Built from the room's own boxes, colours as S390 (the desk's wood, the window frame's lighter wood for the drawer fronts, the boombox's charcoal, Room 3's CRT bezel grey, the dead-glass hex). Was (S390) beside the desk under the posters. Gone at r2 with the rest of 1997's machines."},
+   {"id": "tvDresserDrawerA", "pos": [1.667, 0.43, 1.75], "size": [0.006, 0.22, 0.56], "color": "#A8917B"},
+   {"id": "tvDresserDrawerB", "pos": [1.667, 0.16, 1.75], "size": [0.006, 0.22, 0.56], "color": "#A8917B"},
+   {"id": "tvDresserKnobA", "pos": [1.66, 0.43, 1.75], "size": [0.012, 0.02, 0.08], "color": "#2C2C34"},
+   {"id": "tvDresserKnobB", "pos": [1.66, 0.16, 1.75], "size": [0.012, 0.02, 0.08], "color": "#2C2C34"}
   ]
  },
  "r2": {
@@ -491,7 +507,12 @@
    "suitcaseHandle",
    "suitcaseTag",
    "inst_referral",
-   "danielHandheld"
+   "danielHandheld",
+   "tvDresser",
+   "tvDresserDrawerA",
+   "tvDresserDrawerB",
+   "tvDresserKnobA",
+   "tvDresserKnobB"
   ],
   "add": [
    {"id": "winView2003", "pos": [-0.95, 1.55, -0.672], "size": [0.72, 0.82, 0.004], "color": "#C9A07A", "emissive": true, "print": "dusk2003", "_docS299": "⚑ S299 (headset B: \"the window outside is blank\") — the 2003 view: dusk over the street (his S179: never daylight), a thin plate in front of the pane, so 1997's night and its moon are untouched."},
@@ -726,6 +747,18 @@
   ]
  },
  "r3": {
+  "_docRetiredS394": "⚑ S394 (UiB job 27 B1; his 15 Nov: \"keep Maya's object of the CRT but we just transform it into an object of the time\") — retired here, one line each to restore: Vera's wall TV, its DVD player, tray, light and the course's case (S392; the Lamby set stands on wallTvUnit now), and Maya's shelf CRT (e_crtBody / e_crtBezel / e_crtScreen, the remembrance of S97/S107) — transformed into the Lamby set on the same plank (data/room/teaching_tvs.json).",
+  "_retiredS394": [
+   {"id": "wallTvDvd", "pos": [-4.45, 0.475, 2.25], "size": [0.43, 0.05, 0.28], "color": "#2C2C34"},
+   {"id": "wallTvDvdTray", "pos": [-4.5, 0.48, 2.108], "size": [0.26, 0.008, 0.004], "color": "#15151F"},
+   {"id": "wallTvDvdLed", "pos": [-4.27, 0.48, 2.108], "size": [0.012, 0.008, 0.004], "color": "#008000", "emissive": true},
+   {"id": "wallTvCase", "pos": [-4.14, 0.459, 2.27], "size": [0.135, 0.018, 0.19], "color": "#A8917B"},
+   {"id": "wallTvBody", "pos": [-4.45, 1.3, 2.39], "size": [0.74, 0.44, 0.06], "color": "#2E3238"},
+   {"id": "wallTvTube", "pos": [-4.45, 1.31, 2.359], "size": [0.71, 0.4, 0.002], "color": "#15151F"},
+   {"id": "e_crtBody", "_docS392": "⚑ S392 (UiB job 26 B0.3; his 15 Nov: \"Clearly the CRT in 2026 no longer makes sense to be as is … it can have a retro design but it makes no sense to be like that\") — back to its own size (S390 had enlarged it to be 2026's TV): the old machine on the plank is a remembrance of the past (his S97 ruling, 1 Sep: \"maybe it could live on the shelf as a remembrance to the past\"). The course now plays on a 2026 display with a retro body on the wall beside the shelf (r4: e26Display…), because the plank (0.42 m) cannot take a second screen beside it.", "pos": [4.85, 1.35, -0.81], "size": [0.46, 0.42, 0.4], "color": "#D8CDB4", "yaw": 180, "_doc": "⛑ OFF THE DESK AND ONTO THE BOOKCASE, 2026-09-01. Sérgio: 'the computer doesnt make the most of sense to be here, maybe it could live on the shelf as a rememberance to the past, but it doesnt make sense to come from a wide computer to CRT.' He is right and the data agrees: Room 2's Era-3 machine is a 645x372mm WIDESCREEN, so the piece ran 1997 CRT -> 2016 widescreen -> 2026 CRT, which is time going backwards on the one surface a player reads eras from. ⛑ Room 3 is only ever seen in E4 (wallEast lifts at r4), so this desk WAS 2026's desk with a nineties monitor on it. ⛑ THIS SUPERSEDES S74's 'not deleted, not moved: the same machine across thirty years, finally off, still in the room' — the machine still is exactly that, and r4 still puts its screen out. It is simply kept rather than used: on top of the bookcase, turned to face the seat, the way people actually store the computer they cannot throw away. Placed against the measured model AABB (top y 1.672, x 4.052-4.527), not guessed. ⛑ ON THE SHELF, NOT ON TOP OF IT — measured, not guessed. The bookcase top is y 1.672, which from the seat's eye at 1.16 sits ~31 degrees up: outside a 21 degree half-FOV, so at rest you could not see it at all and a remembrance you cannot find is not one. The row-1 shelf puts it at eye level (pitch -2.6 degrees from the seat) where turning finds it. Its width is trimmed 0.50 -> 0.46 so it sits inside the case's measured 0.475 interior instead of clipping the side panels; the foot is dropped, because a monitor kept on a shelf is not standing on its tilt stand."},
+   {"id": "e_crtBezel", "pos": [4.85, 1.35, -0.59], "size": [0.42, 0.38, 0.03], "color": "#2C2C34", "yaw": 180},
+   {"id": "e_crtScreen", "pos": [4.85, 1.35, -0.575], "size": [0.32, 0.28, 0.02], "color": "#8FC4E0", "emissive": true, "yaw": 180}
+  ],
   "props": {
    "windowPane": {
     "color": "#D4D0C8"
@@ -1845,53 +1878,6 @@
     "yaw": 270
    },
    {
-    "id": "e_crtBody",
-    "pos": [
-     4.85,
-     1.35,
-     -0.81
-    ],
-    "size": [
-     0.46,
-     0.42,
-     0.4
-    ],
-    "color": "#D8CDB4",
-    "yaw": 180,
-    "_doc": "⛑ OFF THE DESK AND ONTO THE BOOKCASE, 2026-09-01. Sérgio: 'the computer doesnt make the most of sense to be here, maybe it could live on the shelf as a rememberance to the past, but it doesnt make sense to come from a wide computer to CRT.' He is right and the data agrees: Room 2's Era-3 machine is a 645x372mm WIDESCREEN, so the piece ran 1997 CRT -> 2016 widescreen -> 2026 CRT, which is time going backwards on the one surface a player reads eras from. ⛑ Room 3 is only ever seen in E4 (wallEast lifts at r4), so this desk WAS 2026's desk with a nineties monitor on it. ⛑ THIS SUPERSEDES S74's 'not deleted, not moved: the same machine across thirty years, finally off, still in the room' — the machine still is exactly that, and r4 still puts its screen out. It is simply kept rather than used: on top of the bookcase, turned to face the seat, the way people actually store the computer they cannot throw away. Placed against the measured model AABB (top y 1.672, x 4.052-4.527), not guessed. ⛑ ON THE SHELF, NOT ON TOP OF IT — measured, not guessed. The bookcase top is y 1.672, which from the seat's eye at 1.16 sits ~31 degrees up: outside a 21 degree half-FOV, so at rest you could not see it at all and a remembrance you cannot find is not one. The row-1 shelf puts it at eye level (pitch -2.6 degrees from the seat) where turning finds it. Its width is trimmed 0.50 -> 0.46 so it sits inside the case's measured 0.475 interior instead of clipping the side panels; the foot is dropped, because a monitor kept on a shelf is not standing on its tilt stand."
-   },
-   {
-    "id": "e_crtBezel",
-    "pos": [
-     4.85,
-     1.35,
-     -0.59
-    ],
-    "size": [
-     0.42,
-     0.38,
-     0.03
-    ],
-    "color": "#2C2C34",
-    "yaw": 180
-   },
-   {
-    "id": "e_crtScreen",
-    "pos": [
-     4.85,
-     1.35,
-     -0.575
-    ],
-    "size": [
-     0.32,
-     0.28,
-     0.02
-    ],
-    "color": "#8FC4E0",
-    "emissive": true,
-    "yaw": 180
-   },
-   {
     "id": "e_doorPanel",
     "pos": [
      2.93,
@@ -1990,6 +1976,7 @@
    {"id": "w_lamp2Shade", "pos": [-5.3, 1.0, 1.3], "size": [0.17, 0.12, 0.17], "color": "#F2C879", "yaw": 90, "emissive": true, "_docS177b": "Un-parked (S175 had parked it under the modelled lamp) — see w_lamp2Foot."},
    {
     "id": "w_mug",
+    "_docS392": "⚑ S392 (UiB job 26 B0.2) — back where it was (S390 had moved it 18 cm for the laptop, which is gone: the course is on a wall TV now).",
     "pos": [
      -5.18,
      0.75,
@@ -2645,7 +2632,8 @@
     ],
     "color": "#E8B7C8",
     "yaw": 270
-   }
+   },
+   {"id": "wallTvUnit", "pos": [-4.45, 0.225, 2.245], "size": [0.8, 0.45, 0.35], "color": "#D4D0C8", "_docS392": "⚑ S392 (UiB job 26 Part B0; his note on job 25 B's page, 15 Nov: \"Don't add a laptop to Vera … like there is space, there is walls … like no\"; his v3 note: \"this was a DVD\") — THE 2016 TV IS ON A WALL, the DVD player under it. The south wall (the door's wall) was free from the window's corner to the door: the TV hangs on it at the seat's own x, 1.7 m away and 90° to the left of the desk, facing the seat square on; a low white media unit under it carries the DVD player and the course's case. The course was a DVD (his \"this was a DVD\"; research §5: a small-group 'video curriculum' with a Leader's Edition, 2014). Nobody is asked to look for it: the platform assigns the session, Lamby says where and the piece turns the visitor to it (src/room/teachingTv.ts). Built from boxes; colours from the room's own (the window frame's white, the monitor's #2E3238, the dead-glass hex, 1997's charcoal for the player). Replaces S390's laptop; leaves with her computer at r4."}
   ],
   "_docDeskCleared": "⛑ e_keyboard and e_mouse REMOVED 2026-09-01 with the CRT's move (Sérgio: 'we can[not] really see it with all the clutter here' — 'it' being the headset, the era's ONE interaction and until now the least legible object on the desk). They were that machine's peripherals; wired to nothing they are just clutter in front of the thing the era is actually about. What stays is hers and not the apparatus's: the folders, her glasses, and the headset on its dock.",
   "_docRetiredS327": "⚑ S327 / T04 (his 8 Nov headset session: two phones — the Handset Window on the monitor and the handset on its cradle in front of it, covering Sign in; 'the phone here doesn't make a lot of sense'). The Handset Window IS Vera's phone in 2016; nothing in the era needs the handset in a hand any more (the cascade runs while the window is up). Handset and cradle are parked here, off the desk, with their history; era3Devices keeps the phone's screen plane off. To bring them back, move both entries into `add` (and into r4's `remove`).",
@@ -2690,6 +2678,15 @@
   "_docParkedS174": "⚑ S174 — Sérgio crossed the photo frame and the radio on the 2016 still. Parked, not deleted."
  },
  "r4": {
+  "_docRetiredS394": "⚑ S394 (UiB job 27 B1; his 15 Nov: \"So you left the old CRT? and just added screen next to it? that doesn't make any sense\") — the cream 2026 display on its wall arm (S392) is retired here, one line each to restore; and r4's patch that put Maya's CRT dark (S74) goes with the CRT.",
+  "_retiredS394": [
+   {"id": "e26DisplayArm", "pos": [5.345, 1.5, -0.835], "size": [0.06, 0.06, 0.37], "color": "#2C2C34", "_docS392": "⚑ S392 (UiB job 26 B0.3; his 15 Nov: \"Clearly the CRT in 2026 no longer makes sense to be as is … it can have a retro design but it makes no sense to be like that\") — 2026's SCREEN: a slim 20-inch display of 2026 in a retro body, on a wall arm beside the shelf. Its body is the old monitor's cream (#D8CDB4, the same hex as e_crtBody next to it) with a chunky chin and a grille, the way 2020s 'retro' screens quote the beige machines — the nod to the old machine is in its look, and the old machine itself stays on the plank as the remembrance (his S97 ruling). The plank (0.42 m wide) cannot take it beside the CRT, so it is on the wall, east of the shelf, its arm bringing it forward to the line of the old monitor's face (the probe found the CRT, 40 cm deep, hiding its left edge from the seat when it hung flat on the wall) and short of the curtain: from the seat 59° to the left of the desk, 1.6 m away, 14° up. Dad's link plays on it (src/room/teachingTv.ts lays a screen canvas on e26DisplayTube; data/room/teaching_tvs.json). Built from boxes; colours from the room's own."},
+   {"id": "e26DisplayBody", "pos": [5.345, 1.49, -0.63], "size": [0.48, 0.35, 0.04], "color": "#D8CDB4"},
+   {"id": "e26DisplayTube", "pos": [5.345, 1.52, -0.609], "size": [0.44, 0.248, 0.002], "color": "#15151F"},
+   {"id": "e26DisplayGrilleA", "pos": [5.28, 1.362, -0.609], "size": [0.14, 0.009, 0.002], "color": "#2C2C34"},
+   {"id": "e26DisplayGrilleB", "pos": [5.28, 1.344, -0.609], "size": [0.14, 0.009, 0.002], "color": "#2C2C34"},
+   {"id": "e26DisplayLed", "pos": [5.54, 1.353, -0.609], "size": [0.012, 0.012, 0.002], "color": "#008000", "emissive": true}
+  ],
   "_docS328": "⚑ S328 (T03/T46, his 8 Nov headset test) — three of Maya's r4 props removed: e_laptop (\"I think we're just gonna have to remove the laptop\": Kettle is a window on the monitor now) and e_phoneBody + e_phoneCam, the phone on her nightstand (\"a phone on top of the table there, which makes no sense\"; his 7 Nov ruling: no phone in 2026). All three were Maya's own and no other era used them (guard 1: nothing of Vera's or Daniel's touched).",
   "props": {
    "e_chair": {
@@ -2706,10 +2703,6 @@
     "color": "#15151F"
    },
    "e_winPane": {
-    "color": "#15151F"
-   },
-   "e_crtScreen": {
-    "_doc": "Session 74: THE CRT GOES DARK AND STAYS (build plan fixture list, item 3 — was blue, i.e. still reading as ON). #15151F is the same 'off' hex every other window/screen in this r4 block already goes to (windowPane/w_winPane/e_winPane above) — reused, not invented. This prop is spawned `emissive:true` (r3's own add), so an override here replaces its emissive colour directly (clusterMorph.applyTarget copies `color` straight onto the emissive channel for an emissive prop) — there is no separate 'off' switch in this data schema, so 'as dark as the rest of the dead glass in this room' is how off is expressed. Not deleted, not moved: the same machine across thirty years, finally off, still in the room.",
     "color": "#15151F"
    }
   },
@@ -2796,7 +2789,8 @@
    "inst_routerLed",
    "inst_floor",
    "inst_floorEdgeFront",
-   "inst_floorEdgeSide"
+   "inst_floorEdgeSide",
+   "wallTvUnit"
   ],
   "add": [
    {

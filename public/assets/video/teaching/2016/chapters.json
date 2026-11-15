@@ -1,0 +1,95 @@
+{
+ "tape": "2016",
+ "title": "Heartwood · Session Two: The Roots",
+ "version": "v5",
+ "medium": "DVD, Leader's Edition",
+ "music": "Music: made in code for these tapes by Claude (Anthropic, Opus 5.5) — \"Heartwood course bed (v4)\" (2016-V4)",
+ "duration": 228.167,
+ "partOneEnd": 72.725,
+ "chapters": [
+  {
+   "id": "label",
+   "kind": "label",
+   "title": "Before you watch",
+   "start": 0.0,
+   "end": 6.95
+  },
+  {
+   "id": "disc",
+   "kind": "title",
+   "title": "Heartwood Ministries · Leader's Edition",
+   "start": 6.95,
+   "end": 14.95
+  },
+  {
+   "id": "t1",
+   "kind": "trailer",
+   "title": "Trailer · Too Close? five-pack",
+   "start": 14.95,
+   "end": 27.55
+  },
+  {
+   "id": "menu",
+   "kind": "menu",
+   "title": "Main menu · Leader's Edition",
+   "start": 27.55,
+   "end": 36.15
+  },
+  {
+   "id": "ch1",
+   "kind": "lesson",
+   "title": "Chapter 1 · Welcome · The Big Three",
+   "start": 36.15,
+   "end": 65.153
+  },
+  {
+   "id": "end1",
+   "kind": "endcard",
+   "title": "End of Part 1 · Pause the DVD here",
+   "start": 65.153,
+   "end": 76.325
+  },
+  {
+   "id": "ch2",
+   "kind": "lesson",
+   "title": "Chapter 2 · Mothers & Fathers",
+   "start": 76.325,
+   "end": 104.346
+  },
+  {
+   "id": "t2",
+   "kind": "trailer",
+   "title": "Trailer · Deep Roots, 20 weeks",
+   "start": 104.346,
+   "end": 116.946
+  },
+  {
+   "id": "ch3",
+   "kind": "lesson",
+   "title": "Chapter 3 · No File to Put It In",
+   "start": 116.946,
+   "end": 151.235
+  },
+  {
+   "id": "ch4",
+   "kind": "lesson",
+   "title": "Chapter 4 · When Friendship Becomes Everything",
+   "start": 151.235,
+   "end": 171.842
+  },
+  {
+   "id": "x",
+   "kind": "collapse",
+   "title": "The three boxes (the collapse)",
+   "start": 171.842,
+   "end": 202.517
+  },
+  {
+   "id": "break",
+   "kind": "break",
+   "title": "What this asked of women",
+   "start": 202.517,
+   "end": 228.167
+  }
+ ]
+}

@@ -55,6 +55,30 @@ const capped=make();for(const beat of ['checkin','story','release','tapes','onli
 capped.tick(0,pi);assert(!capped.active);
 console.log('Restorify personalisation: one balloon; silence and voice gates; dismissal logged; navigation only; era cap respected.');
 
+// S390: the teaching TV — Lamby offers ONCE per era to take a stalled visitor back to it: only after a tip-wait and a half
+//   of quiet with nothing better to say, never over another voice, its Yes is navigation only ('open:tv'), its No is
+//   logged by name, and it counts toward the era's cap.
+const tvLine='The fellowship\'s tape has more parts. Shall I take you back to the TV?';
+const tvIn=(extra={})=>input('nothing-here',{era:'e1',map:{current:{era:'e1',beat:{id:'nothing-here'}},quiet:false},tvOffer:tvLine,...extra});
+const tv=make();tv.tick(74,tvIn());assert.notEqual(tv.view.rung,'tv');tv.tick(1,tvIn({voice:true}));assert(!tv.active);
+tv.tick(80,tvIn());tv.tick(0.1,tvIn());assert.equal(tv.view.rung,'tv');assert.equal(tv.view.text,tvLine);tv.press('lg-later');assert.equal(logs.at(-1)[0],'dismissed');assert.equal(logs.at(-1)[1],'tv');
+tv.tick(1000,tvIn());assert.notEqual(tv.view.rung,'tv');
+const tvYes=make();tvYes.tick(80,tvIn());tvYes.tick(0.1,tvIn());tvYes.press('lg-take');assert.equal(acts.at(-1),'open:tv');tvYes.tick(1000,tvIn());assert(!tvYes.active);
+const tvCap=make();for(const beat of ['kit','read','pray','pledge','connect','web','channel']){tvCap.tick(50,input(beat,{era:'e1',map:{current:{era:'e1',beat:{id:beat}},quiet:false}}));tvCap.press('lg-ok');}
+tvCap.tick(500,tvIn());tvCap.tick(0.1,tvIn());assert.notEqual(tvCap.view.rung,'tv');
+console.log('Teaching TV offer: once per era, after a stall, never over a voice; navigation only; dismissal logged; era cap respected.');
+
+// S392: the teaching TV's CALL — when the piece takes the visitor to the TV, Lamby says where it is OVER the TV's own hold
+//   (voice: true), once per era; Take me there is 'open:tv'; × is logged by name; it comes down when the call is taken down.
+const callLine='Your Un-Walk kit says: watch the fellowship\'s tape before step 2. The TV is behind you. I\'ll take you there.';
+const callIn=(extra={})=>input('kit',{era:'e1',map:{current:{era:'e1',beat:{id:'kit'}},quiet:false},voice:true,tvCall:callLine,...extra});
+const call=make();call.tick(0.1,callIn());assert.equal(call.view.rung,'tvcall');assert(call.active);assert.equal(call.view.text,callLine);
+call.press('lg-take');assert.equal(acts.at(-1),'open:tv');call.tick(0.1,callIn());assert.notEqual(call.view.rung,'tvcall');
+const callX=make();callX.tick(0.1,callIn());callX.press('lg-x');assert.equal(logs.at(-1)[0],'dismissed');assert.equal(logs.at(-1)[1],'tvcall');
+callX.tick(1,callIn());assert(!callX.active);
+const callGone=make();callGone.tick(0.1,callIn());callGone.tick(0.1,callIn({tvCall:undefined}));assert(!callGone.active);
+console.log('Teaching TV call: said over the TV\'s hold, once per era; Take me there is navigation; × logged; taken down with the moment.');
+
 // S306: a timed surface must retain its pending action while the real guide speaks.
 const waitJs = ts.transpileModule(fs.readFileSync('src/narrative/guideWait.ts', 'utf8'), {
   compilerOptions: { module: ts.ModuleKind.ESNext, target: ts.ScriptTarget.ES2020 }

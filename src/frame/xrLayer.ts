@@ -43,6 +43,8 @@ export interface XrLayerDeps {
   visorWorn(): boolean;
   /** the story has begun (past the entrance and the setup) */
   inRoom(): boolean;
+  /** ⚑ S394 fix — something is held before the eyes (a Lamby set, a game, a phone, the visor): the table offer waits */
+  held(): boolean;
 }
 
 export interface XrLayer {
@@ -54,7 +56,7 @@ export interface XrLayer {
   mouseClick(): boolean;
   readonly mouseEngaged: boolean;
   /** ?debug=1 review only: force the balloon / the worn visor, to photograph Lamby and the lens without a story */
-  review(what: { lamby?: boolean; worn?: boolean }): void;
+  review(what: { lamby?: boolean; worn?: boolean; offer?: boolean }): void;
 }
 
 /** where each era's Lamby lives, in room coordinates (Room 1's monitor at SCREEN in app.ts; the devices at
@@ -155,7 +157,8 @@ export function mountXrLayer(app: pc.AppBase, deps: XrLayerDeps): XrLayer {
     if (!live()) { table = null; return; }
     if (!offered && deps.inRoom() && deps.comfort.calibrated) {
       inRoomFor += dt;
-      if (inRoomFor > 6) { offered = true; deps.frame.notice(deps.strings.offer, 9); }
+      // ⚑ S394 fix — never while something is held before the eyes (it hung over the Lamby set's keys): it waits until put down
+      if (inRoomFor > 6 && !deps.held()) { offered = true; deps.frame.notice(deps.strings.offer, 9); }
     }
     if (!table) return;
     table.t += dt;
@@ -242,7 +245,10 @@ export function mountXrLayer(app: pc.AppBase, deps: XrLayerDeps): XrLayer {
     matchTable() { if (!live()) return; table = { t: 0, hist: [] }; deps.frame.notice(deps.strings.ask, 24); },
     mouseClick() { if (!grip) return false; deps.mouse.click(cursor.x, cursor.y); return true; },
     get mouseEngaged() { return !!grip; },
-    review(what) { if (what.lamby !== undefined) forced.lamby = what.lamby; if (what.worn !== undefined) forced.worn = what.worn; },
+    review(what) {
+      if (what.lamby !== undefined) forced.lamby = what.lamby; if (what.worn !== undefined) forced.worn = what.worn;
+      if (what.offer) { offered = false; inRoomFor = 7; }   // S394 fix (?debug=1): the table offer is due again at once
+    },
     pressLamby(physical, toLogical) {
       if (!lamby.enabled) return false;
       const r = toLogical(physical), d = r.p1.clone().sub(r.p0), len = d.length();

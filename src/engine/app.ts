@@ -24,7 +24,7 @@ import closeMessage from '../../data/strings/close_message.json';
 import * as pc from 'playcanvas';
 import { DesktopOS } from '../desktop/os';
 import { WitnessCanvas } from '../witness/intake';
-import { ledger } from '../state/ledger';
+import { ledger, ledgerGeneration } from '../state/ledger';
 import { gameMenuBus } from '../state/gameMenuBus';
 import { ERA1_CANVAS } from '../desktop/theme/era1';
 import { setLargeTextProbe } from '../desktop/theme/fonts';
@@ -84,6 +84,10 @@ import { e4Bridge } from '../desktop/apps/space';
 import { mountXrInput, type XrInput } from '../frame/xrInput';
 import { buildRestoreEntrance, type RestoreEntrance } from '../room/restoreEntrance';
 import { FRAME } from '../desktop/theme/chrome';
+import { TeachingTvs, TV_MOMENT } from '../room/teachingTv';
+import { TAPES } from '../narrative/teachingTapes';
+import { viewerFilm, viewerAudio } from '../frame/siteViewer/audio';
+import { voiceHeld, voiceWanted, setFilmAudible } from '../state/voiceHold';
 
 /** ⚑ S381 (UiB job 21 Part B; his headset: "To close the website…" with the Lexicon open) — the headset's note for the
  *  window that is open: the Lexicon, the machine's page (or its Receipt), or a website (gameMenu.json xr*Close / xr*Minimised) */
@@ -800,6 +804,12 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     const upRay = xrComfort.logicalRay({ p0: p, p1: p.clone().add(camera.up) });
     sceneHead.setPosition(ray.p0); sceneHead.lookAt(ray.p1, upRay.p1.sub(upRay.p0).normalize()); return sceneHead;
   }
+  /** ⚑ S394 fix — something is held before the eyes: a game (the Game Boy, the flip phone, the console), a Lamby set, Vera's
+   *  phone, the visor on its way to the face. The frame's plate and notices stay down while it is (called only from frame
+   *  ticks, after every one of these exists) */
+  function anythingHeld(): boolean {
+    return !!(devices && cluster && devices.held(cluster.era)) || !!teachingTvs?.holding || !!era3Devices?.phoneInHand || carryingPhone || carryingVisor;
+  }
   const grabHand = new pc.Entity('logical-grip');
   function poseGrabHand(ray: { p0: pc.Vec3; p1: pc.Vec3 }): void {
     grabHand.setPosition(ray.p0); grabHand.lookAt(ray.p1);
@@ -883,6 +893,18 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   let tapes: TapeSystem | null = null;
   let tapeAudio: TapeAudioBus | null = null;
   let era3Devices: Era3Devices | null = null;
+  /** ⚑ S390 (UiB job 25 Part B) — the three teaching TVs (src/room/teachingTv.ts): built below with the room, driven per frame */
+  let teachingTvs: TeachingTvs | null = null;
+  /** the clocks its triggers read: when kit-read and Dad's message were first seen, and the frame clock (seconds) */
+  const tvClock = { kitReadAt: -1, dadReadAt: -1, now: 0 };
+  const TV_AFTER_DAD = TV_MOMENT.afterDad;
+  /** seconds a due moment waits for a Lamby balloon to be read before it takes the floor (the balloon hides, then returns) */
+  const TV_GUIDE_PATIENCE = 8;
+  let tvGeneration = -1;
+  /** ?debug=1 review aid: a probe arms an era's moment without walking to its beat (the walk proves the beat; this proves the TV) */
+  const tvArmed = new Set<string>();
+  /** ⚑ S392 — the words of Lamby's call while the TV's moment is taking the visitor there (undefined otherwise) */
+  let tvCallText: string | undefined;
   if (options.reinterp === true) {
     niche = buildFluidNiche(app);
     niche.setFacet(options.facet ?? 'none');
@@ -892,7 +914,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     e4Room = buildE4Room(app, room);
     // Completion belongs to the scripted leg, never to the visitor's subsequent look direction.
     e4Room.setConduct(() => {
-      if (scriptedBusy() || os.e4?.stage !== 'closed') return false;
+      if (scriptedBusy() || os.e4?.stage !== 'closed' || voiceHeld() || voiceWanted()) return false;   // S390: after Dad's link has played
       // The walls, stripped belongings and grey bedding are ahead at the end of this turn.
       // 52 degrees in 9.2 s: smoothstep peak 8.5 degrees/s, inside the existing comfort envelope.
       commitLookOffset();
@@ -934,6 +956,51 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       const sc = glass.getLocalScale();
       mountXrGlass(app, glass, { w: sc.x, h: sc.z }, () => [room.props.get(prop)?.entity], roomUp, { footY: deskTop(desk) });
     }
+    /**
+     * ⚑ S394 (UiB job 27 Part B; S392, S390 before it) — THE LAMBY SET. The engine's half: when each era's moment is due and the
+     * floor is free (`due` / `quiet`), and the eye a brought set faces (`eye`: the logical head in a headset, the camera
+     * otherwise). NOTHING HERE MOVES THE CAMERA: job 26's conducted turn to the TV and back (and the headset's cut under the
+     * dissolve) are gone — the set comes to the visitor (his 15 Nov: "on the headset there are no FADES"). The set's own half is
+     * src/room/teachingTv.ts.
+     *  · 1997: the fellowship's tape comes with the Un-Walk programme — due once Daniel has read its first step (kit-read),
+     *    when no tape, prayer, chat, form, letter or journal is up and no voice is speaking (the programme's wizard may be
+     *    open: it waits for him);
+     *  · 2016: the course is assigned to Vera — due once Renata's testimony job is sent and she is back at a board at rest
+     *    (the phone first delivers anything it holds: one voice at a time);
+     *  · 2026: her father's link — due once Dad's message has been read and had its reading time (Dad's thread goes back to
+     *    the list as the system takes the screen, as it does for every system beat), before the room's own turn.
+     */
+    teachingTvs = new TeachingTvs(app, {
+      era: () => (closeStage ? 'close' : os.era),
+      due: (tape) => {
+        if (tvArmed.has(tape)) return os.era === (tape === '1997' ? 'e1' : tape === '2016' ? 'e3' : 'e4');
+        if (tape === '1997') return os.era === 'e1' && tvClock.kitReadAt >= 0 && tvClock.now - tvClock.kitReadAt >= 2;
+        if (tape === '2016') return os.era === 'e3' && ledger.records.includes('e3-job:testimony');
+        return os.era === 'e4' && tvClock.dadReadAt >= 0 && tvClock.now - tvClock.dadReadAt >= TV_AFTER_DAD;
+      },
+      quiet: (tape, dueFor) => {
+        // (not os.sendOfferPending: in 2026 it reads true for the whole era — e4HoldsTheSpine — and there is no send in 1997 or 2016)
+        if (scriptedBusy() || os.paused || gameMenuBus.isOpen || os.updateArmed || voiceHeld() || camMove) return false;
+        if (devices && cluster && devices.held(cluster.era)) return false;   // a game in the hand is played out first
+        if (os.lambyGuide.active && dueFor < TV_GUIDE_PATIENCE) return false;   // a balloon is read first; then it waits for the TV
+        if (tape === '1997') {
+          return os.inDesktop && !os.toastUp && !(tapes?.isPlaying) && !(pcPrayer && !pcPrayer.paused && !pcPrayer.ended)
+            && !os.irc?.open && !os.packet?.open && !os.diary?.open && !os.provotype && !os.kit?.onPrayerPage && !os.kit?.dialing;
+        }
+        if (tape === '2016') return !!era3Devices?.debugQueue().tvMomentFree && !era3Devices?.phoneInHand;
+        return !!os.e4 && os.e4.stage === 'closed';   // Dad's own notification may still be up: his link replaces it
+      },
+      held: () => os.paused || gameMenuBus.isOpen,
+      eye: () => (xr?.active ? logicalHead() : camera),
+      camera: () => (xr?.active ? null : camera.camera ?? null),
+      xr: () => !!xr?.active,
+      announce: (tape) => { if (tape === '2026') os.e4?.browser.dadSharesTape(); },
+      // ⚑ S392 — Lamby's call: os.tvCall feeds the guide's input; the balloon is up while its rung is the call's. ⚑ S394: the
+      //   guide's balloon for the call (and the later offer) is drawn IN VIEW by the set's card, not on the glass
+      call: (_tape, text) => { tvCallText = text ?? undefined; os.dirty = true; },
+      callOpen: () => os.lambyGuide.view.rung === 'tvcall' && os.lambyGuide.active,
+      guidePress: (id) => { os.lambyGuide.press(id); os.dirty = true; }
+    });
   }
   // (the in-room cork board that used to be built here is RETIRED — decision
   // doc §1, Sérgio: "I would've liked the cork board to actually work, but
@@ -970,6 +1037,20 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       era3Devices ? era3Devices.debugQueue() : null;
     // ⚑ S364 (job 14 B7) the console session, for review (?debug=1 only): light(), draw(), tap(u,v), stats
     (window as { __consoleSession?: unknown }).__consoleSession = consoleSession;
+    // ⚑ S390 — the teaching TVs (?debug=1 only): their state, hits and places for the walker and the probes; `play`/`press` are
+    //   review aids for photographs and probes (a probe that proves a control presses it in the room, not through these)
+    (window as { __teachingTv?: unknown }).__teachingTv = Object.assign(() => teachingTvs?.debug() ?? null, {
+      play: (tape: '1997' | '2016' | '2026', t = 0) => teachingTvs?.tvs[tape].play(t),
+      press: (tape: '1997' | '2016' | '2026', id: string) => teachingTvs?.tvs[tape].pressId(id),
+      // ⚑ S394 — bring the set close / put it back (review aids for photographs; a probe that proves the press presses it)
+      take: (tape: '1997' | '2016' | '2026') => { const tv = teachingTvs?.tvs[tape]; if (!tv) return; tv.wake(); tv.take(xr?.active ? logicalHead() : camera, !!xr?.active, xr?.active ? null : camera.camera); },
+      putBack: (tape: '1997' | '2016' | '2026') => teachingTvs?.tvs[tape].putBack(null, 'visitor'),
+      fitAll: () => teachingTvs?.fitAll() ?? null,   // S394 fix: every caption and margin line drawn into the bar, measured
+      inst: (tape: '1997' | '2016' | '2026') => teachingTvs?.tvs[tape] ?? null,   // S394 fix: the set itself (review aid)
+      canvases: () => teachingTvs?.canvases() ?? {},
+      uploads: () => (window as { __uploads?: number }).__uploads ?? 0,
+      arm: (tape: string) => { tvArmed.add(tape); }
+    });
     (window as { __consoleProbe?: unknown }).__consoleProbe = () => consoleSessionInternal.probe();
     (window as { __deviceDraws?: () => unknown }).__deviceDraws = () => era3Devices ? era3Devices.debugDraws() : null;
     // ⚑ S382 — Vera's notebook and Nuala's mug: what can be pressed now (the walker's map) and their state (a probe)
@@ -1078,6 +1159,10 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       const p = surface.getPosition(), dx = p.x - camPos.x, dy = p.y - camPos.y, dz = p.z - camPos.z;
       startCamMove({ ...camPos, pitch: Math.atan2(dy, Math.hypot(dx, dz)) * pc.math.RAD_TO_DEG, yaw: Math.atan2(-dx, -dz) * pc.math.RAD_TO_DEG }, 1.8, true);
     };
+    // ⚑ S390 — Lamby's one offer per era to take a stalled visitor back to the teaching TV (src/narrative/lambyGuide.ts 'tv')
+    os.tvOffer = () => (teachingTvs?.offerDue(os.era) ? teachingTvs.lambyLine(os.era) : undefined);
+    os.onGuideTv = () => teachingTvs?.takeTo();
+    os.tvCall = () => tvCallText;   // S392: Lamby's call while the moment takes the visitor to the TV
     os.guideExternal = () => {
       if (queueGuide) {
         queueGuide.lambyGuide = os.lambyGuide;
@@ -1110,6 +1195,8 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
         };
       }
       if (scriptedBusy()) return { silent: true, voice: false };
+      // ⚑ S390 — the teaching TV's conducted tape holds the floor: Lamby (and 1997's side-line) wait for it
+      if (voiceHeld()) return { silent: false, voice: true };
       if (os.era === 'e3') return { silent: queueGuide?.guideSilent ?? true, voice: queueGuide?.guideVoice ?? false };
       if (os.era === 'e4') {
         const active = os.lambyGuide.active;
@@ -1210,7 +1297,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     let teamSkipPresses: number[] = [];   // S339: the team skip (debug builds only)
     xrInput = mountXrInput(app, {
       // ⚑ S343 / T11 — a ray that lands on the monitor presses where it lands, even with a hand on the desk mouse
-      onSelect: (physicalRay) => { if (!xrComfort.calibrated) { xrComfort.calibrate(); xrFrame?.setHint(null); return; } if (xrComfort.busy) return; if (siteViewerXr?.pressRay(physicalRay)) return; const ray = xrComfort.logicalRay(physicalRay); if (xrFrame?.pressTab(physicalRay)) return; if (restoreEntrance?.blocking) { noteHumanInput(); startFirstBed(); restoreEntrance.press(physicalRay); return; } if (document.getElementById('lambyos-home')) return; noteHumanInput(); os.lambyGuide.activity(); if (descentActive || scriptedBusy() || os.paused) return; if (!toDesktopR(ray) && xrLayer?.mouseClick()) return; if (xrLayer?.pressLamby(physicalRay, (r) => xrComfort.logicalRay(r))) return; resolveTapRay(ray); },   // A22: the tab first
+      onSelect: (physicalRay) => { if (!xrComfort.calibrated) { xrComfort.calibrate(); xrFrame?.setHint(null); return; } if (xrComfort.busy) return; if (siteViewerXr?.pressRay(physicalRay)) return; const ray = xrComfort.logicalRay(physicalRay); if (xrFrame?.pressTab(physicalRay)) return; if (restoreEntrance?.blocking) { noteHumanInput(); startFirstBed(); restoreEntrance.press(physicalRay); return; } if (document.getElementById('lambyos-home')) return; noteHumanInput(); os.lambyGuide.activity(); if (descentActive || scriptedBusy() || os.paused) return; if (teachingTvs?.pressCard(ray) || (teachingTvs?.holding && teachingTvs.pressHeld(ray))) return; if (!toDesktopR(ray) && xrLayer?.mouseClick()) return; if (xrLayer?.pressLamby(physicalRay, (r) => xrComfort.logicalRay(r))) return; resolveTapRay(ray); },   // A22: the tab first
       // ⚑ S271 (his 31 Oct: "I entered the menu, but I cannot get out") — a press that misses the menu closes it, as
       //   Resume does; the menu is never a room you have to find the door of
       onMenuSelect: (ray) => { if (document.getElementById('lambyos-home')) return; if (siteViewerXr?.pressRay(ray)) return; noteHumanInput(); if (xrFrame && !xrFrame.press(ray)) gameMenuBus.close(); },
@@ -1317,6 +1404,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       guideYes: () => { os.lambyGuide.press(os.lambyGuide.view.act ? 'lg-take' : 'lg-show'); os.dirty = true; },
       visorWorn: () => (cluster?.era ?? os.era) === 'e4' && !!e4Bridge()?.shell()?.pinned,
       inRoom: () => !restoreEntrance?.blocking && !os.setup?.open && !document.getElementById('lambyos-home'),
+      held: () => anythingHeld(),   // S394 fix: the table offer waits while something is held before the eyes
       mouse: {
         active: () => !!cluster && (cluster.era === 'e1' || cluster.era === 'e2') && os.inDesktop && !gameMenuBus.isOpen && !scriptedBusy(),
         prop: () => room.props.get('mouse')?.entity ?? null,
@@ -1357,6 +1445,8 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
         point: (p0: number[], p1: number[]) => xrFrame?.tick({ p0: new pc.Vec3(p0[0], p0[1], p0[2]), p1: new pc.Vec3(p1[0], p1[1], p1[2]) }),
         hint: (t: string | null) => xrFrame?.setHint(t),
         hintText: () => xrFrame?.hintNow() ?? null,   // S381: read-only, for the probes
+        hintShown: () => xrFrame?.hintShown() ?? null,   // S394 fix: the plate's corners while it is up
+        notice: (t: string, sec = 9) => xrFrame?.notice(t, sec),   // S394 fix: a notice, for the probes
         hit: (p0: number[], p1: number[]) => xrFrame?.debugHit({ p0: new pc.Vec3(p0[0], p0[1], p0[2]), p1: new pc.Vec3(p1[0], p1[1], p1[2]) })
       };
     }
@@ -3493,7 +3583,8 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   function syncKitLoop(): void {
     const want = os.inDesktop && os.era === 'e1' && os.kit?.open === true && !os.paused && !(tapes?.isPlaying)
       && !(pcPrayer && !pcPrayer.paused && !pcPrayer.ended)   // S219: and yields to the prayer the computer plays
-      && !os.e1LoopName;   // S343: and to the game's, the form's or the fellowship's own music
+      && !os.e1LoopName   // S343: and to the game's, the form's or the fellowship's own music
+      && !teachingTvs?.audible;   // S390: and to the fellowship's video on the TV (one music at a time)
     if (want && !kitLoop) { kitLoop = playLoop('unwalk_loop_1997.mp3'); if (kitLoop) kitLoop.volume = 0.45; }
     else if (!want && kitLoop) { stopClip(kitLoop); kitLoop = null; }
   }
@@ -3648,6 +3739,10 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
    *  controller's select (xrInput.ts) both arrive here as a ray. */
   function resolveTapRay(ray: Ray): void {
     if (closeStage === 'message') { nextCloseCard(); return; }   // S209 / P7-48 — a press turns the card
+    // ⚑ S394 — Lamby's line in view (its card is over everything), then a Lamby set in the hand (in front of everything; a
+    //   press that misses it passes on to the room)
+    if (teachingTvs?.pressCard(ray)) return;
+    if (teachingTvs?.holding && teachingTvs.pressHeld(ray)) return;
     // Foreground games own the press before every room prop and monitor behind them.
     if (devices && cluster && devices.held(cluster.era)) {
       devices.press(ray, cluster.era, xr?.active ? logicalHead() : camera);
@@ -3800,6 +3895,8 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       // plane or the screen isn't visible this era, so this never steals a
       // click meant for a movement marker on the floor.
       if (era3Devices && era3Devices.handleWorkstationPointer(ray)) return;
+      // ⚑ S394 — a lit Lamby set at rest comes close at a press (src/room/teachingTv.ts), before the markers
+      if (teachingTvs?.pressRest(ray)) return;
       // R28-1: click-to-move, NEVER gaze-to-move — this pointerdown ray/hit
       // test is the ONLY thing that can arm a marker; looking at one (however
       // long) never does. Only test markers actually being offered right now
@@ -3919,6 +4016,8 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       if (lb) return lb.text === lexStrings.star ? A.closeLexicon : A.closeLabel.replace('{label}', lb.text);
     }
     if (os.isOff) return hitAt(ray, POWER_BTN, 0.08) ? A.power : null;
+    // ⚑ S394 — the Lamby set names itself and what a press on it does (the press resolver asks it the same way)
+    { const tv = teachingTvs?.aimPoint(ray); if (tv) { aimAt = tv.at; return (A[`tv_${tv.what}`] ?? '').replace('{tape}', TAPES[tv.tape]?.title ?? '') || null; } }
     if (!os.inDesktop) return null;
     const devName = (): string | null => {
       const dev = devices && cluster ? devices.aim(ray, cluster.era) : null;
@@ -4460,7 +4559,10 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     tickKeychain();
     // ⚑ P8 A10 (headset B: "the message appears in front of the console"; "impossible to play") — the hint plate hangs
     //   exactly where a held device is held, so while a device is in the hand the plate stays down
-    const deviceInHand = !!(devices && cluster && devices.held(cluster.era));
+    const deviceInHand = anythingHeld();   // S394: a game, a Lamby set, Vera's phone, the visor
+    // ⚑ S394 fix (his: "in Headset the white bar is in front of the buttons") — while anything is held before the eyes, the
+    //   frame's plate and every notice stay down (a notice keeps its time; the table offer waits until it is put down)
+    if (xr?.active) xrFrame?.setHeld(deviceInHand);
     // S291: while the site window is up, the helper's plate stays down (it would hang over the window's foot)
     // ⚑ S345 / T29 — what the ray is on is named at the ray's end (a small tag pinned to the mark, xrFrame.setAim), not
     //   on the helper's plate; the plate keeps the helper's own lines, and stays down while a device is in the hand
@@ -4961,6 +5063,33 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       carryPhoneBody(restPhone?.entity ?? null);
     } else if (heldPhoneBody) heldPhoneBody.enabled = false;
     era3Devices?.tick(dt); // Session 37: uploads each device screen once, the first dirty frame
+    // ⚑ S390 — the teaching TVs: their triggers' clocks, the voices that make a playing TV pause itself (B2.3), the update
+    //   that stops it (B2.4), and the programmes' music yielding while a tape is heard
+    if (teachingTvs) {
+      if (tvGeneration !== ledgerGeneration) { tvGeneration = ledgerGeneration; tvClock.kitReadAt = -1; tvClock.dadReadAt = -1; }
+      tvClock.now += dt;
+      if (tvClock.kitReadAt < 0 && ledger.records.includes('kit-read')) tvClock.kitReadAt = tvClock.now;
+      if (tvClock.dadReadAt < 0 && os.e4?.browser.messenger.dadRead) tvClock.dadReadAt = tvClock.now;
+      const q3 = os.era === 'e3' ? era3Devices?.debugQueue() : null;
+      const b4 = os.era === 'e4' ? os.e4?.browser : null;
+      const on = (v: boolean | undefined): string => (v ? '1' : '');
+      const voices: Record<string, string> = {
+        lamby: os.lambyGuide.active ? os.lambyGuide.view.text ?? '1' : '',
+        toast: os.toastKey,
+        conduct: on(!!camMove && camMove.conducted && !teachingTvs.momentRunning),
+        side: os.era === 'e1' ? os.guide?.activeText ?? '' : '',
+        felt1997: on(os.era === 'e1' && (!!os.packet?.open || !!os.diary?.open)),
+        chat1997: on(os.era === 'e1' && !!os.irc?.open),
+        lambient: on(!!q3?.guideVoice), personal2016: on(!!q3?.personalQuiet),
+        voice2026: on(!!b4?.guideVoice), toast2026: b4?.toastKey ?? '', felt2026: on(!!b4?.messenger.felt),
+        // the site viewer (the menu's Lexicon and websites) starting a track or a film: one thing heard at a time
+        viewer: viewerFilm.state() === 'playing' ? `film:${viewerFilm.file()}` : viewerAudio.playing() ?? ''
+      };
+      teachingTvs.update(dt, closeStage ? 'close' : os.era, voices, os.updateArmed);
+      // ⚑ S394 — Lamby's call and his later offer, in view (the card), from the guide's own view
+      teachingTvs.guide(os.lambyGuide.view, os.lambyGuide.active);
+      setFilmAudible(teachingTvs.audible);
+    }
 
     if (os.inDesktop) flipBtn.style.display = 'block';
   });

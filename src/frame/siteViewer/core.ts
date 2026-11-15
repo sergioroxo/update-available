@@ -13,7 +13,8 @@ import { MODEL, YEARS, type Block, type TabId } from './model';
 import { FILM, SKINS, isMachineView, type View, type Year } from './skins';
 import { drawMachinePage, ReceiptPrint, LexiconPage, MACHINE_COPY } from './machine';
 import lexStrings from '../../../data/strings/lexicon.json';
-import { FILM_BAR, FILM_INSET, layoutDoc, type Doc, type DocHit, type Op, type Rect, wrap } from './layout';
+import { TAPES, cueAt, marginAt, tapeOfFile } from '../../narrative/teachingTapes';
+import { FILM_BAND_K, FILM_BAR, FILM_INSET, layoutDoc, type Doc, type DocHit, type Op, type Rect, wrap } from './layout';
 import type { FilmState } from './audio';
 import { drawScrollbar, drawSiteHeader, drawStatus, drawWindow, roundRect, SCROLL_W, type DrawEnv, type Hit } from './frame';
 import { siteViewerBus } from './bus';
@@ -372,10 +373,15 @@ export class ViewerCore {
     const F = this.host.film;
     const st = F.state(op.file);
     const face = SKINS[this.view].font;
-    const { w, h, pic } = op;
+    const { w, h, pic, band } = op;
     ctx.fillStyle = FILM.screen; ctx.fillRect(x, y, w, h);
     const v = st !== 'idle' && F.hasFrame() ? F.video() : null;
-    if (v) ctx.drawImage(v, x, y, w, pic);
+    if (v) {
+      // ⚑ S394 — the frame at its own aspect inside the picture rect (4:3 is pillarboxed), never stretched
+      const vw = v.videoWidth || 16, vh = v.videoHeight || 9;
+      const dw = Math.min(w, pic * vw / vh), dh = dw * vh / vw;
+      ctx.drawImage(v, x + (w - dw) / 2, y + (pic - dh) / 2, dw, dh);
+    }
     const cx = x + w / 2, cy = y + pic / 2;
     const word = st === 'idle' ? 'Play the film' : st === 'loading' && !v ? 'Loading the film…' : st === 'paused' ? 'Paused' : st === 'ended' ? 'Play again'
       : st === 'error' ? 'This film cannot play here. It plays on the web page version.' : '';
@@ -395,7 +401,8 @@ export class ViewerCore {
     }
     // the progress line: the time gone, the line (filled as far as the film has played, a knob at the head), the length
     const { t, dur } = st === 'idle' ? { t: 0, dur: 0 } : F.time();
-    const by = y + pic + FILM_BAR / 2, x0 = x + FILM_INSET, x1 = x + w - FILM_INSET;
+    if (band > 0) this.paintBand(ctx, x, y + pic, w, band, op.file, st === 'idle' ? 0 : F.time().t);
+    const by = y + pic + band + FILM_BAR / 2, x0 = x + FILM_INSET, x1 = x + w - FILM_INSET;
     const k = dur > 0 ? Math.max(0, Math.min(1, t / dur)) : 0;
     ctx.fillStyle = FILM.track; ctx.fillRect(x0, by - 3, x1 - x0, 6);
     ctx.fillStyle = FILM.ink; ctx.fillRect(x0, by - 3, Math.round((x1 - x0) * k), 6);
@@ -403,6 +410,42 @@ export class ViewerCore {
     ctx.font = `18px ${SKINS[this.view].mono}`; ctx.textBaseline = 'middle';
     ctx.textAlign = 'right'; ctx.fillText(clock(t), x0 - 14, by);
     ctx.textAlign = 'left'; ctx.fillText(dur > 0 ? clock(dur) : '-:--', x1 + 14, by);
+  }
+
+  /** ⚑ S394 — a teaching tape's live text: the caption (up to 2 lines, centred) and under it the margin line (head dim, text) */
+  private paintBand(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, band: number, file: string, t: number): void {
+    const id = tapeOfFile(file);
+    if (!id) return;
+    const tape = TAPES[id];
+    const pic = band / FILM_BAND_K;
+    const face = SKINS[this.view].font;
+    const cap = cueAt(tape, t), mg = marginAt(tape, t);
+    const cf = Math.round(pic / 14.4), mf = Math.round(pic / 18.7);
+    const pad = 16, cx = x + w / 2, maxW = w - 2 * pad;
+    ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+    let yy = y + 8;
+    if (cap) {
+      const font = `700 ${cf}px ${face}`;
+      ctx.font = font; ctx.fillStyle = FILM.ink;
+      wrap(ctx, cap.text, font, maxW).slice(0, 2).forEach((l, i) => ctx.fillText(l, cx, yy + i * Math.round(cf * 1.25)));
+    }
+    yy = y + 8 + Math.round(cf * 1.25) * 2 + 6;
+    if (mg) {
+      const hf = `700 ${mf}px ${face}`, tf = `${mf}px ${face}`;
+      ctx.textAlign = 'left';
+      ctx.font = hf; const hw = ctx.measureText(mg.head).width;
+      ctx.font = tf;
+      const rest = mg.text ? ' — ' + mg.text : '';
+      const lines = wrap(ctx, mg.head + rest, tf, maxW).slice(0, 2);
+      lines.forEach((l, i) => {
+        const ly = yy + i * Math.round(mf * 1.25);
+        if (i === 0 && l.length >= mg.head.length && l.startsWith(mg.head)) {
+          ctx.font = hf; ctx.globalAlpha = 0.65; ctx.fillStyle = FILM.ink; ctx.fillText(mg.head, x + pad, ly); ctx.globalAlpha = 1;
+          ctx.font = tf; ctx.fillText(l.slice(mg.head.length), x + pad + hw, ly);
+        } else { ctx.font = tf; ctx.fillStyle = FILM.ink; ctx.fillText(l, x + pad, ly); }
+      });
+    }
+    ctx.textAlign = 'left';
   }
 
   /** ⚑ S371 — the browser's repaint while a film plays: only the film's rect (clipped to the page), never the window */

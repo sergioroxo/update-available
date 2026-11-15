@@ -261,7 +261,10 @@ const SEAT_SUBJECTS = {
    * declarations, not one, and this is the second.
    */
   'r3-shelf': [
-    { what: "the CRT kept on the shelf", kind: 'prop', id: 'e_crtScreen' }
+    // ⚑ S394 (job 27 B1) — the CRT on the shelf became the Lamby set (src/room/lambyVision.ts; his: "keep Maya's object of
+    //   the CRT but we just transform it into an object of the time"): the same bearing, its glass's own world centre
+    //   (data/room/teaching_tvs.json 2026 place + lambyVision GLASS: pos y 1.14 + 0.345, z −0.81 + 0.199)
+    { what: "the Lamby set on the shelf (was the CRT)", kind: 'plane', at: [4.85, 1.485, -0.611] }
   ],
   /**
    * ⚑ `r3-turned` DECLARES NOTHING, and that is the point of adding it. The

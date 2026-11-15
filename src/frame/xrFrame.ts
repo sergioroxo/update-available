@@ -88,6 +88,11 @@ export interface XrFrame {
   setGrip(at: pc.Vec3 | null, extent?: number): void;
   /** S270g — a line that wins over the helper's for `seconds` (the table match, its result) */
   notice(text: string | null, seconds?: number): void;
+  /** ⚑ S394 fix (his: "in Headset the white bar is in front of the buttons") — something is held before the eyes (a Lamby set,
+   *  a game, a phone, the visor): the helper's plate and any notice stay down, and a notice keeps the time it had left */
+  setHeld(on: boolean): void;
+  /** the plate is up (the probes read it, and where it hangs) */
+  hintShown(): { text: string; corners: number[][] } | null;
   /** ⚑ S381 — the hint line as it stands (the probes read it; nothing acts on it) */
   hintNow(): string | null;
   /** ⚑ S361 / H50 — the Close's message, one card at a time, on its own plate in front of the eyes (null: down). The
@@ -494,6 +499,8 @@ export function mountXrFrame(app: pc.Application, head: pc.Entity, opts: {
     tabTex.upload();
   }
   let closedAt = 0, onWrist = false, noticeText: string | null = null, noticeUntil = 0;
+  /** ⚑ S394 fix — a device is held: the plate is down, a notice's clock is stopped (`heldSince`) */
+  let held = false, heldSince = 0;
   const watching = (w: { at: pc.Vec3; palm: pc.Vec3 | null }): boolean => wristWatched(head, w);
 
   const act = (id: string): void => {
@@ -560,7 +567,21 @@ export function mountXrFrame(app: pc.Application, head: pc.Entity, opts: {
       if (h) act(h.id);
       return true;
     },
-    hintNow(): string | null { return noticeText && performance.now() < noticeUntil ? noticeText : hint; },
+    hintNow(): string | null { return noticeText && (held || performance.now() < noticeUntil) ? noticeText : hint; },
+    setHeld(on: boolean): void {
+      if (on === held) return;
+      held = on;
+      if (on) { heldSince = performance.now(); hintPlane.enabled = false; return; }
+      // put down: a notice that was waiting has the seconds it had left; the plate comes back where the eyes are now
+      if (noticeText) noticeUntil += performance.now() - heldSince;
+      if (hint && !open) { hang(hintPlane, HINT_DIST, HINT_DROP); hintPlane.enabled = true; }
+    },
+    hintShown(): { text: string; corners: number[][] } | null {
+      if (!hintPlane.enabled || !hint) return null;
+      const m = hintPlane.getWorldTransform().data;
+      const at = (u: number, v: number): number[] => [m[12] + u * m[0] + v * m[8], m[13] + u * m[1] + v * m[9], m[14] + u * m[2] + v * m[10]];
+      return { text: hint, corners: [at(-0.5, -0.5), at(0.5, -0.5), at(-0.5, 0.5), at(0.5, 0.5)] };
+    },
     notice(text: string | null, seconds = 6): void {
       noticeUntil = text ? performance.now() + seconds * 1000 : 0;
       noticeText = null; this.setHint(text); noticeText = text;
@@ -575,11 +596,11 @@ export function mountXrFrame(app: pc.Application, head: pc.Entity, opts: {
       cardPlane.enabled = true;
     },
     setHint(text: string | null): void {
-      if (noticeText && performance.now() < noticeUntil) text = noticeText;
+      if (noticeText && (held || performance.now() < noticeUntil)) text = noticeText;   // S394 fix: held, a notice's clock stands
       else noticeText = null;
       if (text === hint) return;
       hint = text;
-      if (hint && !open) { hang(hintPlane, HINT_DIST, HINT_DROP); hintPlane.enabled = true; }
+      if (hint && !open && !held) { hang(hintPlane, HINT_DIST, HINT_DROP); hintPlane.enabled = true; }
       else hintPlane.enabled = false;
       drawHint();
     },

@@ -18,7 +18,9 @@ export type Block =
   | { k: 'links'; items: Link[] }
   | { k: 'key'; t: string; rows: { status: Status; tag: string; long: string }[] }
   | { k: 'fig'; img: string; w: number; h: number; alt: string; caption: string; credit: string }
-  | { k: 'media'; title: string; what: string; file: string; type: string; credit: string; lyrics: string[]; lyricsTitle: string }
+  | { k: 'media'; title: string; what: string; file: string; type: string; credit: string; lyrics: string[]; lyricsTitle: string;
+      /** ⚑ S392 — a teaching tape's break as text and its sources (tools/gen_era_sites.mjs tapeNotes) */
+      notes?: { title: string; lines: string[] }[] }
   | { k: 'terms'; rows: { term: string; status: string; def: string }[] }
   | { k: 'beats'; items: { label: string; opt: string; hint: string; where: string }[] }
   | { k: 'pagelink'; label: string; note: string; href: string }

@@ -54,6 +54,9 @@ export function drawLambyGuide(ctx: CanvasRenderingContext2D, skin: GuideEra, st
   ui.setFont(ctx, skin === 'e3' ? 12 : 9); ctx.fillStyle = skin === 'e3' || skin === 'e2' ? ERA3.white : ink; if (skin !== 'e4') ctx.fillText(decisions.helper[skin], tx + 22, skin === 'e3' ? ty + 1 : ty + 5);   // S272: 2003's bar is blue
   hits.push({ id: 'lg-tray', label: decisions.helper[skin], tip: state.hidden ? undefined : copy.ui.trayTip, x: tx, y: skin === 'e3' ? ty - 5 : ty - 3, w: skin === 'e3' ? 82 : 60, h: skin === 'e3' ? 24 : 21 });
   if (state.hidden || !state.text) return out;
+  // ⚑ S394 (UiB job 27 B3) — the Lamby set's call and its later offer are drawn IN VIEW by the set's own card
+  //   (src/room/teachingTv.ts TvCall), wherever the visitor is looking; the glass does not say them a second time
+  if (state.rung === 'tv' || state.rung === 'tvcall') return out;
   out.balloon = true;
   const targets = state.targets.flatMap(id => hits.filter(h => h.id === id));
   const multiple = state.beat === 'pledge' || state.beat === 'consent' || state.beat === 'steps';

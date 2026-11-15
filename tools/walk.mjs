@@ -710,7 +710,7 @@ async function main() {
   //   The 80° cap still holds whenever something is in front of the walker.
   const turnable = (st, sig) => (st.dropped || [])
     // S382: an optional room prop (Vera's notebook, the mug) is on the map but never pressed, so never turned to either
-    .filter((d) => d.turn && d.surface !== 'prop' && !FORBIDDEN.test(d.id) && guidedAllows(d, st, seen) &&
+    .filter((d) => d.turn && d.surface !== 'prop' && d.surface !== 'tv' && d.surface !== 'tvset' && d.surface !== 'tvcall' && !FORBIDDEN.test(d.id) && guidedAllows(d, st, seen) &&
       Math.abs(d.turn.yaw) <= ((st.targets || []).length ? TURN_YAW_MAX : 180) &&
       Math.abs(d.turn.pitch) <= TURN_PITCH_MAX &&
       (pressed.get(keyOf(sig, d)) || 0) < PRESS_CAP &&
@@ -974,7 +974,7 @@ async function main() {
   };
   const pick = (targets, sig, seen, dismissFirst) => {
     let live = targets.filter((t) =>
-      t.surface !== 'prop' && !FORBIDDEN.test(t.id) && guidedAllows(t, lastState, seen) && !capped(sig, t));
+      t.surface !== 'prop' && t.surface !== 'tv' && t.surface !== 'tvset' && t.surface !== 'tvcall' && !FORBIDDEN.test(t.id) && guidedAllows(t, lastState, seen) && !capped(sig, t));
     /**
      * ⚑ THE TAB BUDGET (see MIN_TABS). Counted from the LEDGER, not from this
      * tool's own memory of what it pressed — `e4Space:tab:*` is filed once per
@@ -1013,7 +1013,7 @@ async function main() {
       //   a provotype opened mid-conversation swallowed the rest of IRC's
       //   escalation and the walk stranded there with every other control dead.
       const out = targets.find((t) =>
-        t.surface !== 'prop' && !FORBIDDEN.test(t.id) &&
+        t.surface !== 'prop' && t.surface !== 'tv' && t.surface !== 'tvset' && t.surface !== 'tvcall' && !FORBIDDEN.test(t.id) &&
         /^leave$|^close$|^dismiss$|^okay?$/i.test(t.id));
       if (out) return out;
     }
@@ -1264,7 +1264,7 @@ async function main() {
     !EXIT.test(t.id) && ((pressed.get(keyOf(sig, t)) || 0) >= PRESS_CAP || inertMarks.has(inertKey(sig, t)));
   /** every live control here has been pressed to its cap: the screen is spent */
   const spent = (st, sig) => {
-    const live = st.targets.filter((t) => t.surface !== 'prop' && !FORBIDDEN.test(t.id));
+    const live = st.targets.filter((t) => t.surface !== 'prop' && t.surface !== 'tv' && t.surface !== 'tvset' && t.surface !== 'tvcall' && !FORBIDDEN.test(t.id));
     return live.length > 0 && live.every((t) => capped(sig, t));
   };
 
@@ -1425,6 +1425,33 @@ async function main() {
       break;
     }
     if (s.silent.length) continue;
+
+    /**
+     * ⚑ S394 — THE LAMBY SET (UiB job 27 B3). The piece brings the set to the visitor: Lamby's line appears in view, then the
+     * set comes before the eye and plays Part 1 of the tape, and waits there, held. A visitor who is not watching anything
+     * else answers it, and so does the walker, before anything behind it (the set and the card are in front of everything):
+     * Lamby's yes on the card; while the set is on its way or playing, it watches; once it has stopped (End of Part 1), it
+     * presses the set's body, which puts it back where it stands, paused where it was.
+     */
+    if (s.tvSet && (s.tvSet.card || s.tvSet.held || s.tvSet.lifting)) {
+      const yes = s.tvSet.card ? s.targets.find((t) => t.surface === 'tvcall' && t.id === 'lg-take@call') : null;
+      const body = !s.tvSet.card && s.tvSet.held && !s.tvSet.playing && !s.tvSet.lifting
+        ? s.targets.find((t) => t.surface === 'tvset' && t.id.startsWith('tv-body@')) : null;
+      const t = yes || body;
+      if (t && (pressed.get(keyOf(sig, t)) || 0) < PRESS_CAP) {
+        pressed.set(keyOf(sig, t), (pressed.get(keyOf(sig, t)) || 0) + 1);
+        stalls = 0;
+        s = await press(t, s);
+        continue;
+      }
+      if (stalls < stallCap(s) + 40) {
+        stalls += 1;
+        if (stalls === 1 || stalls % 10 === 0) note('watching', { what: 'the Lamby set ' + (s.tvSet.card ? 'is being called (Lamby\'s line in view)' : s.tvSet.playing ? 'is playing its tape in the hand' : 'is coming close or going back') + ' — watching, not pressing past it', era: s.era, phase: s.phase, spine: s.spine });
+        await wait(2000);
+        s = await probe();
+        continue;
+      }
+    }
 
     /**
      * ⚑ BEFORE CONCLUDING THERE IS NOTHING HERE, LOOK ROUND. This sits ahead of

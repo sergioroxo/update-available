@@ -147,7 +147,8 @@ export function buildRestoreEntrance(app: pc.Application, room: RoomHandles, rig
   // S271 — Recentre brings the frame's words back in front, with the title (see xrRecentred)
   const onRecentred = (head: pc.Vec3, yaw: number): void => {
     const inv = rig.getWorldTransform().clone().invert(), at = inv.transformPoint(head);
-    const local = yaw - rig.getEulerAngles().y, r = local * Math.PI / 180;
+    // S392: the rig's yaw from where it points (getEulerAngles().y mirrors any yaw beyond ±90°; xrComfort.ts yawOf)
+    const fw = rig.forward, local = yaw - Math.atan2(-fw.x, -fw.z) * 180 / Math.PI, r = local * Math.PI / 180;
     panel.setLocalPosition(at.x - Math.sin(r) * 3, at.y - 0.64, at.z - Math.cos(r) * 3); panel.setLocalEulerAngles(90, local, 0);
   };
   xrRecentred.add(onRecentred);
