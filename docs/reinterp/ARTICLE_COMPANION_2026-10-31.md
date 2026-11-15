@@ -1070,6 +1070,58 @@ Codex's figures leave out:
   - Suno;
   - the ArenaAI trials.
 
+## 7v. The programmes' own computer analogy (his, 15 Nov 2026)
+
+*His words, on watching the 2016 tape: "The computer analogy is amazing finding here for this project — please add to
+the research document."*
+
+**What the archive says.** The programmes described the person as a computer, in their own teaching, between 1993 and
+1995. Three documents in the Love in Action / Exodus papers (Smithsonian NMAH.AC.1428) say it:
+
+1. **The floppy disc with no file.** Exodus booklet PR-02, *Are People Born Gay?* (© 1993; Box 2 Folder 12), printed
+   p. 19 (PDF p. 11). It opens "To use a computer analogy". A heterosexual woman has "a floppy disc that is titled
+   'woman'", so her experiences of being female can be stored "in that file". The lesbian "has no file to put it in",
+   so the experiences that "should affirm her get lost".
+2. **The same paragraph, taught in class.** Love in Action's *Steps Out* class manual (c. 1994; Box 13 Folder 1) repeats
+   it word for word: printed p. 27 by the OCR's page footer (not yet checked on the page image).
+3. **The mind as a computer, to be overwritten.** Love in Action's founding handbook, *Helping People Step Out of
+   Homosexuality* (revised edition © 1995; Box 2 Folder 13):
+   - PDF p. 139 (printed 131): "In the computer industry the saying is: garbage in/garbage out";
+   - PDF p. 140 (printed 132): the student adds "mountains of material to your memory tapes", and "this bulk of the
+     material" will eject the old desires;
+   - PDF p. 143 (printed 135), under "Interference – How It Works": "Our mind works like a computer; it is constantly
+     placing information into categories."
+
+**The procedure around it.** The "computer" lines sit inside the handbook's Chapter Thirteen, "Displacement: Putting
+Off / Putting On" (PDF pp. 136–141, printed 128–133). That chapter is a whole procedure for overwriting a person:
+- "Interference is the technical name for displacement": new material "pushes [the old] out of your mind";
+- the forgetting curve (about 80 percent lost in thirty days) is "a blessing" for someone leaving "the gay lifestyle";
+- television is "new morality propaganda", so garbage in, garbage out;
+- "What Do We Lose?": associations "triggered by music, clothing", and the scene;
+- "We forget things that are contrary to our opinions", so failure is blamed on the ambivalent.
+
+It also prints the procedure's own admission: "The more we fight against homosexual thoughts, the more intense they
+become." His 15 Nov note: "golden content for the 1997 video … use them". The v4 plan builds 1997's second half on this
+chapter (`TEACHING_TAPES_V4_PLAN_2026-11-15.md` §5).
+
+**Why it matters for this piece.** The piece's frame is conversion as a software update that fails: each era opens
+with an update notice, a EULA and an install (SCRIPT_UPDATE_v0.5 §1, in the repository from its first commit, 12 June
+2026). That frame was chosen as a metaphor from outside. The archive, read in November, shows the programmes used the
+same model from inside. In their teaching:
+- the person is storage;
+- identity is a file that is there or missing;
+- change means writing over the old material until its bulk pushes the old out.
+
+So the piece's "update" re-performs the programmes' own picture of the person. Its "failure" is what the record found.
+
+**Where it is used.** The 1997 tape teaches "Your mind works like a computer. Garbage in, garbage out" and "your
+memory tapes" (Part 5). The 2016 tape re-uses the 1993 floppy in a 2016 course, drawn as a Save dialog with no folder
+for "woman" (TEACHING_TAPES §2.4, §5.6). That shows the network re-issuing its old literature under a new look.
+
+**Do not overclaim.** These are three documents from one network, 1993–1995. They are not evidence that the analogy was
+widespread. The piece's metaphor came first, so the article should call this a convergence found after the fact, not
+a source the piece was built from.
+
 ## 8. What the article must not overclaim
 
 - **Headset and phone timing are not verified by instruments.** Every VR check here is an emulated headset in a desktop
