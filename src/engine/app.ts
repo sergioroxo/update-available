@@ -60,7 +60,7 @@ import reinterpStrings from '../../data/strings/reinterp.json';
  *  menu's string file because the recentre row beside it does too — one file
  *  for the frame voice, none of it on the monitor texture. */
 import menuStrings from '../../data/strings/gameMenu.json';
-import { controlsHint as mapControlsHint } from '../../data/strings/map.json';
+import { controlsHint as mapControlsHint, controlsHintTouch as mapControlsHintTouch } from '../../data/strings/map.json';
 import { mapState, nextHint } from '../witness/map';
 import { pulse as witnessPulse } from '../witness/pulse';
 import { createInstitution, INSTITUTION_IDS } from '../room/institution';
@@ -796,7 +796,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   // ⚑ S270b (his: "the menu tab low on your right, it's still like appearing, it doesn't leave") — said for 12 s, once
   let xrMenuHintLeft = 12;
   const xrHelperText = (t: string | null, dt: number): string | null => {
-    if (t !== mapControlsHint) return t;
+    if (t !== mapControlsHint && t !== mapControlsHintTouch) return t;
     if (xrMenuHintLeft <= 0) return null;
     if (!xr?.input.inputSources.some(source => !!source.hand)) return null;
     xrMenuHintLeft -= dt; return menuStrings.xrMenuHint;
