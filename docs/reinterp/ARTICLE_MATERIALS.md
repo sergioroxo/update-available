@@ -21,6 +21,7 @@ ARTICLE_COMPANION; this file only says where things are.*
 | `docs/reinterp/ARTICLE_EVIDENCE_LOG.md` | **his own notes** for the article (his file: Claude reads, never rewrites) | yes |
 | `docs/reinterp/ARTICLE_FIGURES_2026-10-31.md` | the 26 figures, captions and how they were made | yes |
 | `docs/reinterp/ABSTRACT_EVIDENCE_2026-07-30.md` | the abstract submission's figures and method check (30 Jul) | yes |
+| `docs/reinterp/FABLE_REVIEW_FINDINGS_2026-11-16.md` | **an outside review by Fable 5.2 (16 Nov)**: §3 is research notes for the article (does the build support the argument, three contributions to IDN, the method and what is missing, gaps in the companion and figures, a playtest design, which research states to show); §2 a director's pass with three proposals; checked by the orchestrator at the end. A different model from the builders, so itself method material (companion §6) | yes |
 | `"Claude outputs/PROJECT_TIMELINE_FOR_ARTICLE.md"` | production timeline from file dates and git, to 14 Sept (a chronology to pull from, not prose) | local |
 | `BUILD_LOG.md` | every session, one line each (S-numbers cited throughout) | yes |
 | `docs/reinterp/TRACKER.md`, `docs/reinterp/TODO.md` | the history, and what is still open | yes |
