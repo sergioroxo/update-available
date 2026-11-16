@@ -931,6 +931,8 @@ export function mountDebugPanel(os: DesktopOS, opts: DebugOpts = {}): void {
     'phone/tablet: turn the device to look (button at the bottom)<br>` = show/hide this panel';
   controls.appendChild(ctrls);
 
+  // ⚑ S396 — marked as the review panel, so the held-device clearance (src/frame/heldClearance.ts) and its probe leave it out
+  panel.dataset.debugUi = '1'; pill.dataset.debugUi = '1';
   document.body.appendChild(panel);
   document.body.appendChild(pill);
   document.body.appendChild(motionReadout);

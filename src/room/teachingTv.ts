@@ -51,7 +51,7 @@ import * as aero from '../desktop/theme/era3';
 import { drawLambyChar } from '../desktop/apps/lambyChar';
 import decisions from '../../data/strings/cx3b.json';
 import { holdVoice, releaseVoice, voiceHolder, setVoiceWanted } from '../state/voiceHold';
-import { buildLambySet, toLocal, hitBounds, keyAt, glassAt, GLASS, FACE, KEY_POINTS, KEY_ROW, SET_NAME, deckPixels, type LambySet, type SetKey, type DeckState } from './lambyVision';
+import { buildLambySet, toLocal, hitBounds, keyAt, glassAt, GLASS, FACE, KEY_POINTS, KEY_ROW, DISPLAY, SET_NAME, deckPixels, type LambySet, type SetKey, type DeckState } from './lambyVision';
 
 type Style = 'vcr' | 'dvd' | 'hedge';
 interface TvSpec { era: string; place: { pos: number[]; yaw: number }; style: Style; seat: number[] }
@@ -866,6 +866,15 @@ export class TeachingTv {
     }
   }
 
+  /** ⚑ S396 — the set's face as world rects (four corners each): the glass, the key row, the deck's display. The frame's
+   *  page layer keeps clear of them while it is held (app.ts, src/frame/heldClearance.ts) */
+  faceWorld(): pc.Vec3[][] {
+    const m = this.set.root.getWorldTransform();
+    const rect = (x0: number, x1: number, y0: number, y1: number, z: number): pc.Vec3[] =>
+      [[x0, y0], [x1, y0], [x1, y1], [x0, y1]].map(([x, y]) => m.transformPoint(new pc.Vec3(x, y, z)));
+    return [rect(GLASS.cx - GLASS.w / 2, GLASS.cx + GLASS.w / 2, GLASS.cy - GLASS.h / 2, GLASS.cy + GLASS.h / 2, GLASS.z),
+      rect(KEY_ROW.x0, KEY_ROW.x1, KEY_ROW.y0, KEY_ROW.y1, KEY_ROW.z), rect(DISPLAY.x0, DISPLAY.x1, DISPLAY.y0, DISPLAY.y1, DISPLAY.z)];
+  }
   /** where the walker and the probes aim: each key, a point on the bezel (the body), the glass's centre, in world metres */
   targets(): { keys: { id: SetKey; at: number[] }[]; body: number[]; glass: number[]; picTop: number[]; picBottom: number[]; keyRow: number[][] } {
     const m = this.set.root.getWorldTransform();
@@ -1293,6 +1302,11 @@ export class TeachingTvs {
   }
 
   redraw(): void { for (const id of TAPE_IDS) this.tvs[id].redraw(); }
+  /** ⚑ S396 — the held set's face (world rects), or null (app.ts keeps the page layer clear of it) */
+  heldFace(): pc.Vec3[][] | null {
+    const tv = TAPE_IDS.map((t) => this.tvs[t]).find((x) => x.held);
+    return tv ? tv.faceWorld() : null;
+  }
   /** ⚑ S396 (the MUTE fix) — called INSIDE a press's own handler (app.ts): the era's tape is primed once, before its moment
    *  plays it from the frame loop */
   prime(): void {

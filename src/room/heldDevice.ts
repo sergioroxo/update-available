@@ -93,6 +93,9 @@ export interface HeldDevice {
   touch(source: object, tip: pc.Vec3 | null): boolean;
   /** ⚑ S219 / W1-B7 — a keyboard key, while it is in hand: true when the game took it (so the camera does not) */
   key(k: GameKey): boolean;
+  /** ⚑ S396 — its face as world rects (four corners each): the glass, and a square round each button (its press radius).
+   *  The frame's page layer keeps clear of them while it is held (app.ts, src/frame/heldClearance.ts) */
+  faceWorld(): pc.Vec3[][];
 }
 
 const LIFT_SECONDS = 0.45;
@@ -317,6 +320,27 @@ export function buildHeldDevice(room: RoomHandles, spec: DeviceSpec): HeldDevice
     spec,
     get held() { return holding; },
     get aimedAt() { return aimedAt; },
+    faceWorld() {
+      const m = plane.getWorldTransform();
+      const glass = [[-0.5, -0.5], [0.5, -0.5], [0.5, 0.5], [-0.5, 0.5]].map(([x, z]) => m.transformPoint(new pc.Vec3(x, 0, z)));
+      const ax = new pc.Vec3(), az = new pc.Vec3();
+      m.getX(ax).normalize(); m.getZ(az).normalize();
+      const keys = (spec.buttons ?? []).map((b) => {
+        const c = worldOf(b.at);
+        return [[-1, -1], [1, -1], [1, 1], [-1, 1]].map(([i, j]) => c.clone().add(ax.clone().mulScalar(i * b.r)).add(az.clone().mulScalar(j * b.r)));
+      });
+      // the body too (a flip phone's keypad, the console's controllers: keys on the face even where the game takes them
+      //   through the glass or the keyboard) — its world box, as the eight corners
+      const box = new pc.BoundingBox(); let any = false;
+      wrap.forEach((e) => {
+        const r = (e as pc.Entity).render;
+        if (!r || !(e as pc.Entity).enabled) return;
+        for (const mi of r.meshInstances) { if (any) box.add(mi.aabb); else { box.copy(mi.aabb); any = true; } }
+      });
+      const body = any ? [-1, 1].flatMap((i) => [-1, 1].flatMap((j) => [-1, 1].map((k) => new pc.Vec3(
+        box.center.x + i * box.halfExtents.x, box.center.y + j * box.halfExtents.y, box.center.z + k * box.halfExtents.z)))) : [];
+      return body.length ? [glass, ...keys, body] : [glass, ...keys];
+    },
     touch(source, tip) {
       if (!tip || !app?.xr?.active || !holding || !wrap.enabled || !game) {
         touching.delete(source); return false;

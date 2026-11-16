@@ -128,7 +128,7 @@ function bodyGeometry(): Acc {
 const DECAL = { w: 1024, h: 384, strip: { x: 0, y: 0, w: 1024, h: 112 }, badge: { x: 0, y: 124, w: 448, h: 132 }, white: { x: 512, y: 140, w: 480, h: 112 },
   display: { x: 0, y: 266, w: 520, h: 113 } };
 /** the display's window on the deck, left of the slot (set metres) */
-const DISPLAY = { x0: -0.226, x1: -0.106, y0: 0.059, y1: 0.085, z: FRONT + 0.0065 };
+export const DISPLAY = { x0: -0.226, x1: -0.106, y0: 0.059, y1: 0.085, z: FRONT + 0.0065 };
 /** what the deck shows: `mode` lights its lamps, `word` and `time` are its display (the words are data: teaching_tv.json `deck`) */
 export interface DeckState { mode: 'off' | 'ready' | 'load' | 'play' | 'pause' | 'stop' | 'end' | 'error'; word: string; time: string }
 /** the body's one texel: the middle of a white block (every body vertex has this UV, so its derivative is nil: level 0, white) */

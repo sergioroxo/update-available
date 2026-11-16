@@ -1460,6 +1460,24 @@ async function main() {
         s = await press(t, s);
         continue;
       }
+      // ⚑ S396 — a tape playing in the hand is watched in ONE step: the walker waits on its clock until it stops (its end,
+      //   or a stall of 20 s), noting at most once every 10 s, so two minutes of tape no longer spend ~60 steps of the walk
+      if (s.tvSet.held && s.tvSet.playing && !s.tvSet.lifting && !s.tvSet.card && s.tvSet.t !== null) {
+        const tape = s.tvSet.tape, w = tvWatch[tape];
+        note('watching', { what: `the Lamby set is playing its ${tape} tape in the hand — watched to its end`, era: s.era, phase: s.phase, spine: s.spine });
+        let lastT = s.tvSet.t, still = 0, lastNote = Date.now();
+        const until = Date.now() + ((s.tvSet.duration ?? 180) + 60) * 1000;
+        while (Date.now() < until) {
+          await wait(2000);
+          s = await probe();
+          if (!s.tvSet || !s.tvSet.held || !s.tvSet.playing || s.tvSet.tape !== tape) break;
+          if (s.tvSet.t > lastT + 0.05) { lastT = s.tvSet.t; still = 0; if (w) w.furthest = Math.max(w.furthest, lastT); }
+          else if (++still >= 10) break;   // its clock has stood still for 20 s: a stall, handled as before
+          if (Date.now() - lastNote >= 10000) { lastNote = Date.now(); note('watching', { what: `the ${tape} tape at ${lastT.toFixed(0)} s`, era: s.era, phase: s.phase, spine: s.spine }); }
+        }
+        stalls = 0;
+        continue;
+      }
       if (stalls < stallCap(s) + 40) {
         stalls += 1;
         if (stalls === 1 || stalls % 10 === 0) note('watching', { what: 'the Lamby set ' + (s.tvSet.card ? 'is being called (Lamby\'s line in view)' : s.tvSet.playing ? 'is playing its tape in the hand' : 'is coming close or going back') + ' — watching, not pressing past it', era: s.era, phase: s.phase, spine: s.spine });
