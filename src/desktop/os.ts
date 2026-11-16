@@ -2800,7 +2800,17 @@ export class DesktopOS {
       case 'boot': this.drawBoot(); break;
       case 'splash': this.drawSplash(W, H); break;
       case 'name': this.drawName(W, H); break;
-      case 'desktop': this.drawDesktop(W, H); break;
+      case 'desktop':
+        this.drawDesktop(W, H);
+        /**
+         * ⚑ S398 (UiB job 29 A2) — AN ICON UNDER A WINDOW IS NOT OFFERED. A press on a desktop icon that a window is
+         * drawn over never reaches it (`hitAt` skips an icon wherever a frame lies on top), yet the icon stayed in the
+         * published hits as live: the 16 Nov walk pressed the IRC and Family Form icons eleven times under the IRC
+         * window during 1997's intermission (steps 124–145), each press dead. The same rule, at the icon's centre,
+         * now decides what is published. (The frames are known only once the whole desktop is drawn: hence here.)
+         */
+        this.hits = this.hits.filter((h) => !(h.id.startsWith('icon-') && ui.topFrameAt(h.x + h.w / 2, h.y + h.h / 2)));
+        break;
       case 'left': this.drawLeft(W, H); break;
       case 'r_dark': ui.px(this.ctx, 0, 0, W, H, ERA1.black); break; // O1: monitor off
       case 'r_boot': this.drawReinterpBoot(W, H); break;             // O2
@@ -3618,14 +3628,8 @@ export class DesktopOS {
     x: number, y: number, label: string, enabled: boolean, id: string, unread = false
   ): void {
     if (enabled) this.iconsDrawn.push({ id, label });
-    // ⚑ S398 (UiB job 29 A2) — an icon the 1997 browser is drawn over is not offered: the browser's window spans the
-    //   whole desktop (web1997.ts WX 4 … 508) and takes every press while it is open (handleClick asks it before the
-    //   icons), so an icon under it was published as live and could never be pressed. The 16 Nov walk pressed the
-    //   IRC and Family Form icons eleven times there, during the intermission before the form (steps 124–145).
-    this.drawIconInto(this.ctx, this.iconsCovered() ? [] : this.hits, x, y, label, id, enabled, unread);
+    this.drawIconInto(this.ctx, this.hits, x, y, label, id, enabled, unread);
   }
-  /** S398: the desktop's icons are under a window that owns every press (the 1997 browser) */
-  private iconsCovered(): boolean { return this.desktopEra === 'e1' && !!this.web?.open; }
 
   /** ⚑ S87 — `drawIcon`'s geometry, into any context/hit table; see
    *  `drawSendOfferInto`'s comment for why this exists. Label-width fitting

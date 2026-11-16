@@ -2412,7 +2412,7 @@
    {
     "id": "e_signMat",
     "pos": [
-     5.658,
+     5.657,
      2.0,
      0.88
     ],
@@ -2422,7 +2422,8 @@
      0.006
     ],
     "color": "#F5F4ED",
-    "yaw": 270
+    "yaw": 270,
+    "_docS398": "⚑ S398 (UiB job 29 A1): 1 mm proud of the sign (was x 5.658, its face exactly flush with e_sign's at 5.655). Two coplanar faces 9.8 m from the eye in the 2016 → 2026 flight: which one won was decided by float rounding, so the white mat and the blue sign swapped whenever the room was batched or torn down (the old build at each cascade's start and end, and the S398 bands mid-cascade: tools/s396-drawcalls-probe.mjs found it as a 512-pixel shape). The mat is meant to sit on the sign; now it always does."
    },
    {
     "id": "e_pinboard",
