@@ -85,6 +85,7 @@ import { mountXrInput, type XrInput } from '../frame/xrInput';
 import { buildRestoreEntrance, type RestoreEntrance } from '../room/restoreEntrance';
 import { FRAME } from '../desktop/theme/chrome';
 import { TeachingTv, TeachingTvs, TV_MOMENT } from '../room/teachingTv';
+import { mountHeldClearance, type HeldClearance, type ScreenRect } from '../frame/heldClearance';
 import { mountSeatCull } from '../room/seatCull';
 import { setVertexColourMerge, vertexColourMergeOn } from '../room/batching';
 import { TAPES } from '../narrative/teachingTapes';
@@ -812,6 +813,28 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   function anythingHeld(): boolean {
     return !!(devices && cluster && devices.held(cluster.era)) || !!teachingTvs?.holding || !!era3Devices?.phoneInHand || carryingPhone || carryingVisor;
   }
+  /** ⚑ S396 — the held device's face on the screen (CSS px): its glass and its keys — a Lamby set (glass, key row, deck's
+   *  display), a game (glass, a square round each button), Vera's phone (its glass). Flat screens only (the headset keeps
+   *  everything down while anything is held: xrFrame.setHeld) */
+  function heldFaceScreen(): ScreenRect[] | null {
+    if (!anythingHeld() || !camera.camera) return null;
+    const worlds: pc.Vec3[][] = [];
+    const tv = teachingTvs?.heldFace(); if (tv) worlds.push(...tv);
+    const dv = devices && cluster ? devices.faceWorld(cluster.era) : null; if (dv) worlds.push(...dv);
+    const ph = era3Devices?.phoneInHand ? era3Devices.phoneScreen : null;
+    if (ph) { const m = ph.getWorldTransform(); worlds.push([[-0.5, -0.5], [0.5, -0.5], [0.5, 0.5], [-0.5, 0.5]].map(([x, z]) => m.transformPoint(new pc.Vec3(x, 0, z)))); }
+    const out: ScreenRect[] = [];
+    // (in front of the eye by the view direction: worldToScreen's z is clip-space depth, negative for a near point in view)
+    const eye = camera.getPosition(), fwd = camera.forward;
+    for (const quad of worlds) {
+      if (quad.some((p) => new pc.Vec3().sub2(p, eye).dot(fwd) <= 0)) continue;
+      const ps = quad.map((p) => camera.camera!.worldToScreen(p, new pc.Vec3()));
+      out.push({ x0: Math.min(...ps.map((p) => p.x)), y0: Math.min(...ps.map((p) => p.y)), x1: Math.max(...ps.map((p) => p.x)), y1: Math.max(...ps.map((p) => p.y)) });
+    }
+    return out.length ? out : null;
+  }
+  /** ⚑ S396 — while anything is held, nothing of the page layer covers it (src/frame/heldClearance.ts) */
+  let heldClearance: HeldClearance | null = null;
   const grabHand = new pc.Entity('logical-grip');
   function poseGrabHand(ray: { p0: pc.Vec3; p1: pc.Vec3 }): void {
     grabHand.setPosition(ray.p0); grabHand.lookAt(ray.p1);
@@ -1063,6 +1086,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       canvases: () => teachingTvs?.canvases() ?? {},
       uploads: () => (window as { __uploads?: number }).__uploads ?? 0,
       arm: (tape: string) => { tvArmed.add(tape); },
+      heldClear: () => ({ clearance: heldClearance?.debug() ?? null, face: heldFaceScreen() }),   // S396: the probe
       noPrime: (on: boolean) => { TeachingTv.noPrime = on; }   // S396: the probe's control run (the MUTE fix off)
     });
     (window as { __consoleProbe?: unknown }).__consoleProbe = () => consoleSessionInternal.probe();
@@ -4576,6 +4600,14 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     // ⚑ P8 A10 (headset B: "the message appears in front of the console"; "impossible to play") — the hint plate hangs
     //   exactly where a held device is held, so while a device is in the hand the plate stays down
     const deviceInHand = anythingHeld();   // S394: a game, a Lamby set, Vera's phone, the visor
+    // ⚑ S396 — on a flat screen the page layer's strips (the sound captions, the reminder, the call, the hints) move off the
+    //   held device's glass and keys, and come back when it is put down
+    if (!heldClearance) heldClearance = mountHeldClearance(() => [
+      { id: 'caption-strip', el: tapeCaption }, { id: 'call', el: call?.el ?? null }, { id: 'helper', el: document.getElementById('reinterp-helper') },
+      { id: 'move-hint', el: moveHint }, { id: 'year', el: timePassing?.el ?? null }, { id: 'off-hint', el: offHint }, { id: 'desk-skip', el: deskSkipNote },
+      // the frame's own buttons too, where they would sit over it (the look button, the menu, the turn)
+      { id: 'look-button', el: motionBtn }, { id: 'menu', el: document.getElementById('reinterp-menu-glyph') }, { id: 'flip', el: document.getElementById('flip') }]);
+    heldClearance.tick(!xr?.active && deviceInHand ? heldFaceScreen() : null);
     // ⚑ S394 fix (his: "in Headset the white bar is in front of the buttons") — while anything is held before the eyes, the
     //   frame's plate and every notice stay down (a notice keeps its time; the table offer waits until it is put down)
     if (xr?.active) xrFrame?.setHeld(deviceInHand);

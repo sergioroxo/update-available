@@ -170,6 +170,8 @@ export interface Devices {
   key(k: GameKey, era: string): boolean;
   /** P8 A10 — is this era's device in the hand right now */
   held(era: string): boolean;
+  /** ⚑ S396 — this era's device's face (world rects) while it is held, else null */
+  faceWorld(era: string): pc.Vec3[][] | null;
 }
 
 export function buildDevices(room: RoomHandles): Devices {
@@ -227,7 +229,8 @@ export function buildDevices(room: RoomHandles): Devices {
     take(era, cam) { current(era)?.take(cam); },
     press(ray, era, cam) { return current(era)?.press(ray, cam) ?? false; },
     key(k, era) { return current(era)?.key(k) ?? false; },
-    held(era) { return !!current(era)?.held; }
+    held(era) { return !!current(era)?.held; },
+    faceWorld(era) { const d = current(era); return d?.held ? d.faceWorld() : null; }
   };
 }
 
