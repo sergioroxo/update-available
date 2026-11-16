@@ -249,6 +249,8 @@ function maltaAlertHold(): number { const R = vera.removals; return Math.max(9, 
 /** ⚑ S368 / F03 — the alert fires once this many of the group's Malta messages have landed: it says the group "is discussing",
  *  so two members (Bea, then Susan) have spoken first. Was 1 (Bea alone). */
 const MALTA_ALERT_AFTER = 4;
+/** ⚑ S399 — the room's light lifts once the news link has landed (s3_maiden.json `news[1]`, Bea's link) */
+const MALTA_LIFT_AFTER = 2;
 /** ⚑ S368 / F01·F02 (his screenshot: "Return the fa…" under the phone) — THE HANDSET WINDOW IS ONE FIXED WIDTH, docked at the
  *  right, and the board's layout RESERVES its column: nothing of the board is drawn under it. It used to be 188 px and grow to
  *  280 over the board (the cascade's "brought forward", and its title bar's own press). 200 × the 310 px phone draws it at
@@ -1010,6 +1012,11 @@ export class GraceQueueLite {
    *  Bea's FIRST Malta message lands, as a pop-in over whatever is on the desk (the Handset Window included), with the platform's
    *  chime. One voice: if another system pop-in is up it waits for it, and while it is up the phone's news waits too. */
   private updateMaltaAlert(dt: number): void {
+    // ⚑ S399 (job 29 B1: "Malta and the light lifting" is a kept beat) — THE LIFT, re-attached. Its only call on a
+    //   visitor's path went with phoneE3's `showCard` on 7 Nov (fcc2bf5c), so since then the room lifted only by debug
+    //   beat. It answers the law again as S64 had it, on the news link (Bea's second message), whichever way she reads
+    //   it: the beat holds LIFT_DELAY_SECONDS, then the room's light lifts, before the platform's alert.
+    if (!this.liftFired && this.liftT < 0 && this.phone.newsLanded >= MALTA_LIFT_AFTER) { this.liftT = 0; this.bump(); }
     if (this.maltaAlertT < 0 && !this.maltaAlertDone && this.phone.newsLanded >= MALTA_ALERT_AFTER && !this.kitPopin && !this.storyOffer && !this.pauseOpen) {
       this.maltaAlertT = 0; this.phone.newsPaused = true; playOnce('lambient_chime.mp3'); this.bump();
     }
