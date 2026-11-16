@@ -15,14 +15,20 @@
  *  · THE MARGIN AND THE CAPTIONS ARE INSIDE THE SET'S FRAME: the glass is 4:3, the picture its upper three quarters (a 4:3
  *    tape pillarboxed, a 16:9 disc full width), and the bar under it carries the caption (the spoken line, or the large type
  *    on the picture) and the piece's margin (v5: `head`, then `text`) — sized to the picture, never a panel larger than it.
- *    The record's panel of S392 is gone (his: "a subtitles text 3 times bigger than the video").
+ *    The record's panel of S392 is gone (his: "a subtitles text 3 times bigger than the video"). ⚑ S396: a v6 tape carries its
+ *    own bar (subtitles and the [n] line burned in) and fills the whole glass; the set draws no bar over it.
+ *  · ⚑ S396 — NOTHING OF THE PLAYER'S ON THE GLASS (his 16 Nov: "There is a play button on the screen for a TV that already
+ *    has a play button, that is unnecessary"): no Play on, no Pause sign, no clock, no chapter list, no sound chip. The keys
+ *    (⏻ ⏮ ▶ ❚❚ ⏭ ⏏) are the controls; the set shows its state on itself — the lit ▶ or ❚❚, and the deck's display under the
+ *    keys (the word, the counter). The whole glass still plays and pauses.
  *  · THE MOMENT, NO TURNS AND NO FADES (B3): once per room, at the era's beat, Lamby's line appears IN VIEW wherever the
  *    visitor is looking (`TvCall`, a card placed in the current view, in the headset too — never behind them); then the set
- *    comes to them and plays from its start to End of Part 1, and waits there, held, ▶ ready. Nothing turns the visitor:
+ *    comes to them and plays from its start (⚑ S396, his 16 Nov "Play it all": to its end — there is no Part 1 stop; setting
+ *    it down, or the story moving on, pauses it where it is, and ▶ later goes on from that second). Nothing turns the visitor:
  *    job 26's conducted turns (1997's two of 22 s) and the headset's cut under the dissolve are gone. Lamby's × closes the
- *    balloon and the set still comes (the system forces; Lamby only speaks). After a breath on the end card the floor is
+ *    balloon and the set still comes (the system forces; Lamby only speaks). After a breath at the end (or a pause) the floor is
  *    free again; the next voice of the story sends the set back to its place, paused where it was.
- *  · KEPT FROM JOB 26: option A (start → End of Part 1), the live margin and captions, the era sites' tape resuming from the
+ *  · KEPT FROM JOB 26: the live margin and captions (v4/v5), the era sites' tape resuming from the
  *    set's place (one timeline, memory only), the self-pause when the story speaks, the stop at the update, the uploads only
  *    while a new picture exists or a line changes.
  *
@@ -31,7 +37,7 @@
 import * as pc from 'playcanvas';
 import tvData from '../../data/room/teaching_tvs.json';
 import words from '../../data/strings/teaching_tv.json';
-import { TAPES, TAPE_IDS, TAPE_ERA, placeOf, chapterAt, marginAt, cueAt, screenAt, clock,
+import { TAPES, TAPE_IDS, TAPE_ERA, placeOf, chapterAt, marginAt, cueAt, screenAt, clock, barInPicture,
   type TapeId, type Chapter, type TapeData } from '../narrative/teachingTapes';
 import { makeScreenTexture, makeScreenEntity } from '../engine/screenTexture';
 import { adoptOneShot, roomBed } from '../audio/tapeAudio';
@@ -45,7 +51,7 @@ import * as aero from '../desktop/theme/era3';
 import { drawLambyChar } from '../desktop/apps/lambyChar';
 import decisions from '../../data/strings/cx3b.json';
 import { holdVoice, releaseVoice, voiceHolder, setVoiceWanted } from '../state/voiceHold';
-import { buildLambySet, toLocal, hitBounds, keyAt, glassAt, GLASS, FACE, KEY_POINTS, KEY_ROW, SET_NAME, type LambySet, type SetKey } from './lambyVision';
+import { buildLambySet, toLocal, hitBounds, keyAt, glassAt, GLASS, FACE, KEY_POINTS, KEY_ROW, SET_NAME, deckPixels, type LambySet, type SetKey, type DeckState } from './lambyVision';
 
 type Style = 'vcr' | 'dvd' | 'hedge';
 interface TvSpec { era: string; place: { pos: number[]; yaw: number }; style: Style; seat: number[] }
@@ -57,9 +63,10 @@ const MOMENT = (tvData as unknown as { moment: { callHold: number; dismissBreath
 /** the moment's clock (data/room/teaching_tvs.json `moment`), for the engine's triggers */
 export const TV_MOMENT = MOMENT;
 const W = words as unknown as {
-  tapes: Record<TapeId, { leader: string[]; listHead: string; osd?: Record<string, string>; dadLine?: string; dadLink?: string; dadToast?: string }>;
-  player: Record<string, string>; lamby: Record<string, string> & { call: Record<string, string> } };
+  tapes: Record<TapeId, { leader: string[]; dadLine?: string; dadLink?: string; dadToast?: string }>;
+  player: Record<string, string>; deck: Record<Exclude<DeckState['mode'], 'off'> | 'mute', string>; lamby: Record<string, string> & { call: Record<string, string> } };
 const P = W.player;
+const DECK = W.deck;
 const D2R = Math.PI / 180;
 
 /** the glass's canvas: 4:3; the picture above, the bar (captions, the margin) under it — at least a quarter of the glass
@@ -103,19 +110,14 @@ type BarLayout = { cap: BarBlock | null; mar: (BarBlock & { head: string }) | nu
 const MARGIN_FACE = `"${VENDORED.ui2026}", ${FACES.e4.family}`;
 
 export interface Hit { id: string; x: number; y: number; w: number; h: number }
-/** `partOne` = stopped by itself on the end card of Part 1 (option A); `ended` = at the tape's own end */
-export type TvState = 'off' | 'leader' | 'loading' | 'playing' | 'paused' | 'partOne' | 'ended' | 'stopped' | 'error';
+/** `ended` = at the tape's own end. ⚑ S396 — his 16 Nov "Play it all": there is no Part 1 stop any more (the `partOne` state
+ *  is gone); the tape plays to its end unless the visitor pauses it, sets it down or the story moves on */
+export type TvState = 'off' | 'leader' | 'loading' | 'playing' | 'paused' | 'ended' | 'stopped' | 'error';
 /** where the set is: in its place, coming to the eye, held, or going back */
 export type Pose = 'rest' | 'lifting' | 'held' | 'returning';
 /** what a ray is on: the resting set ('pick'), or, held, a key, the glass, the body */
 export type SetAim = 'pick' | SetKey | 'glass' | 'body';
 type Ray = { p0: pc.Vec3; p1: pc.Vec3 };
-
-/** a palette colour at an alpha (the colour is the palette's own; only its opacity is set) */
-function hexA(hex: string, a: number): string {
-  const n = parseInt(hex.slice(1), 16);
-  return `rgba(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}, ${a})`;
-}
 
 /** each era's player in its own colours and face (palettes from src/desktop/theme/ only) */
 const LOOK: Record<Style, { face: string; bg: string; ink: string; dim: string; accent: string; panel: string; blue: string; weight: string }> = {
@@ -189,13 +191,20 @@ export class TeachingTv {
   private lastFrame = -1;
   private dirty = true;
   private barKey = '';
-  /** the tape's second last frame, to see it CROSS the end of Part 1 while playing (a seek past it does not stop it) */
-  private prevT = -1;
   /** the visitor paused it themselves (not the menu, not the story) */
   userPaused = false;
   /** play() was refused with sound and it plays muted: a press on the glass gives the sound (a gesture) */
   needsSound = false;
-  private stopNote: string | null = null;
+  /** ⏏ or the era's update stopped it (not a pause): the glass goes blank, the deck reads STOP */
+  private stopping = false;
+  /** ⚑ S396 (the MUTE fix) — primed by the visitor's press: when, and whether inside the press's user activation (the probe) */
+  primed: { at: number; active: boolean | null } | null = null;
+  /** the priming's own pause event is not the visitor's (it must not move the place or mark the tape started) */
+  private priming = false;
+  /** the first time the tape actually played: when, and whether with its sound (the probe) */
+  playStart: { at: number; muted: boolean; needsSound: boolean } | null = null;
+  /** review aid (?debug=1, the probe's control run): no priming */
+  static noPrime = false;
   private inEra = false;
   /** draws (each is one upload of the glass), for the probe */
   draws = 0;
@@ -298,6 +307,8 @@ export class TeachingTv {
   /** the bar's height for this tape: the tallest moment at its sizes (wrapped first), within `bar.baseH`…`bar.maxH` */
   private sizeBar(): void {
     if (!this.ctx) return;
+    // v6 (S395): the bar is in the picture; the picture is the whole glass
+    if (barInPicture(this.data)) { this.barH = 0; this.barWorst = { key: '', need: 0, fits: true }; return; }
     let need = 0, key = '';
     for (const m of this.barMoments()) {
       const L = this.fitBar(m, BAR.maxH);
@@ -313,7 +324,7 @@ export class TeachingTv {
     if (on === this.inEra) return;
     this.inEra = on;
     if (!on) {
-      if (this.state !== 'off') this.stop(null);
+      if (this.state !== 'off') this.stop();
       this.snapHome();
     }
     this.set.root.enabled = on;
@@ -329,12 +340,20 @@ export class TeachingTv {
     v.setAttribute('playsinline', ''); v.setAttribute('webkit-playsinline', ''); v.setAttribute('disablepictureinpicture', '');
     v.crossOrigin = null;
     const mine = (): boolean => this.video === v;
-    v.addEventListener('playing', () => { if (!mine()) return; this.state = 'playing'; this.userPaused = false; this.stopNote = null; this.dirty = true; });
+    v.addEventListener('playing', () => {
+      // (a 'playing' queued before a pause arrives after it — the priming's play → pause does exactly that: stale, ignored)
+      if (!mine() || v.paused) return;
+      this.state = 'playing'; this.userPaused = false; this.stopping = false; this.dirty = true;
+      if (!this.playStart) this.playStart = { at: performance.now(), muted: v.muted, needsSound: this.needsSound };
+    });
     v.addEventListener('waiting', () => { if (mine() && !v.paused) { this.state = 'loading'; this.dirty = true; } });
     v.addEventListener('pause', () => {
       if (!mine() || v.ended) return;
+      // the priming's own pause (the MUTE fix): nothing happened — only within a moment of it, so a pause event that never
+      //   came (a refused play) cannot swallow the visitor's next one
+      if (this.priming) { this.priming = false; if (this.primed && performance.now() - this.primed.at < 1500) return; }
       this.note();
-      if (this.state === 'playing' || this.state === 'loading') this.state = this.stopNote ? 'stopped' : 'paused';
+      if (this.state === 'playing' || this.state === 'loading') this.state = this.stopping ? 'stopped' : 'paused';
       this.wantPlay = false; this.dirty = true;
     });
     v.addEventListener('ended', () => { if (mine()) this.ended(); });
@@ -343,7 +362,7 @@ export class TeachingTv {
       if (!mine()) return;
       if (this.pendingSeek !== null) { v.currentTime = Math.min(this.pendingSeek, Math.max(0, (v.duration || 0) - 0.05)); this.pendingSeek = null; }
     });
-    v.addEventListener('seeked', () => { if (mine()) { this.lastFrame = -1; this.prevT = v.currentTime; this.dirty = true; } });
+    v.addEventListener('seeked', () => { if (mine()) { this.lastFrame = -1; this.dirty = true; } });
     v.addEventListener('loadeddata', () => { if (mine()) this.dirty = true; });
     v.addEventListener('timeupdate', () => { if (mine() && !v.paused) this.note(); });
     this.video = v;
@@ -367,15 +386,13 @@ export class TeachingTv {
     } else if (Math.abs(v.currentTime - t) > 0.05) {
       if (v.readyState >= 1) v.currentTime = t; else this.pendingSeek = t;
     }
-    this.prevT = t;
-    if (t >= this.data.partOneEnd) placeOf(this.tape).partOneSeen = true;
     this.lastFrame = -1; this.dirty = true;
   }
   play(t: number): void {
     this.load(t);
     const v = this.element();
     adoptOneShot(v, `teaching_${this.tape}.mp4`, 'film');
-    this.wantPlay = true; this.userPaused = false; this.stopNote = null;
+    this.wantPlay = true; this.userPaused = false; this.stopping = false;
     if (this.state !== 'playing') this.state = 'loading';
     placeOf(this.tape).started = true;
     this.sync();
@@ -394,21 +411,43 @@ export class TeachingTv {
   pause(by: 'visitor' | 'story' | 'menu' = 'visitor'): void {
     const v = this.video;
     if (by === 'visitor') this.userPaused = true;
-    if (by === 'story') this.stopNote = null;
+    if (by === 'story') this.stopping = false;
     if (v && !v.paused) v.pause();
     this.wantPlay = false;
     if (this.state === 'loading') this.state = 'paused';
     this.dirty = true;
   }
-  /** ⏏ — or the era's update: paused, the place kept, the stopped screen */
-  stop(note: string | null): void {
+  /** ⏏ — or the era's update: paused, the place kept, the glass blank (▶ goes on from the same second) */
+  stop(): void {
     const v = this.video;
-    this.stopNote = note ?? P.ejected;
+    this.stopping = true;
     if (v && !v.paused) v.pause();
     this.note();
     this.wantPlay = false;
     if (this.state !== 'off') this.state = 'stopped';
     this.dirty = true;
+  }
+  /**
+   * ⚑ S396 — THE MUTE FIX. WebKit (Safari on the iPhone, the iPad, the Mac; the Vision Pro) lets an element play with its
+   * sound only when play() is called inside a press, and the moment's own play() runs from the frame loop when the set
+   * arrives — so on an iPhone the tape would start muted (the deck's MUTE, ▶ for the sound). The visitor's first press in
+   * the era therefore plays and pauses this element at once, unmuted (app.ts → TeachingTvs.prime, inside the press's own
+   * handler): the element is then one the visitor has played, and the moment's play() keeps its sound. Nothing is heard:
+   * it is paused in the same task, before a sample is rendered. If a browser still refuses, the deck's MUTE stays the
+   * fallback. ⚑ Probed headless (tools/s394-lamby-tv-probe.mjs `--webkit-lock`, an emulation of WebKit's rule); not yet on
+   * a Safari device.
+   */
+  prime(): void {
+    if (this.primed || TeachingTv.noPrime || this.playing || this.state === 'off' && !this.inEra) return;
+    const v = this.element();
+    if (!this.loaded) this.preload();
+    this.priming = true;
+    v.muted = false;
+    const ua = (navigator as Navigator & { userActivation?: { isActive: boolean } }).userActivation;
+    this.primed = { at: performance.now(), active: ua ? ua.isActive : null };
+    const attempt = v.play();
+    v.pause();
+    attempt?.catch(() => { /* interrupted by the pause, or refused: either way nothing played */ });
   }
   /** the leader: the set is on, the tape's label on the glass, before it rolls */
   showLeader(): void { this.state = 'leader'; this.dirty = true; this.sync(); this.preload(); }
@@ -423,16 +462,7 @@ export class TeachingTv {
     p.t = this.data.duration; p.partOneSeen = true;
     this.state = 'ended'; this.wantPlay = false; this.dirty = true;
   }
-  /** ⚑ OPTION A — the tape crossed the end of Part 1 while playing: it stops by itself on the programme's end card */
-  private stopAtPartOne(): void {
-    const v = this.video, p = placeOf(this.tape);
-    p.partOneSeen = true;
-    if (v && !v.paused) v.pause();
-    if (v && Math.abs(v.currentTime - this.data.partOneEnd) > 0.1) v.currentTime = this.data.partOneEnd;
-    p.t = this.data.partOneEnd;
-    this.wantPlay = false; this.userPaused = false;
-    this.state = 'partOne'; this.dirty = true;
-  }
+  /** the moment has let go of the set (the name is S392's; ⚑ S396 there is no Part 1 stop: Lamby's later offer waits on this) */
   markPartOneSeen(): void { placeOf(this.tape).partOneSeen = true; }
 
   // ── the bringing close (heldDevice's grammar) ───────────────────────────────
@@ -446,7 +476,8 @@ export class TeachingTv {
       // the PICTURE `pictureDeg` tall at `xrDist` (Meta's 0.5 m floor for anything looked at for long; nearer than the desk)
       ({ d, k } = xrScale());
       // the picture's centre on the line of sight (the bar under it, the keys under that)
-      anchor = new pc.Vec3(GLASS.cx, GLASS.cy + GLASS.h * (1 - PIC_BASE / LH) / 2, GLASS.z);
+      //   (v6: the picture is the whole glass, its bar burned in — the glass's centre; the set's size is the same)
+      anchor = new pc.Vec3(GLASS.cx, barInPicture(this.data) ? GLASS.cy : GLASS.cy + GLASS.h * (1 - PIC_BASE / LH) / 2, GLASS.z);
     } else {
       // the FACE (the glass's top to the keys' foot) fills `flatFill` of the view's height (a phone: `phoneFill`, the glass, the
       //   bar and the keys filling it — ⚑ S394 fix: its capitals at ≥ 12 px), never more than `flatMaxW` of its width
@@ -548,11 +579,12 @@ export class TeachingTv {
     if (id === 'tv-pause') { if (this.playing) this.pause('visitor'); return; }
     if (id === 'tv-play') {
       if (this.state === 'ended' || this.state === 'leader') { this.play(0); return; }
-      if (this.playing) return;
+      // ⚑ S396 — playing muted (a browser that wanted a press for the sound): ▶ is that press (the deck reads MUTE)
+      if (this.playing) { if (this.needsSound) this.pressId('tv-sound'); return; }
       this.play(v && this.loaded ? v.currentTime : p.t);   // from where it stopped — never a jump
       return;
     }
-    if (id === 'tv-eject') { this.stop(P.ejected); return; }
+    if (id === 'tv-eject') { this.stop(); return; }
     if (id === 'tv-prev' || id === 'tv-next') {
       // ⚑ his "this was a DVD": during the disc's trailers only pause is offered (no skip)
       if (this.inTrailer) return;
@@ -563,7 +595,7 @@ export class TeachingTv {
       if (to >= d.duration - 0.05) { if (v) v.currentTime = d.duration; this.ended(); return; }
       const resume = this.state === 'playing' || this.state === 'loading';
       if (resume) this.play(to);
-      else { this.load(to); if (this.state === 'ended' || this.state === 'stopped' || this.state === 'partOne' || this.state === 'leader') this.state = 'paused'; p.t = to; this.sync(); }
+      else { this.load(to); if (this.state === 'ended' || this.state === 'stopped' || this.state === 'leader') this.state = 'paused'; p.t = to; this.sync(); }
     }
   }
 
@@ -571,13 +603,10 @@ export class TeachingTv {
   update(dt = 1 / 60): void {
     this.tickLift(dt);
     if (this.litFor > 0) { this.litFor -= dt; if (this.litFor <= 0) this.set.light(null); }
+    // ⚑ S396 — the deck shows the state (a repaint only when its lamps or words change: the counter's second)
+    if (this.set.root.enabled) this.set.deck(this.deckState());
     if (this.state === 'off' || !this.entity.enabled) return;
     const v = this.video;
-    if (v && this.loaded && this.state === 'playing' && !v.paused) {
-      const t = v.currentTime, P1 = this.data.partOneEnd;
-      if (!placeOf(this.tape).partOneSeen && this.prevT >= 0 && this.prevT < P1 && t >= P1 && t - this.prevT < 1.5) this.stopAtPartOne();
-      this.prevT = t;
-    }
     // a new picture: counted in thirtieths of a second (the tapes are 30 frames a second), so the glass is drawn and uploaded
     //   once per frame of the tape, not once per frame of the room
     const tick = v ? Math.floor(v.currentTime * 30) : -1;
@@ -606,12 +635,12 @@ export class TeachingTv {
    * second copy also crowded the bar and lost its last lines: the probe's first 2016 v5 frame).
    */
   private barLines(): BarLines {
-    const live = this.loaded && (this.state === 'playing' || this.state === 'loading' || this.state === 'paused' || this.state === 'partOne');
-    if (!live) return { caption: null, margin: null };
+    const live = this.loaded && (this.state === 'playing' || this.state === 'loading' || this.state === 'paused');
+    if (!live || barInPicture(this.data)) return { caption: null, margin: null };
     const t = this.time;
     // a spoken line that only reads out the type on the picture is not said twice; one that says something else is captioned
     const big = screenAt(this.data, Math.min(t, this.data.duration - 0.01));
-    const said = this.state !== 'partOne' ? cueAt(this.data, t) : null;
+    const said = cueAt(this.data, t);
     const norm = (x: string): string => x.toLowerCase().replace(/[^\p{L}\p{N}]+/gu, ' ').trim();
     const cue = said && big && norm(big.text).includes(norm(said.text)) ? null : said;
     const m = marginAt(this.data, t);
@@ -626,7 +655,6 @@ export class TeachingTv {
   private draw(lines: BarLines): void {
     const c = this.ctx; if (!c) return;
     this.draws++;
-    const L = this.look;
     this.hits = [];
     c.save();
     c.fillStyle = ERA1.black; c.fillRect(0, 0, LW, LH);
@@ -638,25 +666,15 @@ export class TeachingTv {
       const w = Math.round(v.videoWidth * s), h = Math.round(v.videoHeight * s);
       c.drawImage(v, PIC.x + Math.round((PIC.w - w) / 2), PIC.y + Math.round((PIC.h - h) / 2), w, h);
     }
+    // ⚑ S396 — his 16 Nov "There is a play button on the screen for a TV that already has a play button, that is unnecessary":
+    //   nothing of the player's is drawn on the glass (no Play on, no Pause sign, no clock, no chapter list, no sound chip). The
+    //   picture is the tape's; the state is on the set (the lit ▶ or ❚❚, the deck's display). The leader is the tape's own label,
+    //   ⏏ leaves the glass blank, and a tape that will not play says so.
     if (this.state === 'leader' || (!hasFrame && (this.state === 'loading' || this.state === 'playing'))) this.drawLeader();
-    switch (this.state) {
-      case 'playing': case 'loading': this.drawPlaying(); break;
-      case 'paused': this.drawPaused(false); break;
-      case 'partOne': this.drawPaused(true); break;
-      case 'ended': this.drawEnded(); break;
-      case 'stopped': this.drawStopped(); break;
-      case 'error': this.drawError(); break;
-      default: break;
-    }
-    if (this.needsSound && (this.state === 'playing' || this.state === 'loading')) {
-      c.font = this.font(30); const tw = Math.ceil(c.measureText(P.sound).width) + 36;
-      const r = { x: LW - tw - 24, y: 24, w: tw, h: 56 };
-      c.fillStyle = hexA(L.bg, 0.85); c.fillRect(r.x, r.y, r.w, r.h);
-      c.strokeStyle = L.ink; c.lineWidth = 3; c.strokeRect(r.x + 1.5, r.y + 1.5, r.w - 3, r.h - 3);
-      c.fillStyle = L.ink; c.textBaseline = 'middle'; c.textAlign = 'center'; c.fillText(P.sound, r.x + r.w / 2, r.y + r.h / 2 + 1);
-      c.textAlign = 'left';
-    }
-    this.drawBar(lines);
+    if (this.state === 'stopped') this.drawStopped();
+    else if (this.state === 'error') this.drawError();
+    // v6 (S395): the bar is burned into the picture (captions, the [n] line): the set draws no bar of its own
+    if (!barInPicture(this.data)) this.drawBar(lines);
     // the glass is one control (play / pause; the sound, when asked for), published whole for the walker's map
     this.hits.push({ id: this.playing ? (this.needsSound ? 'tv-sound' : 'tv-pause') : 'tv-play', x: 0, y: 0, w: LW, h: LH });
     c.restore();
@@ -778,10 +796,10 @@ export class TeachingTv {
     this.sizeBar();
     const was = this.state;
     for (const m of this.barMoments()) {
-      // the whole glass, as the frame loop draws it, in each state the bar is up in (playing; paused and at End of Part 1 the
-      //   player's own display draws first and leaves its own text state behind: the measurement must not depend on it)
+      // the whole glass, as the frame loop draws it, in each state the bar is up in (playing, paused): the measurement must not
+      //   depend on the state the canvas was left in
       let worst: (typeof out)[number] | null = null;
-      for (const st of ['playing', 'paused', 'partOne'] as TvState[]) {
+      for (const st of ['playing', 'paused'] as TvState[]) {
         this.state = st;
         this.draw(m);
         const b = this.bar, ink = b.ink;
@@ -797,7 +815,8 @@ export class TeachingTv {
     return { floor: this.floorCap, barH: this.barH, moments: out };
   }
 
-  /** the tape's label before it rolls: a VCR's blue, the disc's input card with the assignment, Dad's share line */
+  /** the tape's label before it rolls: a VCR's blue, the disc's input card with the assignment, Dad's share line (⚑ S396: the
+   *  label is the tape's own picture; the player's PLAY sign is gone from the glass — the deck's ▶ and its display say it) */
   private drawLeader(): void {
     const c = this.ctx!, L = this.look, lines = W.tapes[this.tape].leader;
     const pic = this.pic, k = pic.h / 540;
@@ -805,10 +824,9 @@ export class TeachingTv {
     c.textAlign = 'center'; c.textBaseline = 'middle';
     const cx = pic.x + pic.w / 2, cy = pic.y + pic.h / 2;
     if (this.spec.style === 'vcr') {
-      c.font = this.font(30); c.fillStyle = L.dim; c.fillText(lines[0], cx, cy - 90);
-      c.font = this.font(46); c.fillStyle = L.ink; c.fillText(lines[1], cx, cy - 20);
-      c.font = this.font(30); c.fillStyle = L.accent; c.fillText(lines[2], cx, cy + 46);
-      c.font = this.font(42); c.fillStyle = L.accent; c.textAlign = 'left'; c.fillText(`${W.tapes['1997'].osd?.play ?? 'PLAY'} ▶`, 44, 54);
+      c.font = this.font(Math.round(30 * k)); c.fillStyle = L.dim; c.fillText(lines[0], cx, cy - 90 * k);
+      c.font = this.font(Math.round(46 * k)); c.fillStyle = L.ink; c.fillText(lines[1], cx, cy - 20 * k);
+      c.font = this.font(Math.round(30 * k)); c.fillStyle = L.accent; c.fillText(lines[2], cx, cy + 46 * k);
     } else if (this.spec.style === 'dvd') {
       c.fillStyle = ERA3.glass; const bw = Math.round(700 * k), bh = Math.round(290 * k); c.fillRect(cx - bw / 2, cy - bh / 2, bw, bh);
       c.fillStyle = ERA3.accent; c.fillRect(cx - bw / 2, cy - bh / 2, bw, 8);
@@ -822,88 +840,30 @@ export class TeachingTv {
     }
     c.textAlign = 'left';
   }
-
-  /** while it plays: the reading-the-tape note while it loads */
-  private drawPlaying(): void {
-    const c = this.ctx!, L = this.look;
-    if (this.state === 'loading') {
-      const osd = W.tapes[this.tape].osd?.loading;
-      if (osd) { c.font = this.font(this.spec.style === 'vcr' ? 38 : 30); c.fillStyle = L.accent; c.textBaseline = 'middle'; c.fillText(osd, 44, 54); }
-    }
-  }
-  /** the part and the time, the player's own on-screen display (top right of the picture), while it is paused or stopped */
-  private drawClock(): void {
-    const c = this.ctx!, L = this.look, d = this.data, t = this.time;
-    c.font = this.font(30); c.fillStyle = L.ink; c.textBaseline = 'middle'; c.textAlign = 'right';
-    c.fillText(`${clock(t)} / ${clock(d.duration)}`, LW - 36, 54);
-    let title = this.chapter?.title ?? '';
-    c.font = this.font(24); c.fillStyle = L.dim;
-    while (title.length > 4 && c.measureText(title).width > LW * 0.5) title = title.slice(0, -2);
-    if (title !== (this.chapter?.title ?? '')) title = title.trimEnd() + '…';
-    c.fillText(title, LW - 36, 90);
-    c.textAlign = 'left';
-  }
-  /** paused (by the visitor, the story or the menu), or stopped by itself at the end of Part 1 — the picture stays (the end card
-   *  is the programme's own), the player's pause sign; at Part 1's end a "▶ Play on" chip (the glass and ▶ both play on) */
-  private drawPaused(partOne: boolean): void {
-    const c = this.ctx!, L = this.look, osd = W.tapes[this.tape].osd;
-    if (this.spec.style === 'vcr') {
-      c.font = this.font(44); c.fillStyle = L.accent; c.textBaseline = 'middle'; c.fillText(`${osd?.pause ?? 'PAUSE'} ❚❚`, 44, 54);
-    } else {
-      const PIC = this.pic; c.fillStyle = hexA(L.bg, partOne ? 0.12 : 0.35); c.fillRect(PIC.x, PIC.y, PIC.w, PIC.h);
-      c.font = this.font(34); c.fillStyle = L.ink; c.textBaseline = 'middle'; c.fillText(`❚❚ ${osd?.pause ?? ''}`.trim(), 36, 54);
-    }
-    this.drawClock();
-    if (partOne) this.chip(`▶  ${P.playOn}`);
-  }
-  /** a chip at the picture's foot, right (the player's own offer: Play on, From the start) */
-  private chip(label: string): void {
-    const c = this.ctx!, L = this.look;
-    c.font = this.font(40); const bw = Math.ceil(c.measureText(label).width) + 56, bh = 74;
-    const PIC = this.pic, r = { x: LW - bw - 30, y: PIC.y + PIC.h - bh - 26, w: bw, h: bh };
-    if (this.spec.style === 'vcr') {
-      c.fillStyle = ERA1.black; c.fillRect(r.x, r.y, r.w, r.h);
-      c.fillStyle = ERA1.white; c.fillRect(r.x, r.y, r.w - 3, r.h - 3);
-      c.fillStyle = ERA1.greyDark; c.fillRect(r.x + 3, r.y + 3, r.w - 6, r.h - 6);
-      c.fillStyle = ERA1.silver; c.fillRect(r.x + 3, r.y + 3, r.w - 9, r.h - 9);
-      c.fillStyle = ERA1.black;
-    } else {
-      c.fillStyle = this.spec.style === 'dvd' ? ERA3.accent : L.panel; c.fillRect(r.x, r.y, r.w, r.h);
-      c.strokeStyle = L.ink; c.lineWidth = 2; c.strokeRect(r.x + 1, r.y + 1, r.w - 2, r.h - 2);
-      c.fillStyle = L.ink;
-    }
-    c.textBaseline = 'middle'; c.textAlign = 'left';
-    c.fillText(label, r.x + 28, r.y + r.h / 2 + 2);
-  }
-  /** the tape's own end: what was on it, and "From the start" (the glass or ▶ plays it again) */
-  private drawEnded(): void {
-    const c = this.ctx!, L = this.look;
-    const PIC = this.pic;
-    c.fillStyle = hexA(this.spec.style === 'vcr' ? L.blue : L.bg, this.spec.style === 'vcr' ? 0.92 : 0.82);
-    c.fillRect(PIC.x, PIC.y, PIC.w, PIC.h);
-    c.textBaseline = 'middle'; c.textAlign = 'left';
-    if (this.spec.style === 'vcr') { c.font = this.font(40); c.fillStyle = L.accent; c.fillText(W.tapes['1997'].osd?.ended ?? '', 44, 54); }
-    else { c.font = this.font(34); c.fillStyle = L.dim; c.fillText(W.tapes[this.tape].listHead, 44, 54); }
-    const rows = this.data.chapters.filter((ch) => ch.kind === 'lesson' || ch.kind === 'commercial' || ch.kind === 'collapse' || ch.kind === 'break');
-    c.font = this.font(28);
-    rows.slice(0, 8).forEach((ch, i) => { c.fillStyle = ch.kind === 'commercial' ? L.dim : L.ink; c.fillText(ch.title, 60, 112 + i * 40); });
-    this.chip(`▶  ${P.playAgain}`);
-  }
+  /** ⏏ or the era's update: the glass blank (a VCR's blue, a player's black) — nothing written on it; the deck reads STOP */
   private drawStopped(): void {
     const c = this.ctx!, L = this.look;
-    const PIC = this.pic; c.fillStyle = this.spec.style === 'vcr' ? L.blue : hexA(L.bg, 0.9); c.fillRect(PIC.x, PIC.y, PIC.w, PIC.h);
-    c.textBaseline = 'middle'; c.textAlign = 'left';
-    if (this.spec.style === 'vcr') { c.font = this.font(44); c.fillStyle = L.accent; c.fillText(W.tapes['1997'].osd?.stop ?? '', 44, 54); }
-    const p = placeOf(this.tape), ch = this.data.chapters[chapterAt(this.data, p.t)];
-    c.font = this.font(42); c.fillStyle = L.ink; c.fillText(this.data.title, 48, PIC.h * 0.36);
-    c.font = this.font(32); c.fillStyle = L.dim; c.fillText(`${ch?.title ?? ''} · ${clock(p.t)}`, 48, PIC.h * 0.36 + 60);
-    c.fillText(this.stopNote ?? P.stopped, 48, PIC.h * 0.36 + 112);
+    const PIC = this.pic; c.fillStyle = this.spec.style === 'vcr' ? L.blue : ERA1.black; c.fillRect(PIC.x, PIC.y, PIC.w, PIC.h);
   }
   private drawError(): void {
     const c = this.ctx!, L = this.look;
     const PIC = this.pic; c.fillStyle = this.spec.style === 'vcr' ? L.blue : L.panel; c.fillRect(PIC.x, PIC.y, PIC.w, PIC.h);
     c.font = this.font(36); c.fillStyle = L.ink; c.textBaseline = 'middle'; c.textAlign = 'center';
     c.fillText(P.cannot, PIC.x + PIC.w / 2, PIC.y + PIC.h / 2); c.textAlign = 'left';
+  }
+  /** ⚑ S396 — what the deck shows: its lamps (▶ while it plays, ❚❚ while it is paused) and its display (the word, the counter) */
+  deckState(): DeckState {
+    const s = this.state, t = clock(this.time);
+    switch (s) {
+      case 'off': return { mode: 'off', word: '', time: '' };
+      case 'leader': return { mode: 'ready', word: DECK.ready, time: clock(0) };
+      case 'loading': return { mode: 'load', word: DECK.load, time: t };
+      case 'playing': return { mode: 'play', word: this.needsSound ? DECK.mute : DECK.play, time: t };
+      case 'paused': return { mode: 'pause', word: DECK.pause, time: t };
+      case 'ended': return { mode: 'end', word: DECK.end, time: t };
+      case 'stopped': return { mode: 'stop', word: DECK.stop, time: t };
+      default: return { mode: 'error', word: DECK.error, time: '' };
+    }
   }
 
   /** where the walker and the probes aim: each key, a point on the bezel (the body), the glass's centre, in world metres */
@@ -921,7 +881,9 @@ export class TeachingTv {
     return { tape: this.tape, entity: this.entity.name, enabled: this.entity.enabled, setEnabled: this.set.root.enabled, LW, LH, state: this.state,
       t: v?.currentTime ?? null, paused: v?.paused ?? null, muted: v?.muted ?? null, volume: v?.volume ?? null, src: v?.src ?? null,
       chapter: this.chapter?.id ?? null, chapterKind: this.chapter?.kind ?? null, hits: this.hits.map((h) => ({ ...h })), needsSound: this.needsSound, userPaused: this.userPaused,
-      draws: this.draws, place: { ...placeOf(this.tape) }, partOneEnd: this.data.partOneEnd, duration: this.data.duration,
+      draws: this.draws, place: { ...placeOf(this.tape) }, partOneEnd: this.data.partOneEnd, duration: this.data.duration, version: this.data.version,
+      primed: this.primed, playStart: this.playStart,
+      barInPicture: barInPicture(this.data), deck: this.deckState(),
       pose: this.pose, held: this.held, heldScale: this.heldScale, heldDist: this.heldDist, lastPress: this.lastPress, setDown: this.setDown,
       glass: { w: GLASS.w, h: GLASS.h, picFrac: this.pic.h / LH, barPx: this.barH }, floorCap: this.floorCap, barWorst: { ...this.barWorst }, bar: { ...this.bar, recent: [...this.bar.recent] }, targets: this.targets() };
   }
@@ -1097,7 +1059,7 @@ export interface TvHost {
 export type MomentStage = 'idle' | 'call' | 'bring' | 'play' | 'after' | 'done';
 
 /** ONCE PER ROOM: the set lights with its leader, Lamby's line in view, the set comes to the visitor, the tape plays from its
- *  start to the end of Part 1, a breath on the end card, and the floor is free (the set waits, held, ▶ ready) */
+ *  start to its end (⚑ S396) unless the visitor pauses it or sets it down, a breath, and the floor is free (the set waits, held) */
 class TvMoment {
   stage: MomentStage = 'idle';
   private t = 0;
@@ -1114,9 +1076,9 @@ class TvMoment {
   get running(): boolean { return this.stage !== 'idle' && this.stage !== 'done'; }
   get calling(): boolean { return this.stage === 'call'; }
   takeNow(): void { if (this.stage === 'call') this.go = true; }
-  abort(note: string | null): void {
+  abort(): void {
     if (!this.running) return;
-    this.tv.stop(note);
+    this.tv.stop();
     this.tv.markPartOneSeen();
     this.host.call(this.tv.tape, null);
     this.stage = 'done';
@@ -1165,7 +1127,7 @@ class TvMoment {
         const refused = ((s === 'paused' || s === 'loading') && !this.tv.userPaused && this.t >= MOMENT.noPlayRelease && this.tv.time < 0.2)
           || this.tv.stalledFor >= MOMENT.noPlayRelease;
         if (!this.tv.held) { this.tv.markPartOneSeen(); this.finish(); break; }   // set down by the visitor: the moment lets go
-        if (s === 'partOne' || s === 'ended' || s === 'error' || this.tv.userPaused || s === 'stopped' || refused) {
+        if (s === 'ended' || s === 'error' || this.tv.userPaused || s === 'stopped' || refused) {
           this.tv.markPartOneSeen();
           this.stage = 'after'; this.t = 0;
         }
@@ -1218,17 +1180,17 @@ export class TeachingTvs {
     if (era !== this.era) {
       for (const id of TAPE_IDS) {
         const mine = TAPE_ERA[id] === era;
-        if (!mine) this.moments[id].abort(P.stopped);
+        if (!mine) this.moments[id].abort();
         this.tvs[id].setInEra(mine);
         if (mine && this.moments[id].stage === 'idle') this.tvs[id].preload();
       }
       this.era = era;
     }
     if (updateArmed) for (const id of TAPE_IDS) {
-      if (this.moments[id].running) this.moments[id].abort(P.stopped);
+      if (this.moments[id].running) this.moments[id].abort();
       // ⚑ S394 fix — stopped at the update even if a voice paused it a moment before (the update's own notice arrives first)
       const st = this.tvs[id].state;
-      if (st === 'playing' || st === 'loading' || st === 'paused' || st === 'partOne' || st === 'leader') this.tvs[id].stop(P.stopped);
+      if (st === 'playing' || st === 'loading' || st === 'paused' || st === 'leader') this.tvs[id].stop();
       if (this.tvs[id].held) this.tvs[id].putBack(this.host.eye().getPosition(), 'story');
     }
     for (const id of TAPE_IDS) this.moments[id].update(dt);
@@ -1324,18 +1286,26 @@ export class TeachingTvs {
 
   /** the Close and a Leave: every set stops and goes; the places stay in memory for the era websites */
   stopAll(): void {
-    for (const id of TAPE_IDS) { this.moments[id].abort(P.stopped); this.tvs[id].stop(P.stopped); this.tvs[id].setInEra(false); }
+    for (const id of TAPE_IDS) { this.moments[id].abort(); this.tvs[id].stop(); this.tvs[id].setInEra(false); }
     this.era = 'close';
     this.card.hide();
     releaseVoice('teaching-tv');
   }
 
   redraw(): void { for (const id of TAPE_IDS) this.tvs[id].redraw(); }
+  /** ⚑ S396 (the MUTE fix) — called INSIDE a press's own handler (app.ts): the era's tape is primed once, before its moment
+   *  plays it from the frame loop */
+  prime(): void {
+    const id = TAPE_IDS.find((t) => TAPE_ERA[t] === this.era);
+    if (!id) return;
+    const st = this.moments[id].stage;
+    if (st === 'idle' || st === 'call' || st === 'bring') this.tvs[id].prime();
+  }
 
   // ── review aids (?debug=1): the walker, the probes ───────────────────────
   debug() {
     const p = this.card.entity.getPosition();
-    return { era: this.era, name: SET_NAME, holding: this.holding, watching: this.watching,
+    return { era: this.era, name: SET_NAME, holding: this.holding, watching: this.watching, deckPixels: deckPixels(),
       moments: Object.fromEntries(TAPE_IDS.map((t) => [t, { stage: this.moments[t].stage, seconds: this.moments[t].seconds, callSeconds: this.moments[t].callSeconds }])),
       call: { shown: this.card.shown, text: this.card.text, hits: this.card.hits.map((h) => ({ ...h })), entity: this.card.entity.name, cw: this.card.CW, ch: this.card.CH, at: [p.x, p.y, p.z] },
       tvs: TAPE_IDS.map((t) => this.tvs[t].debug()) };

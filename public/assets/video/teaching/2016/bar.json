@@ -1,0 +1,78 @@
+{
+ "tape": "2016",
+ "version": "v6",
+ "lines": [
+  {
+   "start": 8.15,
+   "end": 12.23,
+   "refs": [
+    1
+   ],
+   "text": "[1] Emotional Dependency, 1990, pp. 8–9, 15"
+  },
+  {
+   "start": 12.23,
+   "end": 14.9,
+   "refs": [
+    2
+   ],
+   "text": "[2] “Emotional Dependency, 5 Pack”, Exodus Global Alliance, 2016"
+  },
+  {
+   "start": 25.3,
+   "end": 34.24,
+   "refs": [
+    3
+   ],
+   "text": "[3] The Heart of the Matter, Focus on the Family, 2001, p. 10"
+  },
+  {
+   "start": 34.24,
+   "end": 39.9,
+   "refs": [
+    3
+   ],
+   "text": "[3] The Heart of the Matter, Focus on the Family, 2001, p. 14"
+  },
+  {
+   "start": 41.0,
+   "end": 68.3,
+   "refs": [
+    4
+   ],
+   "text": "[4] Are People Born Gay?, Exodus, 1993, p. 19"
+  },
+  {
+   "start": 69.58,
+   "end": 75.63,
+   "refs": [
+    1
+   ],
+   "text": "[1] Emotional Dependency, 1990, p. 7"
+  },
+  {
+   "start": 75.63,
+   "end": 79.62,
+   "refs": [
+    1
+   ],
+   "text": "[1] Emotional Dependency, 1990, pp. 8–9"
+  },
+  {
+   "start": 79.62,
+   "end": 94.9,
+   "refs": [
+    1
+   ],
+   "text": "[1] Emotional Dependency, 1990, pp. 16–17"
+  },
+  {
+   "start": 102.7,
+   "end": 112.4,
+   "refs": [
+    1
+   ],
+   "text": "[1] Emotional Dependency, 1990, p. 25"
+  }
+ ]
+}

@@ -1,95 +1,52 @@
 {
  "tape": "2026",
+ "version": "v6",
  "title": "HEDGE™ — a course for parents in a confused age",
- "version": "v5",
- "music": "Music: made in code for these tapes by Claude (Anthropic, Opus 5.5)",
- "duration": 258.433,
- "partOneEnd": 75.092,
+ "duration": 123.369,
  "chapters": [
   {
-   "id": "label",
-   "kind": "label",
-   "title": "Before you watch",
    "start": 0.0,
-   "end": 6.5
+   "title": "Before you watch"
   },
   {
-   "id": "intro",
-   "kind": "title",
-   "title": "HEDGE™ · We Saw It Coming",
-   "start": 6.5,
-   "end": 27.23
+   "start": 4.0,
+   "title": "HEDGE™ · We Saw It Coming"
   },
   {
-   "id": "l1",
-   "kind": "lesson",
-   "title": "Lesson 1 · The Old Wound",
-   "start": 27.23,
-   "end": 56.148
+   "start": 21.19,
+   "title": "Lesson 1 · 1988 · The Old Wound"
   },
   {
-   "id": "a1",
-   "kind": "commercial",
-   "title": "Ad · LAST LINE LIVE",
-   "start": 56.148,
-   "end": 69.148
+   "start": 41.598,
+   "title": "Ad · The Prayer Wall"
   },
   {
-   "id": "end1",
-   "kind": "endcard",
-   "title": "End of Part 1",
-   "start": 69.148,
-   "end": 78.692
+   "start": 46.784,
+   "title": "Lesson 2 · 2003 · Catch It Early"
   },
   {
-   "id": "l2",
-   "kind": "lesson",
-   "title": "Lesson 2 · Catch It Early",
-   "start": 78.692,
-   "end": 103.417
+   "start": 54.129,
+   "title": "Lesson 3 · 2014 · The Screens"
   },
   {
-   "id": "l3",
-   "kind": "lesson",
-   "title": "Lesson 3 · The Culture Moved In",
-   "start": 103.417,
-   "end": 128.749
+   "start": 63.759,
+   "title": "Lesson 4 · 2019 · It Spreads"
   },
   {
-   "id": "a2",
-   "kind": "commercial",
-   "title": "Ad · The Prayer Wall",
-   "start": 128.749,
-   "end": 140.749
+   "start": 72.363,
+   "title": "Lesson 5 · 2025 · It Has a Name"
   },
   {
-   "id": "l4",
-   "kind": "lesson",
-   "title": "Lesson 4 · It Spreads",
-   "start": 140.749,
-   "end": 164.716
+   "start": 81.551,
+   "title": "Lesson 6 · Today · The Door"
   },
   {
-   "id": "l5",
-   "kind": "lesson",
-   "title": "Lesson 5 · It Has a Name",
-   "start": 164.716,
-   "end": 188.487
+   "start": 93.184,
+   "title": "When they are 18"
   },
   {
-   "id": "l6",
-   "kind": "collapse",
-   "title": "Lesson 6 · When She Is 18",
-   "start": 188.487,
-   "end": 238.769
-  },
-  {
-   "id": "brk",
-   "kind": "break",
-   "title": "What this asked of people",
-   "start": 238.769,
-   "end": 258.433
+   "start": 108.869,
+   "title": "What this asked of people"
   }
- ],
- "_doc": "room.mp4 and web.mp4 share this timeline. partOneEnd sits inside the endcard chapter (End of Part 1, the course's MODULE 1 COMPLETE card), ≥ 1.5 s after the card is fully drawn; the card holds still from partOneEnd − 1.5 s to the chapter's end. Lesson 6 (kind \"collapse\") carries the collapse, the chat door and LIVE NOW. v5: no sources roll; the break is one frame (break.json), its long version web/break_long.json."
+ ]
 }

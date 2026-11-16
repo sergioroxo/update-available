@@ -1,11 +1,9 @@
 {
  "tape": "1997",
- "version": "v5",
+ "version": "v6",
  "label": [
-  "This tape is a reconstruction.",
-  "Its teaching comes from real ministries' handbooks and booklets, 1993–1996.",
-  "Every reason in it was taught to real people.",
-  "You can stop it at any time."
+  "Made from real teaching materials, 1987–1998.",
+  "You can stop at any time."
  ],
  "admission": [
   {
@@ -13,13 +11,17 @@
    "source": "Love in Action, Helping People Step Out of Homosexuality (a handbook for pastors, counselors and lay workers), revised edition © 1995 (first published © 1984), printed p. 133 (PDF p. 141), under the heading “Remember Half The Process Won't Work”; Smithsonian National Museum of American History, Archives Center, NMAH.AC.1428 (the Mattachine Society of Washington “Love in Action” Collection), Box 2 Folder 13; read on the page image, 15 Nov 2026"
   }
  ],
- "barHead": "TAUGHT IN — Love in Action handbook (1995), printed p. 133",
- "bar": "It is in the same chapter as Part 3 of this tape.",
- "barSource": "Love in Action, Helping People Step Out of Homosexuality, rev. © 1995: Chapter Thirteen, “Displacement: Putting Off/Putting On”, runs from printed p. 128 (PDF p. 136) to printed p. 140 (PDF p. 148); Chapter Fourteen begins on printed p. 141 (PDF p. 149). NMAH.AC.1428 Box 2 Folder 13; read on the page images and the OCR, 15 Nov 2026",
+ "bar": "[1] Love in Action handbook, 1995, p. 133",
  "on": [
-  306.672,
-  330.542
+  108.839,
+  118.839
  ],
- "held": 22.67,
- "note": "In the tape the admission is the picture; the bar under it carries barHead and bar (the web copy burns them in; the room's set and the era site draw them from here). No sources roll: the long version is break_long.json."
+ "endCard": {
+  "text": "TriedPath and its products are invented.",
+  "on": [
+   118.839,
+   123.339
+  ]
+ },
+ "note": "In both copies the admission is the picture and the bar under it is burned in ([1] p. 133). No sources roll: the long version is break_long.json; every reference is references.json."
 }

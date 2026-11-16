@@ -17,7 +17,15 @@
   "missed": "Missed it?"
  },
  "common": {
-  "tape": {"_docS392": "⚑ S394 (UiB job 27 B4/B6; S392 before) — the teaching tapes' text blocks under the player on each era site (tools/gen_era_sites.mjs). Drafts for his eye.", "marginTitle": "The margin, as text", "sourcesTitle": "Sources: every line of the margin, the break, and the documents"},
+  "tape": {
+   "_docS392": "⚑ S394 (UiB job 27 B4/B6; S392 before) — the teaching tapes' text blocks under the player on each era site (tools/gen_era_sites.mjs). Drafts for his eye.",
+   "marginTitle": "The margin, as text",
+   "sourcesTitle": "Sources: every line of the margin, the break, and the documents",
+   "_docS396": "⚑ S396 (UiB job 28 B2) — a v6 tape (its subtitles and source line burned into the picture): under the player, the source line as text with its times (each number a link to its reference), the references, and the long break. Drafts for his eye (T89).",
+   "barTitle": "The source line under the subtitles, as text",
+   "barLead": "While the tape plays, a line under its subtitles names the document each lesson is taken from. Here it is with its times. Each number leads to the full reference below.",
+   "refsTitle": "References"
+  },
   "contentNote": "This site is about conversion practices — efforts to change a person's sexual orientation or gender identity. It describes what they did and says plainly that they harm. Nobody in the piece is real. Every organisation and product in it is invented. The practices they perform are documented.",
   "records": "This page has no scripts. It records nothing and asks nothing of you.",
   "statusKey": "How well each thing is documented",
@@ -224,6 +232,22 @@
      "The first update notice, its agreement and its changelog"
     ]
    ],
+   "floppy": {
+    "_doc": "⚑ S396 (UiB job 28 B3; his 16 Nov: \"Have we added to the Close in 1997 and the research document about the floppy disk analogy? We should, because we do use a floppy disk to start the narrative.\") — the programmes' own computer analogy, on the 1997 site's Practices tab (tools/gen_era_sites.mjs). Quotes only what docs/reinterp/ARTICLE_COMPANION_2026-10-31.md §7v quotes, with its pages; no overclaim (one network, 1993–1995; the piece's metaphor came first). Draft by Claude for his eye (T89).",
+    "title": "The programmes’ own computer",
+    "status": "documentary",
+    "paras": [
+     "Some programmes of the 1990s described the person as a computer, in their own teaching. The papers that say so come from one network, Exodus and Love in Action, between 1993 and 1995. They show what this network taught, not that the comparison was common.",
+     "A 1993 Exodus booklet, Are People Born Gay?, has a passage that begins “To use a computer analogy”. A heterosexual woman, it says, has “a floppy disc that is titled ‘woman’”, so her experiences of being female can be stored “in that file”. The lesbian “has no file to put it in”, so the experiences that “should affirm her get lost”.",
+     "Love in Action’s handbook, Helping People Step Out of Homosexuality, revised in 1995, goes further: “Our mind works like a computer; it is constantly placing information into categories.” The student adds “mountains of material to your memory tapes”, so that “this bulk of the material” ejects the old desires. The handbook’s chapter on this is called “Displacement: Putting Off / Putting On”.",
+     "This piece also begins with a floppy disk: the programme’s disk going into Daniel’s computer, a picture chosen before the project had read these papers."
+    ],
+    "sources": [
+     "Exodus, Are People Born Gay? (booklet PR-02, © 1993), printed p. 19 (PDF p. 11). National Museum of American History, Archives Center, NMAH.AC.1428, Box 2, Folder 12.",
+     "Love in Action, Helping People Step Out of Homosexuality, rev. © 1995: printed p. 135 (PDF p. 143), “Our mind works like a computer”; printed p. 132 (PDF p. 140), “memory tapes” and “this bulk of the material”; chapter thirteen, “Displacement: Putting Off / Putting On”, printed pp. 128–133 (PDF pp. 136–141). National Museum of American History, Archives Center, NMAH.AC.1428, Box 2, Folder 13."
+    ],
+    "link": "https://sova.si.edu/record/nmah.ac.1428"
+   },
    "imageAlt": {
     "lib": "A cartoon of a 1990s beige computer, a tower and a keyboard on a small wooden desk.",
     "plate": "A low-poly room in warm light. A beige computer on a desk, a lamp, a July 1997 calendar on the wall, a window."
@@ -233,7 +257,14 @@
     "plate": "Daniel's room, as the Close shows it."
    },
    "media": [
-    {"tape": "1997", "type": "video", "title": "“Understanding Your Roots” — the fellowship’s tape", "_docS392": "⚑ S394 (UiB job 27 B4) — the v4 tape: the label, the tape played straight, the margin beside it (as page text), the long break. Drafts for his eye (T85).", "what": "The video that came with Daniel’s Un-Walk kit, on the Lamby set behind his seat: the programme’s own teaching on why a boy becomes gay, and its procedure for overwriting him — “our mind works like a computer” — cut by its own commercials. The tape is the programme’s screen and never corrects itself. Under it, as text, is the piece’s margin: where each teaching was printed, and what was already known. Below that is the long version of its break, what it asked of people, pastors and families, with every source. {length}. In the piece it starts where you left it on the Lamby set."},
+    {
+     "tape": "1997",
+     "type": "video",
+     "title": "“Understanding Your Roots” — the fellowship’s tape",
+     "_docS392": "⚑ S394 (UiB job 27 B4) — the v4 tape: the label, the tape played straight, the margin beside it (as page text), the long break. Drafts for his eye (T85).",
+     "what": "The video that came with Daniel’s Un-Walk kit, on the Lamby set behind his seat: the programme’s own teaching on why a boy becomes gay, and its procedure for overwriting him — “our mind works like a computer” — cut by its own commercials. The tape is the programme’s screen and never corrects itself. Under it, as text, is the piece’s margin: where each teaching was printed, and what was already known. Below that is the long version of its break, what it asked of people, pastors and families, with every source. {length}. In the piece it starts where you left it on the Lamby set.",
+     "whatV6": "The video that came with Daniel’s Un-Walk kit, on the Lamby set behind his seat: the programme’s own teaching on why a boy becomes gay, and its procedure for overwriting him — “our mind works like a computer” — cut by its own commercials. The tape is the programme’s screen and never corrects itself. The line under its subtitles names the document each lesson comes from; under the player that line is printed with its times, each number leads to its full reference, and below them is the long version of its break, what it asked of people, pastors and families, with every source. {length}. In the piece it starts where you left it on the Lamby set."
+    },
     {
      "file": "assets/audio/fold_my_hands_tape97.mp3",
      "type": "audio",
@@ -454,7 +485,14 @@
     "plate": "Vera's room, as the Close shows it."
    },
    "media": [
-    {"tape": "2016", "type": "video", "title": "“Heartwood” — Session Two: The Roots", "_docS392": "⚑ S394 (UiB job 27 B4) — the v4 tape (a DVD course, his \"this was a DVD\"). Drafts for his eye (T85).", "what": "The course GracePlatform assigned to Vera, played from the disc in the Lamby set by her door: a women’s small-group course on a Leader’s Edition disc, on why a woman loves a woman. At its centre is a 1993 booklet’s computer, re-issued word for word under a 2016 look. Under it, as text, is the piece’s margin: where each teaching was printed, and what was already known. Below that is the long version of its break, what it asked of women, leaders and families, with every source. {length}. In the piece it starts where you left it on the Lamby set."},
+    {
+     "tape": "2016",
+     "type": "video",
+     "title": "“Heartwood” — Session Two: The Roots",
+     "_docS392": "⚑ S394 (UiB job 27 B4) — the v4 tape (a DVD course, his \"this was a DVD\"). Drafts for his eye (T85).",
+     "what": "The course GracePlatform assigned to Vera, played from the disc in the Lamby set by her door: a women’s small-group course on a Leader’s Edition disc, on why a woman loves a woman. At its centre is a 1993 booklet’s computer, re-issued word for word under a 2016 look. Under it, as text, is the piece’s margin: where each teaching was printed, and what was already known. Below that is the long version of its break, what it asked of women, leaders and families, with every source. {length}. In the piece it starts where you left it on the Lamby set.",
+     "whatV6": "The course GracePlatform assigned to Vera, played from the disc in the Lamby set by her door: a women’s small-group course on a Leader’s Edition disc, on why a woman loves a woman. At its centre is a 1993 booklet’s computer, re-issued word for word under a 2016 look. The line under its subtitles names the document each teaching comes from; under the player that line is printed with its times, each number leads to its full reference, and below them is the long version of its break, what it asked of women, leaders and families, with every source. {length}. In the piece it starts where you left it on the Lamby set."
+    },
     {
      "file": "assets/audio/floppysheep_song.mp3",
      "type": "audio",
@@ -584,7 +622,14 @@
     "plate": "Maya's room, as the Close shows it."
    },
    "media": [
-    {"tape": "2026", "type": "video", "title": "“HEDGE™” — a course for parents", "_docS392": "⚑ S394 (UiB job 27 B4) — the v4 tape (the course tells its own history, 1988 to today, from the research). Drafts for his eye (T85).", "what": "The link Maya’s father sent her on her eighteenth birthday, “watch this”, played on the Lamby set on her shelf: a campaign course for parents that tells its own story of “how it happens”, from 1988 to today, as escalation and fear. Under it, as text, is the piece’s margin: where each reason was taught, and the dated facts about the manuals and the professional bodies. Below that is the long version of its break, what it asked of people, pastors and families, with every source. {length}. In the piece it starts where you left it on the Lamby set."},
+    {
+     "tape": "2026",
+     "type": "video",
+     "title": "“HEDGE™” — a course for parents",
+     "_docS392": "⚑ S394 (UiB job 27 B4) — the v4 tape (the course tells its own history, 1988 to today, from the research). Drafts for his eye (T85).",
+     "what": "The link Maya’s father sent her on her eighteenth birthday, “watch this”, played on the Lamby set on her shelf: a campaign course for parents that tells its own story of “how it happens”, from 1988 to today, as escalation and fear. Under it, as text, is the piece’s margin: where each reason was taught, and the dated facts about the manuals and the professional bodies. Below that is the long version of its break, what it asked of people, pastors and families, with every source. {length}. In the piece it starts where you left it on the Lamby set.",
+     "whatV6": "The link Maya’s father sent her on her eighteenth birthday, “watch this”, played on the Lamby set on her shelf: a campaign course for parents that tells its own story of “how it happens”, from 1988 to today, as escalation and fear. The line under its subtitles names where each reason was taught; under the player that line is printed with its times, each number leads to its full reference, and below them is the long version of its break, what it asked of people, pastors and families, with every source. {length}. In the piece it starts where you left it on the Lamby set."
+    },
     {
      "file": "assets/video/the_great_becoming.mp4",
      "type": "video",

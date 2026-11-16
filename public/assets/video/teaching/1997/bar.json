@@ -1,0 +1,110 @@
+{
+ "tape": "1997",
+ "version": "v6",
+ "lines": [
+  {
+   "start": 12.088,
+   "end": 29.716,
+   "refs": [
+    1
+   ],
+   "text": "[1] Love in Action handbook, 1995, p. 135"
+  },
+  {
+   "start": 29.916,
+   "end": 36.782,
+   "refs": [
+    1
+   ],
+   "text": "[1] Love in Action handbook, 1995, p. 131"
+  },
+  {
+   "start": 37.182,
+   "end": 44.46,
+   "refs": [
+    1
+   ],
+   "text": "[1] Love in Action handbook, 1995, p. 129"
+  },
+  {
+   "start": 44.86,
+   "end": 53.404,
+   "refs": [
+    1
+   ],
+   "text": "[1] Love in Action handbook, 1995, p. 132"
+  },
+  {
+   "start": 53.854,
+   "end": 63.908,
+   "refs": [
+    1
+   ],
+   "text": "[1] Love in Action handbook, 1995, p. 128"
+  },
+  {
+   "start": 63.908,
+   "end": 67.306,
+   "refs": [
+    1
+   ],
+   "text": "[1] Love in Action handbook, 1995, p. 129"
+  },
+  {
+   "start": 67.806,
+   "end": 75.371,
+   "refs": [
+    1
+   ],
+   "text": "[1] Love in Action handbook, 1995, pp. 130–131"
+  },
+  {
+   "start": 75.371,
+   "end": 80.844,
+   "refs": [
+    1
+   ],
+   "text": "[1] Love in Action handbook, 1995, p. 131"
+  },
+  {
+   "start": 81.244,
+   "end": 87.923,
+   "refs": [
+    1
+   ],
+   "text": "[1] Love in Action handbook, 1995, p. 132"
+  },
+  {
+   "start": 88.323,
+   "end": 93.245,
+   "refs": [
+    2
+   ],
+   "text": "[2] Exodus resource booklets, 1993–98, back page"
+  },
+  {
+   "start": 93.245,
+   "end": 95.345,
+   "refs": [
+    3
+   ],
+   "text": "[3] Exodus booklet, 1987, back cover"
+  },
+  {
+   "start": 96.745,
+   "end": 108.839,
+   "refs": [
+    4
+   ],
+   "text": "[4] Exodus booklet PR-01, 1996, p. 17"
+  },
+  {
+   "start": 109.189,
+   "end": 118.839,
+   "refs": [
+    1
+   ],
+   "text": "[1] Love in Action handbook, 1995, p. 133"
+  }
+ ]
+}

@@ -84,7 +84,9 @@ import { e4Bridge } from '../desktop/apps/space';
 import { mountXrInput, type XrInput } from '../frame/xrInput';
 import { buildRestoreEntrance, type RestoreEntrance } from '../room/restoreEntrance';
 import { FRAME } from '../desktop/theme/chrome';
-import { TeachingTvs, TV_MOMENT } from '../room/teachingTv';
+import { TeachingTv, TeachingTvs, TV_MOMENT } from '../room/teachingTv';
+import { mountSeatCull } from '../room/seatCull';
+import { setVertexColourMerge, vertexColourMergeOn } from '../room/batching';
 import { TAPES } from '../narrative/teachingTapes';
 import { viewerFilm, viewerAudio } from '../frame/siteViewer/audio';
 import { voiceHeld, voiceWanted, setFilmAudible } from '../state/voiceHold';
@@ -909,7 +911,18 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     niche = buildFluidNiche(app);
     niche.setFacet(options.facet ?? 'none');
     ceiling = buildCeilingWitness(app);
+    // ⚑ S396 (UiB job 28 B4) — plain boxes batch as ONE draw, their colour in their vertices (batching.ts); ?novcbatch=1 = the A/B
+    setVertexColourMerge(runtimeQuery().get('novcbatch') !== '1');
     cluster = buildClusterShell(app, room, niche, ceiling, layout, options.nobatch !== true);
+    // ⚑ S396 (UiB job 28 B4) — what the seat cannot see is not drawn: a mesh wholly inside another room, behind a closed
+    //   wall or outside a doorway's opening as seen from the eye (src/room/seatCull.ts). ?noseatcull=1 = the A/B escape.
+    const seatCull = mountSeatCull(app, room, runtimeQuery().get('noseatcull') !== '1');
+    if (runtimeQuery().get('debug') === '1') {
+      (window as { __seatCull?: unknown }).__seatCull = seatCull;
+      // the probe's A/B for the merge: rebake with it off or on (tools/s396-drawcalls-probe.mjs)
+      const shell = cluster;
+      (window as { __vcBatch?: unknown }).__vcBatch = { get on() { return vertexColourMergeOn(); }, set(on: boolean) { setVertexColourMerge(on); shell.rebake(); } };
+    }
     cluster.onSpaceChange = () => { if (relocLeg) startMorphLayer(relocKey); };   // S347: the place's own sounds, as it changes
     e4Room = buildE4Room(app, room);
     // Completion belongs to the scripted leg, never to the visitor's subsequent look direction.
@@ -1049,7 +1062,8 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       inst: (tape: '1997' | '2016' | '2026') => teachingTvs?.tvs[tape] ?? null,   // S394 fix: the set itself (review aid)
       canvases: () => teachingTvs?.canvases() ?? {},
       uploads: () => (window as { __uploads?: number }).__uploads ?? 0,
-      arm: (tape: string) => { tvArmed.add(tape); }
+      arm: (tape: string) => { tvArmed.add(tape); },
+      noPrime: (on: boolean) => { TeachingTv.noPrime = on; }   // S396: the probe's control run (the MUTE fix off)
     });
     (window as { __consoleProbe?: unknown }).__consoleProbe = () => consoleSessionInternal.probe();
     (window as { __deviceDraws?: () => unknown }).__deviceDraws = () => era3Devices ? era3Devices.debugDraws() : null;
@@ -1297,7 +1311,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     let teamSkipPresses: number[] = [];   // S339: the team skip (debug builds only)
     xrInput = mountXrInput(app, {
       // ⚑ S343 / T11 — a ray that lands on the monitor presses where it lands, even with a hand on the desk mouse
-      onSelect: (physicalRay) => { if (!xrComfort.calibrated) { xrComfort.calibrate(); xrFrame?.setHint(null); return; } if (xrComfort.busy) return; if (siteViewerXr?.pressRay(physicalRay)) return; const ray = xrComfort.logicalRay(physicalRay); if (xrFrame?.pressTab(physicalRay)) return; if (restoreEntrance?.blocking) { noteHumanInput(); startFirstBed(); restoreEntrance.press(physicalRay); return; } if (document.getElementById('lambyos-home')) return; noteHumanInput(); os.lambyGuide.activity(); if (descentActive || scriptedBusy() || os.paused) return; if (teachingTvs?.pressCard(ray) || (teachingTvs?.holding && teachingTvs.pressHeld(ray))) return; if (!toDesktopR(ray) && xrLayer?.mouseClick()) return; if (xrLayer?.pressLamby(physicalRay, (r) => xrComfort.logicalRay(r))) return; resolveTapRay(ray); },   // A22: the tab first
+      onSelect: (physicalRay) => { if (!xrComfort.calibrated) { xrComfort.calibrate(); xrFrame?.setHint(null); return; } if (xrComfort.busy) return; if (siteViewerXr?.pressRay(physicalRay)) return; const ray = xrComfort.logicalRay(physicalRay); if (xrFrame?.pressTab(physicalRay)) return; if (restoreEntrance?.blocking) { noteHumanInput(); startFirstBed(); restoreEntrance.press(physicalRay); return; } if (document.getElementById('lambyos-home')) return; noteHumanInput(); teachingTvs?.prime(); os.lambyGuide.activity(); if (descentActive || scriptedBusy() || os.paused) return; if (teachingTvs?.pressCard(ray) || (teachingTvs?.holding && teachingTvs.pressHeld(ray))) return; if (!toDesktopR(ray) && xrLayer?.mouseClick()) return; if (xrLayer?.pressLamby(physicalRay, (r) => xrComfort.logicalRay(r))) return; resolveTapRay(ray); },   // A22: the tab first
       // ⚑ S271 (his 31 Oct: "I entered the menu, but I cannot get out") — a press that misses the menu closes it, as
       //   Resume does; the menu is never a room you have to find the door of
       onMenuSelect: (ray) => { if (document.getElementById('lambyos-home')) return; if (siteViewerXr?.pressRay(ray)) return; noteHumanInput(); if (xrFrame && !xrFrame.press(ray)) gameMenuBus.close(); },
@@ -3738,6 +3752,8 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   /** ⚑ S147 — one resolution for every press: the mouse's tap (above) and the
    *  controller's select (xrInput.ts) both arrive here as a ray. */
   function resolveTapRay(ray: Ray): void {
+    // ⚑ S396 — the MUTE fix: the era's tape is primed inside this press (WebKit gives sound only to a play() from a press)
+    teachingTvs?.prime();
     if (closeStage === 'message') { nextCloseCard(); return; }   // S209 / P7-48 — a press turns the card
     // ⚑ S394 — Lamby's line in view (its card is over everything), then a Lamby set in the hand (in front of everything; a
     //   press that misses it passes on to the room)

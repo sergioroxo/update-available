@@ -27,6 +27,7 @@ import * as pc from 'playcanvas';
 import { HOME } from '../desktop/theme/home';
 import { ERA1 } from '../desktop/theme/era1';
 import { WALL } from '../desktop/theme/era4';
+import { INSTITUTION } from '../desktop/theme/institution';
 import { FACES, VENDORED } from '../desktop/theme/fonts';
 import { drawLambyChar } from '../desktop/apps/lambyChar';
 import { makeScreenTexture } from '../engine/screenTexture';
@@ -121,8 +122,15 @@ function bodyGeometry(): Acc {
   return a;
 }
 
-/** the printed decal canvas: the keys' strip (top, 1024 × 112) and the badge (bottom, 448 × 132) */
-const DECAL = { w: 1024, h: 256, strip: { x: 0, y: 0, w: 1024, h: 112 }, badge: { x: 0, y: 124, w: 448, h: 132 }, white: { x: 512, y: 140, w: 480, h: 112 } };
+/** the printed decal canvas: the keys' strip (top, 1024 × 112), the badge (448 × 132), the white block, and ⚑ S396 the deck's
+ *  display (520 × 113, under the keys: the only place the set shows its state — his "a play button on the screen for a TV that
+ *  already has a play button, that is unnecessary") */
+const DECAL = { w: 1024, h: 384, strip: { x: 0, y: 0, w: 1024, h: 112 }, badge: { x: 0, y: 124, w: 448, h: 132 }, white: { x: 512, y: 140, w: 480, h: 112 },
+  display: { x: 0, y: 266, w: 520, h: 113 } };
+/** the display's window on the deck, left of the slot (set metres) */
+const DISPLAY = { x0: -0.226, x1: -0.106, y0: 0.059, y1: 0.085, z: FRONT + 0.0065 };
+/** what the deck shows: `mode` lights its lamps, `word` and `time` are its display (the words are data: teaching_tv.json `deck`) */
+export interface DeckState { mode: 'off' | 'ready' | 'load' | 'play' | 'pause' | 'stop' | 'end' | 'error'; word: string; time: string }
 /** the body's one texel: the middle of a white block (every body vertex has this UV, so its derivative is nil: level 0, white) */
 const WHITE_UV: [number, number] = [(DECAL.white.x + DECAL.white.w / 2) / DECAL.w, (DECAL.white.y + DECAL.white.h / 2) / DECAL.h];
 
@@ -145,20 +153,35 @@ export interface LambySet {
   glow(k: number): void;
   /** light one key for a moment (a press answered), or none */
   light(key: SetKey | null): void;
+  /** ⚑ S396 — the deck shows the state: ▶ lit while it plays, ❚❚ lit while it is paused, and the display under the keys
+   *  (printed again only when the words change: a state, or the counter's second) */
+  deck(state: DeckState): void;
   /** the decal canvas, for the review aids */
   readonly decal: HTMLCanvasElement;
 }
 
-/** the set's printing: each key's face and mark, the slot's label, the badge */
-function drawDecal(c: CanvasRenderingContext2D, lit: SetKey | null): void {
+/** where a key sits on the decal's strip (canvas px) */
+function keyRect(k: { x: number }): { cx: number; cy: number; kw: number; kh: number; x: number; y: number } {
+  const S = DECAL.strip, sx = S.w / (STRIP.x1 - STRIP.x0), sy = S.h / (STRIP.y1 - STRIP.y0);
+  const cx = S.x + (k.x - STRIP.x0) * sx, cy = S.y + (STRIP.y1 - KEY_Y) * sy;
+  const kw = KEY_W * sx, kh = KEY_H * sy;
+  return { cx, cy, kw, kh, x: Math.round(cx - kw / 2), y: Math.round(cy - kh / 2) };
+}
+/** ⚑ S396 (review aid, the probe) — the decal's pixels that show the state: each key's lamp, and the display */
+export function deckPixels(): { lamps: Record<SetKey, { x: number; y: number; w: number; h: number }>; display: { x: number; y: number; w: number; h: number } } {
+  const lamps = {} as Record<SetKey, { x: number; y: number; w: number; h: number }>;
+  for (const k of KEYS) { const r = keyRect(k); lamps[k.id] = { x: r.x + 10, y: r.y + 12, w: 20, h: 20 }; }
+  return { lamps, display: { ...DECAL.display } };
+}
+/** the set's printing: each key's face and mark, the slot's label, the badge, the display */
+function drawDecal(c: CanvasRenderingContext2D, lit: SetKey | null, deck: DeckState): void {
   c.clearRect(0, 0, DECAL.w, DECAL.h);
   c.fillStyle = ERA1.white; c.fillRect(DECAL.white.x, DECAL.white.y, DECAL.white.w, DECAL.white.h);
   // the strip: the deck's fascia colour, the keys where the raised keys are
-  const S = DECAL.strip, sx = S.w / (STRIP.x1 - STRIP.x0), sy = S.h / (STRIP.y1 - STRIP.y0);
+  const S = DECAL.strip;
   c.fillStyle = HOME.woolShade; c.fillRect(S.x, S.y, S.w, S.h);
   for (const k of KEYS) {
-    const cx = S.x + (k.x - STRIP.x0) * sx, cy = S.y + (STRIP.y1 - KEY_Y) * sy;
-    const kw = KEY_W * sx, kh = KEY_H * sy, x = Math.round(cx - kw / 2), y = Math.round(cy - kh / 2);
+    const { cx, cy, kw, kh, x, y } = keyRect(k);
     const face = k.id === 'power' ? HOME.lambFace : k.id === 'play' ? WALL.accent : ERA1.silver;
     // a 1990s key: a light top edge, a dark foot, the face
     c.fillStyle = ERA1.greyDark; c.fillRect(x, y, Math.round(kw), Math.round(kh));
@@ -166,7 +189,19 @@ function drawDecal(c: CanvasRenderingContext2D, lit: SetKey | null): void {
     c.fillStyle = k.id === 'power' ? ERA1.grey : ERA1.white; c.fillRect(x + 3, y + 3, Math.round(kw) - 6, 4);
     c.fillStyle = k.id === 'power' ? (k.id === lit ? HOME.lambFace : ERA1.paper) : ERA1.black;
     mark(c, k.id, Math.round(cx), Math.round(cy) - 1, Math.round(kh * 0.42));
+    // ⚑ S396 — the key that is ON carries its lamp: ▶ green while it plays, ❚❚ amber while it is paused, ⏻ green while it is lit
+    const on = (k.id === 'play' && (deck.mode === 'play' || deck.mode === 'load')) || (k.id === 'pause' && deck.mode === 'pause') || (k.id === 'power' && deck.mode !== 'off');
+    if (on) { c.fillStyle = ERA1.black; c.fillRect(x + 7, y + 9, 26, 26); c.fillStyle = k.id === 'pause' ? WALL.accent : INSTITUTION.terminalGlow; c.fillRect(x + 10, y + 12, 20, 20); }
   }
+  // ⚑ S396 — the display under the keys: a VCR's own window, its state and its counter (nothing is drawn on the glass)
+  const Dp = DECAL.display;
+  c.fillStyle = HOME.lambFace; c.fillRect(Dp.x, Dp.y, Dp.w, Dp.h);
+  c.fillStyle = INSTITUTION.screenBg; c.fillRect(Dp.x + 6, Dp.y + 6, Dp.w - 12, Dp.h - 12);
+  c.textBaseline = 'middle'; c.textAlign = 'left'; c.font = `64px "${VENDORED.bitmap}", ${FACES.e1.family}`;
+  c.fillStyle = deck.mode === 'pause' ? WALL.accent : INSTITUTION.screenInk;
+  if (deck.word && deck.mode !== 'off') c.fillText(deck.word, Dp.x + 22, Dp.y + Dp.h / 2 + 2);
+  c.textAlign = 'right'; if (deck.time && deck.mode !== 'off') c.fillText(deck.time, Dp.x + Dp.w - 22, Dp.y + Dp.h / 2 + 2);
+  c.textAlign = 'left';
   // the badge: Lamby's face and the name
   const B = DECAL.badge;
   c.fillStyle = HOME.wool; c.fillRect(B.x, B.y, B.w, B.h);
@@ -215,6 +250,7 @@ export function buildLambySet(app: pc.AppBase, name: string): LambySet {
   const g = bodyGeometry();
   quad(g, STRIP.x0, STRIP.y0, STRIP.x1, STRIP.y1, STRIP.z, DECAL.strip);
   quad(g, BADGE.cx - BADGE.w / 2, BADGE.cy - BADGE.h / 2, BADGE.cx + BADGE.w / 2, BADGE.cy + BADGE.h / 2, BADGE.z, DECAL.badge);
+  quad(g, DISPLAY.x0, DISPLAY.y0, DISPLAY.x1, DISPLAY.y1, DISPLAY.z, DECAL.display);
   const mesh = new pc.Mesh(app.graphicsDevice);
   mesh.setPositions(g.p); mesh.setNormals(g.n); mesh.setColors(g.c); mesh.setUvs(0, g.uv); mesh.setIndices(g.i); mesh.update(pc.PRIMITIVE_TRIANGLES);
   const mat = new pc.StandardMaterial();
@@ -225,15 +261,16 @@ export function buildLambySet(app: pc.AppBase, name: string): LambySet {
   body.addComponent('render', { meshInstances: [new pc.MeshInstance(mesh, mat, body)] });
   if (body.render) body.render.batchGroupId = -1;   // never batched: it moves
   root.addChild(body);
-  let lit: SetKey | null = null, drawnFonts = false;
-  const paint = (): void => { if (ctx) { drawDecal(ctx, lit); tex.upload(); } };
+  let lit: SetKey | null = null, drawnFonts = false, deckState: DeckState = { mode: 'off', word: '', time: '' };
+  const paint = (): void => { if (ctx) { drawDecal(ctx, lit, deckState); tex.upload(); } };
   paint();
   // the name's face may still be loading at the first paint: printed again once, when the fonts are in
   void document.fonts?.ready.then(() => { if (!drawnFonts) { drawnFonts = true; paint(); } });
   return {
     root, decal: canvas,
     glow(k) { mat.emissive.set(k, k, k); mat.update(); },
-    light(key) { if (key === lit) return; lit = key; paint(); }
+    light(key) { if (key === lit) return; lit = key; paint(); },
+    deck(st) { if (st.mode === deckState.mode && st.word === deckState.word && st.time === deckState.time) return; deckState = { ...st }; paint(); }
   };
 }
 
