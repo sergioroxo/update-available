@@ -9,7 +9,11 @@ it for anything not covered). ⚑ = likely needs institutional ethics review.*
    transmitted.** Wiped on exit/idle/refusal endings. (CI-enforced.)
 2. **No real people**: no likenesses, no verbatim survivor testimony, no
    real individuals as characters. Abstract roles, institutions, mechanics.
-   Organizations may be named only where documented in the KB.
+   Organizations may be named only where documented in the KB, and only as
+   citations: dossier cards, the Close, the Lexicon, the era sites, and the
+   teaching tapes' source line and references (his ruling 15 Nov 2026;
+   reworded at his yes, 16 Nov). Never as characters: no invented act, line
+   or product in a real organisation's name.
 3. The photo-filter mock takes **no** camera/file input, ever.
 4. Content warning up front, minimum 4s before continue arms; a working
    Leave; pause/exit reachable from every scene including the Offer.

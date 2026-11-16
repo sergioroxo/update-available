@@ -110,7 +110,10 @@ Plan of record: `docs/REINTERP_RESTRUCTURE_R28_2026-07-10.md`.
 - No real people, likenesses, logos, or verbatim survivor testimony.
   Invented marks only (Compass, HopeRestored, Pastor.AI, Sift™, EuroRepent
   Elite™, transjesus.str…). Organizations may be NAMED only where the KB
-  documents them.
+  documents them, and only as citations: dossier cards, the Close, the
+  Lexicon, the era sites, and the teaching tapes' source line and references
+  (⚑ his ruling 15 Nov 2026; reworded at his yes, 16 Nov). Never as
+  characters: no invented act, line or product in a real organisation's name.
 
 ## Aesthetic laws
 - Pixel discipline: import era palettes from `src/desktop/theme/` — never
