@@ -52,7 +52,8 @@ export function mountHelper(opts: {
     el.style.opacity = '0';
   };
   const show = (h: HelperHint): void => {
-    el.textContent = mapData.controlsHint;
+    // ⚑ S397 — a touch screen has no Esc: it names the II button at the bottom left (the headset swaps in its own line, app.ts)
+    el.textContent = window.matchMedia('(pointer: coarse)').matches ? mapData.controlsHintTouch : mapData.controlsHint;
     shownKey = h.key;
     shown = true;
     el.style.opacity = '1';

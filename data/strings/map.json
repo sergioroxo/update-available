@@ -634,5 +634,7 @@
  "_docS227": "⚑ S227 — 2016 starts with three jobs and the rest arrive as updates (docs/reinterp/VERA_OPTIONS_2026-10-09.md §4c.7; his answers 2026-10-10). `work` still names Annette, who is now one of the three starters; `jobs` and `recommend` say the other tools come as the platform's updates, which she installs. `labelSpeedrun` / `hintSpeedrun` replace a beat's label and hint in the Speedrun Version (src/state/cut.ts), where Lambient sends her straight to Annette and one finished job lights the phone.",
  "_docS205": "⚑ S205 — 2003's testimony is the era's main path now (s2_testimony.json): the request, the release, the tapes, the edit, the page. Caleb's message comes after it.",
  "controlsHint": "Esc opens the menu.",
+ "controlsHintTouch": "The II button, bottom left, opens the menu.",
+ "_docControlsHintTouch": "⚑ S397 (the orchestrator, 16 Nov: a phone has no Esc) — the idle reminder on a touch screen (phone, tablet: pointer coarse) names the menu button the screen really has, the II glyph at the bottom left (gameMenu.json pauseGlyphSymbol). The computer keeps controlsHint; the headset says its own line (gameMenu.json xrMenuHint, S269).",
  "_docS332": "⚑ S332 — 2016 is four jobs plus Malta (DESIGN_2016_CONNECTIONS, his second answers): places, family and the group are main beats now; the optional `jobs` beat (story clip, flagged replies) is retired with those tiles."
 }
