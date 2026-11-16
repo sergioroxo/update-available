@@ -1150,3 +1150,47 @@ VR-layer feature (figs 15–26): `ARTICLE_FIGURES_2026-10-31.md`, images in `out
 
 **Since 10 Nov:** `ARTICLE_MATERIALS.md` is the index of every document, image folder and source for the article, kept
 current each session.
+
+## 11. Corrections, 16–17 Nov 2026 (Fable's review §3.4; UiB job 29 B, S399)
+
+*Appended, not edited in: the sections above keep what was true when they were written. Where one of them is now out
+of date, the correction is here. Sources: `FABLE_REVIEW_FINDINGS_2026-11-16.md` §3.4 and the orchestrator's check at its
+end; his decisions in `FABLE_DECISIONS_2026-11-16.md`.*
+
+- **Draw calls (§8).** "2016 and 2026 cost ~170–196 draw calls … Not yet fixed" is no longer true. S396 (16 Nov) brought
+  every headset look under the 75 budget (the worst, 63). One moment is still over: the 2016 → 2026 era change draws up
+  to 214 calls in the headset while the room's batches are rebuilt. That is job 29 A1, not fixed when this was written.
+- **Presses (§6).** "The guided version walks in ~251–258 presses" was October. The walk of 16 Nov (S397) pressed **437**
+  times over 848 steps, 143 of them changing nothing (some are the walker's own policy). After 2016's cut (below) the
+  walk of e38eb49e (17 Nov) pressed **423** times over 835 steps, 141 changing nothing.
+- **The games (§4, §7o).** The table of five games as "creative failure" overstates what a visitor meets. On the default
+  path only MATCH MADE SIMPLE (2026) is played. His words (16 Nov): "They are Optional, you are not supposed to play the
+  game in 2026, it is just a suggestion of Lamby". The article should say the games are optional and offered by Lamby,
+  and that each is to be playable on its era's website at the Close (job 29 C).
+- **The Close (§2, step 5)** describes it as it was on 31 Oct. Since then: the four era websites and their hub, opened
+  from the panels (S283 on, S365); the computer panel and then Daniel's low-poly CRT in the panels' row (S378–S380); the
+  Lexicon in the menu and the setup (S381). Decided on 16 Nov and not built when this was written: the window title "Your
+  Update Has Failed · 1997 — 2026" (job 29 A7), and his line with Caleb's answer at Daniel's desk before the Close (D3).
+- **The turn (§1, §5, fig. 4).** **The piece no longer asks for the turn.** Two rulings removed it: no story beat may
+  depend on a look (10 Oct), and no conducted turns in the headset (15 Nov). The one-pager now says so. Fig. 4 should be
+  reframed or dropped, and the article should not claim the turn as the place where the argument lands. On 16 Nov he also
+  decided that the back-wall record and its stamp go and the file comes onto each era's screen (job 29 D;
+  `RESEARCH_NOTE_THE_BACK_WALL_AND_LAMBY_2026-11-16.md`).
+- **The VR layer (§8).** "Days old and has not been in a headset yet" is out of date: he has been in the Quest with it
+  (10 and 12 Nov). The evidence is still his notes, not measurements.
+- **2016's reading load.** His "we can for sure reduce stuff in the 2016": the default visit's board now holds two jobs,
+  the testimony and the places list; the family calls and the group's check-in stay whole behind "The other jobs" and
+  `?cut=full`. 2016 is at 78% of its census words (3,230 → 2,534) and 77% of the words a visitor meets once (1,476 →
+  1,134), in 35 presses instead of 48. That is not the half the brief aimed at (`TEXT_CUT_2016_S399_2026-11-16.md`).
+  *For the method:* the census counts distinct screens, so a board redrawn with a new clock time counts again, and 634
+  of 2016's 3,230 words were other eras' canvases; "words met once" is the better measure of reading load.
+- **The light at Malta.** If the article cites the room's light lifting at Malta (2016's turn), note that it did not lift
+  on a visitor's path from 7 to 16 Nov: an unrelated rewrite removed its only call. It was restored and walked on 17 Nov
+  (S399).
+- **The sources.** Eight corrections from the review are made (`SOURCES_JOB29_B2_2026-11-16.md`). *Chiles v. Salazar* now
+  cites the Court's own opinion. The UK bill's two reactions are cited to their pages: RCPsych's president on LBC, and
+  Stonewall's campaign page, because its statement of 25 June does not use "abusive". Three of the Close's four dated
+  star labels were reworded to what their pages say and one was confirmed. "Planned for 2027" is on the 2026 site. The
+  2016 panel says "conversion practices", not "practices like hers". The 2009 APA report is replaced by the Royal
+  College of Psychiatrists' 2014 statement wherever it was shown beside a claim, and kept as a name and as the Lexicon's
+  source.
