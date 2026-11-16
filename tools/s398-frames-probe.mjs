@@ -22,7 +22,8 @@
  *
  * Writes <out>/<label>-frames.json and a photo per row. Exit 1 if a poster (computer, headset) or a panel (all three
  * modes) is not whole in its frame, or on a page error. The phone's portrait frame is reported for the posters, not
- * asserted: at 42° across it frames the monitor, and a poster beside it cannot be in it without covering the monitor.
+ * asserted: at 42° across it frames the monitor, and a poster beside it cannot be in it without covering the monitor;
+ * so is 2026's poster on the computer (left where it was: his call, see reinterp_deltas.json e_ballPoster).
  */
 import fs from 'node:fs';
 import path from 'node:path';
@@ -135,7 +136,12 @@ if (!ONLY || ONLY === 'posters') for (const p of POSTERS) for (const mode of MOD
     const file = `${LABEL}-poster-${p.room}-${mode}.png`;
     await page.screenshot({ path: path.join(OUT, file) }); row.photo = file;
     console.log(`[${p.room} ${mode}] ${p.id}: ${row.inside ? 'whole in the frame' : 'CUT'} · box ${row.box.join(',')} of ${row.W}×${row.H} · fov ${row.fov}`);
-    if (mode !== 'phone') check(`poster ${p.room} (${p.id}) whole in the seat's first view · ${mode}`, row.inside, `box ${row.box.join(',')} of ${row.W}×${row.H}`);
+    // the phone's portrait frame is reported, not asserted (see the header); so is 2026 on the computer: left where it was,
+    //   whole and large in the headset, because the computer's view holds it only at a size its words cannot be read
+    //   (reinterp_deltas.json e_ballPoster _docS398: his call)
+    const reported = mode === 'phone' || (p.room === '2026' && mode === 'computer');
+    if (!reported) check(`poster ${p.room} (${p.id}) whole in the seat's first view · ${mode}`, row.inside, `box ${row.box.join(',')} of ${row.W}×${row.H}`);
+    else row.reportedOnly = true;
   }
   row.errors = errors; report.posters.push(row);
   check(`poster ${p.room} · ${mode}: no page errors`, errors.length === 0, errors.slice(0, 2).join(' | '));
