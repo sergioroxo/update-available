@@ -14,7 +14,7 @@ been built by a builder session and checked by an orchestrator session, both Opu
 that is **not anchored on theirs**. Disagree with them where the evidence says so.
 
 He wants it to be **really useful**: not only what is wrong, but what would make the piece stronger,
-meaning the narrative, the space and the whole experience. The sessions so far have mostly built, fixed
+meaning the narrative, the space and the whole experience, and what it offers his research. The sessions so far have mostly built, fixed
 and reconciled. You are asked to **direct**.
 
 **This is a review, not a build.** Write findings and proposals; change no code.
@@ -48,7 +48,7 @@ and reconciled. You are asked to **direct**.
 
 - The free allowance ends **Mon 17 Nov 08:59**. Plan for it to run out before you finish.
 - Order: **§1** (about a quarter of your effort: a decision memo, not a build), then **§2** (the main
-  part), then **§3** only if allowance remains.
+  part), then **§3** (the research), then **§4** only if allowance remains.
 - Write each section to the findings file as soon as it is done.
 - Use helper subagents on a cheaper model (Sonnet) for mechanical work: extracting frames, listing
   files, counting words, grepping. Keep the looking, the judging and the writing for yourself.
@@ -154,8 +154,49 @@ Judge the piece **as a visitor meets it**, then **propose**. Stay inside `CLAUDE
     current plan. For each: what the visitor would experience, why it is better, what it replaces, the
     cost in days of building, and the risk.
 11. Where the build drifted from the intent: was the drift for better or for worse?
+12. **Challenge the decided creative choices.** These were settled over months. Question any that the
+    evidence says is weaker than an alternative, and say plainly which you would keep:
+    - the era changes as software updates, with the flyover and the glob morph;
+    - Lamby, one guide with four era skins;
+    - three rooms that age across 30 years, one seat per room, and the turn;
+    - the LambyVision teaching tapes (the TV as the system's labelling screen);
+    - the over-the-top satire of the system's own surfaces, which must collapse;
+    - the games that cannot be won;
+    - the entrance (the stars, the setup, Daniel's room);
+    - the Close as built, and its Restart card;
+    - the pixel discipline, the soft lo-fi look, and the short default visit.
 
-## 3 · If allowance remains: code health
+    Many of these were **his rulings** (see `TODO.md` and the memory files). When a proposal would
+    reverse one, say so, so that he can decide.
+
+## 3 · The research
+
+He is writing an article for *Digital Creativity* (a special issue on interactive digital narrative).
+The piece is also research through design. Read, in this order:
+- `docs/reinterp/ARTICLE_RESTRUCTURE_IDEA_2026-10-31.md` (his one argument);
+- `docs/reinterp/ARTICLE_COMPANION_2026-10-31.md` (the main companion, §1–§7u);
+- `docs/reinterp/ARTICLE_MATERIALS.md` (the index of everything; §7 lists what is open before
+  submission);
+- `docs/reinterp/ARTICLE_EVIDENCE_LOG.md` (**his own notes**: read, never rewrite);
+- `docs/reinterp/ARTICLE_FIGURES_2026-10-31.md`.
+
+**Questions:**
+1. Does the built piece support his argument (digital SOGICE as *"a visual and interface culture that
+   keeps redesigning coercion as care"*, shown through failure)? Where is the evidence strongest?
+   Where would a peer reviewer push back?
+2. What does the piece show that is new for interactive digital narrative research? Name the two or
+   three strongest contributions, and the scenes that carry them.
+3. The method: critical making with a declared human–AI production (companion §6 and §7u). What is
+   worth reporting? What is missing (for example, how decisions and his overrides were recorded)? What
+   would a reviewer question?
+4. Gaps: claims in the companion that the build no longer matches, figures that need a reshoot, and
+   sources still marked `[VERIFY SOURCE]`.
+5. What to study next: what a playtest or audience study should measure, and which research states
+   (the tapes' versions, the TransJesus trials) best show the process.
+
+Write this part as **notes for him**, not as article prose.
+
+## 4 · If allowance remains: code health
 
 A short pass: the riskiest modules, dead code from superseded designs, and checks that pass while
 proving nothing. Ten findings at most.
@@ -166,7 +207,8 @@ proving nothing. Ten findings at most.
 - **§1** answers Part 1's five questions, recommendation first.
 - **§2** opens with a one-page **director's note**: what the piece is now, and what it could be. Then
   findings A–C, then the proposals D.
-- **§3** code health.
+- **§3** the research notes.
+- **§4** code health.
 - Each finding gives what you found, the evidence (frame path, measurement, `file:line`, walk line),
   its severity (blocks a visitor / weakens the piece / polish), a suggested fix, and whether it needs
   **his** call (ethics, his words, a change of direction) or can simply be built.
