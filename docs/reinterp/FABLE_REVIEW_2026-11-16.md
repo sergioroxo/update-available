@@ -13,7 +13,11 @@ You are **Fable 5.2**, asked by Sérgio Roxo (project lead, UiB Center for Digit
 been built by a builder session and checked by an orchestrator session, both Opus 5.5. He wants a read
 that is **not anchored on theirs**. Disagree with them where the evidence says so.
 
-**This is a review, not a build.** Write findings; change no code.
+He wants it to be **really useful**: not only what is wrong, but what would make the piece stronger,
+meaning the narrative, the space and the whole experience. The sessions so far have mostly built, fixed
+and reconciled. You are asked to **direct**.
+
+**This is a review, not a build.** Write findings and proposals; change no code.
 
 ## 0 · Ground rules (binding)
 
@@ -28,15 +32,30 @@ that is **not anchored on theirs**. Disagree with them where the evidence says s
   anything without asking him. Don't use online chatbots.
 - **Words he owns:** dossier phrasing, the Lexicon's close lines and every `_s` line are his. Report
   on them; never rewrite them.
-- **The laws:** `CLAUDE.md` (it outranks other docs) and `docs/ETHICS_CONSTRAINTS.md`. Your persistent
-  memory has loaded; read its `feedback` files, they hold his corrections.
+- **The laws:** `CLAUDE.md` (it outranks other docs) and `docs/ETHICS_CONSTRAINTS.md`. His corrections
+  are in the memory folder `~/.claude/projects/-Users-sergiogalvaoroxo-update-available/memory/`: read
+  the files whose frontmatter says `type: feedback`. Where one disagrees with `CLAUDE.md`, `CLAUDE.md`
+  wins (for example, the writing is now Claude's, 17 Aug).
 - **Which docs are current:** `docs/reinterp/TODO.md` is the one live list. `00_WHERE_THINGS_STAND.md`
   dates from 5 Sep and is stale. Before trusting any doc, check its `STATUS:` line.
 - **Look, don't only read.** This project's main defect class is content that exists and cannot be
   met by a visitor. A finding about what a visitor sees must cite a frame, a measurement or a walk
   line, not source alone.
+- **He may paste a note while you work** (for example what he saw in the Quest). Fold it into the
+  right section.
 
-## 1 · First, his technical questions (do this part first)
+## 0.5 · How to spend your allowance
+
+- The free allowance ends **Mon 17 Nov 08:59**. Plan for it to run out before you finish.
+- Order: **§1** (about a quarter of your effort: a decision memo, not a build), then **§2** (the main
+  part), then **§3** only if allowance remains.
+- Write each section to the findings file as soon as it is done.
+- Use helper subagents on a cheaper model (Sonnet) for mechanical work: extracting frames, listing
+  files, counting words, grepping. Keep the looking, the judging and the writing for yourself.
+- **Look at many pictures and hold the whole piece at once.** That is what the earlier reviewers could
+  not do in one sitting.
+
+## 1 · First, his technical questions
 
 His words (16 Nov): *"Is there another [3D engine] we should use? have you consider that? also is the
 Drawcalls fixable with another 3D engine? I have a Unity Education Grant License."* And, on hearing
@@ -82,15 +101,23 @@ and BUILD_LOG S396).
 4. Draw calls: is the current approach sound? What would remove the era-change spike?
 5. **Your recommendation**, and what only a real Quest can settle.
 
-## 2 · Then the piece itself
+## 2 · Then the piece itself: a director's pass (the main part)
 
-Judge the piece **as a visitor meets it**: story and cadence, the ethics laws, period truth, and
-whether the Close's claims match their sources.
+Judge the piece **as a visitor meets it**, then **propose**. Stay inside `CLAUDE.md` and the ethics.
 
-**Evidence to start from (no walk needed):**
+**The intent (read before judging, so you can see where the build drifted):**
+- `docs/PROJECT_ONE_PAGER.md`
+- `docs/PRODUCTION_SCRIPT_v0.3.md` and `docs/SCRIPT_UPDATE_v0.4.md` … `v0.8.md`
+- `docs/REINTERP_RESTRUCTURE_R28_2026-07-10.md` (the reinterpretation's plan of record)
+- `docs/reinterp/CADENCE_STUDY_2026-10-10.md` (a draft), `OPENING_NOTES_2026-10-15.md`,
+  `RESTRUCTURE_1997_2003_2026-10-31.md`
+- `docs/reinterp/SCRIPT_VS_BUILD_2026-08-21.md` (an older promise-vs-build audit; check what is still
+  true)
+
+**The evidence (no walk needed):**
 - The latest walk, 16 Nov, entrance → the Restart page:
   `research/article-images-2026-11-16/s397-menu-line/walk-30cc0d9f/WALK_2026-11-16_SPEEDRUN_GUIDED.md`
-  plus its `TEXT_CENSUS_*`.
+  (its "MINUTES PER ERA" table gives the timings) plus its `TEXT_CENSUS_*`.
 - Photos: `research/article-images-2026-11-16/` (job 28, the Lamby sets in three modes, the era
   sites).
 - The three v6 teaching tapes, about 2 minutes each. Find them through `data/room/teaching_tapes.json`;
@@ -98,16 +125,35 @@ whether the Close's claims match their sources.
   `RESEARCH_TRANS_CAUSES_1997_2026_2026-11-15.md`. To watch, extract frames (`ffmpeg`, 1 fps) and read
   the `captions.vtt`.
 - `docs/reinterp/VISUAL_REVIEW_2026-11-12.md` and `docs/reinterp/ARTICLE_COMPANION_2026-10-31.md`.
-- To photograph more yourself: `tools/stills.mjs` (pass your own `--port`).
+- To photograph more yourself: `tools/stills.mjs` (pass your own `--port`). Photograph the headset
+  and phone views too, not only the computer.
 
-**Questions:**
-1. Does each era (1997, 2003, 2016, 2026) say one clear thing, and does the visitor feel it?
-2. Where does the piece explain instead of show, or show something no visitor will meet?
-3. Any breach of the tone laws: satire outside perpetrator self-presentation, the clinical debate
+**A · The visitor's arc**
+1. The first 60 seconds; each era's first and last minute; the era changes; the Close. Where does
+   attention rise, and where does it drop? Is the length of a visit right?
+2. Does each era (1997, 2003, 2016, 2026) say one clear thing, and does the visitor feel it?
+3. Where does the piece explain instead of show? Where does it show something no visitor will meet?
+
+**B · The space**
+4. The three rooms that age across 30 years; the turn (the piece's one bodily ask); the seats and the
+   sends; light, colour and sound. Does the space carry the story, or does it only hold the screens?
+   Judge each look-mode: headset, computer, phone.
+5. The rule "never require the visitor to look" (`CLAUDE.md`, R28 amendment 1). Where does a beat still
+   depend on a look? Where does taking the visitor there feel forced?
+
+**C · The laws and the facts**
+6. Any breach of the tone laws: satire outside perpetrator self-presentation, the clinical debate
    satirised, a `felt` or `respite` scene touched by the system, invented testimony, a real person?
-4. Period truth: anything anachronistic in the software, devices or language of each era?
-5. The Close: do its claims match their sources and their `documentary | contested | speculative`
+7. Period truth: anything anachronistic in the software, devices or language of each era?
+8. The Close: do its claims match their sources and their `documentary | contested | speculative`
    status? Spot-check at least ten.
+
+**D · Proposals**
+9. For each era: its strongest moment (to protect), its weakest (to cut or change), and one addition.
+10. **Three bold proposals:** larger changes that would make the piece stronger, not bound by the
+    current plan. For each: what the visitor would experience, why it is better, what it replaces, the
+    cost in days of building, and the risk.
+11. Where the build drifted from the intent: was the drift for better or for worse?
 
 ## 3 · If allowance remains: code health
 
@@ -118,9 +164,13 @@ proving nothing. Ten findings at most.
 
 `docs/reinterp/FABLE_REVIEW_FINDINGS_2026-11-16.md`:
 - **§1** answers Part 1's five questions, recommendation first.
-- **§2 and §3:** each finding gives what you found, the evidence (frame path, measurement,
-  `file:line`, walk line), its severity (blocks a visitor / weakens the piece / polish), a suggested
-  fix, and whether it needs **his** call (ethics, his words) or can simply be built.
-- **End:** the ten most important findings ranked, and the outline of one build job for the builder.
+- **§2** opens with a one-page **director's note**: what the piece is now, and what it could be. Then
+  findings A–C, then the proposals D.
+- **§3** code health.
+- Each finding gives what you found, the evidence (frame path, measurement, `file:line`, walk line),
+  its severity (blocks a visitor / weakens the piece / polish), a suggested fix, and whether it needs
+  **his** call (ethics, his words, a change of direction) or can simply be built.
+- **End:** the ten most important findings and proposals ranked, and the outline of one build job for
+  the builder (only what needs no call from him; list his calls separately).
 
 Plain, short sentences: Sérgio is dyslexic and reads this himself.
