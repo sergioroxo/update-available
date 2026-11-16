@@ -1,21 +1,18 @@
 {
  "tape": "1997",
- "version": "v5",
- "line": "A reconstruction: an invented fellowship's teaching tape. Every lesson is quoted or closely paraphrased from a ministry handbook, two Exodus booklets and a class manual (1993–1996); every commercial is built on a real period product, price or flyer (1987–2001). All are held in the Smithsonian's Love in Action Collection.",
+ "version": "v6",
+ "line": "A reconstruction: an invented fellowship's teaching tape. Every lesson is quoted or closely paraphrased from a ministry handbook and an Exodus booklet (1995, 1996); its two adverts are built on the Exodus booklet series and a 1987 booklet price. All are held in the Smithsonian's Love in Action Collection.",
+ "made": "Made in code for YOUR UPDATE HAS FAILED by Claude (Anthropic, Opus 5.5), UiB job 28 (S395), 16 Nov 2026: the pictures drawn frame by frame in headless Chrome; v5's felt board, felt Lamby, CG and adverts re-shot for the LambyVision glass.",
+ "music": "Music: made in code for these tapes by Claude (Anthropic, Opus 5.5) — the bed “Open Door” (1997-B, his pick); the adverts' jingle is v3's TriedPath theme (made in code for this tape, S389)",
+ "voices": "Build-time Supertonic 3 through tools/tts/render.py, register 'apparatus' only (his picks): narrator stock voice F3 (0.92, 14 steps), announcer M1 (0.97, 16 steps). v5's renders, and one new line with the same voice (“Part two. Displacement. Putting off, putting on.”). Lamby has no voice.",
+ "invented": "TriedPath Fellowship, its Pocket Library, the “Mountains of Material” cassette set, the booklet titles on the covers, the fellowship hall, the phone numbers (fictional 555-01xx), Lamby's bubbles and the felt board are the piece's. No real person is shown or named.",
  "documents": [
   {
    "title": "Helping People Step Out of Homosexuality (a handbook for pastors, counselors, lay workers)",
    "organisation": "Love in Action",
    "year": "1995 (revised edition; first published 1984)",
    "archive": "Smithsonian National Museum of American History, Archives Center, NMAH.AC.1428 (the Mattachine Society of Washington “Love in Action” Collection), Box 2 Folder 13",
-   "pages": "cover; printed pp. 1, 11, 13, 17, 18, 128–135, 176–177 (PDF pp. 2, 9, 19, 21, 25, 26, 136–143, 184–185)"
-  },
-  {
-   "title": "Are People Born Gay? (resource booklet #PR-02)",
-   "organisation": "Exodus International–North America",
-   "year": "1993",
-   "archive": "Smithsonian National Museum of American History, Archives Center, NMAH.AC.1428 (the Mattachine Society of Washington “Love in Action” Collection), Box 2 Folder 12",
-   "pages": "printed pp. 7, 9, 13 (PDF pp. 5, 6, 8)"
+   "pages": "printed pp. 128–133, 135 (PDF pp. 136–141, 143)"
   },
   {
    "title": "Is Homosexuality Inborn? (resource booklet #PR-01)",
@@ -37,27 +34,6 @@
    "year": "1987",
    "archive": "Smithsonian National Museum of American History, Archives Center, NMAH.AC.1428 (the Mattachine Society of Washington “Love in Action” Collection), Box 2 Folder 9",
    "pages": "PDF p. 15"
-  },
-  {
-   "title": "Steps Out Program Class Manual",
-   "organisation": "Love in Action",
-   "year": "c. 1994 (its latest dated item is June 1994)",
-   "archive": "Smithsonian National Museum of American History, Archives Center, NMAH.AC.1428 (the Mattachine Society of Washington “Love in Action” Collection), Box 13 Folder 1",
-   "pages": "Program Overview p. iii (PDF p. 6); Group Interaction pp. i, v (PDF pp. 12, 16)"
-  },
-  {
-   "title": "the truth comes out: The Roots and Causes of Male Homosexuality (the resources pages: the video “Understanding Homosexuality: Roots and Recovery”, $20)",
-   "organisation": "Focus on the Family",
-   "year": "2001 (later than this tape; dated where used)",
-   "archive": "Smithsonian National Museum of American History, Archives Center, NMAH.AC.1428 (the Mattachine Society of Washington “Love in Action” Collection), Box 6 Folder 5",
-   "pages": "printed p. 39 (PDF p. 22)"
-  },
-  {
-   "title": "Women Relating to Men (a church class flyer)",
-   "organisation": null,
-   "year": "1992 (Thursday 11 June)",
-   "archive": "Smithsonian National Museum of American History, Archives Center, NMAH.AC.1428 (the Mattachine Society of Washington “Love in Action” Collection), Box 1 Folder 3 (“Women Only”)",
-   "pages": "PDF p. 17"
   }
  ],
  "facts": [
@@ -79,8 +55,5 @@
    "source": "World Health Organization, ICD-10 (browser, 2019 version), block F66, Note, https://icd.who.int/browse10/2019/en/GetConcept?ConceptId=F66 read 15 Nov 2026; adoption “May 1990 (WHA43.24)”, https://www.who.int/standards/classifications/classification-of-diseases read 15 Nov 2026",
    "url": "https://icd.who.int/browse10/2019/en/GetConcept?ConceptId=F66 ; https://www.who.int/standards/classifications/classification-of-diseases"
   }
- ],
- "invented": "TriedPath Fellowship, its Pocket Library, the “Mountains of Material” cassette set, the Un-Walk Steps class, the fellowship hall, the phone numbers (fictional 555-01xx), Lamby's bubbles and the felt board are the piece's. The Roots & Recovery video and the Women Relating to Men flyer are real; their words are quoted, their makers' and presenters' names are not used. No real person is shown or named.",
- "music": "Music: made in code for these tapes by Claude (Anthropic, Opus 5.5) — the bed “Open Door” (1997-B); the commercials' jingles are v3's (made in code for this tape, S389)",
- "voices": "Build-time Supertonic 3 through tools/tts/render.py, register 'apparatus' only: narrator stock voice F3 (0.92, 14 steps), announcer M1 (0.97, 16 steps). Lamby has no voice."
+ ]
 }

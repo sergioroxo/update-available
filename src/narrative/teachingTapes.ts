@@ -9,15 +9,19 @@
  * sources, the short break and the long break (`breakLong`, for the site) come from data/room/teaching_tapes.json, which
  * tools/teaching-tapes-import.mjs generates from each tape's web/ folder (the piece requests nothing at run time).
  *
- * ⚑ OPTION A (his 15 Nov: "choose option A"): once per room the piece takes the visitor to the TV and the tape plays FROM
- * ITS START — the label, the title, Part 1 and the first commercial — and stops by itself at "End of Part 1". The rest is
- * theirs, on the same TV and on the era's website. The 59 s short tape of S390 is gone (his v3 note: "The 59 version
+ * ⚑ OPTION A (his 15 Nov: "choose option A", superseded 16 Nov by "Play it all", below): once per room the piece takes the
+ * visitor to the TV and the tape plays FROM ITS START. The 59 s short tape of S390 is gone (his v3 note: "The 59 version
  * doesn't make much sense because it forces you to see the ending").
  *
  * THE PLACE IS MEMORY ONLY (CLAUDE.md's no-storage law): one second per tape, for the rest of the visit. It is wiped with the
  * ledger (`ledgerGeneration`), never written anywhere, and it is not on the record: the frame never plays, so watching is
  * not filed, counted or rewarded. The TV and the era's website at the Close (src/frame/siteViewer/audio.ts) read and write
  * the same place; if the visitor stops, it stays where they stopped, and ▶ goes on from there in both. It never jumps.
+ *
+ * ⚑ S396 (UiB job 28 B1; his 16 Nov) — "Play it all": OPTION A's stop at the end of Part 1 is gone; once brought, the tape
+ * plays to its end. "The person if they want they can get out of it, and it gets paused": setting the set down (or the story
+ * moving on) pauses it where it is, and ▶ later goes on from that second, in the room and on the era's website. v6 (S395)
+ * burns the bar into the picture (subtitles, the [n] line) and adds the numbered references and notes the site prints.
  */
 import data from '../../data/room/teaching_tapes.json';
 import { ledgerGeneration } from '../state/ledger';
@@ -41,15 +45,23 @@ export interface BreakText { label: string[]; admission: { text: string; source:
 export interface BreakLong { title: string; intro: string; sections: { heading: string; items: { text: string; source: string }[] }[]; sources: string[]; synthesised?: boolean }
 export interface TapeSources { line?: string; documents?: { title: string; organisation?: string | null; year?: string | number; archive?: string; pages?: string }[];
   facts?: { id?: string; text: string; source: string; url?: string }[]; music?: string; voices?: string; made?: string }
+/** ⚑ S396 (v6) — the [n] line as the bar shows it (burned into the picture), and the numbered references it points to */
+export interface BarLine { start: number; end: number; refs: number[]; text: string }
+export interface Reference { n: number; short: string; citation: string; pages: string; about: string; url: string }
 export interface TapeData {
   tape: TapeId; title: string; version: string; music: string; placeholder: boolean;
-  duration: number; partOneEnd: number;
+  /** v4/v5's End of Part 1 (kept as data; ⚑ S396 nothing stops there any more — his "Play it all"); null for v6 */
+  duration: number; partOneEnd: number | null;
   room: FileData;
   chapters: Chapter[]; margin: MarginLine[]; cues: Cue[];
   /** ⚑ the tape's large in-video type — the label, the End of Part 1 card, the break — as timed text (screen_text.vtt) */
   screen?: Cue[];
   sources: TapeSources | null; break: BreakText | null; breakLong: BreakLong | null;
+  /** ⚑ S396 (v6) — the bar is in the picture: the [n] lines and their references are data for the era site */
+  bar?: BarLine[]; references?: Reference[]; notes?: { heading: string; items: { text: string; source: string }[] }[];
 }
+/** ⚑ S396 — the tape carries its own bar (subtitles and the [n] line burned in): nothing is drawn over it */
+export const barInPicture = (t: TapeData): boolean => t.version === 'v6';
 
 export const TAPE_IDS: readonly TapeId[] = ['1997', '2016', '2026'];
 export const TAPES = (data as unknown as { tapes: Record<TapeId, TapeData> }).tapes;
@@ -61,7 +73,8 @@ export const tapeForEra = (era: string): TapeId | null => era === 'e1' ? '1997' 
 export interface Place {
   /** the second in the tape (the room and web copies share one timeline) */
   t: number;
-  /** the tape has stopped by itself at "End of Part 1" (or the conducted moment was let go of): it never stops there again */
+  /** the conducted moment has let go of the set (S392's name, from when the tape stopped at Part 1's end; ⚑ S396 there is no
+   *  such stop): Lamby's one later offer waits for it */
   partOneSeen: boolean;
   /** the tape has ever been started, on the TV or at the Close */
   started: boolean;
@@ -100,12 +113,6 @@ export function screenAt(tape: TapeData, t: number): Cue | null {
   return null;
 }
 
-/** the parts after Part 1 (what ▶ plays on into): lessons, commercials, the collapse and the break */
-export function partsAfterOne(tape: TapeId): Chapter[] {
-  const d = TAPES[tape];
-  return d.chapters.filter((c) => c.start >= d.partOneEnd - 0.01 && (c.kind === 'lesson' || c.kind === 'commercial' || c.kind === 'collapse' || c.kind === 'break'));
-}
-
 /** the tape's place, for the Close's website: where the TV left it (the same timeline) */
 export function tapePlace(tape: TapeId): number { return placeOf(tape).t; }
 
@@ -115,11 +122,13 @@ export function tapeOfFile(file: string): TapeId | null {
   return null;
 }
 
+/** ⚑ S396 — the site viewer draws a live text band under this film (a v4/v5 tape); a v6 tape carries its bar in the picture */
+export function liveBandFor(file: string): boolean { const id = tapeOfFile(file); return !!id && !barInPicture(TAPES[id]); }
+
 /** the site viewer reports the tape's second (pause, seek, end, and every few seconds while it plays) */
 export function notePlace(tape: TapeId, t: number): void {
   const p = placeOf(tape);
   p.t = Math.max(0, t); p.started = true;
-  if (p.t >= TAPES[tape].partOneEnd) p.partOneSeen = true;
 }
 
 export const clock = (s: number): string => { const n = Math.max(0, Math.floor(s)); return `${Math.floor(n / 60)}:${String(n % 60).padStart(2, '0')}`; };

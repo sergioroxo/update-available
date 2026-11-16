@@ -167,6 +167,133 @@ function hasDrawableScale(e: pc.Entity): boolean {
 }
 
 /**
+ * ⚑ S396 (UiB job 28 B4) — ONE DRAW FOR EVERY PLAIN BOX, THE COLOUR CARRIED BY THE VERTICES.
+ *
+ * The batch shares materials by exact signature, and in this building nearly every box prop has a colour of its own:
+ * measured at Vera's worst look back toward the hall (2016, the seated headset mock), after the seat's cull
+ * (seatCull.ts), 58 of the 90 draws left were batches and 33 of those held a single prop — a poster's board, the modem,
+ * the lamp's shade, a book, the institution's rack, the window pane — each a draw call because its colour is unique.
+ * With this, that look draws 63 (tools/s396-drawcalls-probe.mjs; every headset look from every seat is under 75).
+ *
+ * So a box prop whose material is plain (no map, opaque, nothing but a colour on the defaults era1room.ts `spawnProp`
+ * gives it) bakes with a copy of the box mesh whose vertices carry that colour — LINEAR, float32, exactly the value
+ * the engine itself would upload as `material_diffuse` (Color.linear) — and with ONE shared material per kind: a lit
+ * one (diffuse white × the vertex colour) and an unlit one (emissive white × the vertex colour: the panes, the
+ * shades, the LEDs). A box with an emissive tint as well as a diffuse (the apparatus's faint self-light) cannot carry
+ * both in one colour stream and keeps its own material, as before. The shader's albedo is `material_diffuse ×
+ * vVertexColor` = 1 × the same float: the same picture (the probe renders one frame both ways and counts the pixels
+ * that differ — tools/s396-drawcalls-probe.mjs).
+ *
+ * The conversion lives only while the batch does: `clearBatch` gives every prop its own box mesh and its colour
+ * material back BEFORE it clones the private copies the morph animates, and the handle's `material(s)` keep pointing at
+ * the colour material throughout, so anything that reads a prop's colour while it is batched reads the true one.
+ * Writing to a batched prop's material was already wrong (a shared write — see the header); now it is simply unseen
+ * until the next bake. ROLLBACK: `?novcbatch=1`, or delete this block and its two calls.
+ */
+let vertexColourMerge = true;
+/** turn the vertex-colour merge on or off; takes effect at the next bake (cluster `rebake()`) */
+export function setVertexColourMerge(on: boolean): void { vertexColourMerge = on; }
+export function vertexColourMergeOn(): boolean { return vertexColourMerge; }
+/** each converted mesh instance → its own box mesh and its (canonical) colour material */
+const vcOriginal = new Map<pc.MeshInstance, { mesh: pc.Mesh; material: pc.StandardMaterial; defs: number }>();
+/** the engine computes a mesh instance's shader defines (which vertex streams it has) once, in its constructor; a swapped
+ *  mesh must say it carries colours, or the shader ignores them (measured: every merged box came out white) */
+type Defs = { _shaderDefs: number };
+/** the coloured copies, per source mesh and colour (kept for the life of the app: one reference held here) */
+const vcMeshes = new Map<pc.Mesh, Map<string, pc.Mesh>>();
+const vcMaterials = new Map<string, pc.StandardMaterial>();
+const MATERIAL_DEFAULTS = new pc.StandardMaterial();
+const black = (c: pc.Color): boolean => c.r === 0 && c.g === 0 && c.b === 0;
+const sameColor = (a: pc.Color, b: pc.Color): boolean => a.r === b.r && a.g === b.g && a.b === b.b;
+/** 'lit' (colour = diffuse, no emissive) | 'unlit' (colour = emissive, black diffuse) | null (keeps its own material) */
+function vcKind(rc: pc.RenderComponent, m: pc.StandardMaterial): 'lit' | 'unlit' | null {
+  if (rc.type !== 'box') return null;
+  if (m.diffuseMap || m.emissiveMap || m.opacityMap || m.normalMap || m.aoMap || m.lightMap || m.specularMap || m.glossMap) return null;
+  if (m.diffuseVertexColor || m.emissiveVertexColor || m.blendType !== pc.BLEND_NONE || m.opacity !== 1 || m.alphaTest !== 0) return null;
+  const D = MATERIAL_DEFAULTS;
+  if (m.emissiveIntensity !== D.emissiveIntensity || !sameColor(m.specular, D.specular) || m.gloss !== D.gloss || m.metalness !== D.metalness ||
+      m.useMetalness !== D.useMetalness || m.cull !== D.cull || m.depthTest !== D.depthTest || m.depthWrite !== D.depthWrite ||
+      m.twoSidedLighting !== D.twoSidedLighting || m.useFog !== D.useFog || m.useSkybox !== D.useSkybox || m.useTonemap !== D.useTonemap) return null;
+  if (m.useLighting && black(m.emissive)) return 'lit';
+  if (!m.useLighting && black(m.diffuse)) return 'unlit';
+  return null;
+}
+function vcMaterial(kind: 'lit' | 'unlit', from: pc.StandardMaterial): pc.StandardMaterial {
+  let v = vcMaterials.get(kind);
+  if (v) return v;
+  v = from.clone();
+  v.name = `room-batch-vc-${kind}`;
+  if (kind === 'lit') { v.diffuse = new pc.Color(1, 1, 1); v.diffuseVertexColor = true; v.diffuseVertexColorChannel = 'rgb'; }
+  else { v.emissive = new pc.Color(1, 1, 1); v.emissiveVertexColor = true; v.emissiveVertexColorChannel = 'rgb'; }
+  v.update();
+  vcMaterials.set(kind, v);
+  return v;
+}
+/** a copy of `src` with every stream it has, plus the colour (linear, as the engine uploads a material colour) */
+function vcMesh(app: pc.Application, src: pc.Mesh, colour: pc.Color): pc.Mesh {
+  const lin = new pc.Color().linear(colour);
+  const key = `${lin.r}|${lin.g}|${lin.b}`;
+  let per = vcMeshes.get(src);
+  if (!per) { per = new Map(); vcMeshes.set(src, per); }
+  let mesh = per.get(key);
+  if (mesh) return mesh;
+  mesh = new pc.Mesh(app.graphicsDevice);
+  const n = src.vertexBuffer.getNumVertices();
+  for (const el of src.vertexBuffer.format.elements) {
+    if (el.name === pc.SEMANTIC_COLOR) continue;
+    const data = new Float32Array(n * el.numComponents);
+    src.getVertexStream(el.name, data);
+    mesh.setVertexStream(el.name, data, el.numComponents, n, pc.TYPE_FLOAT32, false);
+  }
+  const colours = new Float32Array(n * 4);
+  for (let i = 0; i < n; i++) colours.set([lin.r, lin.g, lin.b, 1], i * 4);
+  mesh.setColors(colours, 4, n);
+  const idx: number[] = [];
+  src.getIndices(idx);
+  if (idx.length) mesh.setIndices(idx);
+  mesh.update(pc.PRIMITIVE_TRIANGLES, true);
+  mesh.incRefCount();   // the cache's own reference: a destroyed prop can never take the shared copy with it
+  per.set(key, mesh);
+  return mesh;
+}
+/**
+ * ⚑ THE MERGED BATCH DRAWS ITS BOXES IN THE ORDER THEIR OWN BATCHES WERE DRAWN. Two boxes that touch (a wall's end
+ * against the next wall, a poster's edge flush on the wall) can have exactly the same depth at a pixel, and the depth
+ * test then keeps whichever was drawn LAST. The engine draws opaque batches by material id, highest first
+ * (`sortMaterialMesh`); inside one batch, primitives go in the order its mesh instances were gathered. Merged as
+ * gathered, three such pixels changed winner across the nine photographed headset poses (traced: `poster2` against
+ * `wallNorth` in 1997, the two corners of `wallNorth` in 2003). So the merged list is put back in the old order — by
+ * each box's own colour material id, highest first, gathering order kept within one colour — on every (re)generation
+ * of the group, which the engine also runs by itself when a batched prop is switched on or off.
+ */
+let prepareOrdered = false;
+function orderMergedLikeTheirBatches(app: pc.Application): void {
+  if (prepareOrdered || !app.batcher) return;
+  prepareOrdered = true;
+  type Prepare = (mis: pc.MeshInstance[], dynamic: boolean, maxAabbSize?: number, translucent?: boolean) => pc.MeshInstance[][];
+  const b = app.batcher as unknown as { prepare: Prepare };
+  const prepare = b.prepare;
+  b.prepare = function (this: unknown, ...args: Parameters<Prepare>): pc.MeshInstance[][] {
+    const lists = prepare.apply(this, args);
+    for (const list of lists) {
+      if (list.length < 2 || !vcOriginal.has(list[0])) continue;
+      const at = new Map(list.map((mi, i) => [mi, i]));
+      const id = (mi: pc.MeshInstance): number => (vcOriginal.get(mi)?.material as unknown as { id: number } | undefined)?.id ?? 0;
+      list.sort((x, y) => id(y) - id(x) || at.get(x)! - at.get(y)!);
+    }
+    return lists;
+  };
+}
+/** every converted instance back to its box and its colour material */
+function restoreVertexColours(): void {
+  for (const [mi, o] of vcOriginal) {
+    if (!mi.mesh) continue;   // destroyed with its prop (the morph re-spawns a box as a model only after a tear-down)
+    mi.mesh = o.mesh; (mi as unknown as Defs)._shaderDefs = o.defs; mi.material = o.material;
+  }
+  vcOriginal.clear();
+}
+
+/**
  * Bake the current settled state into ONE batch group. Call only after the morph
  * and layout have resolved; absent props are represented by zero scale and are
  * skipped until a later era brings them back.
@@ -177,8 +304,10 @@ export function bakeBatch(
   const batcher = app.batcher;
   if (!batcher) return null;
   disableEngineFirstBatch(app);
+  orderMergedLikeTheirBatches(app);
   for (const mi of hiddenAbsent) mi.visible = true; // a re-shown prop must batch as itself; cullAbsentProps re-hides next frame
   hiddenAbsent.clear();
+  restoreVertexColours();   // S396: a bake never starts from a converted prop
   const old = batcher.getGroupByName(GROUP);
   if (old) batcher.removeGroup(old.id);
   const group = batcher.addGroup(GROUP, false, 100);
@@ -200,14 +329,25 @@ export function bakeBatch(
         const canonical = shared.get(k);
         if (canonical) { if (canonical !== m) mi.material = canonical; }
         else shared.set(k, m);
+        // S396: a plain box carries its colour in its vertices and shares one material with every other plain box
+        const kind = vertexColourMerge ? vcKind(rc, mi.material as pc.StandardMaterial) : null;
+        if (kind) {
+          const colourMat = mi.material as pc.StandardMaterial;
+          const defs = (mi as unknown as Defs)._shaderDefs;
+          vcOriginal.set(mi, { mesh: mi.mesh, material: colourMat, defs });
+          mi.mesh = vcMesh(app, mi.mesh, kind === 'lit' ? colourMat.diffuse : colourMat.emissive);
+          (mi as unknown as Defs)._shaderDefs = defs | pc.SHADERDEF_VCOLOR;
+          mi.material = vcMaterial(kind, colourMat);   // the material setter clears the instance's cached shaders
+        }
       }
       rc.batchGroupId = group.id;
     }
     // keep the handle's own view of its materials truthful — `setPropEmphasis`
     // and the belongings lift both read it, and both are excluded above, but a
     // stale array here is exactly the kind of quiet lie this file has cost.
+    // (S396: a vertex-coloured box's handle keeps its COLOUR material, never the shared white one.)
     h.materials = comps.flatMap((rc) =>
-      rc.meshInstances.map((mi) => mi.material as pc.StandardMaterial));
+      rc.meshInstances.map((mi) => (vcOriginal.get(mi)?.material ?? mi.material) as pc.StandardMaterial));
     if (h.materials[0]) h.material = h.materials[0];
     ids.push(id);
     joined++;
@@ -230,6 +370,7 @@ export function clearBatch(
 ): null {
   const batcher = app.batcher;
   if (!batcher || !handle) return null;
+  restoreVertexColours();   // S396: each box its own mesh and colour material back, before the private clones below
   batcher.removeGroup(handle.groupId);
   for (const id of handle.ids) {
     const h = room.props.get(id);

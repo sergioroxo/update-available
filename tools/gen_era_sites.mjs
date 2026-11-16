@@ -67,6 +67,7 @@ const mmss = (sec) => `${Math.floor(sec / 60)}:${String(Math.floor(sec % 60)).pa
 function tapeNotes(t) {
   const T = S.common.tape ?? {};
   const bl = t.breakLong ?? { title: '', intro: '', sections: [], sources: [] };
+  if (t.version === 'v6') return tapeNotesV6(t, T, bl);
   const margin = (t.margin ?? []).map((m) => ({ time: mmss(m.start), head: m.head, text: m.text || '', source: m.source || '' }));
   // ⚑ S394 — v5's short break: the bar under the programme's own admission (barHead + bar, during `on`) is drawn by the set
   //   and printed here with the margin's lines, at its time; its source joins the list
@@ -77,9 +78,39 @@ function tapeNotes(t) {
   return [
     { kind: 'margin', title: T.marginTitle ?? 'The margin, as text', margin,
       lines: margin.map((m) => `${m.time}  ${m.head}${m.text ? ` — ${m.text}` : ''}`) },
-    { kind: 'break', title: bl.title, intro: bl.intro || '', sections: bl.sections ?? [],
-      lines: [...(bl.intro ? [bl.intro, ''] : []), ...(bl.sections ?? []).flatMap((sec) => [`# ${sec.heading}`, ...sec.items.map((i) => `${i.text} — ${i.source}`), ''])] },
+    breakBlock(bl),
     { kind: 'sources', title: T.sourcesTitle ?? 'Sources', sources, lines: sources }
+  ];
+}
+/** the long break as a block (v5 and v6 alike) */
+const breakBlock = (bl) => ({ kind: 'break', title: bl.title, intro: bl.intro || '', sections: bl.sections ?? [],
+  lines: [...(bl.intro ? [bl.intro, ''] : []), ...(bl.sections ?? []).flatMap((sec) => [`# ${sec.heading}`, ...sec.items.map((i) => `${i.text} — ${i.source}`), ''])] });
+/** ⚑ S396 — the floppy section's archive link: only a verified row (links.json / era_links.json), else the build refuses */
+const floppyLink = (fl) => {
+  if (!fl?.link) return null;
+  const row = [...Object.values(links), ...Object.values(eraLinks)].flat().find((l) => l.url === fl.link);
+  if (!row) { console.error(`REFUSED — era_sites.json 1997 floppy: ${fl.link} is not a verified link`); process.exit(1); }
+  return row;
+};
+/** a verified link's own label (links.json / era_links.json), for a reference's url */
+const linkLabel = (url) => [...Object.values(links), ...Object.values(eraLinks)].flat().find((l) => l.url === url)?.label ?? url;
+/**
+ * ⚑ S396 (UiB job 28 B2) — a v6 tape's text under the player: THE [n] LINE (bar.json: each line the bar showed, at its time,
+ * each number a link to its reference), THE REFERENCES (references.json: [n], the full citation and pages, one sentence on
+ * what the document is, its link only where verified; then its notes — what moved off the tape, each item sourced), and
+ * THE LONG BREAK (break_long.json). The picture carries the subtitles and the [n] line; the captions track is offered off.
+ */
+function tapeNotesV6(t, T, bl) {
+  const bar = (t.bar ?? []).map((b) => ({ time: mmss(b.start), text: b.text, refs: b.refs ?? [] }));
+  const refs = (t.references ?? []).map((r) => ({ ...r, label: r.url ? linkLabel(r.url) : '' }));
+  const notes = t.notes ?? [];
+  const refLines = refs.flatMap((r) => [`[${r.n}] ${r.citation}${r.pages ? ` ${r.pages.replace(/\.$/, '')}.` : ''}`, r.about, ...(r.url ? [r.url] : []), '']);
+  const noteLines = notes.flatMap((n) => [`# ${n.heading}`, ...n.items.map((i) => `${i.text} — ${i.source}`), '']);
+  return [
+    { kind: 'bar', title: T.barTitle ?? 'The source line, as text', lead: T.barLead ?? '', tape: t.tape, bar,
+      lines: [...(T.barLead ? [T.barLead, ''] : []), ...bar.map((b) => `${b.time}  ${b.text}`)] },
+    { kind: 'refs', title: T.refsTitle ?? 'References', tape: t.tape, refs, notes, lines: [...refLines, ...noteLines] },
+    breakBlock(bl)
   ];
 }
 for (const year of Object.keys(S.eras)) {
@@ -87,7 +118,9 @@ for (const year of Object.keys(S.eras)) {
     const t = m.tape ? TAPES[m.tape] : null;
     if (!m.tape) return m;
     if (!t) return { ...m, file: '', credit: m.credit ?? '' };
-    return { ...m, file: t.room.file, type: 'video', what: m.what.replace('{length}', lengthOf(t.duration)), credit: tapeCredit(t), notes: tapeNotes(t) };
+    // ⚑ S396 — a v6 tape is described as v6 (its bar in the picture, the [n] line and references under it): `whatV6`
+    const what = (t.version === 'v6' && m.whatV6) ? m.whatV6 : m.what;
+    return { ...m, file: t.room.file, type: 'video', what: what.replace('{length}', lengthOf(t.duration)), credit: tapeCredit(t), notes: tapeNotes(t), version: t.version };
   });
 }
 const map = read('data/strings/map.json');
@@ -241,13 +274,24 @@ function mediaHtml(m, up, tag = 'article') {
   const credit = `<p class="credit">${esc(C.creditLabel)}: ${esc(m.credit)}</p>`;
   if (!m.file) return `<${tag} class="media nofile"><h3>${esc(m.title)}</h3><p>${esc(m.what)}</p>${credit}</${tag}>`;
   const el = m.type === 'video'
-    ? `<video controls preload="none" src="${up}${m.file}">${m.tape ? `<track kind="captions" src="${up}${m.file.replace(/[^/]+$/, 'captions.vtt')}" srclang="en" label="English" default>` : ''}`
+    // ⚑ S396 — the captions track is OFF by default for a v6 tape (its subtitles are in the picture); a v4/v5 tape keeps it on
+    ? `<video controls preload="none" src="${up}${m.file}">${m.tape ? `<track kind="captions" src="${up}${m.file.replace(/[^/]+$/, 'captions.vtt')}" srclang="en" label="English"${m.version === 'v6' ? '' : ' default'}>` : ''}`
     : `<audio controls preload="none" src="${up}${m.file}">`;
   const close = m.type === 'video' ? '</video>' : '</audio>';
   const lyr = m.lyrics ? `<details><summary>${esc(C.lyricsTitle)}</summary><p class="lyrics">${lyricsOf(m.lyrics).map(esc).join('<br>')}</p></details>` : '';
   // S394 — a teaching tape's three text blocks under the player: the margin, the long break, the sources (visible, selectable)
   const blk = (n) => {
     if (n.kind === 'margin') return `<section class="tapemargin"><h4>${esc(n.title)}</h4><ol>${n.margin.map((x) => `<li><span class="t">${esc(x.time)}</span> <b>${esc(x.head)}</b>${x.text ? ` — ${esc(x.text)}` : ''}</li>`).join('')}</ol></section>`;
+    if (n.kind === 'bar') {
+      // each [n] in the line is a link to its reference (the same page, the References block under it)
+      const linked = (text) => esc(text).replace(/\[(\d+)\]/g, (_, k) => `<a href="#ref-${n.tape}-${k}">[${k}]</a>`);
+      return `<section class="tapebar"><h4>${esc(n.title)}</h4>${n.lead ? `<p>${esc(n.lead)}</p>` : ''}<ul>${n.bar.map((x) => `<li><span class="t">${esc(x.time)}</span> ${linked(x.text)}</li>`).join('')}</ul></section>`;
+    }
+    if (n.kind === 'refs') {
+      const ref = (r) => `<li id="ref-${n.tape}-${r.n}"><b>[${r.n}]</b> ${esc(r.citation)}${r.pages ? ` ${esc(r.pages.replace(/\.$/, ''))}.` : ''}<br>${esc(r.about)}${r.url ? ` ${ext({ url: r.url, label: r.label })}` : ''}</li>`;
+      const notes = n.notes.map((x) => `<h5>${esc(x.heading)}</h5><ul>${x.items.map((i) => `<li>${esc(i.text)}<span class="src"> — ${esc(i.source)}</span></li>`).join('')}</ul>`).join('');
+      return `<section class="taperefs"><h4>${esc(n.title)}</h4><ul class="refs">${n.refs.map(ref).join('')}</ul>${notes}</section>`;
+    }
     if (n.kind === 'break') return `<section class="tapebreak"><h4>${esc(n.title)}</h4>${n.intro ? `<p>${esc(n.intro)}</p>` : ''}${n.sections.map((sec) => `<h5>${esc(sec.heading)}</h5><ul>${sec.items.map((i) => `<li>${esc(i.text)}<span class="src"> — ${esc(i.source)}</span></li>`).join('')}</ul>`).join('')}</section>`;
     return `<section class="tapesources"><h4>${esc(n.title)}</h4><ul>${n.sources.map((x) => `<li>${esc(x)}</li>`).join('')}</ul></section>`;
   };
@@ -294,11 +338,17 @@ ${ends}`;
     const d = cards[f].debrief;
     return `<article class="aboutcard"><h4>${esc(CARD_FILES[f])}</h4>${(d.body ?? []).map((l) => `<p>${pub(l)}</p>`).join('')}</article>`;
   }).join('\n');
+  // ⚑ S396 (UiB job 28 B3) — 1997: the programmes' own computer (the floppy with no file), after the practices
+  const fl = E.floppy;
+  const flLink = floppyLink(fl);
+  const floppy = fl ? `<article class="prac floppy" id="floppy"><h3>${esc(fl.title)} ${tag(fl.status)}</h3>
+${fl.paras.map((p) => `<p>${esc(p)}</p>`).join('\n')}
+<div class="src">${tag(fl.status)}${fl.sources.map((x) => `<p>${esc(x)}</p>`).join('')}${flLink ? `<ul class="links"><li>${ext(flLink)}</li></ul>` : `<p class="nolink">${esc(C.noLink)}</p>`}</div></article>` : '';
   out.practices = `<h2 id="h-practices">${esc(S.tabs.practices)}</h2>
 <p class="lede">${esc(C.practicesLead)}</p>
 <div class="statuskey"><h3>${esc(C.statusKey)}</h3><dl class="key">${['documentary', 'contested', 'speculative'].map((s) => `<dt>${tag(s)}</dt><dd>${esc(long(s))}</dd>`).join('')}</dl></div>
 ${prac}
-${abouts ? `<h3>${esc(C.aboutTitle)}</h3><p>${esc(C.aboutLead)}</p>${abouts}` : ''}`;
+${floppy ? `${floppy}\n` : ''}${abouts ? `<h3>${esc(C.aboutTitle)}</h3><p>${esc(C.aboutLead)}</p>${abouts}` : ''}`;
 
   // SOURCES (this year's cards in full; verified links only)
   let src = '';
@@ -780,6 +830,10 @@ function panelsModel(year) {
     { k: 'h2', t: S.tabs.practices }, { k: 'lede', t: C.practicesLead },
     { k: 'key', t: C.statusKey, rows: ['documentary', 'contested', 'speculative'].map((s) => ({ status: s, tag: short(s), long: long(s) })) },
     ...prac,
+    // ⚑ S396 (B3) — 1997: the programmes' own computer
+    ...(E.floppy ? [{ k: 'h3', t: E.floppy.title, status: E.floppy.status, tag: short(E.floppy.status) }, ...E.floppy.paras.map((t) => ({ k: 'p', t })),
+      (() => { const l = floppyLink(E.floppy); return { k: 'src', status: E.floppy.status, tag: short(E.floppy.status), conf: '', t: E.floppy.sources.join(' '),
+        links: l ? [{ label: l.label, url: l.url }] : [], nolink: l ? '' : C.noLink }; })()] : []),
     ...(abouts.length ? [{ k: 'h3', t: C.aboutTitle }, { k: 'p', t: C.aboutLead }, ...abouts] : [])
   ];
   const src = [{ k: 'h2', t: S.tabs.sources }, { k: 'lede', t: C.sourcesLead.replace('{verify}', words.verifyPublic) }, { k: 'h3', t: C.everySource }];

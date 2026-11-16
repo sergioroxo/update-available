@@ -1,21 +1,20 @@
 {
  "tape": "2026",
- "version": "v5",
+ "version": "v6",
  "label": [
   "Made from real teaching materials, 1988–2026. You can stop at any time."
  ],
  "admission": [
   {
    "text": "“Aside from living in a fallen world, no one is certain what causes gender confusion.”",
-   "source": "Reconciliation Ministries of Michigan, \"The Building Blocks of Gender Confusion\" (newsletter article), © 2019, p. 1 (the admission) and pp. 2–4 (the causes it then lists), recmin.org newsletter, read on the page images"
+   "source": "Reconciliation Ministries of Michigan, “The Building Blocks of Gender Confusion”, newsletter article, © 2019, 4 pp.; read on the page images. p. 1 (the admission); pp. 2–4 (the causes it then lists)."
   }
  ],
- "barHead": "TAUGHT IN — a ministry newsletter (2019), p. 1",
- "bar": "Its next three pages list the causes.",
- "barSource": "Reconciliation Ministries of Michigan, \"The Building Blocks of Gender Confusion\" (newsletter article), © 2019, p. 1 (the admission) and pp. 2–4 (the causes it then lists), recmin.org newsletter, read on the page images",
+ "line": "Its next three pages list the causes.",
+ "bar": "[4] “The Building Blocks…”, 2019, p. 1",
  "on": [
-  242.169,
-  257.439
+  108.869,
+  118.869
  ],
- "note": "In the tape the admission is the picture; the bar under it carries barHead and bar (the web copy burns them in; the room's set and the era site draw them from here). No sources roll: the long version is break_long.json."
+ "note": "In the tape the admission and its line are the picture; the bar under it carries its [n]. The long version is break_long.json."
 }

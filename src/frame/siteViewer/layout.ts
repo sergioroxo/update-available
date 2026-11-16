@@ -3,7 +3,7 @@
  * once, so scrolling is only a translate and a cull — the texture is re-uploaded when the VIEWER changes (scroll, tab,
  * hover), never per frame. Type is sized for a headset: body 22 px on a 1024 px-wide window that hangs 0.9 m wide.
  */
-import { tapeOfFile } from '../../narrative/teachingTapes';
+import { liveBandFor } from '../../narrative/teachingTapes';
 import type { Block } from './model';
 import { DOORS, type Skin, type Year } from './skins';
 
@@ -29,7 +29,8 @@ export type Op =
   | { t: 'film'; x: number; y: number; w: number; h: number; file: string; pic: number; band: number };
 
 /** ⚑ S371 — a film's progress strip under its picture, and the inset of the line from either side (the times sit there) */
-/** ⚑ S394 — a teaching tape's live text band (caption + margin line) under the picture, as a share of the picture's height */
+/** ⚑ S394 — a teaching tape's live text band (caption + margin line) under the picture, as a share of the picture's height
+ *  (⚑ S396: v4/v5 only — a v6 tape's bar is burned into its picture) */
 export const FILM_BAND_K = 0.4;
 export const FILM_BAR = 42, FILM_INSET = 84, FILM_MAX_W = 720;
 
@@ -264,7 +265,7 @@ export function layoutDoc(ctx: CanvasRenderingContext2D, blocks: Block[], width:
         const playable = !!b.file && b.type === 'audio';
         const film = !!b.file && b.type !== 'audio' && films;
         const filmNote = !!b.file && b.type !== 'audio' && !films;
-        const fw = Math.min(cw - 36, FILM_MAX_W), pic = Math.round(fw * 9 / 16), band = film && tapeOfFile(b.file) ? Math.round(pic * FILM_BAND_K) : 0, fh = pic + band + FILM_BAR;
+        const fw = Math.min(cw - 36, FILM_MAX_W), pic = Math.round(fw * 9 / 16), band = film && liveBandFor(b.file) ? Math.round(pic * FILM_BAND_K) : 0, fh = pic + band + FILM_BAR;
         const extra = playable ? 62 : film ? fh + 14 + 62 : filmNote ? sl + 8 : 0;
         const h = 14 + title.length * Math.round(SIZE.h4 * LH) + what.length * lh + 8 + extra + lyrH + notesH + cred.length * sl + 16;
         box(pad, y, cw, h, skin.card, skin.cardEdge, 2);

@@ -20,6 +20,7 @@ which serve 2016 and 2026).*
 | **v3** and **the two videos** | 14 Nov, job 25 (S389) | 1997 v3 (v2 + the record's cards + music made in code), 2016 "Heartwood" and 2026 "HEDGE™" as videos, each with a short tape for the room's TV | `output/teaching-tapes/1997-v3/`, `2016/video/`, `2026/video/` | https://claude.ai/artifact/4auxHygUfkgCHqQEKHdb5K | this file, §4–§8 | — (waits on his eye) |
 | **v4**, the label, the margin and the break | 15 Nov, job 26 (S391) | 1997 "Understanding Your Roots" v4 (4:29.7; Part 1 the handbook's computer, Part 3 its chapter "Displacement"), 2016 "Heartwood" v4 (4:11.4; a DVD course, the 1993 floppy at its centre), 2026 "HEDGE™" v4 (4:33.9; the course's own history of its reasons, 1988 → today); each: a label, the tape played straight, the margin as data (drawn live in the room, burned into the web copy), the break; End of Part 1 for the room's TV (job 26 B, S392) | `output/teaching-tapes/1997-v4/`, `2016-v4/`, `2026-v4/`, `page-v4/` | https://claude.ai/artifact/HwYCTvoLf6xwwfySSywDzy | this file, §9 | — (waits on his eye; T85) |
 | **v5**, the slim margin, the short break, the sound by his ear | 15 Nov, job 27 (S393) | 1997 "Understanding Your Roots" v5 (5:31.5; v3's four adverts back; End of Part 1 at 1:31.9), 2016 "Heartwood" v5 (3:48.2; an infographic, no person; nothing cut off), 2026 "HEDGE™" v5 (4:18.4; 18 edit errors fixed); each: the margin one slim line in the bar (TAUGHT IN — source), every spoken line subtitled, the break one screen in the tape (the long break and the sources go to the era site: `break_long.json`), 2016/2026 a short label; music and voices chosen by his ear from the sound sampler (https://claude.ai/artifact/MuULBSjAAe5sy7PLTQPr9m), music 7 dB under the voice | `output/teaching-tapes/1997-v5/`, `2016-v5/`, `2026-v5/`, `sampler-v5/`, `page-v5/` | https://claude.ai/artifact/2ANoLVeiNpAn9an9CZ5CX2 | this file, §10 | — (waits on his eye; T87) |
+| **v6**, two minutes, played straight through | 16 Nov, job 28 (S395) | 1997 "Understanding Your Roots" v6 (2:03; the church-hall felt board on VHS, made clear and bright: the computer, Displacement, two adverts, Lamby unplugging the TV, two question cards), 2016 "Heartwood" v6 (1:57; the DVD course as a fill-in Viewer Guide on a locked spread, the 1993 floppy word for word, no zooms), 2026 "HEDGE™" v6 (2:03; an exposé whose suspect is your child, 1988 → today, the chat front door that remembers and holds you to it); each: one named editor kept for every revision, a look test approved first, no End of Part 1, no pauses, the subtitles and a small [n] source line burned into the bar at the set's own 4:3 frame, the [n] references and the long break for the era site; scanned by its editor, by the session and by the orchestrator before he saw it | `output/teaching-tapes/1997-v6/`, `2016-v6/`, `2026-v6/`, `page-v6-look/`, `page-v6/` | https://claude.ai/artifact/NJqdbMPA34LvqS3FGUx2Xn (the look: https://claude.ai/artifact/KAAVyoYar9fy5izAJL9Am7) | this file, §11 | the look: "I think they work much better these versions. This way there is no need for a pause, people can deal with up to 2 minutes!" (16 Nov); the tapes wait on his eye (T89) |
 
 ## The three tapes
 
@@ -2780,4 +2781,90 @@ Music "Watchful" (B, `_tools/music_v5.py`, his pick) as the course bed in course
 #### How to rebuild
 
 `output/teaching-tapes/2026-v5/source/README.md`; after his next pick by ear: `sh source/rebuild.sh music` or `sh source/rebuild.sh voices`.
+
+## 11. v6: two minutes, played straight through (16 Nov 2026, S395, UiB job 28 Part A)
+
+*Built on his notes on v5 (UIB_JOB_28 "His notes", kept verbatim as a checklist), after a look test he approved. v5 (§10)
+stays untouched as a research state. Video only: Part B (S396) imports the room copies into LambyVision and the era
+sites. Folders (git-ignored): `output/teaching-tapes/1997-v6/`, `2016-v6/`, `2026-v6/`; the look test
+`<year>-v6/look/` and its page `page-v6-look/` ("Tapes v6: the Look", https://claude.ai/artifact/KAAVyoYar9fy5izAJL9Am7);
+the page `page-v6/` ("Teaching Tapes v6", https://claude.ai/artifact/NJqdbMPA34LvqS3FGUx2Xn). Interface:
+`output/teaching-tapes/V6_INTERFACE.md`. Each tape's `REPORT.md` holds his checklist ticked with timestamps, the script
+table (time, picture, voice → subtitle, [n]), the measured capitals and the scan.*
+
+**How it was made (what changed in the method).** Three rounds had reached him with silences, a frozen picture, music
+cutting out and doubled captions, because nobody watched in time. So:
+- **One editor per tape** (Opus), named and kept for every revision of its tape, resumed by id; never a new helper.
+- **His notes as a checklist**, verbatim, ticked in each REPORT with the frame or timestamp that proves it.
+- **Look first:** a style frame and a 15 s motion test per tape, on one page, then a wait for his yes (16 Nov: "I think
+  they work much better these versions. This way there is no need for a pause, people can deal with up to 2 minutes!").
+- **Watch before handing over:** each editor ran silencedetect (−45 dB, 0.8 s), freezedetect (0.002, 2 s) and ebur128,
+  and looked at every frame of a 1 fps sheet; the session scanned and looked again; the orchestrator scanned and looked a
+  third time, and sent back three fixes (below) before anything reached him.
+
+**What changed for all three:**
+- **About two minutes, played straight through** ("Play it all", his confirmation of 16 Nov): no End of Part 1, no stop
+  card, no "pause the tape". `chapters.json` keeps chapter starts only, for the set's ⏮/⏭. Getting out of the set pauses
+  it where it is (Part B).
+- **The bar is ours, inside the frame:** the tape renders at the LambyVision glass's own 4:3 shape, the picture (16:9)
+  above and a bar below it holding the subtitles (large, one or two lines), a thin divider and the source as a small
+  "[n] short title, year, p." No "TAUGHT IN", no black side bars, nothing over the picture. While the picture already
+  shows the spoken words (a felt strip, a card, a big caption), the subtitle line stays empty, so nothing is printed twice.
+- **The bar is burned into both copies** (room 960×720 ≤ 10 MB; web 1440×1080), measured against the room's floors through
+  the held set: subtitles 49–52 px of 1080 (≈ 1.7° in the headset, ≈ 25 px on the computer, ≈ 14 px on the phone); the
+  [n] line ≥ 32 px (≈ 1.1°, ≈ 16 px; on the phone ≈ 9–10 px, under the 12 px floor, accepted for that line only as the
+  orchestrator's call, since his note asks for the sources small and each [n] is printed in full on the era site).
+- **The label is one frame, ≤ 4 s; the end card ≤ 5 s. The break is one screen, the programme's own admission shown whole
+  at once and held about ten seconds over a quiet held chord or tone (no silence, no caret, no noise).**
+- **`references.json`** gives each [n] its full citation and one sentence on what it is, plus what the bar no longer
+  carries (notes); **`break_long.json`** keeps the long break. Both are for the era sites at the Close (B2).
+- **The sound stays his picks** (1997 B + V3 + V2; 2016 the v4 music + V2 + V3; 2026 B + V5 + V3), music continuous under
+  the whole tape, 7 dB under the voices, −14 LUFS, true peak ≤ −1 dBTP. Nobody has listened: the sound is measured.
+
+### 11.1 1997 v6 (2:03.3)
+
+The church-hall flannelgraph on VHS, made clear and bright. Label "Made from real teaching materials, 1987–1998. You can
+stop at any time." (the orchestrator corrected 1987–1996 from the OCR of NMAH-AC1428-B002-F012: the Pocket Library advert's
+source [2] is a later printing of the booklets' back page, listing up to #PR-13, © 1998). Part 1, how your mind works:
+"Our mind works like a computer", the stack of OLD gaining power, garbage in / garbage out, question two; the advert
+Mountains of Material (star wipe; "Fill your memory tapes, and push the old material out!"). Part 2, Displacement:
+putting off / putting on, no neutral ground, the vacancy evil will fill, the TV's "new morality propaganda", Lamby
+pulling the plug ("Unplug it!"), question five; the advert the Pocket Library ("Just one dollar each."). The collapse on
+booklet PR-1's page 17 ("Something they never chose."), the drain, then the break: Love in Action's own admission, "The
+more we fight against homosexual thoughts, the more intense they become." (handbook p. 133), whole for 10 s. End card:
+"TriedPath and its products are invented." Sources [1] the Love in Action handbook, rev. 1995; [2] the Exodus resource
+booklets' back page, 1993–98; [3] Emotional Dependency, 1987, back cover; [4] Exodus PR-01, 1996, p. 17. The other three
+adverts and the "what was already known" facts moved to the era site. Fixed after the scans: the opening's empty board
+(the head is on it from the first frame), the label's range.
+
+### 11.2 2016 v6 (1:57.0)
+
+The DVD course as a fill-in Viewer Guide: one locked spread per chapter, the guide's blanks filled in pink as she speaks,
+nothing zooms or pans (a window light crosses the table once over the session, so the long passages never freeze). The
+label, the Heartwood logo, the Too Close? trailer before the menu (the Deep Roots trailer dropped), the DVD menu; ch. 1
+The Big Three (relationship issues, an identity struggle, a spiritual fallacy; "It's not a sexual orientation problem.
+It's an identity crisis."); the remote's ⏭ to ch. 3, the 1993 floppy word for word ("a floppy disc that is titled
+woman … she has no file to put it in"; "Save that one, friend."); one page turn to ch. 4, the warning signs, and the
+same seven signs, each with a heart, "completely appropriate in marriage and engagement"; the lesson's credits ("Every
+copy you buy plants another seed.") at the lesson's end; the disc failing; the break, Emotional Dependency p. 25,
+"Prepare for grief and depression. Letting go of a dependent relationship can be as painful as going through a
+divorce.", whole for 9.6 s on a calm panel (the orchestrator's fix: it had typed in letter by letter over block noise);
+end card "Heartwood is invented. What it teaches is not: the numbered sources are listed at the Close." Chapter 2 (mother
+and father) is cut for time. Sources [1] Emotional Dependency (1990); [2] the Exodus Global Alliance five-pack page,
+2016; [3] The Heart of the Matter, Focus on the Family, 2001; [4] Are People Born Gay?, Exodus, 1993.
+
+### 11.3 2026 v6 (2:03.4)
+
+An exposé whose suspect is your child: the homework makes the parent the investigator, the chat door turns the file on the
+parent, and by the end the exposé has investigated itself. The sting; the cold open at the house ("I thought I'd know.
+I thought I'd see it coming."); the spine 1988 → 2003 → 2014 → 2019 → 2025 → TODAY (the phone line's "false identity",
+"the same roots as homosexuality. ONLY DEEPER.", the Prayer Wall as the one advert, "Catch it early", the screens and the
+homework "know how many times they text", "One friend comes out. Then the group. Then your child.", ROGD only in the [n]
+line in CAAPS's words, "Now even governments use our word."); TODAY, the chat front door: "It remembers what you tell it.
+And it holds you to it." (the 60/40-minute beat dropped); the course's own "liberty to make their own choices" struck
+through; "If you care about your child, finish the course."; the break, the 2019 newsletter's admission "Aside from
+living in a fallen world, no one is certain what causes gender confusion." No rain, no "full-court" anywhere, every line
+"they" / "your child", no vertical clip, no medical fear. The orchestrator's fix: [10] read "Executive Order 14168"; the
+tape names no government, so the bar now reads "[10] a 2025 executive order" and the full citation (read on govinfo.gov,
+16 Nov 2026) lives only in references.json. Sources [1]–[13].
 

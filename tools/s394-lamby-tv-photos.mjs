@@ -6,6 +6,8 @@
  *
  *     node tools/s394-lamby-tv-photos.mjs --port 5194 [--out output/s394-photos] [--mode desktop|xr|phone|all] [--only 1997|2016|2026]
  *
+ * ⚑ S396 (job 28 B6): a fourth frame, `held-paused` (nothing on the glass; the ❚❚ lamp and the deck's display show it), and a
+ * v6 tape's `held` second is a second into its first [n] line (its bar is in the picture).
  * For each room three frames per mode: `seat` (the seat at rest, what a visitor sees on arrival), `place` (the eye turned to
  * the set where it stands, lit and paused at a margin line, as after its moment), `held` (the set brought close — the review
  * aid `__teachingTv.take`, the same call the moment makes — playing a second into a margin line, so the picture, the caption
@@ -87,13 +89,15 @@ async function room(r, mode) {
     }
     await wait(900);
   };
-  const T = TAPES[r.id], m = T.margin.find((x) => x.start > T.partOneEnd) ?? T.margin[0], t0 = m.start + 1.2;
+  const T = TAPES[r.id], m = T.margin.find((x) => x.start > (T.partOneEnd ?? 0)) ?? T.margin[0] ?? T.bar?.[0], t0 = (m?.start ?? 2) + 1.2;   // S396: a v6 tape's [n] line
   const frames = {};
   await look(null);
   await page.screenshot({ path: path.join(OUT, `after-${mode}-${r.id}-seat.png`) }); frames.seat = true;
-  // lit and paused at its place, as after its moment (the review aid plays then pauses; the probe proves the presses)
-  await page.evaluate((id, t) => { window.__teachingTv.play(id, t); }, r.id, t0); await wait(1500);
-  await page.evaluate((id) => window.__teachingTv.press(id, 'tv-pause'), r.id); await wait(600);
+  // ⚑ S396 — PUT DOWN MID-TAPE: brought close, playing, then put down by the visitor (the review aid `putBack`, the same call
+  //   the body press makes): back at its place, paused at that second — the lit ❚❚ and the deck's display say so
+  await page.evaluate((id) => window.__teachingTv.take(id), r.id); await wait(1700);
+  await page.evaluate((id, t) => { window.__teachingTv.play(id, t); }, r.id, t0); await wait(2000);
+  await page.evaluate((id) => window.__teachingTv.putBack(id), r.id); await wait(2200);
   const g = await page.evaluate((id) => window.__teachingTv().tvs.find((x) => x.tape === id).targets.glass, r.id);
   await look(g);
   await page.screenshot({ path: path.join(OUT, `after-${mode}-${r.id}-place.png`) }); frames.place = g;
@@ -101,7 +105,11 @@ async function room(r, mode) {
   await page.evaluate((id) => window.__teachingTv.take(id), r.id); await wait(1700);
   await page.evaluate((id, t) => window.__teachingTv.play(id, t), r.id, t0); await wait(2500);
   await page.screenshot({ path: path.join(OUT, `after-${mode}-${r.id}-held.png`) });
-  frames.held = await page.evaluate((id) => { const tv = window.__teachingTv().tvs.find((x) => x.tape === id); return { state: tv.state, pose: tv.pose, scale: tv.heldScale, dist: tv.heldDist, bar: { caption: tv.bar.caption, margin: tv.bar.margin } }; }, r.id);
+  frames.held = await page.evaluate((id) => { const tv = window.__teachingTv().tvs.find((x) => x.tape === id); return { state: tv.state, pose: tv.pose, scale: tv.heldScale, dist: tv.heldDist, bar: { caption: tv.bar.caption, margin: tv.bar.margin }, deck: tv.deck, hits: tv.hits.map((h) => h.id) }; }, r.id);
+  // ⚑ S396 — paused in the hand: nothing on the glass, the ❚❚ lamp and the deck's display say it
+  await page.evaluate((id) => window.__teachingTv.press(id, 'tv-pause'), r.id); await wait(900);
+  await page.screenshot({ path: path.join(OUT, `after-${mode}-${r.id}-held-paused.png`) });
+  frames.heldPaused = await page.evaluate((id) => { const tv = window.__teachingTv().tvs.find((x) => x.tape === id); return { state: tv.state, deck: tv.deck, hits: tv.hits.map((h) => h.id) }; }, r.id);
   sheet[`${mode}-${r.id}`] = frames;
   console.log(mode, r.id, JSON.stringify(frames.held));
   await page.close();

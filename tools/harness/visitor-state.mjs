@@ -373,9 +373,11 @@ const LAP = { w: 224, h: 140 };
      * ⚑ S394 — THE LAMBY SET IN THE HAND AND LAMBY'S LINE IN VIEW. Held, the set is in front of everything (a press lands on
      * it first), so its own parts are published — each key, and its body (the press that puts it back) — on surface
      * `tvset`; Lamby's card in view publishes its yes and its × on `tvcall`. walk.mjs answers these first (tv.card: the yes;
-     * a held set that is playing: it watches; one that has stopped: it puts it back), as a visitor would.
+     * a held set that is playing: it watches; one that has stopped: it puts it back), as a visitor would. ⚑ S396 — the tape's
+     * own second (`t`), its length and its state are published too: a held tape now plays to its end (his "Play it all"), and
+     * the walker watches it as long as its clock moves, then reports how far it played.
      */
-    let tvSet = { card: false, held: false, playing: false, lifting: false, tape: null };
+    let tvSet = { card: false, held: false, playing: false, lifting: false, tape: null, t: null, duration: null, state: null };
     if (tvState) {
       if (tvState.call && tvState.call.shown) {
         tvSet.card = true;
@@ -387,7 +389,8 @@ const LAP = { w: 224, h: 140 };
       if (coming && !tvSet.card) tvSet.lifting = true;
       const held = (tvState.tvs || []).find((t) => t.held || t.pose === 'returning');
       if (held) {
-        tvSet = { ...tvSet, held: held.held, playing: held.state === 'playing' || held.state === 'loading', lifting: tvSet.lifting || held.pose === 'lifting' || held.pose === 'returning', tape: held.tape };
+        tvSet = { ...tvSet, held: held.held, playing: held.state === 'playing' || held.state === 'loading', lifting: tvSet.lifting || held.pose === 'lifting' || held.pose === 'returning', tape: held.tape,
+          t: held.t, duration: held.duration, state: held.state };
         if (held.pose === 'held') {
           const tg = held.targets;
           for (const k of tg.keys) add('tv-' + k.id + '@' + held.tape, 'tvset', { x: 0, y: 0, w: 0, h: 0 }, toPage(k.at[0], k.at[1], k.at[2]));

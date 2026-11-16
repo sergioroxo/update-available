@@ -1202,6 +1202,8 @@ async function main() {
    * is exactly that); what was worthless was a fast one during the ball.
    */
   const stallCap = (st) => (st.era === 'e4' ? 160 : st.phase === 'setup:advert' ? 60 : 14);   // S245: the opening film is ~96 s (60 × 4 s)
+  /** ⚑ S396 — each Lamby tape's furthest second while held, its length, whether it played to its end (the notes' `tape`) */
+  const tvWatch = {};
   const pressed = new Map();
   /**
    * ⚑ KEYED ON THE COARSE STATE, NOT ON THE FULL CONTROL SET, and run 22 is why.
@@ -1428,12 +1430,26 @@ async function main() {
 
     /**
      * ⚑ S394 — THE LAMBY SET (UiB job 27 B3). The piece brings the set to the visitor: Lamby's line appears in view, then the
-     * set comes before the eye and plays Part 1 of the tape, and waits there, held. A visitor who is not watching anything
+     * set comes before the eye and plays the tape, and waits there, held. A visitor who is not watching anything
      * else answers it, and so does the walker, before anything behind it (the set and the card are in front of everything):
-     * Lamby's yes on the card; while the set is on its way or playing, it watches; once it has stopped (End of Part 1), it
-     * presses the set's body, which puts it back where it stands, paused where it was.
+     * Lamby's yes on the card; while the set is on its way or playing, it watches; once it has stopped, it presses the set's
+     * body, which puts it back where it stands, paused where it was.
+     * ⚑ S396 (UiB job 28 B6) — "Play it all": the tape now plays TO ITS END (about two minutes; v5's 1997 five and a half),
+     * longer than any stall budget. While the held set plays and its own clock moves, the walker keeps watching without
+     * spending its patience (a clock that stops counts as a stall as before); when it has ended it puts the set down. Each
+     * tape's furthest second and whether it reached its end go in the notes (`tape`), so the walk proves the whole tape plays;
+     * the probe (tools/s394-lamby-tv-probe.mjs) covers putting it down mid-tape and ▶ resuming.
      */
     if (s.tvSet && (s.tvSet.card || s.tvSet.held || s.tvSet.lifting)) {
+      if (s.tvSet.held && s.tvSet.tape && s.tvSet.t !== null) {
+        const w = tvWatch[s.tvSet.tape] ??= { furthest: 0, duration: s.tvSet.duration, ended: false, noted: false };
+        if (s.tvSet.playing && s.tvSet.t > w.furthest + 0.05) { w.furthest = s.tvSet.t; stalls = 0; }   // the clock moves: patience kept
+        if (s.tvSet.state === 'ended') { w.furthest = Math.max(w.furthest, s.tvSet.t); w.ended = true; }
+        if (!s.tvSet.playing && !w.noted && (w.ended || w.furthest > 0)) {
+          w.noted = true;
+          note('tape', { tape: s.tvSet.tape, furthest: +w.furthest.toFixed(1), duration: w.duration, ended: w.ended, state: s.tvSet.state, era: s.era });
+        }
+      }
       const yes = s.tvSet.card ? s.targets.find((t) => t.surface === 'tvcall' && t.id === 'lg-take@call') : null;
       const body = !s.tvSet.card && s.tvSet.held && !s.tvSet.playing && !s.tvSet.lifting
         ? s.targets.find((t) => t.surface === 'tvset' && t.id.startsWith('tv-body@')) : null;
@@ -1921,6 +1937,10 @@ async function main() {
       ? final.ledList.map((e) => '- `' + e + '`').join('\n')
       : '- empty',
     '',
+    '## THE LAMBY TAPES (S396: played to their end in the hand)', '',
+    (log.filter((n) => n.kind === 'tape').length
+      ? log.filter((n) => n.kind === 'tape').map((n) => `- ${n.tape} (${n.era}): played to ${n.furthest} s of ${n.duration} s — ${n.ended ? 'TO ITS END' : '⚑ NOT to its end (' + n.state + ')'}`).join('\n')
+      : '- no tape was held'), '',
     '## WHAT WAS HEARD, IN ORDER', '',
     '⚑ S141 — every clip `play()`ed during the walk, in order (repeats collapsed). A cue that is on',
     'disk and registered but absent here is not wired; a beat with no cue near it is silent.', '',

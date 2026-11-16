@@ -1,5 +1,5 @@
 {
- "_doc": "⚑ S394 (UiB job 27 Part B; S392, S390 before it) — THE LAMBY SET's OWN WORDS: the three players on its glass (a 1997 VCR's on-screen display, a 2016 DVD player's, the 2026 course's), the leader each tape is brought in with, Dad's link in 2026, Lamby's line that brings the set to the visitor (shown IN VIEW, every era) and Lamby's one later offer per era. The tapes' own words are in the videos (Part A) and the margin and the captions come from Part A's files; none of them is here. Drafts by Claude under the 2026-08-17 norm (the writing is Claude's; his edit wins); every line is listed for his eye in T87. Nothing here is a reward, a count or a badge for watching (the frame never plays): the players say what a player says.",
+ "_doc": "⚑ S394 (UiB job 27 Part B; S392, S390 before it) — THE LAMBY SET's OWN WORDS: the leader each tape is brought in with, Dad's link in 2026, Lamby's line that brings the set to the visitor (shown IN VIEW, every era) and Lamby's one later offer per era. The tapes' own words are in the videos (Part A) and the margin and the captions come from Part A's files; none of them is here. Drafts by Claude under the 2026-08-17 norm (the writing is Claude's; his edit wins); every line is listed for his eye in T87. Nothing here is a reward, a count or a badge for watching (the frame never plays): the players say what a player says. ⚑ S396 (UiB job 28 B1; his 16 Nov: \"There is a play button on the screen for a TV that already has a play button, that is unnecessary\"): nothing of the player's is drawn on the glass any more — the on-screen displays, the chapter lists, \"Play on\", \"From the start\", the stopped notes and the sound chip are gone. The set shows its state on its own deck: the lit ▶ or ❚❚ and the display under the keys (`deck`, one vocabulary for the one set, as a VCR's display reads).",
  "tapes": {
   "1997": {
    "_doc": "Brought in after Daniel has read the Un-Walk programme's first step (kit-read): the fellowship's video came in the same package as the disk, and the kit says to watch it. The leader is the VCR showing the tape's own label before it rolls.",
@@ -7,16 +7,7 @@
     "TRIEDPATH FELLOWSHIP",
     "UNDERSTANDING YOUR ROOTS",
     "WATCH BEFORE STEP 2"
-   ],
-   "listHead": "ON THIS TAPE",
-   "osd": {
-    "play": "PLAY",
-    "pause": "PAUSE",
-    "stop": "STOP",
-    "eject": "STOP",
-    "loading": "TRACKING",
-    "ended": "END OF TAPE"
-   }
+   ]
   },
   "2016": {
    "_doc": "Brought in when Vera is back at the board after Renata's testimony job is sent: the platform assigns her the session that teaches the category it has just filed Renata under; the disc is in the Lamby set's player. The leader is the set's own input card with the assignment.",
@@ -24,16 +15,7 @@
     "GracePlatform · caretender training",
     "Assigned to you",
     "Heartwood · Session Two: The Roots"
-   ],
-   "listHead": "Chapters",
-   "osd": {
-    "play": "Play",
-    "pause": "Pause",
-    "stop": "Stop",
-    "eject": "Stop",
-    "loading": "Reading disc",
-    "ended": "Disc menu"
-   }
+   ]
   },
   "2026": {
    "_doc": "Brought in after Maya has read Dad's message (his 7 Nov ruling: the pressure and the shame are her family's): Dad's next message is the link, and it plays on the Lamby set on her shelf. The leader is the share line with his words (\"Watch this. All of it.\" stays on the set's screen, B1).",
@@ -43,22 +25,22 @@
    ],
    "dadLine": "Watch this. All of it.",
    "dadLink": "HEDGE™ · a course for parents",
-   "dadToast": "Watch this. All of it.",
-   "listHead": "Modules"
+   "dadToast": "Watch this. All of it."
   }
  },
  "player": {
-  "playOn": "Play on",
-  "playAgain": "From the start",
-  "partOne": "End of Part 1",
-  "more": "{n} more parts",
-  "moreOne": "1 more part",
-  "play": "Play",
-  "ejected": "Stopped where you left it. ▶ goes on from there.",
-  "stopped": "Stopped where you left it.",
-  "sound": "Press for sound",
-  "cannot": "This tape will not play here.",
-  "part": "Part"
+  "cannot": "This tape will not play here."
+ },
+ "deck": {
+  "_doc": "⚑ S396 — the deck's display, under its keys (src/room/lambyVision.ts): the word for the set's state, beside the counter. ready = the leader is up; load = reading the tape; mute = playing without its sound (▶ or the glass gives the sound).",
+  "ready": "TAPE",
+  "load": "LOAD",
+  "play": "PLAY",
+  "mute": "MUTE",
+  "pause": "PAUSE",
+  "stop": "STOP",
+  "end": "END",
+  "error": "ERROR"
  },
  "lamby": {
   "_doc": "⚑ S394 (UiB job 27 B3; G2, his 15 Oct: \"reinstate Lamby as the connection point of the correction and forcing you to do stuff\"; his 15 Nov: no fades, the line in the 360° room, the set brought close) — `call`: Lamby, in the era's skin, says the tape is due and that he will bring the set; the line appears IN VIEW wherever the visitor looks (src/room/teachingTv.ts TvCall), its yes sends the set at once, and if the visitor closes the balloon (logged, like every dismissal) the set still comes: it is the programme's assignment, and Lamby is its voice. One balloon, inside the era's cap of eight. `e1`/`e3`/`e4` + `yes`/`no`: the ONE later offer per era, ignorable, only while the tape has more to play and the visitor has stalled; yes brings the set (▶ stays theirs).",
