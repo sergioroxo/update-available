@@ -56,17 +56,15 @@ waits for his decision.*
 - **The Christian Post, 5 Aug 2003** (the 2026 tape's [7]): the page shows the date. Holds.
 - **Insider, 2025** (C12f): the video was uploaded 5 Feb 2026 (`LINK_PASS_2026-11-13.md:152`). Fix: 2026.
 
-## Still waiting (third round)
+## Decided, third round (16 Nov, evening)
 
-- **A2 Proposal 1:** he asked whether there is a photo on the 2003 desk. There is none (the desk has the lamp, the mug,
-  the phone and a note); the orchestrator recommends dropping Proposal 1, keeping only 2026's light (B7).
-- **A3 Proposal 3** and **B5 the setup:** not understood; explained again more simply.
-- **B8 the back-wall record and the stamp:** his question: was the video not meant to replace the panel, since the
-  turn is gone and nobody understood it? History: INTAKE_CRITIQUE (13 Nov) → his "make the video first" → the
-  orientation tape (S385) → the LambyVision tapes. The corner itself was never decided; the panel and the stamp are
-  still in the build.
-- **B11 the hopeful ending:** he wants a better way than "UPDATE AVAILABLE — for the world, not for you"; options
-  given.
+| # | Item | His words | What follows |
+|---|---|---|---|
+| A2 | Proposal 1, the screen leaves the monitor | "okay" (to: there is no photo on the 2003 desk; drop it, keep 2026's light) | Dropped. Only 2026's light (B7) is built |
+| A3 | Proposal 3, start in 2026 for thirty seconds | "Why? don't understand what would that bring or how it would've even work... I understand of the flashfoward as an aesthic, but also it has to bring a context that i dont think it does." | Dropped. The entrance (stars → setup → film → 1997) stays |
+| B5 | The setup | "Truly think that could cause more confusion, leave this be, we can streamline the content but the how to look anf the start butto are impornt for enageing with the content, specially for peopl not used to VR and game environements" | No change. "How to look" and Start stay in the setup |
+| B8 | The back-wall record and its stamp | "Yes it should go, and we can make the "your file" on the computer more present of the system tracking you, that way keeping the importance of the element tha the walk was bringing here — all of this should go for the research docuemnt as it was an importnat element of from the start of this research that had stopped functionign (include the previosu versions of the mages whete half the room had the side of the system etc). And now how Lamby keeps evoling into this helping figure that representeb by the system as well." | Job 29 Part D: the wall and the stamp go; the file comes onto each era's screen. A research note traces the system's side of the room and Lamby's evolution (`RESEARCH_NOTE_THE_BACK_WALL_AND_LAMBY_2026-11-16.md`) |
+| B11 | The hopeful ending | "I think it would work beautofully when we arrive at the desk of Daniel at the end, and we see that text anf the space transforms to the close" | Job 29 Part D: when the end of 2026 lands at Daniel's desk, his monitor shows his line and Caleb's answer (`s2_caleb.json` residue: "Then it was never me that was broken…" / "it never was, d. not once."); then the room becomes the Close. The closing cards are unchanged |
 
 ## Asked in the first round (kept for the record)
 
