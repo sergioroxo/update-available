@@ -177,8 +177,11 @@ try {
   app.xr.input.fire('squeezeend',src);
   return {held:held.distance(rest),follow:moved.distance(held),returned:prop.getPosition().distance(rest),menu:!!document.querySelector('#reinterp-game-menu:not([hidden])')};
  });
- assert.ok(grab.held>0.02, JSON.stringify(grab)); assert.ok(grab.follow>0.05, JSON.stringify(grab)); assert.ok(grab.returned<0.001, JSON.stringify(grab));
- checks.push('Shared handheld: controller grip grabs the 2003 handset, follows a 10 cm hand translation, release restores desk pose.');
+ // ⚑ S398 (UiB job 29 A10) — S345 / T28 changed the release: in a headset, letting go of the grip leaves the device where
+ //   it was put, still in hand and playable (heldDevice.ts release()); only a press away from it puts it down. This
+ //   asserted the old snap back to the desk, so it failed from S345 on (S396's notes). It now asserts the S345 rule.
+ assert.ok(grab.held>0.02, JSON.stringify(grab)); assert.ok(grab.follow>0.05, JSON.stringify(grab)); assert.ok(grab.returned>0.02, JSON.stringify(grab));
+ checks.push('Shared handheld: controller grip grabs the 2003 handset, follows a 10 cm hand translation, and letting go leaves it in hand (S345).');
  console.error('probe: reduced');
  const queue=await page.evaluate(()=>{
   const c=window.__xrComfort,before=c.status().cuts;

@@ -50,6 +50,15 @@ export class DiaryApp {
   onBreakout?: () => void;
   /** fires after the breakout beat — the update ritual begins */
   onDone?: () => void;
+  /**
+   * ⚑ S398 (UiB job 29 A3) — ONE HIT AREA, THE ONE IT DRAWS. The diary took any press on the screen and published no rect,
+   * so nothing could aim at it (the walk swept for it, and called it a surface that owns no hit rects) and nothing could
+   * check where its press was. It now publishes the notepad's own window — `PAD`, the same rectangle `drawNotepad` frames
+   * — while it is asking for the hand (the blank page; the stalled erase; the held split once it may go on), and nothing
+   * while the system has the moment. A press anywhere on the screen still reaches it, as before: the beat is the hand
+   * on the moment, and a hand that misses the window is not refused.
+   */
+  hits: { x: number; y: number; w: number; h: number; id: string }[] = [];
 
   private phase: DiaryPhase = 'prompt';
   private shown = 0;
@@ -138,7 +147,16 @@ export class DiaryApp {
 
   private blink(): boolean { return Math.floor(Date.now() / 450) % 2 === 0; }
 
+  /** the press, with where it landed: the published window, or (as always) anywhere else on the screen */
+  handleClick(_x: number, _y: number): void { this.press(); }
+
+  /** asking for the hand right now */
+  private get asking(): boolean {
+    return this.phase === 'prompt' || this.phase === 'resist' || (this.phase === 'breakout' && this.breakT >= BREAKOUT_HOLD && !this.doneFired);
+  }
+
   draw(ctx: CanvasRenderingContext2D): void {
+    this.hits = this.asking ? [{ x: PAD.x, y: PAD.y, w: PAD.w, h: PAD.h, id: 'diary-press' }] : [];
     // the "before departure" note — its own window, while you write (Sérgio)
     if (this.phase === 'prompt' || this.phase === 'writing' || this.phase === 'committed') {
       this.drawNote(ctx);

@@ -3618,8 +3618,14 @@ export class DesktopOS {
     x: number, y: number, label: string, enabled: boolean, id: string, unread = false
   ): void {
     if (enabled) this.iconsDrawn.push({ id, label });
-    this.drawIconInto(this.ctx, this.hits, x, y, label, id, enabled, unread);
+    // ⚑ S398 (UiB job 29 A2) — an icon the 1997 browser is drawn over is not offered: the browser's window spans the
+    //   whole desktop (web1997.ts WX 4 … 508) and takes every press while it is open (handleClick asks it before the
+    //   icons), so an icon under it was published as live and could never be pressed. The 16 Nov walk pressed the
+    //   IRC and Family Form icons eleven times there, during the intermission before the form (steps 124–145).
+    this.drawIconInto(this.ctx, this.iconsCovered() ? [] : this.hits, x, y, label, id, enabled, unread);
   }
+  /** S398: the desktop's icons are under a window that owns every press (the 1997 browser) */
+  private iconsCovered(): boolean { return this.desktopEra === 'e1' && !!this.web?.open; }
 
   /** ⚑ S87 — `drawIcon`'s geometry, into any context/hit table; see
    *  `drawSendOfferInto`'s comment for why this exists. Label-width fitting
@@ -4704,7 +4710,7 @@ export class DesktopOS {
     if (this.phase === 'desktop' && this.rootCause?.open) { this.rootCause.handleClick(x, y); return; }
     if (this.phase === 'desktop' && this.folder1997?.open) { this.folder1997.handleClick(x, y); if (!this.folder1997.open) this.wayBack('e2'); this.dirty = true; return; }
     if (this.phase === 'desktop' && this.companion.open && this.desktopEra === 'e2') { this.companion.handleClick(x, y); this.dirty = true; return; }
-    if (this.phase === 'desktop' && this.diary?.open) { this.diary.press(); return; }
+    if (this.phase === 'desktop' && this.diary?.open) { this.diary.handleClick(x, y); return; }   // S398: its published window, or anywhere
     if (this.phase === 'desktop' && this.packet?.open) { this.packet.handleClick(x, y); return; }
     // ⚑ S199 — the browsers are windows over the desktop: asked AFTER the modal windows that draw above them
     //   (the exercise, the rig, the game, the diary, the packet — a walk stuck there when this came first) and

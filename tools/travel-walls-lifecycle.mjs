@@ -1,4 +1,4 @@
-/** Offline cancellation/batching/reduced-motion checks for W1-B11. */
+/** Offline checks for W1-B11: the eye never passes through a wall — the entrance arc and the Close's flight. (S398: the send checks are retired, see below.) */
 import fs from 'node:fs';
 import puppeteer from 'puppeteer-core';
 const port=Number(process.argv[process.argv.indexOf('--port')+1]);
@@ -16,34 +16,12 @@ async function open(reduced=false) {
  await p.evaluate(()=>{window.__app.timeScale=0; window.__wallState=()=>Object.fromEntries(['wallWest','wallEast','wallNorth','ceiling'].map(id=>{const h=window.__app.root.findByName(id);const mi=h.render.meshInstances[0];return [id,{opacity:mi.material.opacity,depthWrite:mi.material.depthWrite,blend:mi.material.blendType,batch:h.render.batchGroupId}]}));});
  return p;
 }
-const p=await open();
-const before=await p.evaluate(()=>window.__wallState());
-await p.evaluate(()=>{window.__os.onSendResolve('s1','visited');for(let i=0;i<4680;i++){window.__app.update(1/120);if(Math.abs(window.__camPose().x+2.13)<0.002)break;}});
-const crossing=await p.evaluate(()=>({pose:window.__camPose(),walls:window.__wallState()}));
-if(crossing.walls.wallWest.opacity!==0||crossing.walls.wallEast.opacity!==1||crossing.walls.wallNorth.opacity!==1||crossing.walls.ceiling.opacity!==1)throw new Error('Neighbour material/fade isolation failed');
-await p.evaluate(()=>window.__app.render());await p.screenshot({path:'out/travel-walls/fade-crossing.png'});
-await p.keyboard.press('ArrowLeft');
-await p.evaluate(()=>{for(let i=0;i<120;i++)window.__app.update(1/120);});
-const cancelled=await p.evaluate(()=>({pose:window.__camPose(),walls:window.__wallState()}));
-if(cancelled.pose.driven||cancelled.walls.wallWest.opacity!==0)throw new Error('Cancellation inside partition became solid');
-await p.evaluate(()=>{const a=window.__poses().seats.r1;window.__camFree(a.x,a.y,a.z,a.pitch,a.yaw);window.__app.update(1/120);});
-const restored=await p.evaluate(()=>window.__wallState());
-for(const id of Object.keys(before))if(restored[id].opacity!==before[id].opacity||restored[id].depthWrite!==before[id].depthWrite||restored[id].blend!==before[id].blend||restored[id].batch<0)throw new Error('Wall failed to restore/rebatch: '+id);
-results.checks.push({name:'only approached wall fades; cancel inside stays clear; departing restores material and batch',before,crossing,cancelled,restored});
-// Repeat a real arc, then skip its following era relocation; no faded material survives.
-await p.evaluate(()=>{window.__os.onSendResolve('s2','visited');for(let i=0;i<4680;i++){window.__app.update(1/120);if(Math.abs(window.__camPose().x-2.13)<0.002)break;}
- [...document.querySelectorAll('button')].find(b=>b.textContent.includes('E2→E3')).click();});
-await p.keyboard.press('Enter');await p.evaluate(()=>window.__app.update(1/120));
-const skipped=await p.evaluate(()=>window.__wallState());
-if(Object.values(skipped).some(w=>w.opacity!==1||!w.depthWrite))throw new Error('Era skip retained a faded material');
-results.checks.push({name:'era transition/skip resets all temporary fades',skipped});
-await p.close();
-const rm=await open(true);
-await rm.evaluate(()=>{window.__os.onSendResolve('s1','visited');for(let i=0;i<4681;i++)window.__app.update(1/120);});
-const reduced=await rm.evaluate(()=>({pose:window.__camPose(),walls:window.__wallState()}));
-if(Math.abs(reduced.pose.x+4.4)>0.01||Object.values(reduced.walls).some(w=>w.opacity!==1))throw new Error('Reduced-motion cut failed');
-results.checks.push({name:'reduced-motion cut lands and leaves walls opaque',reduced});
-await rm.close();
+// ⚑ S398 (UiB job 29 A10) — the send checks are gone, and why. This probe was written for W1-B11: 2003's two sends
+// (s1, s2) dollied the eye across a closed partition, and the wall it crossed had to fade alone and come back whole.
+// Since 2003's referral is read at Daniel's own desk (app.ts onSendResolve: `if (os.era === 'e2')` — the send never
+// moves the view), no send crosses a wall, so the send, its cancellation and its reduced-motion cut could not start:
+// the probe failed on a path the piece no longer has (S396's notes). The walls the eye still passes are the entrance
+// arc and the Close's flight from Maya's room, both checked below; cluster.ts's travel fade itself is unchanged.
 // Extra unchanged paths: evaluate the exported entrance quadratic and the
 // Close's actual lead + sweep. Scope exceeds the three era/send request.
 const e=await open();

@@ -1,0 +1,6 @@
+{
+ "_doc": "⚑ S398 (UiB job 29 A8) — the text-size card for his Quest session (src/frame/xrTextCard.ts; ?debug=1&textcard=1 only). Frame voice, a test instrument: the heading says what to do, each row is labelled with the angle its letters make at one metre, and the line is ordinary monitor text in the 1997/2003 face. Not part of the piece. The sheet: docs/TEXT_SIZE_CARD_QUEST_SHEET.md.",
+ "heading": "One metre away: read the smallest line you can.",
+ "label": "{deg}°",
+ "line": "Your session is ready. Press Next to continue."
+}
