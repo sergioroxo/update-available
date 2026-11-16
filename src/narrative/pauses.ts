@@ -10,6 +10,7 @@
  * Pure reads: nothing here files anything.
  */
 import P from '../../data/strings/pauses.json';
+import MAP from '../../data/strings/map.json';
 import { mapState } from '../witness/map';
 import type { DesktopOS } from '../desktop/os';
 
@@ -29,8 +30,14 @@ export function pauseItems(era: EraId, extraDone: string[] = []): string[] {
   const eraState = st.eras.find((e) => e.id === era);
   const items = PAUSE[era].items;
   const out: string[] = [];
+  // ⚑ S399 (job 29 B1) — a beat marked off the default visit (`"speedrun": false`: 2016's family calls and the group's
+  //   check-in) that this visit's map has left out is not offered here either: the card lists only what this desk holds.
+  //   Optional side doors without that mark (1997's, 2003's) are still listed, as the card was made to do.
+  const offDefault = new Set((MAP.eras as { id: string; beats: { id: string; speedrun?: boolean }[] }[])
+    .find((e) => e.id === era)?.beats.filter((b) => b.speedrun === false).map((b) => b.id) ?? []);
   for (const [id, line] of Object.entries(items)) {
     const beat = eraState?.beats.find((b) => b.beat.id === id);
+    if (!beat && offDefault.has(id)) continue;
     const done = beat ? beat.state === 'done' : extraDone.includes(id);
     if (!done) out.push(line);
   }

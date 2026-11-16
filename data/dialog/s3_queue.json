@@ -79,10 +79,9 @@
   ],
   "startersSpeedrun": [
    "testimony",
-   "places",
-   "family",
-   "group"
+   "places"
   ],
+  "_docS399": "⚑ S399 (UiB job 29 B1; his 16 Nov: \"We can for sure reduce stuff in the 2016, since it has a lot of text\"). The default visit's board keeps the two jobs the brief keeps: the testimony (the first APPLY) and the places list (a lesbian bar taken out of a woman's own post). Return the family calls and Post to the group make the testimony's point again (she is the hand), so they leave the default visit and stay whole, word for word, behind \"The other jobs\" in the Start menu (extras.json `jobs`) and in ?cut=full. Their phone messages (Mam and her unsent note; the check-in on her own phone) go with them. Before/after: docs/reinterp/TEXT_CUT_2016_S399_2026-11-16.md. His edit wins: putting a job back is one line here.",
   "updates": []
  },
  "verbs": {
@@ -112,7 +111,7 @@
   "waitFamily": "The family line still has parents waiting.",
   "_docWait": "⚑ S227 (VERA_OPTIONS §4c.2) — the waiting lines name only jobs that are ON the board and unfinished: the group (waitLine1), the family calls (waitFamily), the video once its update is installed (waitLine2, its 'And' dropped so it can stand first). At most two, the R28 cap; none if nothing named is open.",
   "firstOrder": "A testimony first. Then the places list, the family calls and the group's check-in.",
-  "firstOrderSpeedrun": "A testimony first. Then the places list, the family calls and the group's check-in.",
+  "firstOrderSpeedrun": "A testimony first. Then the places list.",
   "_docFirstOrder": "⚑ S227 — LAMBIENT'S OPENING MESSAGE CALLS HER TO THE THREE IN ORDER (his 2026-10-10: 'the order of the three is Lambient's'; one short clause per job), said as the second line of the consent beat so the reply ('I'll keep the room tidy either way') is still heard first and the beat stays at two lines (R28). The board's own header still says 'Start anywhere. The order is yours.' — the platform offers a freedom and its assistant hands her an order in the same breath. In the Speedrun Version (`?cut=speedrun`) Lambient sends her straight to Annette's job ('to speed up the narrative').",
   "witnessAllowed": "assistant: introduced — Lambient permissions granted",
   "witnessDeclined": "assistant: dismissed — Lambient permissions declined, companion retained",

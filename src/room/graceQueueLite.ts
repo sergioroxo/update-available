@@ -522,7 +522,9 @@ export class GraceQueueLite {
   }
   /** a job (or a story) is open on the platform: Malta's conducted clock waits for the board */
   private get jobOpen(): boolean { return this.mode === 'list' || !!this.openSurface; }
-  private get fourJobsDone(): boolean { return FOUR_JOBS.every(id => this.jobDone(id)); }
+  /** ⚑ S399 (job 29 B1) — the jobs ON the board, finished: the default visit's board holds the testimony and the places list
+   *  (s3_queue.json `startersSpeedrun`); the family calls and the group join it only through "The other jobs" or ?cut=full */
+  private get fourJobsDone(): boolean { return FOUR_JOBS.filter(id => this.isUnlocked(id)).every(id => this.jobDone(id)); }
   /** ⚑ S332 — the Wick card is stamped BANNED once Orla's invitation has been read (era3Devices takes it) */
   wickBanPending = false;
   get wickBanReady(): boolean { return this.wickBanPending && this.phone.delivered('arrival') && !this.phone.voiceBusy && this.phone.atRest; }
@@ -1471,7 +1473,8 @@ export class GraceQueueLite {
     //   lines, which is the cap.
     // ⚑ S227 — and the second line is the ORDER of the day's three (his: "the order of the three is Lambient's");
     //   in the Speedrun Version it sends her straight to Annette
-    this.lambSay([allow ? LAMBIENT.acceptReply : LAMBIENT.declineReply, isSpeedrun() && !extraOn('work') ? LAMBIENT.firstOrderSpeedrun : LAMBIENT.firstOrder]);
+    // ⚑ S399 (job 29 B1) — the line names the jobs ON the board, and "The other jobs" (`jobs`) is what decides the board
+    this.lambSay([allow ? LAMBIENT.acceptReply : LAMBIENT.declineReply, isSpeedrun() && !extraOn('jobs') ? LAMBIENT.firstOrderSpeedrun : LAMBIENT.firstOrder]);
     this.seenBoard = true;
     this.mode = 'board';
     this.bump();
@@ -1535,7 +1538,10 @@ export class GraceQueueLite {
 
   /** every job in the roster (the record is not a job — his Q8), installed or not, finished */
   private rosterComplete(): boolean {
-    return BOARD.filter((t) => t.id !== 'record' && (t.surface === 'testimony' || this.surfaces.has(t.id)))
+    // ⚑ S399 (job 29 B1) — the roster is this visit's: what is on the board plus what the platform will still offer as an
+    //   update (installed or not, as S227 had it); a job left off the default visit's board is not owed
+    const roster = new Set([...this.unlockedIds(), ...TOOLS.updates.map((u) => u.id)]);
+    return BOARD.filter((t) => t.id !== 'record' && roster.has(t.id) && (t.surface === 'testimony' || this.surfaces.has(t.id)))
       .every((t) => this.taskComplete(t));
   }
 

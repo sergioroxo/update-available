@@ -175,8 +175,9 @@
         "_proposed": "S47 2026-07-25 — wording corrected per SOURCE_VERIFICATION_RESULTS; awaiting Sérgio",
         "status": "documentary",
         "confidence": "high",
-        "text": "Professional bodies state these practices lack evidence of benefit and carry risk of harm: the APA's 2009 review of sexual-orientation change efforts, its 2021 resolutions covering both orientation and gender identity, and the UK's cross-government Memorandum of Understanding on Conversion Therapy (2015; extended to gender identity in 2017).",
-        "urls": ["https://www.apa.org/pi/lgbt/resources/therapeutic-response.pdf", "https://www.apa.org/about/policy/resolution-sexual-orientation-change-efforts.pdf", "https://www.apa.org/about/policy/resolution-gender-identity-change-efforts.pdf", "https://www.rcgp.org.uk/getmedia/4ac66d06-b013-4ff0-a471-63dbaecde0d9/RCGP-MoU-oct-2017.PDF"]
+        "_docS399": "⚑ S399 (UiB job 29 B2 item 8): as origin_intake_e1's source 3, the same sentence. APA 2009 replaced by the Royal College of Psychiatrists' PS02/2014 (S19, LEXICON_SOURCES_VERIFIED_2026-10-11.md line 337); the APA named for its 2021 resolutions (S17).",
+        "text": "Professional bodies state these practices lack evidence of benefit and carry risk of harm: the American Psychological Association's 2021 resolutions covering both orientation and gender identity, the Royal College of Psychiatrists' 2014 position statement on sexual orientation, and the UK's cross-government Memorandum of Understanding on Conversion Therapy (2015; extended to gender identity in 2017).",
+        "urls": ["https://www.apa.org/about/policy/resolution-sexual-orientation-change-efforts.pdf", "https://www.apa.org/about/policy/resolution-gender-identity-change-efforts.pdf", "https://www.rcpsych.ac.uk/docs/default-source/improving-care/better-mh-policy/position-statements/ps02_2014.pdf?sfvrsn=b39bd77c_4", "https://www.rcgp.org.uk/getmedia/4ac66d06-b013-4ff0-a471-63dbaecde0d9/RCGP-MoU-oct-2017.PDF"]
       }
     ]
   },

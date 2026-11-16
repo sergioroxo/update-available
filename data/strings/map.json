@@ -382,20 +382,22 @@
      "label": "The family calls",
      "done": "familyDone",
      "hint": "On the board: Return the family calls. Send a reply to each parent, or don’t.",
-     "where": "the workstation"
+     "where": "the workstation",
+     "speedrun": false
     },
     {
      "id": "group",
      "label": "The group’s check-in",
      "done": "grouped",
      "hint": "On the board: Post to the group. Post this week’s check-in, or not.",
-     "where": "the workstation"
+     "where": "the workstation",
+     "speedrun": false
     },
     {
      "id": "vera-install",
      "label": "Kindredraft",
      "done": "veraRecordOpened",
-     "hint": "After the four jobs, install Kindredraft. It opens Vera’s own 2014 story.",
+     "hint": "When the board’s jobs are done, install Kindredraft. It opens Vera’s own 2014 story.",
      "where": "the workstation"
     },
     {
