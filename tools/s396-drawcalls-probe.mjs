@@ -51,6 +51,13 @@ const LIST = has('list');
  *  at moments through each (the rise, the glob cascade, the travel, the descent, the landing) render one frame with the
  *  seat's cull off and on: 0 pixels may differ. (The merge is not switched mid-change: the batch is down while the morph runs.) */
 const CHANGE = has('change');
+/** ⚑ S398 (UiB job 29 A1) — --change now flies ALL FOUR changes (1997 → 2003, 2003 → 2016, 2016 → 2026, and 2026 → the
+ *  Close's flight) and FAILS if any moment of any of them draws more than 75 calls in the headset mock (the build:
+ *  the seat's cull on, the cascade's bands on), or if, at any moment while a cascade runs, the cascade's bands
+ *  (cluster.ts S398: what holds still keeps its batch) change a pixel against the old tear-down (`__morphBands`,
+ *  the same frame drawn both ways). --changes e1-e2,e2-e3,e3-e4,close picks some. The computer is measured and its
+ *  peak reported beside; its moments are asserted for pixels, and for the budget too (it shares the room). */
+const CHANGES_ONLY = flag('changes', '');
 const BUDGET = 75;
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 fs.mkdirSync(OUT, { recursive: true });
@@ -287,16 +294,93 @@ for (const r of ROOMS) {
     await page.close();
   }
 }
+/** ⚑ S398 — the same frame drawn with the cascade's bands batched (the build) and with the old tear-down (nothing
+ *  batched while the cascade runs), the seat's cull on throughout, Math.random seeded per render as above.
+ *
+ *  A batch draws its boxes pre-transformed into the world and in another ORDER than the props drawn one by one, so the
+ *  two pictures are the same to within one level of 255 but not bit for bit, and where two coplanar surfaces overlap (a
+ *  sign's mat on its board, a poster flush on a wall) the one drawn last wins: the old build flips those ties itself, at
+ *  each cascade's start and end, when the whole room goes from one batch to none and back. So the old tear-down is drawn
+ *  TWICE, its props' private materials cloned in their order and then in the reverse order (the renderer orders opaque
+ *  draws by material): a pixel that differs between those two is a tie, and either winner is the old build's. A REAL
+ *  difference is a pixel more than one level from BOTH old pictures — a prop shown in a state it is not in — and there
+ *  must be none. The strict count (any pixel, any level) is reported beside. Inactive: only the build's draws. */
+/** A pixel more than one level from BOTH old pictures is not a draw-order tie. Two kinds remain, and neither is a prop in
+ *  the wrong state: a triangle's EDGE landing on the other side of a pixel's centre (a batch's vertices are transformed on
+ *  the CPU, a prop's on the GPU: the same point to within float rounding), and a DEPTH FLIP between two near-coplanar
+ *  layers far off (a sign's mat on its board, 6 mm apart at 9.8 m: the same float rounding decides which is nearer) —
+ *  a strip two or three pixels tall along the layer's edge (S398, traced: the 2026 sign in 2016 → 2026, diff image in the
+ *  job's research folder). A prop drawn in a state it is not in is a FILLED shape, its whole projected area. So the
+ *  verdict counts INTERIOR pixels (all four neighbours real): at most INTERIOR_PIXELS a moment, which a strip three
+ *  pixels tall and up to 64 long stays under and any prop seen at reading size does not. The strict counts are kept. */
+const INTERIOR_PIXELS = 64;
+async function bandsRender(page, settled = false) {
+  return page.evaluate(async (settled) => {
+    const app = window.__app, gl = app.graphicsDevice.gl, W = gl.drawingBufferWidth, H = gl.drawingBufferHeight, R = app.renderer, mb = window.__morphBands;
+    if (!mb || (!settled && !mb.active)) return { active: false };
+    const grab = () => { const px = new Uint8Array(W * H * 4); gl.readPixels(0, 0, W, H, gl.RGBA, gl.UNSIGNED_BYTE, px); return px; };
+    const random = Math.random;
+    const room = app.root.findByName('era1-room');
+    const render = (on, reverse = false) => {
+      let seed = 0x2f6b;
+      Math.random = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+      const saved = [];
+      try {
+        window.__seatCull.enabled = true; if (settled) mb.settled(on); else mb.batched(on);
+        if (reverse && room) {
+          // the same values, new material ids in the reverse order (put back after the render: the morph holds the originals)
+          const mis = []; room.forEach((n) => { for (const mi of n.render?.meshInstances ?? []) mis.push(mi); });
+          for (const mi of mis.reverse()) { const m = mi.material; if (!m || mi.batching) continue; saved.push([mi, m]); const c = m.clone(); c.update(); mi.material = c; }
+        }
+        const d0 = R._forwardDrawCalls; app.render(); return { px: grab(), draws: R._forwardDrawCalls - d0 };
+      } finally { for (const [mi, m] of saved) mi.material = m; Math.random = random; }
+    };
+    const on1 = render(true), off = render(false), offR = render(false, true), on2 = render(true);
+    const delta = (A, B, i) => Math.max(Math.abs(A.px[i] - B.px[i]), Math.abs(A.px[i + 1] - B.px[i + 1]), Math.abs(A.px[i + 2] - B.px[i + 2]));
+    const compare = (A, B) => {
+      let n = 0, maxDelta = 0, over1 = 0, real = 0, ties = 0; const where = [], realAt = new Set();
+      for (let i = 0; i < A.px.length; i += 4) {
+        const d = delta(A, B, i);
+        if (B === off && delta(off, offR, i)) ties++;
+        if (!d) continue;
+        n++; if (d > maxDelta) maxDelta = d; if (d > 1) over1++;
+        const isReal = B === off && d > 1 && delta(A, offR, i) > 1;
+        if (isReal) { real++; realAt.add(i / 4); }
+        if (where.length < 12 && (isReal || where.length < 4)) { const k = i / 4; where.push({ x: k % W, y: H - 1 - Math.floor(k / W), a: [A.px[i], A.px[i + 1], A.px[i + 2]], b: [B.px[i], B.px[i + 1], B.px[i + 2]], real: isReal }); }
+      }
+      // a real pixel with a real neighbour is part of a run (an edge along a pixel row, a depth flip); one with all four
+      //   neighbours real is INSIDE a filled shape — what a prop drawn in a state it is not in looks like
+      let clustered = 0, interior = 0;
+      for (const k of realAt) {
+        const x = k % W;
+        for (const d of [-1, 1, -W, W, -W - 1, -W + 1, W - 1, W + 1]) { const j = k + d; if (realAt.has(j) && Math.abs((j % W) - x) <= 1) { clustered++; break; } }
+        if (x > 0 && x < W - 1 && realAt.has(k - 1) && realAt.has(k + 1) && realAt.has(k - W) && realAt.has(k + W)) interior++;
+      }
+      return { pixels: n, maxDelta, over1, real, clustered, interior, ties, where };
+    };
+    return { active: true, diff: compare(on1, off), noise: compare(on1, on2).pixels, draws: { on: on1.draws, off: off.draws }, stats: window.__morphBandStats };
+  }, settled);
+}
+
 if (CHANGE) {
   report.changes = [];
-  for (const c of [{ from: 2, to: 'e3', label: '2003 → 2016' }, { from: 3, to: 'e4', label: '2016 → 2026' }]) for (const mode of ['desktop', 'xr']) {
+  /** the four changes: each opened at its FROM era's review route (?era=, `home=0`: no entrance) and started the way the
+   *  piece starts it — the restart's own `onEraShift` (as S396 did), 1997 → 2003 by the debug replay (`__relocate`: 1997
+   *  has no ?era=), and the Close by `__enterClose` from Maya's desk (the hand-off the visit takes) */
+  const CHANGES = [
+    { key: 'e1-e2', label: '1997 → 2003', era: 2, start: () => window.__relocate('e1', 'e2') },
+    { key: 'e2-e3', label: '2003 → 2016', era: 2, start: () => window.__os.onEraShift('e3') },
+    { key: 'e3-e4', label: '2016 → 2026', era: 3, start: () => window.__os.onEraShift('e4') },
+    { key: 'close', label: '2026 → the Close', era: 4, start: () => window.__enterClose() }
+  ].filter((c) => !CHANGES_ONLY || CHANGES_ONLY.split(',').includes(c.key));
+  for (const c of CHANGES) for (const mode of ['desktop', 'xr']) {
     const page = await browser.newPage();
     await page.setViewport({ width: 1280, height: 720, deviceScaleFactor: 1 });
     const errors = [];
     page.on('pageerror', (e) => errors.push(String(e).slice(0, 240)));
     // the change's own legs stay on (no descent=0); home=0: no entrance
-    await page.goto(`http://localhost:${PORT}/?reinterp=1&kiosk=0&era=${c.from}&debug=1&home=0`, { waitUntil: 'domcontentloaded', timeout: 180000 });
-    await page.waitForFunction(() => window.__os && window.__camPose && window.__app && window.__seatCull, { timeout: 180000 });
+    await page.goto(`http://localhost:${PORT}/?reinterp=1&kiosk=0&era=${c.era}&debug=1&home=0`, { waitUntil: 'domcontentloaded', timeout: 180000 });
+    await page.waitForFunction(() => window.__os && window.__camPose && window.__app && window.__seatCull && window.__relocate && window.__enterClose, { timeout: 180000 });
     await page.addStyleTag({ content: 'body > *:not(canvas) { display: none !important; }' });
     if (mode === 'xr') {
       await page.evaluate(() => { const app = window.__app, head = app.root.findByName('camera');
@@ -306,29 +390,58 @@ if (CHANGE) {
       await page.waitForFunction(() => window.__xrComfort?.calibrated && !window.__xrComfort.busy, { timeout: 30000 }).catch(() => {});
     }
     for (let i = 0; i < 40; i++) { const p = await page.evaluate(() => window.__camPose()); if (!p.driven && !p.descent) break; await wait(800); }
-    await wait(3000);
+    await wait(c.key === 'close' ? 6000 : 3000);
+    // the old build's own batch/no-batch difference, at the settled moment before the change (see bandsRender)
+    const settledPair = c.key === 'close' ? null : await bandsRender(page, true);
     const t0 = Date.now(); const samples = [];
-    await page.evaluate((to) => window.__os.onEraShift(to), c.to);
-    let landedAt = -1;
-    while ((Date.now() - t0) / 1000 < 75) {
+    await page.evaluate(c.start);
+    let landedAt = -1, closeLeft = false;
+    while ((Date.now() - t0) / 1000 < (c.key === 'close' ? 120 : 100)) {
       const t = (Date.now() - t0) / 1000;
-      const pose = await page.evaluate(() => { const p = window.__camPose(); return { leg: p.leg ?? null, x: +p.x.toFixed(2), y: +p.y.toFixed(2), z: +p.z.toFixed(2), yaw: +p.yaw.toFixed(0) }; });
+      const pose = await page.evaluate(() => { const p = window.__camPose(); const cs = window.__closeState?.();
+        return { leg: p.leg ?? null, x: +p.x.toFixed(2), y: +p.y.toFixed(2), z: +p.z.toFixed(2), yaw: +p.yaw.toFixed(0), stage: cs?.stage ?? null, glitching: !!cs?.glitching }; });
       // a look back toward the rest of the building at every other sample, in the headset (the head turns; the flight does not)
       if (mode === 'xr') await page.evaluate((k) => window.__app.root.findByName('camera').setLocalEulerAngles(-10, k % 2 ? 160 : 0, 0), samples.length);
       const pr = await pairedRender(page, true);
-      samples.push({ t: +t.toFixed(1), ...pose, diff: pr.cull.pixels, where: pr.cull.where.slice(0, 3), noise: pr.noise, hidden: pr.hidden, drawsOff: pr.draws.none, drawsOn: pr.draws.cull, eyeRoom: pr.cullLast.region, faces: pr.cullLast.faces });
-      if (landedAt < 0 && !pose.leg && t > 3) landedAt = t;
-      if (landedAt >= 0 && t > landedAt + 5) break;
-      await wait(700);
+      const br = await bandsRender(page);
+      samples.push({ t: +t.toFixed(1), ...pose, diff: pr.cull.pixels, where: pr.cull.where.slice(0, 3), noise: pr.noise, hidden: pr.hidden, drawsOff: pr.draws.none, drawsOn: pr.draws.cull, eyeRoom: pr.cullLast.region, faces: pr.cullLast.faces,
+        bands: br.active ? { diff: br.diff.pixels, over1: br.diff.over1, real: br.diff.real, clustered: br.diff.clustered, interior: br.diff.interior, ties: br.diff.ties, maxDelta: br.diff.maxDelta, where: br.diff.where.slice(0, 6), noise: br.noise, drawsOn: br.draws.on, drawsOld: br.draws.off, stats: br.stats } : null });
+      if (c.key === 'close') {
+        // the flight, the rise to the stars, and night falling; ends once the messages begin (the room is gone by then)
+        if (pose.stage && ['hold', 'message', 'open', 'settled'].includes(pose.stage)) { if (!closeLeft) closeLeft = true; else break; }
+      } else {
+        if (landedAt < 0 && !pose.leg && t > 3) landedAt = t;
+        if (landedAt >= 0 && t > landedAt + 5) break;
+      }
+      await wait(300);
     }
     // a moment whose own noise floor is not 0 cannot judge anything (something there is not repeatable); it is counted,
     // and must stay rare — the cull itself is judged on every repeatable moment
     const judged = samples.filter((x) => !x.noise), bad = judged.filter((x) => x.diff);
     const culledAt = samples.filter((x) => x.hidden > 0).length, culledJudged = judged.filter((x) => x.hidden > 0).length;
-    report.changes.push({ change: c.label, mode, samples, errors });
-    console.log(`[change ${c.label} ${mode}] ${samples.length} moments (${judged.length} repeatable), the cull hiding something in ${culledAt} (${culledJudged} repeatable); legs ${[...new Set(samples.map((x) => x.leg))].join(',')}`);
+    const peak = samples.reduce((a, b) => (b.drawsOn > a.drawsOn ? b : a), samples[0]);
+    const peakOld = samples.reduce((m, x) => Math.max(m, x.bands ? x.bands.drawsOld : x.drawsOn), 0);
+    const withBands = samples.filter((x) => x.bands), bandJudged = withBands.filter((x) => !x.bands.noise), bandBad = bandJudged.filter((x) => x.bands.interior > INTERIOR_PIXELS);
+    const strict = bandJudged.filter((x) => x.bands.diff).length;
+    const settledDiff = settledPair && settledPair.active ? { pixels: settledPair.diff.pixels, over1: settledPair.diff.over1, real: settledPair.diff.real, ties: settledPair.diff.ties, maxDelta: settledPair.diff.maxDelta, noise: settledPair.noise, draws: settledPair.draws } : null;
+    report.changes.push({ change: c.label, key: c.key, mode, peak: { draws: peak.drawsOn, t: peak.t, leg: peak.leg, stage: peak.stage }, peakOldTearDown: peakOld,
+      bandPixels: withBands.length ? { moments: withBands.length, strictZero: bandJudged.length - strict, maxPixels: Math.max(...withBands.map((x) => x.bands.diff)), maxOver1: Math.max(...withBands.map((x) => x.bands.over1)), maxReal: Math.max(...withBands.map((x) => x.bands.real)), maxInterior: Math.max(...withBands.map((x) => x.bands.interior)), maxDelta: Math.max(...withBands.map((x) => x.bands.maxDelta)) } : null,
+      settledBatchVsNone: settledDiff, samples, errors });
+    console.log(`[change ${c.label} ${mode}] ${samples.length} moments (${judged.length} repeatable), the cull hiding something in ${culledAt} (${culledJudged} repeatable); legs ${[...new Set(samples.map((x) => x.leg))].join(',')}; ` +
+      `peak ${peak.drawsOn} draws at t ${peak.t} s (the old tear-down at the same moments: peak ${peakOld}); the cascade's bands live at ${withBands.length} moments`);
     check(`change ${c.label}`, `${mode}: at every repeatable moment of the change the cull changes no pixel`, bad.length === 0 && judged.length >= samples.length * 0.8,
       bad.length ? JSON.stringify(bad.slice(0, 3)) : `${judged.length}/${samples.length} moments repeatable, ${culledJudged} of them with something hidden, 0 px differ`);
+    check(`change ${c.label}`, `${mode}: every moment ≤ ${BUDGET} draw calls (${samples.length} moments)`, peak.drawsOn <= BUDGET,
+      `peak ${peak.drawsOn} at t ${peak.t} s${peak.leg ? ` (leg ${peak.leg})` : ''}${peak.stage ? ` (stage ${peak.stage})` : ''}; over: ${samples.filter((x) => x.drawsOn > BUDGET).map((x) => `${x.t}s:${x.drawsOn}`).join(', ') || 'none'}`);
+    // the bands exist only in the S398 build: a run against an older build reports its peak and skips this
+    const hasBands = await page.evaluate(() => !!window.__morphBands);
+    if (hasBands) {
+      check(`change ${c.label}`, `${mode}: at every repeatable moment its bands show no prop in another state than the old tear-down (no filled shape more than one level from both of its draw orders: ≤ ${INTERIOR_PIXELS} interior px)`,
+        withBands.length > 0 && bandBad.length === 0 && bandJudged.length >= withBands.length * 0.8,
+        (bandBad.length ? JSON.stringify(bandBad.slice(0, 3).map((x) => ({ t: x.t, ...x.bands }))) + '; ' : '') +
+        `${bandJudged.length}/${withBands.length} cascade moments repeatable, ${bandJudged.length - strict} of them 0 px strictly; at most ${Math.max(0, ...withBands.map((x) => x.bands.diff))} px differ, ${Math.max(0, ...withBands.map((x) => x.bands.over1))} by more than one level (max ${Math.max(0, ...withBands.map((x) => x.bands.maxDelta))}), the rest draw-order ties, edges and depth flips (not a tie: at most ${Math.max(0, ...withBands.map((x) => x.bands.real))} px a moment, ${Math.max(0, ...withBands.map((x) => x.bands.interior))} of them interior); ` +
+        `the old build's own batch/no-batch difference at the settled moment before: ${settledDiff ? `${settledDiff.pixels} px, ${settledDiff.over1} by more than one level, ${settledDiff.real} real` : 'n/a'}; draws there ${Math.min(...withBands.map((x) => x.bands.drawsOn))}–${Math.max(...withBands.map((x) => x.bands.drawsOn))} (old tear-down ${Math.min(...withBands.map((x) => x.bands.drawsOld))}–${Math.max(...withBands.map((x) => x.bands.drawsOld))})`);
+    }
     check(`change ${c.label}`, `${mode}: no page errors`, errors.length === 0, errors.slice(0, 3).join(' | '));
     await page.close();
   }

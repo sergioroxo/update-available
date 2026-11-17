@@ -315,27 +315,40 @@ async function main() {
     await wait(6000);
     await shot('04-the-commons', 'the one room the system has no category for');
     if (NO_CLOSE) return;
-    await page.evaluate(() => window.__os.e4.ball.debugJumpTo('after'));
-    await wait(1500);
-    // the termination, the glitch, and the 44 s sweep into the Close
-    await wait(26000);
-    await shot('05-the-sweep', 'the last move: rising over the partition, turning to face the building');
-    // S174: the two frames held back in S173c come back — Room 2 is emptied at
-    //   2026 (R4-16) and the machine has its faces and a clear sight-line (R4-14/15)
-    await wait(24000);
-    await shot('05b-the-night', 'night falls over the building, and the constellation opens while she is still coming down');
-    await wait(30000);
-    await shot('06-constellation', 'the Close: the sky it ends under');
-    await wait(26000);
-    await shot('07-the-panels', 'the panels: the four rooms, and what was true in each');
-    await wait(22000);
-    // ⚑ S378 (UiB job 20 Part A) — the end of the Close is the computer's panel and its page in the site viewer (the
-    //   card on Daniel's far glass is gone): wait for the turn to the panel, photograph it, press its Open button with
-    //   the real mouse, photograph the Restart page, then its Receipt (pressed inside the window, at the core's own hit)
+    /**
+     * ⚑ S398 (UiB job 29 A4) — THE CLOSE AS IT IS TODAY. This used to wait out a fixed timeline after the ball (26 s, 24 s,
+     * 30 s, 26 s, 22 s) and photograph whatever was there; since S361 the Close is in his order and its message cards
+     * wait for a press (a visitor turns each one), so on 16 Nov the "panels" frame showed only stars and the tool said
+     * "the Close never ended" while the walk reached the Restart page (Fable's review §2.A6). Now it is driven as a
+     * visitor goes through it: the Close asked for from Maya's room (the same hand-off the visit takes,
+     * `__enterClose`), the flight with its glitch, the eyes rising to the stars, each card turned by one press in the
+     * middle of the view, the panels opening, and the end: the gaze taken to the computer's panel.
+     */
+    await page.evaluate(() => window.__enterClose());
+    const c0 = Date.now(); let pressed = -1; const took = new Set();
     let ended = false;
-    for (let i = 0; i < 60 && !ended; i++) {
-      ended = await page.evaluate(() => !!window.__closeMachine?.ended);
-      if (!ended) await wait(2000);
+    while (Date.now() - c0 < 360000) {
+      const st = await page.evaluate(() => window.__closeState());
+      if (st.stage === 'travel' && !took.has('sweep')) {
+        took.add('sweep'); await wait(9000);
+        await shot('05-the-sweep', "the last move: the flight from Maya's room over the partition, the building glitching as it passes"); continue;
+      }
+      if (st.stage === 'lookUp' && !took.has('night')) {
+        took.add('night'); await wait(12000);
+        await shot('05b-the-night', "back in Daniel's place, the eyes rising to the stars on his ceiling"); continue;
+      }
+      if (st.stage === 'message' && st.card !== pressed) {
+        await wait(2500);
+        if (!took.has('cards')) { took.add('cards'); await shot('06-constellation', 'the Close: the sky it ends under, and the first of its messages (each turned by a press)'); }
+        await page.mouse.click(VIEW.width / 2, VIEW.height / 2);
+        pressed = st.card; await wait(900); continue;
+      }
+      if (st.stage === 'open' && !took.has('panels')) {
+        took.add('panels'); await wait(7000);
+        await shot('07-the-panels', 'the panels open out of the stars: the four rooms, and what was true in each'); continue;
+      }
+      if (st.ended) { ended = true; break; }
+      await wait(1000);
     }
     const viewerPress = (id) => page.evaluate((id) => {
       const core = window.__siteViewer.dom, cv = document.querySelector('#reinterp-site-viewer canvas');
