@@ -40,6 +40,9 @@ const WORLD_SKY = COMMONS_WORLD.sky;
 import { buildClusterShell, relocationFor, RELOCATIONS, type ClusterShell, type EraKey,
   type RelocationPlan } from '../room/cluster';
 import { buildPointCloud, closeBackdropColor, type PointCloud } from '../room/pointCloud';
+import { buildDanielLine } from '../room/danielLine';
+import { foldedPos } from '../room/clusterMorph';
+import { fileHistory } from '../witness/fileItem';
 import { entriesByEra } from '../witness/record';
 import { createSendRuntime, type SendRuntime } from '../room/sends';
 import { buildMovementNodes, type MovementNodes } from '../room/movementNodes';
@@ -64,10 +67,8 @@ import menuStrings from '../../data/strings/gameMenu.json';
 import { controlsHint as mapControlsHint, controlsHintTouch as mapControlsHintTouch } from '../../data/strings/map.json';
 import { mapState, nextHint } from '../witness/map';
 import { pulse as witnessPulse } from '../witness/pulse';
-import { createInstitution, INSTITUTION_IDS } from '../room/institution';
 import { buildDevices, DEVICE_PROP_IDS } from '../room/handheld';
 import { consoleSession, consoleSessionInternal } from '../room/consoleSession';
-import { practiceOf } from '../witness/record';
 import { mountHelper, type Helper } from '../frame/helper';
 import { mountCall } from '../frame/call';
 import { createTimePassing, type TimePassing } from '../room/timePassing';
@@ -1189,7 +1190,6 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     //   waits dark (the off-hint owns that beat), while the OS is paused, and
     //   while the menu is open.
     gameMenuBus.mapSource = () => mapState(os);
-    witnessPulse.onGrow = () => witness.pulse();
     const guideIdleScale = (): number => {
       const review = Number(runtimeQuery().get('idlescale'));
       return (review > 0 ? review / 60 : 1) * (xr?.active ? 1 : window.matchMedia('(pointer: coarse)').matches ? 1 : 1.8);
@@ -1553,8 +1553,11 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
         spine ? { step: spine.step } : null;
     }
   }
-  const witness = new WitnessCanvas();
-  if (options.reinterp === true) {
+  /** ⚑ S401 (UiB job 29 D1, his "Yes it should go", 16 Nov) — the record on the back wall is gone from the visit: the
+   *  record plane, its frame and the institution's corner (data/room/reinterp_deltas.json `_retiredS401`). The file is
+   *  on each era's screen instead (os.ts `drawFileItem`). The old build (no ?reinterp=1) keeps its wall. */
+  const witness = options.reinterp === true ? null : new WitnessCanvas();
+  if (options.reinterp === true && witness) {
     // The rear wall is ONE surface for the whole of Era 1 (its opening-board
     // footprint and the witness terminal's are the same rectangle — see
     // data/room/cluster.json's witnessTerminal note), so nothing has to be
@@ -1590,17 +1593,19 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     else if (frontHeldOff && os.era !== 'e4') { front.enabled = true; frontHeldOff = false; }
   });
 
-  const backTex = makeScreenTexture(app, witness.canvas, 'screen');
-  const back = makeScreenEntity('witness-screen', backTex, WITNESS.w, WITNESS.h, options.reinterp === true);
-  back.setLocalPosition(WITNESS.x, WITNESS.y, WITNESS.z);
-  back.setLocalEulerAngles(90, 180, 0); // faces -Z (the chair, once turned)
-  app.root.addChild(back);
+  const backTex = witness ? makeScreenTexture(app, witness.canvas, 'screen') : null;
+  const back = witness && backTex ? makeScreenEntity('witness-screen', backTex, WITNESS.w, WITNESS.h, options.reinterp === true) : null;
+  if (back) {
+    back.setLocalPosition(WITNESS.x, WITNESS.y, WITNESS.z);
+    back.setLocalEulerAngles(90, 180, 0); // faces -Z (the chair, once turned)
+    app.root.addChild(back);
+  }
   const terminalFrame = room.props.get('terminalFrame')?.entity;
   const setTerminalFrameVisible = (visible: boolean): void => {
     if (terminalFrame) terminalFrame.enabled = visible;
   };
   const restoreWitnessSurface = (): void => {
-    if (options.reinterp !== true) return;
+    if (options.reinterp !== true || !back) return;
     const wt = clusterData.witnessTerminal;
     back.setLocalPosition(wt.pos[0], wt.pos[1], wt.pos[2]);
     back.setLocalScale(wt.w, 1, wt.h);
@@ -1628,12 +1633,15 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   // side bleeds into peripheral vision — a reason to turn around (Sérgio)
   // NOTE: no CSS transition here — opacity is driven every frame (a transition
   // would fight the per-frame pulse and the layer would never reach its target)
-  const coldCreep = document.createElement('div');
-  Object.assign(coldCreep.style, {
-    position: 'fixed', inset: '0', zIndex: '6', pointerEvents: 'none', opacity: '0',
-    background: 'radial-gradient(ellipse at center, rgba(0,0,0,0) 38%, rgba(70,110,160,0.0) 56%, rgba(80,130,190,0.82) 100%)'
-  } as CSSStyleDeclaration);
-  document.body.appendChild(coldCreep);
+  // ⚑ S401 (job 29 D1) — not in the visit: there is no wall behind the seat to send anyone to
+  const coldCreep = options.reinterp === true ? null : document.createElement('div');
+  if (coldCreep) {
+    Object.assign(coldCreep.style, {
+      position: 'fixed', inset: '0', zIndex: '6', pointerEvents: 'none', opacity: '0',
+      background: 'radial-gradient(ellipse at center, rgba(0,0,0,0) 38%, rgba(70,110,160,0.0) 56%, rgba(80,130,190,0.82) 100%)'
+    } as CSSStyleDeclaration);
+    document.body.appendChild(coldCreep);
+  }
   let coldPhase = 0;
   /** S144: the record's size last frame — the pulse fires on growth */
 
@@ -2310,16 +2318,9 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   // Apply the authored tilt before the entrance takes its snapshot; rebuild below.
   syncRacketDemo();
   cluster?.setNeverBatch(['tennisRacketModel', 'mouse', 'companionKeychain']);   // S275: the keychain carries the pet's LCD // the demonstration moves it; S270h / VR-01: the hand moves the mouse
-  /** ⚑ S183 — the institution's corner: named, pressable, and pulling with the file */
-  const institution = options.reinterp === true ? createInstitution(room) : null;
-  if (institution) {
-    // r1's institutional corner appears only with its filings; restoration must not pre-empt it.
-    if (options.restoreEntrance) institution.tick(0, 'e1', false, 0, 0, false, () => false);
-    cluster?.setNeverBatch([...INSTITUTION_IDS, ...DEVICE_PROP_IDS]);
-    // the auditor's handle (memory: the affordance is the target) — what can be pressed there now
-    (window as unknown as { __institution?: () => unknown }).__institution =
-      () => (cluster ? institution.targets(cluster.era) : []);
-  }
+  // ⚑ S401 (UiB job 29 D1) — the institution's corner (S181–S183, src/room/institution.ts) is gone with the back wall;
+  //   the devices still move, so they still never batch
+  if (options.reinterp === true) cluster?.setNeverBatch([...DEVICE_PROP_IDS]);
 
   // R28-2c: the belongings beat's visual mark — a PERSISTENT warm lift on a
   // kept prop, distinct from setPropEmphasis above in both mechanism-detail
@@ -3451,7 +3452,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     flipBtn.style.color = '#ffd';
     flipBtn.style.borderColor = '#ffd';
   };
-  os.onFlipReady = pulse;
+  if (options.reinterp !== true) os.onFlipReady = pulse;   // S401: the visit's turn control never calls to the wall
   os.onLeave = () => {
     if (restoreEntrance?.blocking) {
       restoreEntrance.cancel(); camMove = null; clearLookOffset();
@@ -3494,10 +3495,11 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       flipCount++;
       ledger.flips = flipCount;
       // the data thread: the name is filed the first time you witness
-      if (!ledger.records.includes('ministry-index-card')) {
+      // ⚑ S401 (job 29 D1) — not in the visit: the wall that was witnessed is gone, and no look files anything
+      if (witness && !ledger.records.includes('ministry-index-card')) {
         ledger.records.push('ministry-index-card');
       }
-      witness.messagesOnFile = os.irc ? os.irc.userMessageCount : 0;
+      if (witness) witness.messagesOnFile = os.irc ? os.irc.userMessageCount : 0;
     } else if (flipCount > 0) {
       os.unlockDossier(); // returned: card #1
     }
@@ -3963,19 +3965,8 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       // ⚑ S209g / I1 — in the ball, a press anywhere else in the hall is her noise: she raises her lamp.
       //   After the markers, so a ring always wins; the headset's own sphere (era3Devices) still hands it back.
       if (os.e4?.pressHall()) return;
-      // ⚑ S183 — the institution's corner answers a press with its own movement
-      //   (src/room/institution.ts). Last, so a marker or a screen always wins.
       // S189 — the device in this era (1997's handheld, 2003's phone, 2026's console): pick it up, play it
       if (devices && cluster && os.inDesktop && devices.press(ray, cluster.era, xr?.active ? logicalHead() : camera)) return;
-      const inst = institutionUnderRay(ray);
-      if (inst) {
-        institution?.press(inst.key);
-        // ⚑ S183d — the press names the practice the object belongs to (practices.json, his
-        //   approved lines), held in the sentence line long enough to read
-        const pr = practiceOf(inst.practice);
-        if (pr) { practiceText = (aimStrings as unknown as Record<string, string>).instPractice.replace('{title}', pr.title).replace('{did}', pr.did); practiceT = PRACTICE_SECONDS; }
-        return;
-      }
     }
   }
 
@@ -4026,16 +4017,6 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     };
   }
 
-  /** ⚑ S183 — the corner object under a ray (its aim key and practice), or null */
-  function institutionUnderRay(ray: Ray): { key: string; practice: string } | null {
-    if (!institution || !cluster || !os.inDesktop) return null;
-    for (const t of institution.targets(cluster.era)) if (rayHitsPointR(ray, t.at, t.r)) return t;
-    return null;
-  }
-  /** ⚑ S183d — the practice a corner press named, and how long it stays in the sentence line */
-  const PRACTICE_SECONDS = 6;
-  let practiceText: string | null = null;
-  let practiceT = 0;
 
   /**
    * ⚑ S152 — THE SENTENCE LINE. What the look is resting on, named — the same
@@ -4111,9 +4092,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     // ⚑ S382 — Vera's notebook and the mug on her desk name themselves (src/room/veraDesk.ts)
     const deskAim = era3Devices?.deskAim(ray);
     if (deskAim) { aimAt = deskAim.at; return A[deskAim.key] ?? null; }
-    const inst = institutionUnderRay(ray);
-    if (inst) aimAt = (inst as { at?: { x: number; y: number; z: number } }).at ?? null;
-    return inst ? A[inst.key] ?? null : null;
+    return null;
   }
   /** ⚑ S345 / T29 — the room point the last aim named (room coordinates), so the headset's ray can end on it */
   let aimAt: { x: number; y: number; z: number } | null = null;
@@ -4747,7 +4726,11 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       if (relocLeg && !camMove) advanceRelocation();
       // ⚑ the Close's four legs hand over the same way; `hold` is the one
       //   without a camera move, so it runs on its own small clock
-      if (closeStage === 'message') {
+      if (closeStage === 'line') {
+        // ⚑ S401 — his line is read on its own clock (danielLine.ts); then the eyes rise
+        danielLine?.tick(dt);
+        if (!danielLine || danielLine.done) advanceClose();
+      } else if (closeStage === 'message') {
         // ⚑ S226 (his, 2026-10-10, cadence study Q6: "Press") — a card waits for a press, never for a clock: 39 words
         //   in 9 s was ~260 words a minute for readers in their second language. Each card says how to go on.
         void CLOSE_CARD_SECONDS;
@@ -4954,10 +4937,9 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
           const hoverText = aimName ?? (!cap && !tapes.inserted && hoveredTapeId
             ? `◈ ${tapes.def(hoveredTapeId).shelfLabel}` : null);
           if (cueT > 0) cueT -= dt; else cueText = null;
-          if (practiceT > 0) practiceT -= dt; else practiceText = null;
-          // the tape's words first; then a sound's name while it is fresh; then the practice a corner
-          // press named (S183d); then what the look rests on
-          const text = cap ?? (cueT > 0 ? cueText : null) ?? practiceText ?? hoverText;
+          // the tape's words first; then a sound's name while it is fresh; then what the look rests on
+          // (S401: the corner's practice line went with the corner)
+          const text = cap ?? (cueT > 0 ? cueText : null) ?? hoverText;
           canvasEl.style.cursor = aimName && !xr?.active && motionState !== 'live' ? 'pointer' : 'default';
           tapeCaption.textContent = text ?? '';
           tapeCaption.style.opacity = text ? '1' : '0';
@@ -5016,24 +4998,16 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     os.screenFacing = !nowBack;   // S226 — the desktop's corner lines wait while she is turned away
     if (nowBack !== facingBack) {
       facingBack = nowBack;
-      if (facingBack) os.markWitnessSeen(); // turning around answers the nudge
+      if (facingBack && options.reinterp !== true) os.markWitnessSeen(); // turning around answers the nudge (S401: not in the visit — no look starts a beat)
       onCrossed(facingBack);
     }
 
     /**
-     * ⚑ S144 — THE WITNESS PULSE. Every filing is heard and seen: when the
-     * record grows, the stamp sounds and the wall's newest row lights. The
-     * player learns in Era 1 that the wall answers what they do, before they
-     * are ever told — which is the only reason to turn round and read it.
-     * (docs/reinterp/THE_RECORD_PLAN_2026-09-15.md §3F)
+     * ⚑ S144 — THE WITNESS PULSE (docs/reinterp/THE_RECORD_PLAN_2026-09-15.md §3F). ⚑ S401 (UiB job 29 D1/D2) — the
+     * wall and its stamp are gone (his round 2: "If we removed the panel in the back, we must remove those sounds"):
+     * the pulse is silent now, and what it lights is the person's file on each era's screen (os.ts `drawFileItem`).
      */
-    // ⚑ S145 — one observer for every face (witness/pulse.ts): the stamp plays
-    //   there, the wall is told, and the 2016 chip / 2026 badge read `pulse.k()`.
     witnessPulse.tick(dt);
-    if (institution && cluster) {
-      institution.tick(dt, cluster.era, cluster.busy, witnessPulse.countFor(cluster.era), witnessPulse.k(),
-        facingBack, (id) => ledger.records.includes(id));
-    }
     if (devices && cluster) {
       const size = witnessPulse.countFor(cluster.era);
       for (const f of devices.tick(dt, cluster.era, deviceHas(cluster.era, size), size)) {
@@ -5043,8 +5017,8 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     }
     // S146 — a filing is the piece moving: the helper's stillness clock restarts on it
     if (witnessPulse.k() > 0.98) helper?.activity();
-    // cold creep: pulse the witness side into the edges while it goes unseen
-    if (os.hasUnseenWitness && !facingBack) {
+    // cold creep: pulse the witness side into the edges while it goes unseen (S401: the old build only)
+    if (coldCreep && os.hasUnseenWitness && !facingBack) {
       coldPhase += dt;
       if (coldPhase >= 8) os.hasUnseenWitness = false;
       const pulse = 0.55 + 0.25 * Math.sin(coldPhase * 2.0); // 0.30–0.80, clearly felt
@@ -5055,7 +5029,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       flipBtn.style.boxShadow = `0 0 ${k.toFixed(1)}px ${(k / 3).toFixed(1)}px currentColor`;
     } else {
       coldPhase = 0;
-      coldCreep.style.opacity = '0';
+      if (coldCreep) coldCreep.style.opacity = '0';
       if (flipBtn.style.boxShadow) flipBtn.style.boxShadow = '';
     }
 
@@ -5110,9 +5084,11 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
      * other. `setEra` early-returns when nothing moved, so this is a pointer
      * compare per frame and never a redraw.
      */
-    witness.setEra(os.era);
-    witness.update(dt);
-    if (witness.dirty) { backTex.upload(); witness.dirty = false; }
+    if (witness && backTex) {
+      witness.setEra(os.era);
+      witness.update(dt);
+      if (witness.dirty) { backTex.upload(); witness.dirty = false; }
+    }
     // ⚑ the LIVE camera pose, every frame — so pressing the phone can lift it to
     //   the hand from wherever she is actually looking, without depending on a
     //   seat cut having happened first. The held pose is still computed ONCE, at
@@ -5588,7 +5564,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
    * The review route (`?close=1`) starts at Daniel's seat, so it keeps the old
    * order: lookUp, night on the stars, then the opening.
    */
-  type CloseStage = 'lead' | 'travel' | 'lookUp' | 'message' | 'hold' | 'open' | 'settled' | null;
+  type CloseStage = 'lead' | 'travel' | 'line' | 'lookUp' | 'message' | 'hold' | 'open' | 'settled' | null;
   /** ⚑ S209 / P7-48 — THE CLOSE'S MESSAGE (data/strings/close_message.json): with the eyes on the stars and before
    *  the panels open, a few plain cards in the frame's voice — what SOGICE is, that it persists, that the law did not
    *  come, and his last line. Each holds CLOSE_CARD_SECONDS or until a press; the frame never plays. */
@@ -5635,6 +5611,10 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     openClosePanels();
   }
   let closeStage: CloseStage = null;
+  /** ⚑ S401 (UiB job 29 D3) — his line at Daniel's desk, before the Close (src/room/danielLine.ts) */
+  const danielLine = options.reinterp === true && cloud ? buildDanielLine(app) : null;
+  if (debugOn && danielLine) (window as { __danielLine?: unknown }).__danielLine = danielLine;
+  if (debugOn) (window as { __fileItems?: () => unknown }).__fileItems = () => fileHistory.slice();   // S401: the file on each screen
   let closeHoldT = 0;
   /** true once the night/constellation began during the sweep (C-01) */
   let closeMorphBegun = false;
@@ -5722,6 +5702,19 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       closeStage = 'travel';
     }
     if (closeStage === 'travel') {
+      // ⚑ S401 (UiB job 29 D3; his 16 Nov, B11) — LANDED AT DANIEL'S DESK: before the room becomes the Close, his monitor
+      //   is on the desk again and on it, plain, his line and Caleb's answer (danielLine.ts), brought before the eye and
+      //   held for the residue's own time. The transformation waits for them: the eyes rise only after (`line` → here).
+      if (danielLine) {
+        closeStage = 'line';
+        // (the review route `?close=1` stands in 1997's room, where his own CRT is still on the desk: the lines go on its glass)
+        danielLine.begin(xr?.active ? logicalHead() : camera, !!xr?.active, xr?.active ? null : camera.camera ?? null,
+          !!cluster && foldedPos('crtBody', { e1: 0, e2: 1, e3: 2, e4: 3 }[cluster.era]) !== null);   // folded props scale, never disable
+        return;
+      }
+      closeStage = 'line';
+    }
+    if (closeStage === 'line') {
       closeStage = 'lookUp';
       // ⚑ W1-G1 — the eyes rise to the stars and come round only HALF of the quarter-turn to Daniel's desk (the other
       //   half is spent while the gaze comes down, in `open`): 45° over 20 s and 45° over 16 s, 4 and 5 °/s at the
@@ -5737,6 +5730,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       //   start of lookUp the whole rise was through a black room, and a ceiling you cannot see is not a ceiling.
       // ⚑ S361 / H50 — night falls first (CLOSE_DUSK_SECONDS), then the messages; no constellation yet
       closeStage = 'hold'; closeHoldT = 0;
+      danielLine?.hide();   // S401: the lights go out on the stars; his monitor goes with the room's light
       cluster.applyRig('close', true, CLOSE_LIGHTS_SECONDS);
       return;
     }
@@ -5789,6 +5783,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   function leaveClose(era: EraKey, navigation = false): void {
     if (!cluster || !cloud) return;
     cloud.hide();
+    danielLine?.hide();   // S401
     if (closeStage === 'message') { closeMsgEl.style.opacity = '0'; xrFrame?.setCard(null); closeCard = -1; }
     closeStage = null;
     closeMorphBegun = false;

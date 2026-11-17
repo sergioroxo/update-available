@@ -1,20 +1,15 @@
-import { runtimeQuery } from '../edition';
 /**
- * ONE version for visitors (2026-10-15, the lead);
- * the full cut is kept for review behind ?cut=full.
- * Internal speedrun names remain so existing authored data stays intact.
+ * ONE version for visitors (2026-10-15, the lead).
+ * ⚑ S401 (UiB job 29 D5; his "Yes, freeze it", 17 Nov) — ONE VERSION. The old full route is FROZEN as a research state
+ * (git tag `research/full-cut-2026-11-17`; docs/reinterp/RESEARCH_NOTE_THE_TWO_CUTS_2026-11-17.md): the live build no
+ * longer answers `?cut=full`, and `currentCut()` is always the visit. The code behind `isSpeedrun()` stays as it is (his
+ * 15 Oct: "Turn the separate full version off (keep the code)"); "speedrun" is only the visit's old internal name.
  */
 import { ledgerGeneration } from './ledger';
 export type Cut = 'full' | 'speedrun';
-let chosen: Cut | null = null;
-export function currentCut(): Cut {
-  if (chosen) return chosen;
-  try { chosen = runtimeQuery().get('cut') === 'full' ? 'full' : 'speedrun'; }
-  catch { chosen = 'speedrun'; }
-  return chosen;
-}
-/** Entrance handover only; no visitor-facing version selector calls this. */
-export function chooseCut(c: Cut): void { chosen = c; }
+export function currentCut(): Cut { return 'speedrun'; }
+/** Entrance handover only; no visitor-facing version selector calls this. Since S401 the visit is the only cut. */
+export function chooseCut(c: Cut): void { void c; }
 export function isSpeedrun(): boolean { return currentCut() === 'speedrun'; }
 
 // Visit-only opt-ins and irreversible branch points; wiped with the ledger, including soft Restart.

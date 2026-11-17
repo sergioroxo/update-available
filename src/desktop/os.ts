@@ -7,6 +7,10 @@ import { pathTargets, drawGlow } from '../witness/pathGlow';
 /** ⚑ S339 — 2003's two icon columns (left of Restorify's window, which now sits on the right) */
 const E2_COL1 = 8;
 const E2_COL2 = 60;
+/** ⚑ S401 (job 29 D2) — 1997's file in the tray: the status well ends this far from the right edge (it ended at 116),
+ *  and the file's well sits between it and Lamby's tray (W − 108) */
+const FILE_TRAY_RIGHT = 160;
+const FILE_TRAY_W = 46;
 const GLOW_MAY = new Set(['icon-folder1997', 'icon-rootcause', 'icon-provotype', 'icon-netvision']);
 import * as pc from 'playcanvas';
 import polish from '../../data/strings/playtestPolish.json';
@@ -37,6 +41,7 @@ import { xrCanvasScale } from '../engine/screenTexture';
 import * as ui from './theme/chrome';
 import institutionStrings from '../../data/strings/institution.json';
 import { entriesByEra, practiceOf } from '../witness/record';
+import { FileWatch, FILE_ITEM } from '../witness/fileItem';
 import { drawYesPoster, YES_W, YES_H } from './apps/yesPoster';
 import { Web1997App } from './apps/web1997';
 import browserStrings from '../../data/dialog/s1_browser.json';
@@ -584,6 +589,8 @@ export class DesktopOS {
   private yourFilePage: 'record' | 'conduct' = 'record';
   /** ⚑ Phase 7 — the map's ○ beat: the folder has been opened once (menu state, never filed) */
   yourFileSeen = false;
+  /** ⚑ S401 (UiB job 29 D2) — the person's file on the screen: its count and its light (src/witness/fileItem.ts) */
+  readonly fileWatch = new FileWatch();
   /** ⚑ S190 — the 1997 browser: the search, between the dial-up and the channel */
   web: Web1997App | null = null;
   /** ⚑ S191 — 2003's forum: recommended after the first check-in; opened from its desktop icon */
@@ -630,7 +637,8 @@ export class DesktopOS {
     if (act.startsWith('focus:')) { this.onGuideFocus?.(act.slice(6)); return; }
     if (act.startsWith('move:')) { this.onGuideMove?.(act.slice(5)); return; }
     if (this.desktopEra === 'e3' || this.desktopEra === 'e4') { this.onGuidePress?.(act.slice(6)); return; }
-    const allowed = ['icon-a', 'web-join', 'icon-restorify', 'icon-story', 'icon-send', 'start-menu', 'done', 'play', 'connect'];
+    const allowed = ['icon-a', 'web-join', 'icon-restorify', 'icon-story', 'icon-send', 'start-menu', 'done', 'play', 'connect',
+      'file-tray', 'icon-your-file'];   // S401: the file (navigation: it opens, read only)
     const id = act.slice(6);
     if (!act.startsWith('press:') || !allowed.includes(id)) return;
     const hit = this.guideTargets().find(h => h.id === id);
@@ -679,6 +687,7 @@ export class DesktopOS {
       harborDue: this.desktopEra === 'e2' && ledger.records.includes('testimony-online') && !ledger.records.includes('forum-posted') && !this.forum?.open,   // S345
       tvOffer: this.tvOffer?.() ?? undefined,   // S390
       tvCall: this.tvCall?.() ?? undefined,   // S392: the TV's call (the moment is taking the visitor there)
+      ...this.fileOffer(),   // S401: Lamby's one pointer per era at the person's file
       idleScale: this.guideIdleScale(), reducedMotion: reducedMotion(), startTarget: 'start-menu' };
     this.lambyGuide.tick(dt, input);
     // ⚑ S283 (headset B: "I pressed show me, and it didn't show me because the NetPilot window is closed, so it needs to
@@ -690,6 +699,21 @@ export class DesktopOS {
       if (owner && this.windowPresent(owner) && !this.windowOpen(owner)) this.restoreWindow(owner);
     }
     if (before !== this.lambyGuide.version) { this.dirty = true; if (this.e4) this.e4.browser.version++; }
+  }
+  /**
+   * ⚑ S401 (UiB job 29 D2) — LAMBY POINTS AT THE FILE, once per era, as the helper who is also the system ("I've kept
+   * everything for you"). Offered only once the era's file holds something to show (three entries) and only on a stall
+   * (src/narrative/lambyGuide.ts `file`); inside the era's cap, never in felt or respite (the guide's own gates), and
+   * dismissal is logged. Where the item is: 1997 the tray, 2003 the icon, 2016 the account button on the workstation's
+   * taskbar, 2026 Memory on GraceOS's taskbar (the last two press through the engine, as their other guide targets do).
+   */
+  private fileOffer(): { fileOffer?: string; fileTarget?: string } {
+    const era = this.desktopEra;
+    const target = era === 'e1' ? 'file-tray' : era === 'e2' ? 'icon-your-file' : era === 'e3' ? 'account-activity' : 'mem-open';
+    let n: number;
+    if (era === 'e1' || era === 'e2') n = this.fileWatch.count;
+    else n = entriesByEra()[era].length;
+    return n >= 3 ? { fileOffer: FILE_ITEM[era].lamby, fileTarget: target } : {};
   }
   idleSeconds = 0;
   /** ⚑ S208 — the era's own screensaver (1997 the starfield, then the kit's WALK ON; 2003 Restorify's flock), after
@@ -882,9 +906,13 @@ export class DesktopOS {
       this.irc.onImage = () => { this.yesOpen = true; this.dirty = true; };
       this.irc.onHooked = () => {
         this.afterGuide('log-toast', () => { this.toast = { text: strings.desktop.logToast, t: 10 }; this.dirty = true; });
-        this.hasUnseenWitness = true; // the cold side begins to creep in
-        this.behindToastAt = this.t + 11; // a beat later: a reason to look back
-        this.onFlipReady?.();
+        // ⚑ S401 (UiB job 29 D1) — the visit sends nobody behind the seat: no creep, no "Record filed." toast, no glow
+        //   on the turn control. Rob escalates on the quiet fallback below. (The old build keeps its nudges.)
+        if (!this.reinterp) {
+          this.hasUnseenWitness = true; // the cold side begins to creep in
+          this.behindToastAt = this.t + 11; // a beat later: a reason to look back
+          this.onFlipReady?.();
+        }
         // the flip EARNS the escalation (main's resolved design): Rob only
         // pushes the residential program after you've turned and witnessed the
         // record — with a fallback so a player who never turns still advances.
@@ -2353,6 +2381,9 @@ export class DesktopOS {
 
   // ── update / draw ──────────────────────────────────────────────────────
   update(dt: number): void {
+    // ⚑ S401 (job 29 D2) — the file's item changes on the glass when something is filed: two redraws, lit and unlit
+    if (this.reinterp && (this.desktopEra === 'e1' || this.desktopEra === 'e2')
+      && this.fileWatch.tick(dt, this.desktopEra, this.desktopEra === 'e2' ? ['e1', 'e2'] : ['e1'])) this.dirty = true;
     const highlights = ledger.view.highlights === true;
     if (highlights !== this.highlightPreference) {
       this.highlightPreference = highlights; this.dirty = true;
@@ -2746,6 +2777,7 @@ export class DesktopOS {
     if (this.desktopEra === 'e2' && this.e2Stage !== 'active') return this;
     if (this.pauseOpen || this.yesOpen) return this;
     if (hit && (hit.id === 'taskbar-guide' || hit.id === 'toast-act' || hit.id.startsWith('min-') || hit.id.startsWith('taskbar-'))) return this;
+    if (this.desktopEra === 'e1' && (this.yourFileOpen || hit?.id === 'file-tray')) return this;   // S401: the file, before the windows
     if (this.netvision?.open) return this.netvision;
     if (this.messageNoticeOpen || this.netvisionOfferOpen) return this;
     if (this.accountability?.modal) return this.accountability;
@@ -3192,6 +3224,9 @@ export class DesktopOS {
         //   Family Form stays in 1997; Release Work '97, Your file and the "1997" folder come with him
         // ⚑ S183f / R5-04 — and his own file, which came with him too
         this.drawIcon(E2_COL2, 188, institutionStrings.yourFile.icon, true, 'icon-your-file');
+        // ⚑ S401 (UiB job 29 D2) — and it is the file that keeps growing: its count on the icon, lit for a moment when
+        //   something is filed (silently; the stamp went with the wall)
+        this.drawFileCount(this.ctx, E2_COL2 + 26, 184, this.fileWatch.count, this.fileWatch.on);
         // ⚑ S274 — Daniel's own folder of the years between (felt; nothing points to it but the song's pip)
         this.drawIcon(E2_COL2, 140, folderStrings.icon, true, 'icon-folder1997', this.folder1997Unread);
         // ⚑ S191 — the forum, once a thread has been recommended; unread until he opens it
@@ -3328,7 +3363,7 @@ export class DesktopOS {
     if (this.reinterp && this.phase === 'desktop' && (this.desktopEra === 'e1' || this.desktopEra === 'e2')) {
       const bw = 64;
       for (const w of this.taskbarWindows()) {
-        if (wellX + bw > W - 116) break;   // the well keeps at least its stub
+        if (wellX + bw > W - (this.desktopEra === 'e1' ? FILE_TRAY_RIGHT : 116)) break;   // the well keeps at least its stub
         if (xp) {
           // 2003: flat blue tabs, the window that is up a shade darker, white type
           ui.px(ctx, wellX, H - 19, bw, 16, this.windowOpen(w.key) ? ERA1.tealDark : ERA1.titleBlue);
@@ -3346,7 +3381,9 @@ export class DesktopOS {
       }
     }
     if (this.reinterp && this.desktopEra === 'e1') {
-      const wellW = Math.max(0, W - 116 - wellX);
+      const wellW = Math.max(0, W - FILE_TRAY_RIGHT - wellX);
+      // ⚑ S401 (UiB job 29 D2) — THE FILE IN THE TRAY: a folder and its count beside Lamby, on every 1997 screen
+      this.drawFileTray(W, H);
       ui.bevel(ctx, wellX, H - 19, wellW, 16, false);
       const guideLine = this.lambyGuide.active || this.lambyGuide.hasStep || this.guideSilence.silent || this.otherVoices ? null : this.guide?.activeText;
       if (guideLine) {
@@ -3738,24 +3775,61 @@ export class DesktopOS {
     this.dirty = true;
   }
 
+  /**
+   * ⚑ S401 (UiB job 29 D2) — 1997'S FILE IN THE TRAY. The record left the back wall (D1) and comes to the screen: a
+   * sunken tray well beside Lamby with a manila folder and the number of entries on file. It is there from the first
+   * view of the desktop (the profile is the first entry), it changes when something is filed — the count goes up and the
+   * well lights navy for a moment, silently — and a press opens Daniel's 1997 file, read only (drawYourFile). Not drawn
+   * while DIARY.TXT is open (felt: his own words, nothing of the apparatus beside them).
+   */
+  private drawFileTray(W: number, H: number): void {
+    if (this.diary?.open) return;
+    const { ctx } = this;
+    const x = W - FILE_TRAY_RIGHT + 4, y = H - 19, w = FILE_TRAY_W, h = 16;
+    const lit = this.fileWatch.on;
+    ui.bevel(ctx, x, y, w, h, false);
+    if (lit) ui.px(ctx, x + 1, y + 1, w - 2, h - 2, ERA1.navy);
+    // the folder: a manila tab and body, 11 × 9
+    const fx = x + 5, fy = y + 4;
+    ui.px(ctx, fx, fy, 5, 2, lit ? ERA1.white : ERA1.olive);
+    ui.px(ctx, fx, fy + 1, 11, 8, lit ? ERA1.white : ERA1.olive);
+    ui.px(ctx, fx + 1, fy + 3, 9, 5, lit ? ERA1.tooltip : ERA1.beige);
+    ui.setFont(ctx, 9);
+    ctx.fillStyle = lit ? ERA1.white : ERA1.black;
+    ctx.fillText(String(this.fileWatch.count), fx + 15, H - 16);
+    this.hits.push({ x, y, w, h, id: 'file-tray' });
+  }
+
+  /** ⚑ S401 — 2003's Your file wears its count: a small white tag at the icon's corner, XP blue while it is lit */
+  private drawFileCount(ctx: CanvasRenderingContext2D, x: number, y: number, n: number, lit: boolean): void {
+    ui.setFont(ctx, 9);
+    const label = String(n), tw = Math.ceil(ctx.measureText(label).width), bw = Math.max(12, tw + 6);
+    ui.px(ctx, x - 1, y - 1, bw + 2, 13, ERA1.navy);
+    ui.px(ctx, x, y, bw, 11, lit ? ERA1.titleBlue : ERA1.white);
+    ctx.fillStyle = lit ? ERA1.white : ERA1.navy;
+    ctx.fillText(label, x + Math.round((bw - tw) / 2), y + 1);
+  }
+
   private drawYourFile(W: number, H: number): void {
     const { ctx } = this;
-    const S = institutionStrings.yourFile;
-    if (this.yourFilePage === 'conduct') { this.drawConductRecord(W, H); return; }
+    // ⚑ S401 — 1997's file is his 1997 entries only, in the same window; 2003's carries both years and the camp's page
+    const e1 = this.desktopEra === 'e1';
+    const S = e1 ? { ...institutionStrings.yourFile, ...FILE_ITEM.e1 } : institutionStrings.yourFile;
+    if (this.yourFilePage === 'conduct' && !e1) { this.drawConductRecord(W, H); return; }
     const dw = 400; const dh = 236;
     const dx = Math.round((W - dw) / 2); const dy = Math.round((H - dh) / 2) - 8;
     const c = ui.windowFrame(ctx, dx, dy, dw, dh, S.title, true);
     ui.px(ctx, c.x, c.y, c.w, c.h, ERA1.paper);
     const by = entriesByEra();
-    const all = [...by.e1, ...by.e2].reverse();
+    const all = (e1 ? [...by.e1] : [...by.e1, ...by.e2]).reverse();
     ui.setFont(ctx, 9);
     ctx.fillStyle = ERA1.greyDark;
-    ctx.fillText(S.sub.replace('{n}', String(all.length)), c.x + 10, c.y + 8);
+    ctx.fillText((S.sub ?? '').replace('{n}', String(all.length)), c.x + 10, c.y + 8);
     ui.px(ctx, c.x + 8, c.y + 22, c.w - 16, 1, ERA1.grey);
     const ROW = 13; const top = c.y + 28; const PW = 128;
     const room = Math.floor((c.h - 28 - 26) / ROW);
     const rows = all.length > room ? all.slice(0, room - 1) : all;
-    if (all.length === 0) { ctx.fillStyle = ERA1.greyDark; ctx.fillText(S.empty, c.x + 10, top); }
+    if (all.length === 0) { ctx.fillStyle = ERA1.greyDark; ctx.fillText(S.empty ?? '', c.x + 10, top); }
     rows.forEach((e, i) => {
       const y = top + i * ROW;
       ctx.save(); ctx.beginPath(); ctx.rect(c.x + 8, y - 2, c.w - 16 - PW - 6, ROW); ctx.clip();
@@ -3769,10 +3843,11 @@ export class DesktopOS {
     });
     if (rows.length < all.length) {
       ctx.fillStyle = ERA1.grey;
-      ctx.fillText(S.more.replace('{n}', String(all.length - rows.length)), c.x + 10, top + rows.length * ROW);
+      ctx.fillText((S.more ?? '').replace('{n}', String(all.length - rows.length)), c.x + 10, top + rows.length * ROW);
     }
     ctx.fillStyle = ERA1.greyDark;
-    ctx.fillText(S.footer, c.x + 10, c.y + c.h - 14);
+    ctx.fillText(S.footer ?? '', c.x + 10, c.y + c.h - 14);
+    if (e1) { this.hits.push({ x: c.closeBox.x, y: c.closeBox.y, w: c.closeBox.w, h: c.closeBox.h, id: 'your-file-close' }); return; }
     // S274 — the second page, for the visitor who looks: the fourteen days as the institution kept them
     const bw = 116, bx = c.x + c.w - bw - 8, bby = c.y + c.h - 20;
     ui.button(ctx, bx, bby, bw, 16, S.conductButton, { hover: this.hover === 'your-file-conduct' });
@@ -4669,6 +4744,16 @@ export class DesktopOS {
       this.openMessenger();
       this.dirty = true;
       return;
+    }
+    // ⚑ S401 (UiB job 29 D2) — the file's tray item is chrome too: asked before the windows. 1997's file window, while
+    //   open, takes the next press and closes (read only: nothing in it is pressable but its close box)
+    if (this.phase === 'desktop' && this.desktopEra === 'e1' && this.yourFileOpen) {
+      this.yourFileOpen = false; this.dirty = true;
+      if (hit?.id === 'your-file-close') this.wayBack('e1');
+      return;
+    }
+    if (this.phase === 'desktop' && this.desktopEra === 'e1' && hit?.id === 'file-tray') {
+      this.yourFileOpen = true; this.yourFileSeen = true; this.dirty = true; return;
     }
     // S165 / W-E2: the topmost window's minimise box, before the windows take the
     //   click — only a keyed frame has one, and only the frame on top is asked

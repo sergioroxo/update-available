@@ -68,6 +68,21 @@ const tvCap=make();for(const beat of ['kit','read','pray','pledge','connect','we
 tvCap.tick(500,tvIn());tvCap.tick(0.1,tvIn());assert.notEqual(tvCap.view.rung,'tv');
 console.log('Teaching TV offer: once per era, after a stall, never over a voice; navigation only; dismissal logged; era cap respected.');
 
+// S401 (job 29 D2): the person's file — Lamby points at it ONCE per era, on a stall, never over a voice or a quiet scene;
+//   it points (the item is its target), Take me there presses the item (navigation: it opens, read only), × is logged by
+//   name, and it counts toward the era's cap.
+const fileLine='I\'ve kept everything for you, Daniel. Your file is right down here.';
+const fileIn=(extra={})=>input('nothing-here',{era:'e1',map:{current:{era:'e1',beat:{id:'nothing-here'}},quiet:false},fileOffer:fileLine,fileTarget:'file-tray',...extra});
+const fo=make();fo.tick(74,fileIn());assert.notEqual(fo.view.rung,'file');fo.tick(1,fileIn({voice:true}));assert(!fo.active);
+fo.tick(80,fileIn({map:{current:{era:'e1',beat:{id:'nothing-here'}},quiet:true}}));assert(!fo.active);
+fo.tick(80,fileIn());fo.tick(0.1,fileIn());assert.equal(fo.view.rung,'file');assert.equal(fo.view.text,fileLine);assert.deepEqual(fo.view.targets,['file-tray']);
+fo.press('lg-x');assert.equal(logs.at(-1)[0],'dismissed');assert.equal(logs.at(-1)[1],'file');
+fo.tick(1000,fileIn());assert.notEqual(fo.view.rung,'file');
+const foYes=make();foYes.tick(80,fileIn());foYes.tick(0.1,fileIn());foYes.press('lg-take');assert.equal(acts.at(-1),'press:file-tray');foYes.tick(1000,fileIn());assert(!foYes.active);
+const foCap=make();for(const beat of ['kit','read','pray','pledge','connect','web','channel']){foCap.tick(50,input(beat,{era:'e1',map:{current:{era:'e1',beat:{id:beat}},quiet:false}}));foCap.press('lg-ok');}
+foCap.tick(500,fileIn());foCap.tick(0.1,fileIn());assert.notEqual(foCap.view.rung,'file');
+console.log('The file: Lamby points once per era, after a stall, never over a voice or a quiet scene; Take me there presses the item; × logged; era cap respected.');
+
 // S392: the teaching TV's CALL — when the piece takes the visitor to the TV, Lamby says where it is OVER the TV's own hold
 //   (voice: true), once per era; Take me there is 'open:tv'; × is logged by name; it comes down when the call is taken down.
 const callLine='Your Un-Walk kit says: watch the fellowship\'s tape before step 2. The TV is behind you. I\'ll take you there.';

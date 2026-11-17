@@ -61,7 +61,7 @@ export function drawLambyGuide(ctx: CanvasRenderingContext2D, skin: GuideEra, st
   const targets = state.targets.flatMap(id => hits.filter(h => h.id === id));
   const multiple = state.beat === 'pledge' || state.beat === 'consent' || state.beat === 'steps';
   const selected = multiple ? targets : targets.slice(0, 1);
-  const pointing = state.rung === 'show' || state.rung === 'start';
+  const pointing = state.rung === 'show' || state.rung === 'start' || state.rung === 'file';   // S401: the file
   const w = Math.min(state.rung === 'choice' ? 304 : 272, W - 8), x = W - w - 4;   // ⚑ S362 / H33: three buttons need a wider balloon
   ui.setFont(ctx, 11);
   const h = Math.max(112, 58 + ui.wrapText(ctx, state.text, w - (skin === 'e4' ? 66 : 36)).length * 15);

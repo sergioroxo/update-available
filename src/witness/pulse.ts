@@ -6,14 +6,14 @@
  * The record now has faces on the devices too — the 2016 platform's chip and
  * the 2026 browser's badge — and they must light on the SAME growth, not keep
  * three counters. This is the one observer: the engine ticks it once a frame;
- * it plays the stamp when `recordCount()` grows and exposes `k()` — 1 at the
+ * it notices when `recordCount()` grows and exposes `k()` — 1 at the
  * moment of filing, easing to 0 over `SECONDS` — for anything that draws.
+ * (S401: it no longer plays the stamp; the wall it sounded from is gone.)
  *
  * It never writes to the ledger. The witness is symmetric: a refusal grows
  * the count exactly as compliance does, and lights the same chip.
  */
 import { recordCount, entriesByEra, type RecordEra } from './record';
-import { playOnce } from '../audio/tapeAudio';
 
 export const PULSE_SECONDS = 1.6;
 
@@ -31,7 +31,9 @@ export const pulse = {
     if (n > seen) {
       seen = n;
       t = 0;
-      playOnce('stamp_witness.mp3');
+      // ⚑ S401 (UiB job 29 D1) — SILENT. The stamp went with the wall it came from (his round 2, 16 Nov: "If we removed
+      //   the panel in the back, we must remove those sounds, as they no longer have a direct application of the
+      //   diegetic/non-diegetic"). What a filing does now is seen, not heard: the file on each era's screen lights.
       onGrow?.();
     }
     if (t < PULSE_SECONDS) t += dt;

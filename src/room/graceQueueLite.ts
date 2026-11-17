@@ -1,4 +1,5 @@
 import mirrorCopy from '../../data/strings/e3_mirror.json';
+import { FileWatch } from '../witness/fileItem';
 import { voiceHeld, filmAudible } from '../state/voiceHold';
 import { GuideWait } from '../narrative/guideWait';
 import { drawVeraArchive, drawVeraDistribution, drawRetainedCopies, studioFont } from '../desktop/apps/veraSurfaces';
@@ -433,7 +434,7 @@ export class GraceQueueLite {
   private guideWait = new GuideWait();
   private guideReady(key: string): boolean { if (this.personalQuiet) return false; return this.guideWait.ready(key, !!this.lambyGuide?.active); }
   pressGuideTarget(id: string): void {
-    if (!['signin', 'start-menu'].includes(id) || this.guideSilent || this.guideVoice) return;
+    if (!['signin', 'start-menu', 'account-activity'].includes(id) || this.guideSilent || this.guideVoice) return;   // S401: the file
     const r = this.rects.find(h => h.id === id);
     if (r) this.handleClick(r.x + r.w / 2, r.y + r.h / 2);
   }
@@ -703,7 +704,10 @@ export class GraceQueueLite {
    *  id the page used, so Lamby's step and the glow point at it), and the receipt (s3_vera.json `send.sent`, "Sent to all
    *  four. Shared across the network: 38 ministries in 9 countries.") shows there, before "Back to today". The press files
    *  the ledger's `pipeline` and `veraDay.distributed` as the page did, so the testimony counts as done as before. The
-   *  page stays in ?cut=full. */
+   *  page stays in ?cut=full.
+   *  ⚑ S403b (job 30 B4, his "Yes, change it") — the editor no longer says "all four" (nothing on it names the four): its
+   *  button is `send.editorPress` ("Send to the network") and its receipt `send.editorSent` ("Sent. Shared with 38
+   *  ministries in 9 countries."); the page keeps `send.press` / `send.sent`. */
   private get sendInEditor(): boolean { return isSpeedrun(); }
   /** Renata's story done, in her editor, not yet sent: the editor offers the send in place of its way back */
   private get editorSendPending(): boolean { return this.sendInEditor && this.mode === 'list' && !this.openSurface && this.renataOpen() && this.storyDone && !veraDay.distributed; }
@@ -713,7 +717,7 @@ export class GraceQueueLite {
   private drawSendLine(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, max: number): void {
     studioFont(ctx, 11); ctx.fillStyle = ERA3.ink;
     const lead = Math.round(textPx(11, 'e3')) + 3;
-    wrapText(ctx, vera.send.sent, w).slice(0, max).forEach((ln, i) => ctx.fillText(ln, x, y + i * lead));
+    wrapText(ctx, vera.send.editorSent, w).slice(0, max).forEach((ln, i) => ctx.fillText(ln, x, y + i * lead));   // ⚑ S403b
   }
   /** where her film was last drawn on the workstation canvas (for the probes and the measurements) */
   private filmRect: { x: number; y: number; w: number; h: number } | null = null;
@@ -813,6 +817,8 @@ export class GraceQueueLite {
   private floppyOpened = false;
 
   update(dt: number): void {
+    // ⚑ S401 (UiB job 29 D2) — her file on the taskbar changes when something is filed (count up, lit a moment): two redraws
+    if (this.fileWatch.tick(dt, 'e3')) this.bump();
     // ⚑ S369 — "This device is no longer supported. Phone disconnected." holds its reading time (was 3 s for 8 words)
     if (this.disconnectT >= 0 && this.disconnectT <= DISCONNECT_SECONDS) { this.disconnectT += dt; if (this.disconnectT > DISCONNECT_SECONDS) this.bump(); }
     if (this.guideFocus) { this.guideFocus.t += dt; if (this.guideFocus.t >= 6) { this.guideFocus = null; this.bump(); } }
@@ -1014,6 +1020,40 @@ export class GraceQueueLite {
 
   // ── the list ─────────────────────────────────────────────────────────────
   private bump(): void { this.ownVersion++; }
+  /** ⚑ S401 (UiB job 29 D2) — Vera's file: its count and its light (src/witness/fileItem.ts) */
+  private readonly fileWatch = new FileWatch();
+  /**
+   * ⚑ S401 (UiB job 29 D2; his 16 Nov, B8: "make the 'your file' on the computer more present of the system tracking
+   * you") — MY ACCOUNT · ACTIVITY, OUT OF THE START MENU. Her record was a Start-menu row nobody had to see; it is the
+   * account chip in GracePlatform's own title bar now (where a 2016 platform kept the signed-in user), right of the
+   * window's title, always in view once she is signed in: her avatar, the words, and the number of things the platform
+   * has filed on her, which goes up while she works and lights for a moment, silently. A press opens Your record
+   * (S145/S149: hers only), over whatever is up; Back returns there. Reading it is optional. The taskbar had no room:
+   * GracePlatform's button, Lambient's tray and the clock fill the platform's width beside the Handset Window.
+   */
+  private drawAccountChip(ctx: CanvasRenderingContext2D, title: string, minX: number): void {
+    const full = mirrorCopy.account, short = full.split(' · ')[0], n = String(this.fileWatch.count), lit = this.fileWatch.on;
+    setFont(ctx, 12);
+    const titleEnd = 9 + Math.ceil(ctx.measureText(title).width) + 14;
+    setFont(ctx, 10);
+    const nw = Math.ceil(ctx.measureText(n).width) + 10;
+    const widthFor = (label: string): number => 6 + 12 + 6 + (label ? Math.ceil(ctx.measureText(label).width) + 6 : 0) + nw + 4;
+    const room = minX - 10 - titleEnd;
+    const label = widthFor(full) <= room ? full : widthFor(short) <= room ? short : '';
+    const w = widthFor(label), x = minX - 10 - w, y = 3, h = 16;
+    px(ctx, x, y, w, h, lit ? ERA3.white : ERA3.accentHi);
+    // her avatar: a head and shoulders in two flat blocks, the platform's profile mark
+    px(ctx, x + 6, y + 2, 12, 12, lit ? ERA3.accent : ERA3.white);
+    px(ctx, x + 9, y + 3, 6, 5, lit ? ERA3.white : ERA3.accentHi);
+    px(ctx, x + 8, y + 9, 8, 4, lit ? ERA3.white : ERA3.accentHi);
+    setFont(ctx, 10); ctx.fillStyle = lit ? ERA3.accent : ERA3.white;
+    if (label) ctx.fillText(label, x + 24, y + 3);
+    const cx = x + w - 4 - nw;
+    px(ctx, cx, y + 2, nw, 12, lit ? ERA3.accent : ERA3.white);
+    ctx.fillStyle = lit ? ERA3.white : ERA3.accent;
+    ctx.fillText(n, cx + 5, y + 3);
+    this.rects.push({ x, y, w, h, id: 'account-activity' });
+  }
 
   /** ⚑ S362 / H41 + H42b — the board's two pop-ins keep their own clocks: the kit's URGENT card (flashes twice a second; the
    *  platform opens the kit itself if it is left) and Kindredraft's draft (types itself in). Both redraw only when they change. */
@@ -2065,6 +2105,8 @@ export class GraceQueueLite {
           : q.app.title;
     const c = aero.windowFrame(ctx, 0, 0, winW, winH, title);
     this.rects.push({ ...c.minBox, id: 'win-min' });
+    // ⚑ S401 (job 29 D2) — her file in the title bar, once she is signed in (before that there is no account to open)
+    if (this.mode === 'board' || this.mode === 'done' || this.mode === 'list') this.drawAccountChip(ctx, title, c.minBox.x);
     this.drawTaskButton(ctx, H, true);
     aero.px(ctx, c.x, c.y, c.w, c.h, ERA3.glass);
     // ⚑ The GUTTER the maximise took away. Windowed, the 14 px of wallpaper on
@@ -2870,7 +2912,7 @@ export class GraceQueueLite {
       const send = this.editorSendPending;
       if (this.editorReceipt) this.drawSendLine(ctx, c.x + 12, by + 36, bx - c.x - 24, 2);
       else { studioFont(ctx, 10); ctx.fillStyle = ERA3.greyDk; ctx.fillText(vera.provenance, c.x + 12, by + 37); }
-      aero.button(ctx, bx, by + 12, bw, 28, send ? vera.send.press : this.boardBackLabel(), { primary: true, size: 11 });
+      aero.button(ctx, bx, by + 12, bw, 28, send ? vera.send.editorPress : this.boardBackLabel(), { primary: true, size: 11 });   // ⚑ S403b
       this.rects.push({ x: bx, y: by + 12, w: bw, h: 28, id: send ? 'vera-send' : 'board-back' });
       if (!send && SUBMISSIONS.some(sb => !this.subComplete(sb))) {
         aero.button(ctx, bx, by + 46, bw, 25, q.app.nextStory, { size: 11 });
@@ -2925,7 +2967,7 @@ export class GraceQueueLite {
       // ⚑ S403 — the default visit: the send is offered here too (the film may end before she presses it), then its receipt
       const send = this.editorSendPending;
       if (this.editorReceipt) this.drawSendLine(ctx, c.x + 4, by, bx - c.x - 16, 2);
-      aero.button(ctx, bx, by, bw, 28, send ? vera.send.press : this.boardBackLabel(), { primary: true, size: 11 });
+      aero.button(ctx, bx, by, bw, 28, send ? vera.send.editorPress : this.boardBackLabel(), { primary: true, size: 11 });   // ⚑ S403b
       this.rects.push({ x: bx, y: by, w: bw, h: 28, id: send ? 'vera-send' : 'board-back' });
       return;
     }
@@ -3539,7 +3581,8 @@ export class GraceQueueLite {
     }
     if (vh?.id === 'vera-send') {
       veraDay.distributed = true; this.sendReceipt = true;
-      ledger.era3Jobs.push({ id: 'pipeline', witness: vera.send.sent }); this.bump(); return;
+      // ⚑ S403b — the record files the receipt the screen showed: the editor's in the default visit, the page's in ?cut=full
+      ledger.era3Jobs.push({ id: 'pipeline', witness: this.veraPage === 'send' ? vera.send.sent : vera.send.editorSent }); this.bump(); return;
     }
     if (vh?.id === 'vera-send-close') {
       this.veraPage = null; this.bump(); return;   // S332: her record is offered after all four jobs

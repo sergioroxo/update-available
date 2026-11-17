@@ -1,0 +1,11 @@
+{
+  "_doc": "⚑ S401 (UiB job 29 D3; his 16 Nov, B11: \"I think it would work beautifully when we arrive at the desk of Daniel at the end, and we see that text and the space transforms to the close\"). At the end of 2026 the crossing lands at Daniel's desk; before the room becomes the Close, his monitor (the CRT that stands in the Close's row as his machine, S380) is on the desk again, dark, and on it are his line and Caleb's answer as they were in 2003, read from data/dialog/s2_caleb.json `residue` — `line` is his ⟨S⟩ wording, VERBATIM, never re-wrapped (drawn on one row, the type sized to fit), `answer` is Caleb's reply — under the Messenger's own lowercase nicks (`window.you`, `window.contact`). Plain: no sound, no Lamby, no frame, no window. The monitor is brought before the eye in every mode (heldDevice's grammar; the headset never turns, never fades), held while the lines are read — the residue's own `arriveSeconds` of dark first, his line, Caleb's after `answerAfter`, then the residue's `holdSeconds` — and set back on the desk; then the transformation takes the room as before (the eyes rise, the stars, the cards, the panels). `?close=1` shows it too. This file holds only the staging: no display text lives here.",
+  "answerAfter": 1.8,
+  "holdExtra": 2.5,
+  "_docHold": "`holdExtra`: the residue's `holdSeconds` (6.5) was for one line held alone in 2003; here two lines (16 words) are read, so the hold after Caleb's answer is holdSeconds + holdExtra.",
+  "liftSeconds": 1.6,
+  "xrDist": 0.7,
+  "flatFill": 0.78,
+  "flatMaxW": 0.9,
+  "clearance": 0.45
+}

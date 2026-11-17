@@ -85,7 +85,21 @@
     "title": "Pages of the time, from the Internet Archive",
     "lead": "Ministry websites as they looked between 2002 and 2007: the rainbow used for a credo, a change programme sold on CD, worship songs and slideshow films as invitations, testimonies offered as proof. Kept in the Internet Archive. Each link opens in a new tab. Read them as evidence of what was said, never as advice."
    }
-  }
+  },
+  "_docGame": "⚑ S400 (UiB job 29 Part C; his 16 Nov: \"They are Optional, you are not supposed to play the game in 2026, it is just a suggestion of Lamby … also we should add all the games in the Close HTML's\") — the words round each year's game on its page (tools/gen_era_sites.mjs gameHtml; the game itself is the piece's own code, tools/build-site-games.mjs). Claude's words; his edit wins.",
+  "gameSoundOn": "Sound: on",
+  "gameSoundOff": "Sound: off",
+  "gameNoScript": "The game needs JavaScript, and this browser has it turned off. Nothing else on this page needs it.",
+  "gameOptional": "In the piece the game is optional. Nothing waits on it, and nothing is lost if it is never played.",
+  "gameHowTitle": "How to play",
+  "gameRuleTitle": "Why it cannot be won",
+  "gameKeyUp": "Up",
+  "gameKeyDown": "Down",
+  "gameKeyLeft": "Left",
+  "gameKeyRight": "Right",
+  "recordsGame": "This page has one script: the year's game, on the Media tab. It sends nothing, records nothing and asks nothing of you.",
+  "_docGameViewer": "⚑ S400b (his ruling 17 Nov, item 3: the in-piece viewer does not run the games, \"but nothing there may look playable when it isn't\") — the one line the in-piece site viewer (era_sites_model.json) shows in the Story tab's game row and at the top of the Media tab. The web pages carry the game itself and do not show this line.",
+  "gameElsewhere": "{game} plays on this year's web page, not in this window."
  },
  "hub": {
   "title": "Four years, four websites",
@@ -175,7 +189,7 @@
   "howTitle": "How these sites work",
   "how": [
    "Each year's website is built from the same data the piece reads. When the piece changes, the sites are rebuilt, so the two cannot disagree.",
-   "The sites are plain pages. They have no scripts and no fonts from anywhere else. They make no requests and record nothing.",
+   "The sites are plain pages. Each year's page has one small script of its own: that year's game, on its Media tab. Nothing loads from anywhere else. The pages make no requests and record nothing.",
    "A link to an outside page opens in a new tab. That is your choice, never the site's."
   ]
  },
@@ -321,7 +335,23 @@
      "what": "A calm tape with no beat: a pan flute, wind chimes and pads that breathe slowly. It plays while the racket's exercise speaks in the programme's voice: in 1997, and again in 2003, where the exercise came with Daniel. 48 seconds, made to loop.",
      "credit": "Composed in code by Claude (Anthropic's AI) for the project, with tools/make_releasework_loop.py. Synthesised: no samples, no recordings. Project-original."
     }
-   ]
+   ],
+   "game": {
+    "id": "fitin",
+    "name": "FIT IN",
+    "row": "Handheld games",
+    "jump": "Play it on this page",
+    "title": "Play FIT IN",
+    "lead": [
+     "FIT IN is the game on Daniel's handheld, on his bed. The cartridge comes in the programme's starter kit. Nothing in the piece asks him to play it.",
+     "This is the same game, on a screen of greens only, like a handheld of the 1990s."
+    ],
+    "how": "A block slides across the screen. Press A, or tap the screen, to drop it. Only the part inside the dotted mould stays. Before a run, the small arrows on the screen choose the mould: the taper, the house, the church, the cake, the gown, the portrait. START pauses.",
+    "keys": "On a keyboard, once you have pressed the handheld: the arrow keys, Space or Z for A, X for B, Enter for START.",
+    "rule": "Every mould narrows somewhere, so something is always cut off. What is cut off falls onto a heap, and the heap stays, run after run. When a run ends, the programme's own blocks slide away. The heap stands.",
+    "glassLabel": "FIT IN, on the handheld's screen. Press the screen or the buttons to play.",
+    "credit": "Made for this project by Claude (Anthropic's AI), through rounds of prototypes the project lead played and approved in October 2026. It is the same code as the piece. Its sound is made live in your browser; nothing is recorded. Project-owned."
+   }
   },
   "2003": {
    "heading": "2003 — Daniel, an adult",
@@ -430,7 +460,23 @@
      "what": "In 1999 a campaign called “Truth in Love” made two television spots. Its sponsor published the spots, and the script of each, on its own website. The script of the mother's spot is a table of what is on screen and what is heard, in nine rows, with a small still for each. Its shape: a childhood photograph, a family room, “bad choices”, the cost of not changing, a mother speaking to other parents, one line from her son, and then a black end card with a number to call. The spot does not show a programme. It shows only the way in. The 2003 story editor in the piece, which cuts Daniel's testimony into before, the programme, after and call now, is the piece's answer to that document. No file of the spots is published here. The archived pages are listed under Pages of the time on the Images tab.",
      "credit": "Described from the sponsor's own published scripts, as archived by the Internet Archive. Nothing is reproduced."
     }
-   ]
+   ],
+   "game": {
+    "id": "clear",
+    "name": "CLEAR",
+    "row": "Phone games",
+    "jump": "Play it on this page",
+    "title": "Play CLEAR",
+    "lead": [
+     "CLEAR is Restorify's game, on Daniel's flip phone. It is there once his first daily check-in is on his file. Nothing in the piece asks him to play it.",
+     "This is the same game, on the phone's own grey-blue screen."
+    ],
+    "how": "A chain of coloured balls rolls along a groove. Each ball carries a letter of the programme's words. Tap the board to aim and fire. Three of one colour together break out of the chain. Tap the gun in the middle, or SWAP, to change the ball it holds. The keys at the foot of the screen pause the game and turn its sound off.",
+    "keys": "On a keyboard, once you have pressed the phone: left and right aim, Space or Z fires, X swaps, Enter pauses. On the phone's own keypad, as on phones of the time: 4 and 6 aim, 5 fires, 2 and 8 swap.",
+    "rule": "The CLEAR meter can never read 100, and the chain never runs out. Each ball that breaks frees its letter into the tray, and the freed letters spell a sentence of Daniel's own: I KNOW WHO I AM. Every end screen shows it whole.",
+    "glassLabel": "CLEAR, on the flip phone's screen. Tap the screen to play.",
+    "credit": "Made for this project by Claude (Anthropic's AI), through rounds of prototypes the project lead played and approved in October 2026. It is the same code as the piece. Its sound is made live in your browser; nothing is recorded. Project-owned."
+   }
   },
   "2016": {
    "heading": "2016 — Vera, at her desk",
@@ -513,7 +559,24 @@
      "what": "In the job “Tag the video”, Vera sees a forty-second testimony video and chooses its tags. The tags are the house vocabulary of the network. The explicit word is greyed out: “not used in house style”. Documented audits found that euphemistic terms surface providers, where explicit terms surface critical information. The video exists only inside the piece, on its screens, so no file is published here.",
      "credit": "Invented for the piece. Nothing is reproduced."
     }
-   ]
+   ],
+   "game": {
+    "id": "floppysheep",
+    "name": "FloppySheep",
+    "row": "Mobile games",
+    "jump": "Play it on this page",
+    "title": "Play FloppySheep",
+    "lead": [
+     "FloppySheep is on Vera's phone, one tap away while her work waits. It is the platform's own mascot game: “a Lamby game”, its footer says. The piece says nothing about her playing it, and nothing she does in it is filed.",
+     "This is the same game, with its song. The Back arrow, or the phone's button, goes to the phone's home screen; tap the lamb there to play again."
+    ],
+    "how": "Tap to hop, and tap again in the air to lift her a little higher. When she touches a lamb, it follows her. The programme's pressures cost you a lamb, never a life. The level lasts as long as the song. ♪ turns the song off.",
+    "keys": "On a keyboard, once you have pressed the phone: Space or Z is a tap.",
+    "rule": "This game is the other way round. Nothing in it judges her: lambs drift away, and that is people choosing, never a loss. The platform's fireworks run out of fuel on their own at the end of the song. No score is kept after a run.",
+    "glassLabel": "FloppySheep, on the phone's screen. Tap the screen to hop.",
+    "home": "Home",
+    "credit": "Made for this project by Claude (Anthropic's AI), through rounds of prototypes the project lead played and approved in October 2026. It is the same code as the piece. Its song, “Out of Bounds”, is the project lead's own, made with Treblo (its words are lower on this tab). Its other sounds are made live in your browser. Project-owned."
+   }
   },
   "2026": {
    "heading": "2026 — Maya, and the update that fails",
@@ -651,7 +714,23 @@
      "what": "The people's music. It arrives with the raid, when Maya's friends take the stage from the host, and plays on until the night ends. No voice: TransJesus dances and says nothing. About two minutes, made to loop.",
      "credit": "Composed in code by Claude (Anthropic's AI) for the project, 11 Nov 2026, with tools/make_transjesus_song.py; chosen by the project lead. Project-original."
     }
-   ]
+   ],
+   "game": {
+    "id": "matchmade",
+    "name": "MATCH MADE SIMPLE",
+    "row": "Console games",
+    "jump": "Play it on this page",
+    "title": "Play MATCH MADE SIMPLE",
+    "lead": [
+     "MATCH MADE SIMPLE is Second Thoughts' game, on the console on Maya's bed. In the piece the AI offers it to her as care, when she is most shaken: “Want to play something to help you relax? I've put it on your console.” It is only a suggestion. She does not have to play it, and neither do you.",
+     "This is the same game. There is no chat on this page, so the handle starts where the game itself starts it."
+    ],
+    "how": "Swap two tiles next to each other to make a line of three. Each match of yours pulls the handle under the picture back toward Maya. Then the programme's pointer makes a move of its own and pushes the handle forward again. START opens the menu, where STOP HERE ends the game at any time.",
+    "keys": "On a keyboard, once you have pressed the console: the arrow keys move, Space or Z picks a tile, X lets go, Enter opens the menu.",
+    "rule": "The handle can never pass 99%. The filter never quite settles on her. The picture underneath is never written to: when the game ends, the copy falls away and the original is there, whole.",
+    "glassLabel": "MATCH MADE SIMPLE, on the console's screen. Tap the tiles to play.",
+    "credit": "Made for this project by Claude (Anthropic's AI), through rounds of prototypes the project lead played and approved in October and November 2026. It is the same code as the piece. Its sound is made live in your browser; nothing is recorded. Project-owned."
+   }
   }
  }
 }

@@ -194,7 +194,9 @@ export interface CloseCrt {
  *  panel's beige measured (156, 149, 130) on the computer) */
 const CASE_LIGHT = 0.72;
 
-export function buildCloseCrt(app: pc.AppBase): CloseCrt {
+/** ⚑ S401 (UiB job 29 D3) — `drawGlass` lets the same monitor carry another face: at the end of 2026 it stands on Daniel's
+ *  desk with his line and Caleb's answer (src/room/danielLine.ts) before it stands in the row with this one */
+export function buildCloseCrt(app: pc.AppBase, drawGlass: (c: CanvasRenderingContext2D) => GlassRect = drawCrtGlass): CloseCrt {
   const entity = new pc.Entity('close-crt');
   type Prop = { id: string; pos: number[]; size: number[]; color?: string };
   const props = (layout.props as Prop[]).filter((p) => PART_IDS.includes(p.id));
@@ -234,7 +236,7 @@ export function buildCloseCrt(app: pc.AppBase): CloseCrt {
   canvas.width = GW; canvas.height = GH;
   const ctx = canvas.getContext('2d');
   let btn: GlassRect = { x: GW - 284, y: GH - 128, w: 236, h: 80 };
-  if (ctx) btn = drawCrtGlass(ctx);
+  if (ctx) btn = drawGlass(ctx);
   const tex = makeScreenTexture(app, canvas, 'screen');
   const glass = makeScreenEntity('close-crt-glass', tex, GLASS.w, GLASS.h);
   glass.setLocalPosition(0, 0, 0);
@@ -273,7 +275,7 @@ export function buildCloseCrt(app: pc.AppBase): CloseCrt {
     },
     redraw(): void {
       if (!ctx) return;
-      button = toLocal(drawCrtGlass(ctx));
+      button = toLocal(drawGlass(ctx));
       tex.upload();
     }
   };

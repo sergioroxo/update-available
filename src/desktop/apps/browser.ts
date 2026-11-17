@@ -40,6 +40,8 @@ import { browserChrome, restoring, glitchBands, CHROME, ADDR, ERA4, V3, WEB, KET
   profileGlyph, streamScene, streamShot, progressBar, type TabLook } from '../theme/era4';
 import { ledger } from '../../state/ledger';
 import { buildStartModel } from '../../witness/startModel';
+import { FileWatch, FILE_ITEM } from '../../witness/fileItem';
+import { entriesByEra } from '../../witness/record';
 import { StartMenuMap } from './startMenuMap';
 import { gameMenuBus } from '../../state/gameMenuBus';
 import startCopy from '../../../data/strings/slice.json';
@@ -746,7 +748,12 @@ export class E4Browser {
   }
 
   // ── the clock ─────────────────────────────────────────────────────────────
+  /** ⚑ S401 (UiB job 29 D2) — Maya's file on GraceOS's taskbar: "Memory", what L keeps about her (src/witness/fileItem.ts) */
+  private readonly fileWatch = new FileWatch();
+  private memOpen = false;
   update(dt: number): void {
+    // ⚑ S401 — the Memory item changes when something is filed (its count up, lit a moment): two redraws, silently
+    if (this.fileWatch.tick(dt, 'e4')) this.version++;
     if (this.startMap.update(dt)) this.version++;
     if (!this.pressable && (this.pageTargets.length || this.hits.length)) { this.pageTargets = []; this.hits = []; }
     if (this.phase === 'dormant') return;
@@ -1256,6 +1263,13 @@ export class E4Browser {
     const ty = H - WIN.taskbar;
     px(ctx, 0, ty, W, WIN.taskbar, V3.bar); px(ctx, 0, ty, W, 1, V3.barEdge);
     ctx.font = monoFor(10); ctx.fillStyle = V3.ink2; ctx.fillText(V.oneScreen.taskbarDate, 8, ty + 5);
+    // ⚑ S401 (UiB job 29 D2) — MEMORY: what L keeps about her, on the taskbar beside the date, always in view while the
+    //   session is open; its count goes up as things are filed ("Memory updated" in the chat is the same act) and it
+    //   lights for a moment, silently. A press opens it over the browser's area. Not over a felt thread (Kettle's
+    //   people): there the taskbar keeps only the date, as it does for L.
+    this.memOpen = this.memOpen && this.phase === 'open';
+    if (this.phase === 'open' && !this.messenger.felt) this.drawMemoryItem(ctx, ty, pressable);
+    if (this.memOpen && !this.messenger.felt) this.drawMemoryCard(ctx, L, pressable);
     if (pressable && this.phase === 'open' && this.lambyGuide?.canRequest && !this.startMap.active && !this.messenger.felt) {
       // drawLambyGuide pushes its own controls (the tray, the balloon's buttons) onto the list it is given; the tray's
       //   L gets its words beside it (his: "where is our guide?")
@@ -1266,10 +1280,55 @@ export class E4Browser {
       this.lambyGuidePaint = drawLambyGuide(ctx, 'e4', this.lambyGuide.view, this.hits, { w: W, h: H }, this.hits.map(h => `press:${h.id}`));
     } else this.lambyGuidePaint = { rings: [], balloon: false };
     const view = this.lambyGuide?.view;
-    if (pressable && view && !view.hidden && view.rung === 'show' && !this.startMap.active) {
+    if (pressable && view && !view.hidden && (view.rung === 'show' || view.rung === 'file') && !this.startMap.active) {
       for (const r of this.hits.filter(h => view.targets.includes(h.id))) drawGuidePointer(ctx, r, { x: W - 24, y: H - 24 }, CHROME.accent, view.frame);
     }
   }
+  /** ⚑ S401 (job 29 D2) — the taskbar's Memory item: a small mark, the word, the count; inverted while lit */
+  private drawMemoryItem(ctx: CanvasRenderingContext2D, ty: number, pressable: boolean): void {
+    const M = FILE_ITEM.e4, lit = this.fileWatch.on, n = String(this.fileWatch.count);
+    ctx.font = monoFor(10);
+    const dw = Math.ceil(ctx.measureText(V.oneScreen.taskbarDate).width);
+    setFont(ctx, 10);
+    const lw = Math.ceil(ctx.measureText(M.label ?? '').width), nw = Math.ceil(ctx.measureText(n).width) + 10;
+    const x = 8 + dw + 16, w = 8 + 10 + 6 + lw + 6 + nw + 6, y = ty + 2, h = WIN.taskbar - 4;
+    roundRect(ctx, x, y, w, h, 7, lit ? V3.primary : V3.card);
+    assistantMark(ctx, x + 6, y + 3, 10, lit ? V3.primaryInk : V3.primary, lit ? V3.primary : V3.primaryInk);
+    setFont(ctx, 10); ctx.fillStyle = lit ? V3.primaryInk : V3.ink;
+    ctx.fillText(M.label ?? '', x + 22, y + 3);
+    const cx = x + 22 + lw + 6;
+    roundRect(ctx, cx, y + 2, nw, h - 4, 6, lit ? V3.primaryInk : V3.primary);
+    ctx.fillStyle = lit ? V3.primary : V3.primaryInk;
+    ctx.fillText(n, cx + 5, y + 3);
+    if (pressable) this.hits.push({ x, y, w, h, id: 'mem-open' });
+  }
+  /** ⚑ S401 — Memory, open: her 2026 entries, newest first, read only; any press closes it */
+  private drawMemoryCard(ctx: CanvasRenderingContext2D, L: Layout, pressable: boolean): void {
+    const M = FILE_ITEM.e4;
+    const all = entriesByEra().e4.slice().reverse();
+    const x = L.b.cx + 12, y = L.b.cy + 12, w = Math.min(L.b.cw - 24, 420), h = L.b.ch - 24;
+    roundRect(ctx, x + 2, y + 3, w, h, 12, V3.grey);
+    roundEdge(ctx, x, y, w, h, 12, V3.edge, V3.card);
+    assistantMark(ctx, x + 14, y + 12, 22, V3.primary, V3.primaryInk);
+    setFont(ctx, 16); ctx.fillStyle = V3.ink; ctx.fillText(M.title ?? '', x + 44, y + 10);
+    setFont(ctx, 11); ctx.fillStyle = V3.ink2; ctx.fillText((M.sub ?? '').replace('{n}', String(all.length)), x + 44, y + 30);
+    ctx.fillText(V.oneScreen.close, x + w - 18, y + 10);
+    px(ctx, x + 14, y + 48, w - 28, 1, V3.edge);
+    const rowH = 18, top = y + 58, room = Math.max(1, Math.floor((h - 58 - 32) / rowH));
+    const rows = all.length > room ? all.slice(0, room - 1) : all;
+    setFont(ctx, 12);
+    if (!all.length) { ctx.fillStyle = V3.ink2; ctx.fillText(M.empty ?? '', x + 14, top); }
+    rows.forEach((e, i) => {
+      ctx.save(); ctx.beginPath(); ctx.rect(x + 14, top + i * rowH - 2, w - 28, rowH); ctx.clip();
+      ctx.fillStyle = e.flagged ? V3.danger : V3.ink;
+      ctx.fillText(e.witness, x + 14, top + i * rowH);
+      ctx.restore();
+    });
+    if (rows.length < all.length) { ctx.fillStyle = V3.ink2; ctx.fillText((M.more ?? '').replace('{n}', String(all.length - rows.length)), x + 14, top + rows.length * rowH); }
+    setFont(ctx, 11); ctx.fillStyle = V3.ink2; ctx.fillText(M.footer ?? '', x + 14, y + h - 22);
+    if (pressable) this.hits.push({ x, y, w, h, id: 'mem-close' });
+  }
+
   /**
    * ⚑ S363 / N1 — 2026's desktop notifications: a person wrote. They stack over the browser's lower right (never over
    * Kettle, where the message itself is), fade after a few seconds, and a press opens the chat. One voice at a time:
@@ -1438,7 +1497,8 @@ export class E4Browser {
   /** Lamby's "Take me there": press the target for her (navigation only — never an answer) */
   pressGuideTarget(id: string): 'monitor' | null {
     if (this.guideSilent || this.guideVoice) return null;
-    const allowed = ['ny-continue', 'clinic-open', 'clinic-support', 'mail-support', 'mail-read', 'tab-mail', 'tab-news', 'news-next', 'sponsor-chat', 'search-go', 'ad-chat', 'tab-photos', 'start-menu', 'row-mum', 'chat-mum', 'row-dad', 'chat-dad', 'row-house', 'chat-house', 'row-junie', 'chat-junie'];
+    const allowed = ['ny-continue', 'clinic-open', 'clinic-support', 'mail-support', 'mail-read', 'tab-mail', 'tab-news', 'news-next', 'sponsor-chat', 'search-go', 'ad-chat', 'tab-photos', 'start-menu', 'row-mum', 'chat-mum', 'row-dad', 'chat-dad', 'row-house', 'chat-house', 'row-junie', 'chat-junie',
+      'mem-open'];   // S401: the file
     if (!allowed.includes(id)) return null;
     const r = this.hits.find(h => h.id === id);
     if (r) { this.handleClick(r.x + r.w / 2, r.y + r.h / 2); return 'monitor'; }
@@ -2794,6 +2854,11 @@ export class E4Browser {
     if (this.act) return true;
     // ⚑ S364 — a page opened larger: any press closes it first (nothing else on the screen takes it)
     if (this.lightbox) { this.lightbox = null; this.version++; return true; }
+    // ⚑ S401 (job 29 D2) — Memory open: any press closes it (read only); its taskbar item opens it
+    if (this.memOpen) { this.memOpen = false; this.version++; return true; }
+    if (this.hits.some(h => h.id === 'mem-open' && mx >= h.x && mx <= h.x + h.w && my >= h.y && my <= h.y + h.h)) {
+      this.memOpen = true; this.version++; return true;
+    }
     let x = mx, y = my;
     const L = this.lay;
     if (L) {

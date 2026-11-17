@@ -152,12 +152,14 @@ const FROM_ERA = Number(flag('from-era', ERA3_ALIAS ? '3' : '0')) || 0;
  *  Era 4). With `--from-era` that makes each of tools/walk-eras.mjs's four walks one era long. */
 const ONE_ERA = process.argv.includes('--one-era');
 const SETUP = process.argv.includes('--setup');
-/** One guided visitor version by default; --cut full reviews the retained full route; --explore audits optional doors. */
+/** One guided visitor version (the visit; the full route is frozen since S401); --explore audits optional doors. */
 /** ⚑ S240 — the restore entrance (stars → setup → Daniel's room) is the DEFAULT front door; `--entrance home` walks
  *  the older LambyOS Home door instead (`?entrance=home`). */
 const HOME_DOOR = flag('entrance', '') === 'home';
 const ENTRANCE = HOME_DOOR ? '' : 'restore';
-const CUT = flag('cut', '') === 'full' ? 'full' : 'speedrun';
+// ⚑ S401 (job 29 D5) — ONE VERSION: the full route is frozen as a research state; --cut full stops here.
+if (flag('cut', '') === 'full') { console.log('walk: the full route (?cut=full) is frozen at the tag research/full-cut-2026-11-17 (S401, his "Yes, freeze it", 17 Nov): there is one visit.'); process.exit(2); }
+const CUT = 'speedrun';
 const GUIDED_WALK = CUT === 'speedrun' && !process.argv.includes('--explore');
 const MAX_STEPS = Number(flag('max', 320));
 /** ⚑ S332 — `--refuse`: in 2016 the walker refuses every job (Skip, Leave it off, Don't send a script, Not this week,
@@ -1868,7 +1870,15 @@ async function main() {
     writeFileSync(join(OUT_DIR, 'TEXT_CENSUS_' + stamp + '.json'), JSON.stringify(keep, null, 1));
   }
 
+  // ⚑ S401 (job 29 D2) — the person's file on each era's screen: every change the faces showed (count, lit), from the page
+  const fileItems = await page.evaluate(() => window.__fileItems?.() ?? null).catch(() => null);
+  if (fileItems) {
+    const per = {};
+    for (const f of fileItems) { const e = (per[f.era] ??= { changes: 0, lit: 0, from: f.count, to: f.count }); e.changes++; if (f.lit) e.lit++; e.to = f.count; }
+    console.log('  file on the screen (S401): ' + (Object.entries(per).map(([e, v]) => `${e} ${v.from}→${v.to} (${v.changes} changes, ${v.lit} lit)`).join(' · ') || 'no change seen'));
+  }
   writeFileSync(join(OUT_DIR, 'WALK_' + stamp + '.json'), JSON.stringify({
+    fileItems,
     when: new Date().toISOString(), port: PORT, viewport: VIEW,
     jumpedTo: JUMP || null,
     setupEntrance: SETUP,

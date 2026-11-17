@@ -345,7 +345,7 @@
   "howTitle": "How these sites work",
   "how": [
    "Each year's website is built from the same data the piece reads. When the piece changes, the sites are rebuilt, so the two cannot disagree.",
-   "The sites are plain pages. They have no scripts and no fonts from anywhere else. They make no requests and record nothing.",
+   "The sites are plain pages. Each year's page has one small script of its own: that year's game, on its Media tab. Nothing loads from anywhere else. The pages make no requests and record nothing.",
    "A link to an outside page opens in a new tab. That is your choice, never the site's."
   ]
  },
@@ -373,7 +373,7 @@
     ],
     [
      "Beats",
-     "20"
+     "19"
     ]
    ],
    "tabs": {
@@ -458,7 +458,7 @@
        ],
        [
         "Handheld games",
-        "FIT IN on the handheld: whatever does not fit the mould stays on a heap that never goes away"
+        "FIT IN on the handheld: whatever does not fit the mould stays on a heap that never goes away. It plays on this year's web page, not in this window."
        ],
        [
         "The update",
@@ -1248,6 +1248,10 @@
       "t": "Media"
      },
      {
+      "k": "note",
+      "t": "FIT IN plays on this year's web page, not in this window."
+     },
+     {
       "k": "lede",
       "t": "Sound and film made for this project. They play only when you press play. Nothing loads before that."
      },
@@ -1683,12 +1687,6 @@
         "where": "Where: the monitor."
        },
        {
-        "label": "The wall behind you",
-        "opt": "optional",
-        "hint": "Turn around. Something on the wall is keeping notes.",
-        "where": "Where: behind you."
-       },
-       {
         "label": "Rob's request",
         "opt": "",
         "hint": "MentorRob has asked to message you privately. Accept the request.",
@@ -1849,7 +1847,7 @@
        ],
        [
         "Phone games",
-        "CLEAR, on Daniel's flip phone"
+        "CLEAR, on Daniel's flip phone. It plays on this year's web page, not in this window."
        ]
       ]
      },
@@ -2310,6 +2308,10 @@
      {
       "k": "h2",
       "t": "Media"
+     },
+     {
+      "k": "note",
+      "t": "CLEAR plays on this year's web page, not in this window."
      },
      {
       "k": "lede",
@@ -2833,7 +2835,7 @@
        ],
        [
         "Mobile games",
-        "FloppySheep, on Vera's phone"
+        "FloppySheep, on Vera's phone. It plays on this year's web page, not in this window."
        ],
        [
         "The assistant",
@@ -3619,6 +3621,10 @@
       "t": "Media"
      },
      {
+      "k": "note",
+      "t": "FloppySheep plays on this year's web page, not in this window."
+     },
+     {
       "k": "lede",
       "t": "Sound and film made for this project. They play only when you press play. Nothing loads before that."
      },
@@ -4069,9 +4075,9 @@
         "where": "Where: the workstation."
        },
        {
-        "label": "Four places, one story",
+        "label": "The story, sent out",
         "opt": "",
-        "hint": "Send the story to all four destinations.",
+        "hint": "When Renata's story is done, send it to the network from her editor.",
         "where": "Where: the workstation."
        },
        {
@@ -4113,7 +4119,7 @@
        {
         "label": "Your record",
         "opt": "optional",
-        "hint": "Your record is in the Start menu, under My account.",
+        "hint": "Your record: My account · activity, at the top of GracePlatform.",
         "where": "Where: the workstation."
        },
        {
@@ -4237,7 +4243,7 @@
        ],
        [
         "Console games",
-        "MATCH MADE SIMPLE"
+        "MATCH MADE SIMPLE. It plays on this year's web page, not in this window."
        ],
        [
         "The data subject's file",
@@ -5779,6 +5785,10 @@
      {
       "k": "h2",
       "t": "Media"
+     },
+     {
+      "k": "note",
+      "t": "MATCH MADE SIMPLE plays on this year's web page, not in this window."
      },
      {
       "k": "lede",
