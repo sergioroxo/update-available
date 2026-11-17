@@ -29,6 +29,8 @@ const MAX = flag('max', '2000');
 const LOGS = join(ROOT, 'out/walks');
 mkdirSync(LOGS, { recursive: true });
 
+// ⚑ S401 (job 29 D5) — ONE VERSION: the full route is frozen as a research state; --cut full stops here.
+if (flag('cut', '') === 'full') { console.log('walk-eras: the full route (?cut=full) is frozen at the tag research/full-cut-2026-11-17 (S401, his "Yes, freeze it", 17 Nov): there is one visit.'); process.exit(2); }
 const t0 = Date.now();
 const runs = ERAS.map((n) => new Promise((resolve) => {
   // one era each: e1 from the front door to 2003's arrival, e2 to 2016's, e3 to 2026's, e4 to the Close

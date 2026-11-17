@@ -31,7 +31,8 @@ async function shot(name,surface){
 }
 async function check(name,fn){const only=process.argv.find(a=>a.startsWith('--only='))?.slice(7);if(only&&!name.includes(only))return;try{const detail=await fn();results.push({name,pass:true,detail});console.log('PASS',name);}catch(e){results.push({name,pass:false,error:String(e)});console.log('FAIL',name,String(e));}}
 try{
- await check('default and full review cuts',async()=>{await load();assert.equal(await page.evaluate(()=>__cut.currentCut()),'speedrun');await load(2,'&cut=full');assert.equal(await page.evaluate(()=>__cut.currentCut()),'full');});
+ // ⚑ S401 (job 29 D5) — ONE VERSION: the full route is frozen at the tag research/full-cut-2026-11-17; ?cut=full is the visit now
+ await check('one visit: ?cut=full is frozen (the visit answers)',async()=>{await load();assert.equal(await page.evaluate(()=>__cut.currentCut()),'speedrun');await load(2,'&cut=full');assert.equal(await page.evaluate(()=>__cut.currentCut()),'speedrun');console.log('the full route (?cut=full) is frozen at the tag research/full-cut-2026-11-17');});
  await check('Home has no version chooser on the computer card',async()=>{
   const p=await browser.newPage();p.on('pageerror',e=>errors.push(String(e)));
   try{

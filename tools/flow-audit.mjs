@@ -7,7 +7,8 @@
  *       [--label before_13f58c68] [--report docs/reinterp/flow-audit/FLOW_AUDIT_<label>.md] [--time wall|piece]
  *     node tools/flow-audit.mjs --port 5291 --dir out/flow-audit/after --label after --flow-shots 6   # walk + report
  *
- * Any other argument is passed to tools/walk.mjs (--port, --max, --require-close, --cut, --from-era, --one-era…).
+ * Any other argument is passed to tools/walk.mjs (--port, --max, --require-close, --from-era, --one-era…). `--cut full`
+ * stops: the full route is frozen (S401).
  * The walk runs with `--flow <dir>` (tools/harness/flow-sampler.mjs): a passive observer that samples every canvas's text
  * with its bounding boxes every 250 ms, the guide/phone hooks, and the walker's presses. It changes nothing the piece or
  * the walker does. This file only READS that data.
@@ -45,6 +46,8 @@ import { fileURLToPath } from 'node:url';
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const argv = process.argv.slice(2);
 const flag = (n, d) => { const i = argv.indexOf(`--${n}`); return i >= 0 && argv[i + 1] && !argv[i + 1].startsWith('--') ? argv[i + 1] : d; };
+// ⚑ S401 (job 29 D5) — ONE VERSION: the full route is frozen as a research state; --cut full stops here.
+if (flag('cut', '') === 'full') { console.log('flow-audit: the full route (?cut=full) is frozen at the tag research/full-cut-2026-11-17 (S401, his "Yes, freeze it", 17 Nov): there is one visit.'); process.exit(2); }
 
 // ───────────────────────────── the rule, in one place ─────────────────────────────
 const NEED_BASE = 2, NEED_PER_WORD = 0.4, NEED_CAP = 10;

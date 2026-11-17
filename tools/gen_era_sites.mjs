@@ -215,7 +215,10 @@ const sourceBlock = (file, index) => {
     `<p>${pub(s.text)}</p>${ls ? `<ul class="links">${ls}</ul>` : `<p class="nolink">${esc(S.common.noLink)}</p>`}</div>`;
 };
 const panelOf = (year) => net.panels.find((p) => p.era === ERA_NO[year]);
-const beatsOf = (year) => map.eras.find((e) => e.id === MAP_ID[year]).beats;
+// ⚑ S401 (job 29 D5, ONE VERSION) — the sites read the visit's wording: a beat's `labelSpeedrun` / `hintSpeedrun` where it
+//   has one (src/witness/map.ts reads them the same way for the visit). The full route is frozen (research/full-cut-2026-11-17).
+const beatsOf = (year) => map.eras.find((e) => e.id === MAP_ID[year]).beats
+  .map((b) => ({ ...b, label: b.labelSpeedrun ?? b.label, hint: b.hintSpeedrun ?? b.hint }));
 const practicesOf = (year) => (panelOf(year).practices ?? []).map((k) => ({ kind: k, ...practices[k] })).filter((p) => p.title);
 const refsOf = (year) => net.labels.filter((l) => l.era === ERA_NO[year]);
 const wordsOf = (year) => lex.terms.filter((t) => t.eras.includes(Number(year)));

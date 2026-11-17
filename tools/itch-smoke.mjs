@@ -25,13 +25,16 @@ const server = http.createServer((req, res) => {
   } catch { res.writeHead(404); res.end('Not found'); }
 });
 await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
+// ⚑ S401 (job 29 D5) — ONE VERSION: `cut=full` left the blocked switches; the full route is frozen at the tag
+//   research/full-cut-2026-11-17 and no build answers it, so there is nothing for the festival build to block.
+if (process.argv.includes('--cut')) { console.log('itch-smoke: the full route (?cut=full) is frozen at the tag research/full-cut-2026-11-17 (S401): there is one visit.'); process.exit(2); }
 const origin = `http://127.0.0.1:${server.address().port}`;
 let browser;
 try {
   browser = await puppeteer.launch({ executablePath:'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome', headless:true,
     args:['--enable-unsafe-swiftshader', '--autoplay-policy=user-gesture-required'], defaultViewport:{ width:1280, height:720 } });
   const results = [];
-  for (const [name, query] of [['default', ''], ['keyboard', ''], ['review-switches-blocked', '?reinterp=0&debug=1&flat=1&era=4&setup=1&lambyrig=1&home=0&cut=full']]) {
+  for (const [name, query] of [['default', ''], ['keyboard', ''], ['review-switches-blocked', '?reinterp=0&debug=1&flat=1&era=4&setup=1&lambyrig=1&home=0']]) {
     const page = await browser.newPage();
     const errors = [], foreign = [], missing = [], requests = [];
     page.on('pageerror', e => errors.push(String(e)));
