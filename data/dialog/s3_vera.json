@@ -22,6 +22,9 @@
   "archive": "As sent · kept in archive · administrators only",
   "press": "Send to all four",
   "sent": "Sent to all four. Shared across the network: 38 ministries in 9 countries.",
+  "editorPress": "Send to the network",
+  "editorSent": "Sent. Shared with 38 ministries in 9 countries.",
+  "_docS403b": "⚑ S403b (UiB job 30 B4; Sérgio, 17 Nov: \"Yes, change it\"; brief at reinterp 4bbc666a): in the DEFAULT visit Renata's editor no longer says \"all four\" (the page that named the four is ?cut=full's only): its button is `editorPress` and its receipt `editorSent`. Old (S403, the editor read `press` and `sent`): the button \"Send to all four\", the receipt \"Sent to all four. Shared across the network: 38 ministries in 9 countries.\" The ?cut=full page keeps `press` (\"Send to all four\", its four previews) and `sent`, unchanged.",
   "_docS403": "⚑ S403 (UiB job 30 B2; his 17 Nov: \"What if instead of seen by 1211, since that would require time passing, why isnt this a sent to the network with a X number of organizations, that way expand the scope of influence of SOGICE?\"). `sent` was \"Sent to all four · seen by 1,211 · 0 comments\" (the only place 1,211 appeared): a view count needs time to pass, and the network's reach widens the practice's influence. 38 ministries and 9 countries are the fiction's figures (the network is invented), not a documented count. In the default visit this page (\"Ready to share\", `intro` \"So she is not alone. One story, four places.\") is folded into Renata's editor: when her last rule is applied the editor offers `press` (\"Send to all four\", her press) and shows `sent` before \"Back to today\" (graceQueueLite `sendInEditor`). The page itself stays in ?cut=full, unchanged.",
   "loop": "New story received. Awaiting review.",
   "back": "Back to today"
