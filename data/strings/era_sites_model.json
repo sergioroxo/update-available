@@ -373,7 +373,7 @@
     ],
     [
      "Beats",
-     "20"
+     "19"
     ]
    ],
    "tabs": {
@@ -1681,12 +1681,6 @@
         "opt": "",
         "hint": "Say something in the channel — pick a reply.",
         "where": "Where: the monitor."
-       },
-       {
-        "label": "The wall behind you",
-        "opt": "optional",
-        "hint": "Turn around. Something on the wall is keeping notes.",
-        "where": "Where: behind you."
        },
        {
         "label": "Rob's request",
@@ -4069,9 +4063,9 @@
         "where": "Where: the workstation."
        },
        {
-        "label": "Four places, one story",
+        "label": "The story, sent out",
         "opt": "",
-        "hint": "Send the story to all four destinations.",
+        "hint": "When Renata's story is done, send it to the network from her editor.",
         "where": "Where: the workstation."
        },
        {

@@ -882,9 +882,13 @@ export class DesktopOS {
       this.irc.onImage = () => { this.yesOpen = true; this.dirty = true; };
       this.irc.onHooked = () => {
         this.afterGuide('log-toast', () => { this.toast = { text: strings.desktop.logToast, t: 10 }; this.dirty = true; });
-        this.hasUnseenWitness = true; // the cold side begins to creep in
-        this.behindToastAt = this.t + 11; // a beat later: a reason to look back
-        this.onFlipReady?.();
+        // ⚑ S401 (UiB job 29 D1) — the visit sends nobody behind the seat: no creep, no "Record filed." toast, no glow
+        //   on the turn control. Rob escalates on the quiet fallback below. (The old build keeps its nudges.)
+        if (!this.reinterp) {
+          this.hasUnseenWitness = true; // the cold side begins to creep in
+          this.behindToastAt = this.t + 11; // a beat later: a reason to look back
+          this.onFlipReady?.();
+        }
         // the flip EARNS the escalation (main's resolved design): Rob only
         // pushes the residential program after you've turned and witnessed the
         // record — with a fallback so a player who never turns still advances.
