@@ -25,6 +25,8 @@
  */
 import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
 import { join, dirname } from 'node:path';
+// ⚑ S400 — each year's game, built from the piece's own code beside its page (written and checked with the pages)
+import { buildSiteGames } from './build-site-games.mjs';
 
 const ROOT = new URL('..', import.meta.url).pathname;
 const CHECK = process.argv.includes('--check');
@@ -156,7 +158,9 @@ for (const [year, arr] of Object.entries(eraLinks)) for (const l of arr) verifyR
 if (refused.length) { console.error('REFUSED — links not verified verbatim:\n  ' + refused.join('\n  ')); process.exit(1); }
 
 // ── the colours: read from the theme files, token by token ──────────────────────────────────────────────────
-const THEME_FILE = { ERA1: 'era1.ts', WEB97: 'web1997.ts', WEB2003: 'web1997.ts', ERA3: 'era3.ts', ERA4: 'era4.ts', PLACE: 'era4.ts', WALL: 'era4.ts' };
+const THEME_FILE = { ERA1: 'era1.ts', WEB97: 'web1997.ts', WEB2003: 'web1997.ts', ERA3: 'era3.ts', ERA4: 'era4.ts', PLACE: 'era4.ts', WALL: 'era4.ts',
+  // ⚑ S400 — the four games' devices (the handheld's greens and buttons, the flip phone's LCD and frame, the console's ink)
+  HANDHELD: 'calendar.ts', CLEAR: 'calendar.ts', MATCHMADE: 'calendar.ts', FLOPPY: 'era3.ts' };
 const themeCache = new Map();
 const themeTokens = (obj) => {
   if (themeCache.has(obj)) return themeCache.get(obj);
@@ -323,7 +327,7 @@ ${E.story.map((p) => `<p>${esc(p)}</p>`).join('\n')}
 <h3>${esc(C.storyFromPanel)}</h3>
 <blockquote class="panelq"><p>${esc(pn.text)}</p><p class="status">${tag(pn.status)} ${esc(long(pn.status))}</p></blockquote>
 <h3>${esc(C.whatYouMeet)}</h3><p>${esc(C.whatYouMeetLead)}</p>
-<dl class="forms">${E.interfaces.map(([a, b]) => `<dt>${esc(a)}</dt><dd>${esc(b)}</dd>`).join('')}</dl>
+<dl class="forms">${E.interfaces.map(([a, b]) => `<dt>${esc(a)}</dt><dd>${esc(b)}${E.game && E.game.row === a ? ` · <label for="t-media" class="golink">${esc(E.game.jump)}</label>` : ''}</dd>`).join('')}</dl>
 ${scriptHtml(E.script)}
 ${ends}`;
 
@@ -396,7 +400,8 @@ ${period.length ? `<p>${esc(C.periodLead)}</p><ul class="period">${period.map((l
 
   // MEDIA
   const items = E.media.map((m) => mediaHtml(m, up)).join('\n');
-  out.media = `<h2 id="h-media">${esc(S.tabs.media)}</h2><p class="lede">${esc(C.mediaLead)}</p>${items}`;
+  // ⚑ S400 — the year's game first (gameHtml), then the sound and film
+  out.media = `<h2 id="h-media">${esc(S.tabs.media)}</h2>${gameHtml(year, up)}<p class="lede">${esc(C.mediaLead)}</p>${items}`;
 
   // WORDS
   const terms = wordsOf(year);
@@ -487,8 +492,8 @@ const panelsHtml = (p) => TABS.map((t) => `<section class="tp" id="p-${t}" aria-
 const yearLinks = (year, up, here = '') => YEARS.map((y) => y === year
   ? `<span aria-current="page">${y}</span>`
   : `<a href="${here}${up === '../../' ? '../' + y + '/' : y + '/'}index.html">${y}</a>`).join(' ');
-const head = (title, desc, css) => `<!doctype html>
-<html lang="en"><head><meta charset="utf-8">
+const head = (title, desc, css, extra = '') => `<!doctype html>
+<html lang="en"><head><meta charset="utf-8">${extra}
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>${esc(title)}</title>
 <meta name="description" content="${esc(desc)}">
@@ -499,6 +504,174 @@ const prevNext = (year) => {
   return { prev: YEARS[(i + 3) % 4], next: YEARS[(i + 1) % 4] };
 };
 const eraHref = (y) => `../${y}/index.html`;
+
+// ══ THE YEAR'S GAME (S400, UiB job 29 Part C) ════════════════════════════════════════════════════════════════
+// His 16 Nov: "They are Optional, you are not supposed to play the game in 2026, it is just a suggestion of Lamby … also
+// we should add all the games in the Close HTML's". Each year's Media tab opens on its game, in the year's own device,
+// drawn here in CSS from theme tokens (no picture files). The game is the piece's own code, built beside the page as
+// `game.js` (tools/build-site-games.mjs; host src/sitegames/). The page carries that ONE script and a Content-Security-
+// Policy that refuses any request (`connect-src 'none'`), so "sends nothing" is the browser's rule, not only ours.
+// The in-piece site viewer (era_sites_model.json) is not given the game: it shows the same Media tab without it.
+// Design and costs: docs/reinterp/SITE_GAMES_NOTE_2026-11-17.md.
+const GAME_CSP = `default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self'; media-src 'self'; font-src 'self'; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'`;
+const gameHead = `\n<meta http-equiv="Content-Security-Policy" content="${GAME_CSP}">`;
+const gameScript = '<script src="game.js" defer></script>\n';
+const gameHeadOf = (year) => (S.eras[year].game ? gameHead : '');
+const gameScriptOf = (year) => (S.eras[year].game ? gameScript : '');
+/** the footer's promise: a page with a game says it has one script, and what it does not do */
+const recordsOf = (year) => (S.eras[year].game ? S.common.recordsGame : S.common.records);
+/** 2016: the game draws in the platform's face, Roboto — the project's own copy (assets/fonts/, OFL), never fetched elsewhere */
+const roboto = (up) => ['400 500:400', '600 700:700'].map((s) => { const [w, f] = s.split(':'); return `@font-face{font-family:"Roboto";src:url("${up}assets/fonts/roboto-5.3.0-latin-${f}.woff2") format("woff2");font-weight:${w};font-style:normal;font-display:swap}`; }).join('\n');
+/** the device's buttons: real buttons, each a GameKey (src/games/types.ts), wired by src/sitegames/shell.ts */
+const gbtn = (key, label, cls, aria = label) => `<button type="button" class="${cls}" data-key="${key}" aria-label="${esc(aria)}">${esc(label)}</button>`;
+/** the device itself, per game */
+function deviceHtml(G) {
+  const C = S.common;
+  const glass = (w, h) => `<canvas class="glass" width="${w}" height="${h}" tabindex="0" aria-label="${esc(G.glassLabel)}"></canvas>`;
+  const dpad = (cls) => `<div class="${cls}" role="group" aria-label="D-pad">${gbtn('up', '▲', 'k-up', C.gameKeyUp)}${gbtn('left', '◀', 'k-left', C.gameKeyLeft)}<span class="k-mid" aria-hidden="true"></span>${gbtn('right', '▶', 'k-right', C.gameKeyRight)}${gbtn('down', '▼', 'k-down', C.gameKeyDown)}</div>`;
+  if (G.id === 'fitin') return `<div class="dev gb">
+<div class="gb-bezel"><span class="gb-led" aria-hidden="true"></span>${glass(160, 144)}</div>
+<div class="gb-ctl">${dpad('dpad')}<div class="gb-ab">${gbtn('b', 'B', 'gb-b')}${gbtn('a', 'A', 'gb-a')}</div></div>
+<div class="gb-ss">${gbtn('start', 'SELECT', 'gb-pill')}${gbtn('start', 'START', 'gb-pill')}</div>
+<div class="gb-grille" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></div>
+</div>`;
+  if (G.id === 'clear') {
+    // the keypad: 4/6 aim, 5 fires, 2/8 swap (the period's own game keys); the rest are printed, not wired
+    const pad = [['1', null], ['2', 'up'], ['3', null], ['4', 'left'], ['5', 'a'], ['6', 'right'], ['7', null], ['8', 'down'], ['9', null], ['*', null], ['0', null], ['#', null]];
+    return `<div class="dev fp">
+<div class="fp-top"><div class="fp-face"><div class="fp-ear" aria-hidden="true"></div><div class="fp-mask">${glass(240, 320)}</div><p class="fp-mark" aria-hidden="true">RESTORIFY</p></div></div>
+<div class="fp-hinge" aria-hidden="true"><span class="fp-led"></span></div>
+<div class="fp-bot">
+<div class="fp-nav">${gbtn('start', '—', 'fp-soft', 'Left soft key: pause')}${dpad('fp-ring')}${gbtn('b', '—', 'fp-soft', 'Right soft key: swap')}</div>
+<div class="fp-keys">${pad.map(([d, k]) => k ? gbtn(k, d, 'fp-key', `${d}`) : `<span class="fp-key" aria-hidden="true">${esc(d)}</span>`).join('')}</div>
+</div>
+</div>`;
+  }
+  if (G.id === 'floppysheep') return `<div class="dev ph">
+<span class="ph-ear" aria-hidden="true"></span>${glass(300, 600)}
+<button type="button" class="ph-home" data-home aria-label="${esc(G.home)}"></button>
+</div>`;
+  // matchmade: the console and its two grips (− and + both open its menu, as START does)
+  return `<div class="dev cs">
+<div class="cs-grip cs-l"><span class="cs-stick" aria-hidden="true"></span>${dpad('cs-pad')}${gbtn('start', '−', 'cs-tiny', 'START')}</div>
+<div class="cs-body">${glass(960, 540)}</div>
+<div class="cs-grip cs-r">${gbtn('start', '+', 'cs-tiny', 'START')}<div class="cs-ab">${gbtn('b', 'B', 'cs-b')}${gbtn('a', 'A', 'cs-a')}</div><span class="cs-stick" aria-hidden="true"></span></div>
+</div>`;
+}
+/** the game's whole section, at the top of the Media tab */
+function gameHtml(year, up) {
+  const G = S.eras[year].game;
+  if (!G) return '';
+  const C = S.common;
+  return `<section class="game" id="game" aria-labelledby="h-game">
+<h3 id="h-game">${esc(G.title)}</h3>
+${G.lead.map((p) => `<p>${esc(p)}</p>`).join('\n')}
+<div class="game-wrap" data-game="${esc(G.id)}" data-audio="${up}assets/audio/">
+${deviceHtml(G)}
+<p class="gamebar"><button type="button" class="snd" data-sound data-on="${esc(C.gameSoundOn)}" data-off="${esc(C.gameSoundOff)}" aria-pressed="true" hidden>${esc(C.gameSoundOn)}</button></p>
+</div>
+<noscript><p class="note">${esc(C.gameNoScript)}</p></noscript>
+<h4>${esc(C.gameHowTitle)}</h4>
+<p>${esc(G.how)}</p>
+<p class="keys">${esc(G.keys)}</p>
+<h4>${esc(C.gameRuleTitle)}</h4>
+<p>${esc(G.rule)}</p>
+<p class="note">${esc(C.gameOptional)}</p>
+<p class="credit">${esc(C.creditLabel)}: ${esc(G.credit)}</p>
+</section>`;
+}
+/** the device's look, from the theme files only (each skin's page carries its own year's device) */
+function gameCss(year) {
+  const id = S.eras[year].game?.id;
+  const base = `.game{margin:4px 0 28px}
+.game-wrap{margin:16px 0 6px}
+.dev{margin:0 auto;-webkit-user-select:none;user-select:none;touch-action:manipulation}
+.dev button{font:inherit;cursor:pointer;-webkit-tap-highlight-color:transparent;padding:0}
+.dev button:active{transform:translateY(1px)}
+.dev .glass{display:block;width:100%;height:auto;image-rendering:pixelated;touch-action:manipulation;cursor:pointer}
+.gamebar{text-align:center;margin:10px 0 0}
+.gamebar .snd{font:inherit;font-size:.88rem;padding:4px 14px;cursor:pointer}
+.game .keys{font-size:.92rem}
+.golink{color:var(--link);text-decoration:underline;cursor:pointer;white-space:nowrap}
+.dpad,.fp-ring,.cs-pad{display:grid;grid-template-columns:repeat(3,var(--k));grid-template-rows:repeat(3,var(--k))}
+.k-up{grid-area:1/2}.k-left{grid-area:2/1}.k-mid{grid-area:2/2}.k-right{grid-area:2/3}.k-down{grid-area:3/2}
+`;
+  if (id === 'fitin') {
+    const c = makePalette('1997 game', { body: 'ERA1.beige', edge: 'ERA1.silver', shade: 'ERA1.grey', bezel: 'HANDHELD.bezel', pad: 'HANDHELD.dpad', button: 'HANDHELD.button',
+      off: 'HANDHELD.screenMid', led: 'ERA1.warn', white: 'ERA1.white', focus: 'ERA1.navy' });
+    mustRead('1997 game', c, [['white', 'button'], ['body', 'pad']]);
+    // the glass at twice its 160 × 144 (square pixels on any screen), the body round it
+    return base + `.gb{--k:34px;width:min(440px,100%);background:${c.body};border-radius:12px 12px 52px 12px;padding:18px 18px 22px;box-shadow:inset -4px -5px 0 ${c.edge},0 2px 0 ${c.shade}}
+.gb-bezel{position:relative;background:${c.bezel};border-radius:8px 8px 30px 8px;padding:18px 9% 24px}
+.gb-led{position:absolute;left:3%;top:42%;width:8px;height:8px;border-radius:50%;background:${c.led}}
+.gb .glass{width:320px;max-width:100%;margin:0 auto;background:${c.off}}
+.gb-ctl{display:flex;justify-content:space-between;align-items:center;margin:24px 4px 0}
+.dpad button,.dpad .k-mid{background:${c.pad};border:0;color:${c.body};font-size:11px}
+.dpad .k-up{border-radius:4px 4px 0 0}.dpad .k-down{border-radius:0 0 4px 4px}.dpad .k-left{border-radius:4px 0 0 4px}.dpad .k-right{border-radius:0 4px 4px 0}
+.gb-ab{display:flex;gap:14px;align-items:flex-start}
+.gb-ab button{width:50px;height:50px;border-radius:50%;border:0;background:${c.button};color:${c.white};font-weight:700}
+.gb-b{margin-top:22px}
+.gb-ss{display:flex;justify-content:center;gap:16px;margin:22px 0 0}
+.gb-pill{border:0;border-radius:10px;background:${c.pad};color:${c.body};font-size:.62rem!important;letter-spacing:.08em;padding:4px 12px!important}
+.gb-grille{display:flex;gap:7px;justify-content:flex-end;margin:-6px 6px 0 0}
+.gb-grille i{display:block;width:6px;height:38px;border-radius:3px;background:${c.edge};box-shadow:inset 1px 1px 0 ${c.shade}}
+.gb .glass:focus-visible,.gb button:focus-visible{outline:3px solid ${c.focus};outline-offset:2px}
+`;
+  }
+  if (id === 'clear') {
+    const c = makePalette('2003 game', { shell: 'ERA1.silver', shade: 'ERA1.grey', frame: 'CLEAR.frame', mask: 'CLEAR.lcdDark', key: 'CLEAR.lattice', keyInk: 'CLEAR.lcdDark',
+      mid: 'CLEAR.lcdMid', lcd: 'CLEAR.lcd', halo: 'CLEAR.halo', slot: 'HANDHELD.dpad', focus: 'ERA1.navy' });
+    mustRead('2003 game', c, [['keyInk', 'key'], ['keyInk', 'lcd']]);
+    return base + `.fp{--k:26px;width:min(428px,100%)}
+.fp-top{background:${c.shell};border-radius:30px 30px 10px 10px;padding:10px 12px 14px;box-shadow:inset 0 -3px 0 ${c.shade}}
+.fp-face{background:${c.frame};border-radius:22px 22px 6px 6px;padding:10px 12px 10px}
+.fp-ear{width:72px;height:8px;margin:2px auto 10px;border-radius:4px;background:repeating-linear-gradient(90deg,${c.slot} 0 6px,${c.frame} 6px 10px)}
+.fp-mask{background:${c.mask};padding:8px;border-radius:4px}
+.fp .glass{background:${c.lcd}}
+.fp-mark{margin:10px 0 2px;text-align:center;color:${c.key};font:700 .72rem/1 var(--mono);letter-spacing:.35em}
+.fp-hinge{position:relative;height:20px;margin:0 26px;background:${c.shade};border-radius:10px}
+.fp-led{position:absolute;right:22%;top:6px;width:8px;height:8px;border-radius:50%;background:${c.halo}}
+.fp-bot{background:${c.shell};border-radius:10px 10px 34px 34px;padding:12px 18px 22px;box-shadow:inset 0 -4px 0 ${c.shade}}
+.fp-nav{display:flex;justify-content:space-between;align-items:center}
+.fp-soft{width:58px;height:22px;border:0;border-radius:11px;background:${c.mid};color:${c.lcd};font-weight:700}
+.fp-ring button,.fp-ring .k-mid{background:${c.mid};border:0;color:${c.lcd};font-size:10px}
+.fp-ring .k-up{border-radius:15px 15px 0 0}.fp-ring .k-down{border-radius:0 0 15px 15px}.fp-ring .k-left{border-radius:15px 0 0 15px}.fp-ring .k-right{border-radius:0 15px 15px 0}
+.fp-keys{display:grid;grid-template-columns:repeat(3,1fr);gap:6px 14px;margin-top:12px}
+.fp .fp-key{display:flex;align-items:center;justify-content:center;height:26px;border:0;border-radius:13px;background:${c.key};color:${c.keyInk};font-weight:700}
+span.fp-key{cursor:default}
+.fp .glass:focus-visible,.fp button:focus-visible{outline:3px solid ${c.focus};outline-offset:2px}
+`;
+  }
+  if (id === 'floppysheep') {
+    const c = makePalette('2016 game', { body: 'ERA3.ink', edge: 'ERA3.greyDk', sky: 'FLOPPY.skyLow', focus: 'ERA3.accentHi' });
+    return base + `.ph{position:relative;width:min(302px,100%);background:${c.body};border-radius:38px;padding:52px 16px 74px;box-shadow:inset 0 0 0 2px ${c.edge}}
+.ph-ear{position:absolute;top:24px;left:50%;width:56px;height:6px;margin-left:-28px;border-radius:3px;background:${c.edge}}
+.ph .glass{aspect-ratio:1/2;border-radius:3px;image-rendering:auto;background:${c.sky}}
+.ph-home{position:absolute;bottom:16px;left:50%;width:44px;height:44px;margin-left:-22px;border-radius:50%;border:2px solid ${c.edge}!important;background:transparent}
+.ph .glass:focus-visible,.ph button:focus-visible{outline:3px solid ${c.focus};outline-offset:3px}
+`;
+  }
+  if (id === 'matchmade') {
+    const c = makePalette('2026 game', { ink: 'MATCHMADE.ink', grip: 'MATCHMADE.plum', key: 'MATCHMADE.dim', keyInk: 'MATCHMADE.ink', pink: 'MATCHMADE.pink', focus: 'MATCHMADE.gold' });
+    mustRead('2026 game', c, [['keyInk', 'key'], ['keyInk', 'pink']]);
+    return base + `.cs{--k:28px;display:flex;align-items:stretch;width:min(1000px,calc(100vw - 32px));margin:0 0 0 calc(50% - min(500px,calc(50vw - 16px)))}
+.cs-grip{flex:0 0 112px;background:${c.grip};display:flex;flex-direction:column;align-items:center;justify-content:space-evenly;gap:10px;padding:14px 8px}
+.cs-l{border-radius:46px 0 0 46px}.cs-r{border-radius:0 46px 46px 0}
+.cs-body{flex:1 1 auto;min-width:0;background:${c.ink};padding:16px 18px}
+.cs-stick{width:46px;height:46px;border-radius:50%;background:${c.ink};box-shadow:inset 0 0 0 6px ${c.key}}
+.cs-pad button,.cs-pad .k-mid{background:${c.key};border:0;border-radius:50%;color:${c.keyInk};font-size:10px}
+.cs-pad .k-mid{background:transparent}
+.cs-ab{display:grid;grid-template-columns:repeat(2,36px);gap:6px}
+.cs-ab button{width:36px;height:36px;border:0;border-radius:50%;background:${c.key};color:${c.keyInk};font-weight:700}
+.cs-a{background:${c.pink}!important}.cs-b{margin-top:22px}
+.cs-tiny{width:26px;height:26px;border:0;border-radius:50%;background:${c.key};color:${c.keyInk};font-weight:700;line-height:1}
+.cs .glass:focus-visible,.cs button:focus-visible{outline:3px solid ${c.focus};outline-offset:2px}
+@media (max-width:640px){.cs{flex-wrap:wrap;width:100%;margin:0}.cs-body{order:0;flex:1 1 100%;border-radius:18px 18px 0 0;padding:10px}
+.cs-grip{order:1;flex:1 1 50%;flex-direction:row;justify-content:space-around;padding:10px 6px}.cs-l{border-radius:0 0 0 30px}.cs-r{border-radius:0 0 30px 0}.cs-stick{display:none}}
+`;
+  }
+  return '';
+}
 
 // ══ 1997 — a GeoCities-style home page ═════════════════════════════════════════════════════════════════════
 function site1997() {
@@ -535,7 +708,7 @@ body{background-color:${c.page};background-image:radial-gradient(${c.tile} 3px,t
 .foot{margin:10px 0 0;background:${c.white};border:3px ridge ${c.rule};padding:10px 16px;font-size:.88rem;text-align:center;color:${c.dim}}
 ${tabRules(`background:${c.heading};color:${c.ink2};text-decoration:none;border-style:inset`, c.engine)}
 @media (max-width:760px){.layout{grid-template-columns:1fr}.frame-nav{display:grid;grid-template-columns:1fr 1fr;gap:4px}.frame-nav h2,.frame-nav hr,.frame-nav .glance,.frame-nav .counter{grid-column:1/-1}.frame-main{padding:12px 14px}}
-${BASE_CSS}`;
+${BASE_CSS}${gameCss(year)}`;
   const { prev, next } = prevNext(year);
   const P = panelsFor(year, '../../');
   const body = `<body><a class="skip" href="#main">${esc(S.skipLabel)}</a>
@@ -556,10 +729,10 @@ ${panelsHtml(P)}
 </main>
 </div>
 <p class="ringbar">${esc(S.common.ringTitle)}<br><a href="${eraHref(prev)}">${esc(S.common.ringPrev)} (${prev})</a> | <a href="../index.html">${esc(S.common.ringHub)}</a> | <a href="${eraHref(next)}">${esc(S.common.ringNext)} (${next})</a></p>
-<p class="foot">${esc(S.common.bestViewed1997)}<br>${esc(S.common.contentNote)}<br>${esc(S.common.records)} · Updated ${esc(S.updated)} · <a href="../../index.html?reinterp=1">${esc(S.playLabel)}</a></p>
+<p class="foot">${esc(S.common.bestViewed1997)}<br>${esc(S.common.contentNote)}<br>${esc(recordsOf(year))} · Updated ${esc(S.updated)} · <a href="../../index.html?reinterp=1">${esc(S.playLabel)}</a></p>
 </div></body></html>
 `;
-  return head(`${S.eras[year].heading} | ${S.siteName}`, S.eras[year].tagline, css) + body;
+  return head(`${S.eras[year].heading} | ${S.siteName}`, S.eras[year].tagline, css, gameHeadOf(year)) + body.replace("</body>", gameScriptOf(year) + "</body>");
 }
 
 // ══ 2003 — a portal with tabs and a left nav ═══════════════════════════════════════════════════════════════
@@ -594,7 +767,7 @@ main{padding-top:16px;min-width:0}
 .foot{margin-top:16px;font-size:.85rem;color:${c.dim};border-top:1px solid ${c.postHead};padding-top:10px}
 ${tabRules(`background:${c.white};border-bottom:3px solid ${c.white};margin-bottom:-3px;box-shadow:inset 0 3px 0 ${c.brand}`, c.brand)}
 @media (max-width:900px){.layout{grid-template-columns:1fr}.side{padding-top:0}.tabs label{padding:8px 10px}.tp{padding:8px 14px 24px}.tp h2{margin:0 -14px 12px;padding:8px 14px}}
-${BASE_CSS}`;
+${BASE_CSS}${gameCss(year)}`;
   const P = panelsFor(year, '../../');
   const years = YEARS.filter((y) => y !== year);
   const body = `<body><a class="skip" href="#main">${esc(S.skipLabel)}</a>
@@ -609,7 +782,7 @@ ${radios()}
 </aside>
 <main id="main">
 ${panelsHtml(P)}
-<p class="foot">${esc(S.common.contentNote)}<br>${esc(S.common.records)} · Updated ${esc(S.updated)}</p>
+<p class="foot">${esc(S.common.contentNote)}<br>${esc(recordsOf(year))} · Updated ${esc(S.updated)}</p>
 </main>
 <aside class="side" aria-label="This year at a glance">
 <div class="box"><h2>This year at a glance</h2><div class="bd"><dl class="glance">${glance(year).map(([a, b]) => `<dt>${esc(a)}</dt><dd>${esc(b)}</dd>`).join('')}</dl></div></div>
@@ -618,7 +791,7 @@ ${panelsHtml(P)}
 </div>
 </div></body></html>
 `;
-  return head(`${S.eras[year].heading} | ${S.siteName}`, S.eras[year].tagline, css) + body;
+  return head(`${S.eras[year].heading} | ${S.siteName}`, S.eras[year].tagline, css, gameHeadOf(year)) + body.replace("</body>", gameScriptOf(year) + "</body>");
 }
 
 // ══ 2016 — a flat, responsive platform ═════════════════════════════════════════════════════════════════════
@@ -629,7 +802,7 @@ function site2016() {
     link: 'ERA3.deskLow', good: 'ERA3.good', amber: 'ERA3.amber', bury: 'ERA3.bury', lamb: 'ERA3.lambBand', lambTag: 'ERA3.lambTag', sys: 'ERA3.sysBand', titleText: 'ERA3.titleText', accentHi: 'ERA3.accentHi', pale: 'ERA3.titleA'
   });
   mustRead(year, c, [['ink', 'bg'], ['ink', 'white'], ['dim', 'white'], ['dim', 'bg'], ['link', 'white'], ['link', 'bg'], ['white', 'bar'], ['pale', 'bar'], ['ink', 'good'], ['ink', 'amber'], ['white', 'bury'], ['titleText', 'lamb'], ['ink', 'sys']]);
-  const css = `:root{--bg:${c.bg};--ink:${c.ink};--card:${c.white};--rule:${c.edge};--link:${c.link};--focus:${c.accent};--body:"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;--mono:Consolas,"DejaVu Sans Mono",monospace;--t-doc:${c.good};--t-doc-ink:${c.ink};--t-dis:${c.amber};--t-dis-ink:${c.ink};--t-inf:${c.bury};--t-inf-ink:${c.white}}
+  const css = `${S.eras[year].game ? `${roboto('../../')}\n` : ''}:root{--bg:${c.bg};--ink:${c.ink};--card:${c.white};--rule:${c.edge};--link:${c.link};--focus:${c.accent};--body:"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;--mono:Consolas,"DejaVu Sans Mono",monospace;--t-doc:${c.good};--t-doc-ink:${c.ink};--t-dis:${c.amber};--t-dis-ink:${c.ink};--t-inf:${c.bury};--t-inf-ink:${c.white}}
 header.top{background:${c.bar};color:${c.white}}
 header.top .in{max-width:820px;margin:0 auto;padding:18px 18px 0}
 header.top .brand{margin:0;font-size:.85rem;letter-spacing:.08em;text-transform:uppercase;color:${c.pale}}
@@ -652,7 +825,7 @@ main{padding-top:24px;min-width:0}
 .foot{margin-top:22px;font-size:.85rem;color:${c.dim}}
 ${tabRules(`opacity:1;border-bottom-color:${c.accentHi};background:${c.barLo}`, c.accentHi)}
 @media (max-width:640px){.tp{padding:6px 16px 24px}}
-${BASE_CSS}`;
+${BASE_CSS}${gameCss(year)}`;
   const P = panelsFor(year, '../../');
   const body = `<body><a class="skip" href="#main">${esc(S.skipLabel)}</a>
 <header class="top"><div class="in"><p class="brand">${esc(S.siteName)} · ${esc(S.projectLine)}</p><h1>${esc(S.eras[year].heading)}</h1><p class="sub">${esc(S.eras[year].tagline)}</p></div></header>
@@ -663,12 +836,12 @@ ${radios()}
 <main id="main">
 ${panelsHtml(P)}
 <ul class="pills" aria-label="The four years">${YEARS.map((y) => y === year ? `<li><span aria-current="page">${y}</span></li>` : `<li><a href="${eraHref(y)}">${y}</a></li>`).join('')}<li><a href="../index.html">${esc(S.hubLabel)}</a></li><li><a href="../../index.html?reinterp=1">${esc(S.playLabel)}</a></li></ul>
-<p class="foot">${esc(S.common.contentNote)}<br>${esc(S.common.records)} · Updated ${esc(S.updated)}</p>
+<p class="foot">${esc(S.common.contentNote)}<br>${esc(recordsOf(year))} · Updated ${esc(S.updated)}</p>
 </main>
 </div>
 </div></body></html>
 `;
-  return head(`${S.eras[year].heading} | ${S.siteName}`, S.eras[year].tagline, css) + body;
+  return head(`${S.eras[year].heading} | ${S.siteName}`, S.eras[year].tagline, css, gameHeadOf(year)) + body.replace("</body>", gameScriptOf(year) + "</body>");
 }
 
 // ══ 2026 — an app-like page of cards ═══════════════════════════════════════════════════════════════════════
@@ -710,7 +883,7 @@ main{padding-top:6px;min-width:0}
 .dock a,.dock span{white-space:nowrap}
 @media (max-width:560px){header.app .sub{display:none}header.app h1{white-space:nowrap}.dock .in{gap:0;padding:8px 6px;font-size:.78rem}.dock a,.dock span{padding:6px 8px}}
 ${tabRules(`background:${c.l};color:${c.field};border-color:${c.l}`, c.warm)}
-${BASE_CSS}`;
+${BASE_CSS}${gameCss(year)}`;
   const P = panelsFor(year, '../../');
   const body = `<body><a class="skip" href="#main">${esc(S.skipLabel)}</a>
 <div class="site">
@@ -721,14 +894,14 @@ ${radios()}
 <div class="hero"><h2>${esc(S.eras[year].heading)}</h2><p>${esc(S.eras[year].tagline)}</p></div>
 <main id="main">
 ${panelsHtml(P)}
-<p class="foot">${esc(S.common.contentNote)}<br>${esc(S.common.records)} · Updated ${esc(S.updated)}</p>
+<p class="foot">${esc(S.common.contentNote)}<br>${esc(recordsOf(year))} · Updated ${esc(S.updated)}</p>
 </main>
 </div>
 </div>
 <nav class="dock" aria-label="The four years"><div class="in"><span>${year}</span>${YEARS.filter((y) => y !== year).map((y) => `<a href="${eraHref(y)}">${y}</a>`).join('')}<a href="../index.html">${esc(S.hubLabel)}</a><a href="../../index.html?reinterp=1">${esc(S.playLabel)}</a></div></nav>
 </body></html>
 `;
-  return head(`${S.eras[year].heading} | ${S.siteName}`, S.eras[year].tagline, css) + body;
+  return head(`${S.eras[year].heading} | ${S.siteName}`, S.eras[year].tagline, css, gameHeadOf(year)) + body.replace("</body>", gameScriptOf(year) + "</body>");
 }
 
 // ══ the hub — four doors ═══════════════════════════════════════════════════════════════════════════════════
@@ -800,6 +973,8 @@ const srcModel = (file, index) => {
   const ls = linkRows(`${file}#${index}`);
   return { k: 'src', status: s.status, tag: short(s.status), conf: s.confidence || '', t: plain(s.text), links: ls, nolink: ls.length ? '' : S.common.noLink };
 };
+/** ⚑ S400b — the in-piece viewer's one line about the year's game: it plays on the web page, not in the window */
+const gameElsewhere = (G, it = false) => S.common.gameElsewhere.replace('{game}', it ? 'It' : G.name);
 function panelsModel(year) {
   const E = S.eras[year];
   const C = S.common;
@@ -814,7 +989,8 @@ function panelsModel(year) {
     { k: 'h3', t: C.storyFromPanel },
     { k: 'quote', t: pn.text, status: pn.status, tag: short(pn.status), long: long(pn.status) },
     { k: 'h3', t: C.whatYouMeet }, { k: 'p', t: C.whatYouMeetLead },
-    { k: 'dl', rows: E.interfaces },
+    // ⚑ S400b (his ruling 17 Nov) — the window does not run the game, so its row says where it plays (no link that looks playable)
+    { k: 'dl', rows: E.interfaces.map(([a, b]) => [a, E.game && E.game.row === a ? `${b}. ${gameElsewhere(E.game, true)}` : b]) },
     ...scriptModel(E.script),
     { k: 'h3', t: C.endsTitle }, { k: 'p', t: C.endsLead }, { k: 'mono', lines: endLines }
   ];
@@ -869,7 +1045,7 @@ function panelsModel(year) {
     ...(period.length ? [{ k: 'p', t: C.periodLead }, { k: 'links', items: period.map((l) => ({ label: l.label, url: l.url, note: l.note })) }] : [{ k: 'p', t: C.periodNone }])
   ];
   out.media = [
-    { k: 'h2', t: S.tabs.media }, { k: 'lede', t: C.mediaLead },
+    { k: 'h2', t: S.tabs.media }, ...(E.game ? [{ k: 'note', t: gameElsewhere(E.game) }] : []), { k: 'lede', t: C.mediaLead },
     ...E.media.map(mediaModel)
   ];
   const terms = wordsOf(year);
@@ -921,14 +1097,17 @@ const files = new Map([
 
 if (CHECK) {
   const stale = [...files].filter(([p, html]) => !existsSync(join(ROOT, p)) || text(p) !== html).map(([p]) => p);
+  // ⚑ S400 — and each year's game.js against the piece's own game code (tools/build-site-games.mjs)
+  stale.push(...await buildSiteGames({ check: true }));
   if (stale.length) { console.error(`era sites are STALE (run: node tools/gen_era_sites.mjs):\n  ${stale.join('\n  ')}`); process.exit(1); }
-  console.log(`era sites up to date: ${files.size} pages match their data`);
+  console.log(`era sites up to date: ${files.size} pages match their data, and the four games their code`);
 } else {
   for (const [p, html] of files) {
     mkdirSync(dirname(join(ROOT, p)), { recursive: true });
     writeFileSync(join(ROOT, p), html);
   }
+  const games = await buildSiteGames();
   const nLinks = Object.values(links).reduce((a, l) => a + l.length, 0) + Object.values(eraLinks).reduce((a, l) => a + l.length, 0);
-  console.log(`wrote ${files.size} files (5 pages under public/sites/ + the viewer model) — ${nLinks} verified links on file`);
+  console.log(`wrote ${files.size} files (5 pages under public/sites/ + the viewer model) and ${games.length} games — ${nLinks} verified links on file`);
   for (const [year, spec] of used) console.log(`  ${year}: ${Object.entries(spec).map(([k, v]) => `${k}=${v}`).join(' ')}`);
 }
