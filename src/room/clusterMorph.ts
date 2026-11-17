@@ -148,7 +148,13 @@ export function constantPropIds(): Set<string> {
 const STATIC_IDS = constantPropIds();
 
 interface Plan {
+  /** S398: the prop's id (the batch bands key off it) */
+  id: string;
   h: PropHandle;
+  /** S398: true once the prop has been written at its target for the last time (update() then leaves it alone) */
+  done?: boolean;
+  /** S398: from and to are the same (it only flickers as the wave passes): its moment ends with the glitch */
+  still?: boolean;
   fromColor: pc.Color; toColor: pc.Color;
   fromPos: pc.Vec3; toPos: pc.Vec3;
   fromScale: pc.Vec3; toScale: pc.Vec3;
@@ -188,31 +194,80 @@ export class ClusterMorph {
    * every material the prop renders with (`materials`, private clones once the batch is torn down) — and each is put
    * back exactly as it was (saved colour, saved scale) when its moment ends.
    */
-  private sweep: { h: PropHandle; startT: number; dur: number; emissive: pc.Color[]; scale: pc.Vec3 }[] = [];
+  private sweep: { id: string; h: PropHandle; startT: number; dur: number; emissive: pc.Color[]; scale: pc.Vec3 }[] = [];
   private sweepT = 0;
 
   constructor(private readonly room: RoomHandles) {}
 
   get running(): boolean { return this.active || this.sweep.length > 0; }
 
+  /**
+   * ⚑ S398 (UiB job 29 A1, the era-change spike) — the props this cascade ANIMATES (each has a plan: a colour, a
+   * position, a scale, or only the glitch's flicker as the wave passes). Everything else in the room holds still
+   * through it — the constants, the kept, the models and composites (they snap once, at the cascade's start), the
+   * props the fold does not own — and cluster.ts keeps those in their batch instead of tearing the whole room down.
+   */
+  get animatedIds(): ReadonlySet<string> {
+    const out = new Set<string>();
+    for (const pl of this.plans) out.add(pl.id);
+    return out;
+  }
+
+  /**
+   * ⚑ S398 — each animated prop's moment, in cascade seconds: [start, end) of the time it is being changed (its
+   * colour, scale and position lerp, and the glitch in the first part of it). Before its start a prop sits exactly at
+   * its from-state; from its end on, exactly at its target, and `update()` no longer writes to it. cluster.ts batches
+   * the props outside their moment (waiting, or done) in bands along the sweep, so only the props being changed
+   * right now draw one by one. `t` is the cascade's clock (`update()` advances it).
+   */
+  get cascadeClock(): number { return this.active ? this.t : -1; }
+  /** `drawn`: false for a prop absent at both ends (scale 0 throughout: never drawn, never batched) */
+  planWindows(): { id: string; start: number; end: number; drawn: boolean; still: boolean }[] {
+    const propDur = PROP_DUR * this.pace;
+    const zero = (v: pc.Vec3): boolean => Math.min(Math.abs(v.x), Math.abs(v.y), Math.abs(v.z)) < 1e-4;
+    return this.plans.map((pl) => ({ id: pl.id, start: pl.startT, end: pl.startT + propDur * (pl.still ? GLITCH_FRAC : 1),
+      drawn: !(zero(pl.fromScale) && zero(pl.toScale)), still: !!pl.still }));
+  }
+  /** S398: has this prop had its last write (it now holds still at its target until the cascade ends)? */
+  planDone(id: string): boolean {
+    if (this.planIndexOf !== this.plans) { this.planIndex = new Map(this.plans.map((pl) => [pl.id, pl])); this.planIndexOf = this.plans; }
+    const pl = this.planIndex.get(id);
+    return !pl || !!pl.done;
+  }
+  private planIndex = new Map<string, Plan>();
+  private planIndexOf: Plan[] | null = null;
+
+  /** ⚑ S398 — the same, for the Close's sweep: each swept prop's moment [start, end) on the sweep's clock; before it and
+   *  after it the prop is exactly as it was (restoreSweep puts back the saved colour and scale), and nothing writes to it */
+  get sweepClock(): number { return this.sweep.length ? this.sweepT : -1; }
+  get sweptIds(): ReadonlySet<string> { return new Set(this.sweep.map((s) => s.id)); }
+  sweepWindows(): { id: string; start: number; end: number; drawn: boolean; still: boolean }[] {
+    return this.sweep.map((s) => ({ id: s.id, start: s.startT, end: s.startT + s.dur, drawn: true, still: true }));
+  }
+  /** its moment is over and it has been put back (`updateSweep` zeroes `dur` when it restores it) */
+  sweepDone(id: string): boolean {
+    for (const s of this.sweep) if (s.id === id) return s.dur === 0;
+    return true;
+  }
+
   /** roll the glitch through the present props over `seconds`, ordered along from → to (world x/z) */
   glitchSweep(from: { x: number; z: number }, to: { x: number; z: number }, seconds: number, propSeconds = 2.6, skip?: ReadonlySet<string>): void {
     this.endSweep();
     const dx = to.x - from.x, dz = to.z - from.z;
     const len2 = Math.max(1e-6, dx * dx + dz * dz);
-    const rows: { h: PropHandle; k: number }[] = [];
+    const rows: { id: string; h: PropHandle; k: number }[] = [];
     for (const [id, h] of this.room.props) {
       if (skip?.has(id)) continue;   // S369: the room's fixed trim keeps its batch through the sweep (cluster.ts)
       if (!h.entity.enabled) continue;
       const s = h.entity.getLocalScale();
       if (Math.min(Math.abs(s.x), Math.abs(s.y), Math.abs(s.z)) < 1e-4) continue;   // absent (scaled to 0)
       const p = h.entity.getPosition();
-      rows.push({ h, k: Math.max(0, Math.min(1, ((p.x - from.x) * dx + (p.z - from.z) * dz) / len2)) });
+      rows.push({ id, h, k: Math.max(0, Math.min(1, ((p.x - from.x) * dx + (p.z - from.z) * dz) / len2)) });
     }
     const span = Math.max(0.5, seconds - propSeconds);
     for (const r of rows) {
       const mats = r.h.materials.length ? r.h.materials : [r.h.material];
-      this.sweep.push({ h: r.h, startT: r.k * span + Math.random() * 0.6, dur: propSeconds * (0.8 + Math.random() * 0.4),
+      this.sweep.push({ id: r.id, h: r.h, startT: r.k * span + Math.random() * 0.6, dur: propSeconds * (0.8 + Math.random() * 0.4),
         emissive: mats.map((m) => m.emissive.clone()), scale: r.h.entity.getLocalScale().clone() });
     }
     this.sweepT = 0;
@@ -419,13 +474,18 @@ export class ClusterMorph {
       const toColor = toPresent && tn ? hex(tn.color) : (h.emissive ? h.material.emissive : h.material.diffuse).clone();
       const toPos = toPresent && tn ? new pc.Vec3(tn.pos[0], tn.pos[1], tn.pos[2]) : h.entity.getLocalPosition().clone();
       const toScale = toPresent && tn ? new pc.Vec3(tn.size[0], tn.size[1], tn.size[2]) : new pc.Vec3(0, 0, 0);
+      const fromColor = (h.emissive ? h.material.emissive : h.material.diffuse).clone();
+      const fromPos = h.entity.getLocalPosition().clone(), fromScale = h.entity.getLocalScale().clone();
       this.plans.push({
+        id,
         h,
-        fromColor: (h.emissive ? h.material.emissive : h.material.diffuse).clone(),
+        fromColor,
         toColor,
-        fromPos: h.entity.getLocalPosition().clone(), toPos,
-        fromScale: h.entity.getLocalScale().clone(), toScale,
-        startT: 0
+        fromPos, toPos,
+        fromScale, toScale,
+        startT: 0,
+        // S398: nothing to change but the flicker (the lerps return it exactly to itself once the glitch is over)
+        still: fromColor.equals(toColor) && fromPos.equals(toPos) && fromScale.equals(toScale)
       });
     }
 
@@ -448,9 +508,16 @@ export class ClusterMorph {
     const propDur = PROP_DUR * this.pace;
 
     for (const pl of this.plans) {
+      // S398: a prop already written at its target is left alone (it was rewritten with the same values every frame
+      //   until the cascade ended: the same picture, and no Math.random is drawn at k = 1, so the glitch's sequence
+      //   for the others is unchanged) — which is what lets cluster.ts batch it again while the rest still change
+      if (pl.done) continue;
       const local = (this.t - pl.startT) / propDur;
       if (local <= 0) continue;
       const k = Math.min(1, local);
+      // S398: the last write — its target (k = 1); for a still prop, the first frame after its glitch, which writes it
+      //   back exactly as it was (from = to) and draws no Math.random (k ≥ GLITCH_FRAC short-circuits the glitch)
+      if (local >= 1 || (pl.still && k >= GLITCH_FRAC)) pl.done = true;
       const e = ease(k);
 
       const col = pl.h.emissive ? pl.h.material.emissive : pl.h.material.diffuse;

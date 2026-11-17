@@ -2800,7 +2800,17 @@ export class DesktopOS {
       case 'boot': this.drawBoot(); break;
       case 'splash': this.drawSplash(W, H); break;
       case 'name': this.drawName(W, H); break;
-      case 'desktop': this.drawDesktop(W, H); break;
+      case 'desktop':
+        this.drawDesktop(W, H);
+        /**
+         * ⚑ S398 (UiB job 29 A2) — AN ICON UNDER A WINDOW IS NOT OFFERED. A press on a desktop icon that a window is
+         * drawn over never reaches it (`hitAt` skips an icon wherever a frame lies on top), yet the icon stayed in the
+         * published hits as live: the 16 Nov walk pressed the IRC and Family Form icons eleven times under the IRC
+         * window during 1997's intermission (steps 124–145), each press dead. The same rule, at the icon's centre,
+         * now decides what is published. (The frames are known only once the whole desktop is drawn: hence here.)
+         */
+        this.hits = this.hits.filter((h) => !(h.id.startsWith('icon-') && ui.topFrameAt(h.x + h.w / 2, h.y + h.h / 2)));
+        break;
       case 'left': this.drawLeft(W, H); break;
       case 'r_dark': ui.px(this.ctx, 0, 0, W, H, ERA1.black); break; // O1: monitor off
       case 'r_boot': this.drawReinterpBoot(W, H); break;             // O2
@@ -4704,7 +4714,7 @@ export class DesktopOS {
     if (this.phase === 'desktop' && this.rootCause?.open) { this.rootCause.handleClick(x, y); return; }
     if (this.phase === 'desktop' && this.folder1997?.open) { this.folder1997.handleClick(x, y); if (!this.folder1997.open) this.wayBack('e2'); this.dirty = true; return; }
     if (this.phase === 'desktop' && this.companion.open && this.desktopEra === 'e2') { this.companion.handleClick(x, y); this.dirty = true; return; }
-    if (this.phase === 'desktop' && this.diary?.open) { this.diary.press(); return; }
+    if (this.phase === 'desktop' && this.diary?.open) { this.diary.handleClick(x, y); return; }   // S398: its published window, or anywhere
     if (this.phase === 'desktop' && this.packet?.open) { this.packet.handleClick(x, y); return; }
     // ⚑ S199 — the browsers are windows over the desktop: asked AFTER the modal windows that draw above them
     //   (the exercise, the rig, the game, the diary, the packet — a walk stuck there when this came first) and

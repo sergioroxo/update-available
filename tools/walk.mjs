@@ -1143,6 +1143,8 @@ async function main() {
   let heldRun = 0;
   note('seated', { era: s.era, phase: s.phase, spine: s.spine, what: s.targets.length + ' live controls' });
   let stalls = 0;
+  /** S398: how long the update ritual has been between its asks (installing, restarting) while the walker waited */
+  let ritualWaits = 0;
   /** the last state in which the piece was seen to MOVE — see the loop detector */
   let lastMoving = '';
   const visits = new Map();
@@ -1642,7 +1644,11 @@ async function main() {
       // a press that moved nothing is a finding, not a retry cue — but it may
       // still have moved something this probe cannot see (a chip selected, an
       // icon chosen), so the memory above is what keeps the walk moving on.
-      s = (!moved(s, after) && s.ritualOpen) ? await sweep(after, null) : after;
+      // ⚑ S398 (job 29 A2/A3) — only a ritual that is asking for nothing is swept for: one that has published its
+      //   buttons (the EULA's Read on, a page turned that this probe cannot see) is pressed through them, and the
+      //   sweep's blind presses there were dead presses of the walker's own making
+      s = (!moved(s, after) && s.ritualOpen && !after.targets.some((x) => /updateApp/.test(x.surface))) ? await sweep(after, null) : after;
+      ritualWaits = 0;
       // ⚑ a real advance forgives every fruitless-press counter: the situation
       //   has genuinely changed, so nothing learned before it still applies.
       //   Deliberately NOT the ledger — see advanceOf.
@@ -1675,6 +1681,22 @@ async function main() {
         await page.screenshot({ path: join(SHOT_DIR, 'walk_nowhere.png') });
         break;
       }
+    } else if (s.ritualOpen && !s.silent.length && ritualWaits < 10) {
+      /**
+       * ⚑ S398 (job 29 A2/A3) — THE UPDATE RITUAL BETWEEN ITS ASKS IS NOT A SURFACE WITHOUT RECTS. Since 2026-08-28 it
+       * registers each button where it draws it (update.ts `hits`), and the harness collects them; while it installs
+       * and restarts it asks nothing and registers nothing, on purpose ("they are not asks"), and goes on by itself.
+       * The walk used to call that "publishing no hit rects" and sweep a grid of presses over it — every one of them
+       * dead, and the report then listed the ritual among the surfaces that own no rects. Now it waits, as a visitor
+       * watching an install does; only a ritual still silent after ten waits (30 s) is swept, as before.
+       */
+      ritualWaits += 1;
+      note('ritual-quiet', {
+        what: 'the update ritual is installing or restarting: it asks nothing until it asks again — waiting (' + ritualWaits + '/10)',
+        era: s.era, phase: s.phase, spine: s.spine
+      });
+      await wait(3000);
+      s = await probe();
     } else if (s.ritualOpen || s.silent.length) {
       // something owns the screen and registered nothing to press: find it
       note('silent-surface', {

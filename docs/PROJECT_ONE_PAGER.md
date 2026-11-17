@@ -31,11 +31,13 @@ always be dismissed; a **dossier** of sourced cards behind the fiction; and a cl
 the rooms are finally seen as one building among many.
 
 ## How you interact
-**The only thing your body does is turn.** There is no walking and nothing is timed. You click on an
-in-world screen, and you turn to look at the room the screen is talking about — the piece's one bodily
-demand, and the moment its argument lands: the machine describes a person, and you have to look at where
-that person lives. It runs three ways from one build — a headset, a desktop browser, or a phone or tablet
-you physically turn like a 360° video.
+**The piece no longer asks for the turn.** There is no walking and nothing is timed. You click on an
+in-world screen. You may look around the room, and nothing in the story waits for you to. An earlier
+version made the turn its one bodily demand (turn round, and see what the system keeps on you). Two later
+rulings took it out: no story beat may depend on where a visitor chooses to look, and the headset never
+turns you. Where the story needs you to see something, the piece brings it to you: a move to another seat,
+a device raised to your eyes. It runs three ways from one build: a headset, a desktop browser, or a phone
+or tablet you turn like a 360° video.
 
 ## The rules it is built under
 These are ethics constraints, not style preferences, and they are enforced in the build:

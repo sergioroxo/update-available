@@ -51,8 +51,9 @@
   {
    "id": "family",
    "surface": null,
-   "label": "Return the family calls",
-   "note": "from relatives"
+   "label": "Answer the mothers",
+   "note": "two waiting",
+   "_docS403": "⚑ S403 (UiB job 30 B1): `label` was \"Return the family calls\" (they are messages, not calls); `note` was \"from relatives\" (two mothers wait now, Maureen and Annette; s3_family.json)."
   },
   {
    "id": "group",
@@ -80,9 +81,10 @@
   "startersSpeedrun": [
    "testimony",
    "places",
-   "family",
-   "group"
+   "family"
   ],
+  "_docS399": "⚑ S399 (UiB job 29 B1; his 16 Nov: \"We can for sure reduce stuff in the 2016, since it has a lot of text\"). The default visit's board keeps the two jobs the brief keeps: the testimony (the first APPLY) and the places list (a lesbian bar taken out of a woman's own post). Return the family calls and Post to the group make the testimony's point again (she is the hand), so they leave the default visit and stay whole, word for word, behind \"The other jobs\" in the Start menu (extras.json `jobs`) and in ?cut=full. Their phone messages (Mam and her unsent note; the check-in on her own phone) go with them. Before/after: docs/reinterp/TEXT_CUT_2016_S399_2026-11-16.md. His edit wins: putting a job back is one line here.",
+  "_docS403": "⚑ S403 (UiB job 30 B1; his 17 Nov: \"I do like the return the Family calls, maybe we can make it more clear and direct of what it is, and that way less text\"; \"Yes let's build the changes for 2016\"). The family calls come back to the default visit's board, shorter, as \"Answer the mothers\" (s3_family.json): the default board is the testimony, the places list and the mothers. Post to the group stays behind \"The other jobs\" and in ?cut=full. Mam's phone message and Vera's unsent note come back with the job (e3_mirror.json `decision`, earned when it is done).",
   "updates": []
  },
  "verbs": {
@@ -109,10 +111,11 @@
   "firstTask2": "Either way it's recorded, so you can't get it wrong.",
   "waitLine1": "The group still needs this week's check-in.",
   "waitLine2": "Renata's story is ready to send. No rush.",
-  "waitFamily": "The family line still has parents waiting.",
+  "waitFamily": "The mothers are still waiting.",
   "_docWait": "⚑ S227 (VERA_OPTIONS §4c.2) — the waiting lines name only jobs that are ON the board and unfinished: the group (waitLine1), the family calls (waitFamily), the video once its update is installed (waitLine2, its 'And' dropped so it can stand first). At most two, the R28 cap; none if nothing named is open.",
-  "firstOrder": "A testimony first. Then the places list, the family calls and the group's check-in.",
-  "firstOrderSpeedrun": "A testimony first. Then the places list, the family calls and the group's check-in.",
+  "firstOrder": "A testimony first. Then the places list, the mothers and the group's check-in.",
+  "firstOrderSpeedrun": "A testimony first. Then the mothers and the places list.",
+  "_docS403": "⚑ S403 (UiB job 30 B1): `firstOrderSpeedrun` was \"A testimony first. Then the places list.\" (S399) — the default board holds the mothers again, and the line is the orchestrator's (UIB_JOB_30 B1); `firstOrder` (?cut=full, or \"The other jobs\") was \"A testimony first. Then the places list, the family calls and the group's check-in.\"; `waitFamily` was \"The family line still has parents waiting.\"",
   "_docFirstOrder": "⚑ S227 — LAMBIENT'S OPENING MESSAGE CALLS HER TO THE THREE IN ORDER (his 2026-10-10: 'the order of the three is Lambient's'; one short clause per job), said as the second line of the consent beat so the reply ('I'll keep the room tidy either way') is still heard first and the beat stays at two lines (R28). The board's own header still says 'Start anywhere. The order is yours.' — the platform offers a freedom and its assistant hands her an order in the same breath. In the Speedrun Version (`?cut=speedrun`) Lambient sends her straight to Annette's job ('to speed up the narrative').",
   "witnessAllowed": "assistant: introduced — Lambient permissions granted",
   "witnessDeclined": "assistant: dismissed — Lambient permissions declined, companion retained",

@@ -15,12 +15,13 @@
   "removed": "[location removed]"
  },
  "rule": "Add the place to the list",
- "ruleWhy": "Location may lead members to unsafe environments.",
- "teach": "Some places are not safe to show. We keep a list, so nobody walks in somewhere unprepared.",
+ "ruleWhy": "",
+ "teach": "Some places aren't safe to show. We keep a list, so nobody walks in unprepared.",
+ "_docS399": "⚑ S399 (UiB job 29 B1, 2016 cut by about half): the rule was explained three times on one screen. Kept: Lambient's lesson (his S332 ask, slightly shorter) and the done line \"The post stays up. The place does not.\" Cut: `ruleWhy` \"Location may lead members to unsafe environments.\" and `listSub` \"Kept by the network for members' safety.\" Áine's post, the list and its places are untouched.",
  "comply": "Add to the list",
  "refuse": "Leave it off",
  "listHeading": "PLACES TO AVOID",
- "listSub": "Kept by the network for members' safety.",
+ "listSub": "",
  "list": [
   "Saturday market · the rainbow stall",
   "Reading group · Thursdays, the library annexe",

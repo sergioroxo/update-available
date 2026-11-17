@@ -33,7 +33,8 @@ import { buildEra1Room } from '../room/era1room';
 import { preloadModels } from '../room/assets';
 import { buildFluidNiche, type FacetState, type FluidNiche } from '../room/fluidNiche';
 import { buildCeilingWitness, type CeilingWitness } from '../room/ceilingWitness';
-import { onCommonsRoom, setCommonsWorld } from '../room/cluster';
+import { onCommonsRoom, setCommonsWorld, setE4Dusk } from '../room/cluster';
+import { e4Has, type E4Beat } from '../narrative/e4Beats';
 import { WORLD as COMMONS_WORLD, onTurnTo } from '../room/commonsWorld';
 const WORLD_SKY = COMMONS_WORLD.sky;
 import { buildClusterShell, relocationFor, RELOCATIONS, type ClusterShell, type EraKey,
@@ -76,6 +77,7 @@ import { mountXrFrame, type XrFrame } from '../frame/xrFrame';
 import { siteViewerBus, ERA_TARGET, mountSiteViewerDom, mountSiteViewerXr, type XrViewer } from '../frame/siteViewer';
 import { mountXrComfort } from '../frame/xrComfort';
 import { mountXrDebug, sceneDrawCalls } from '../frame/xrDebug';
+import { mountTextSizeCard } from '../frame/xrTextCard';
 import { mountXrMonitorQuad, quadSessionOptions } from '../frame/xrMonitorQuad';
 import { mountXrTextures } from '../frame/xrTextures';
 import { guideBody } from '../desktop/apps/lambyGuideDraw';
@@ -906,6 +908,10 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   let ceiling: CeilingWitness | null = null;
   let cluster: ClusterShell | null = null;
   let e4Room: ReturnType<typeof buildE4Room> | null = null;
+  /** S398 (A6): how far 2026's lamp has faded (0 lit … 1 only the screen), and the beats that move it */
+  let e4Dusk = 0;
+  const E4_DUSK_STEPS: readonly [E4Beat, number][] = [['search', 0.2], ['bot', 0.4], ['map', 0.6], ['junie', 0.75], ['original', 0.9], ['tryon', 1]];
+  const E4_DUSK_RATE = 0.04;   // per second: a fifth of the fade in five seconds
   let e4RoomTurnSeq = -1;
   let cloud: PointCloud | null = null;
   let sendRt: SendRuntime | null = null;
@@ -1459,6 +1465,8 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       if (isOpen) xrFrame?.open(); else { xrFrame?.close(); siteViewerXr?.onMenuClosed(); }
     });
     if (runtimeQuery().get('debug') === '1') {
+      // ⚑ S398 (job 29 A8) — the text-size card for his Quest session: one line at 0.6°, 0.8°, 1.0° and 1.2°, one metre ahead
+      if (runtimeQuery().get('textcard') === '1') mountTextSizeCard(app, camera);
       // ⚑ S270 — the debug panel's read-only half, in the headset (his: "I cannot see the debug panel inside of the VR")
       mountXrDebug(app, camera, { lines: () => {
         const c = xrComfort.status(), f = (n: number) => n.toFixed(2), h = camera.getLocalPosition();
@@ -5078,6 +5086,19 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
         articles: os.e4.browser.roomArticleCount, clipTime: os.e4.browser.roomClipTime,
         takeover: os.e4.browser.roomClipTakeover, viewers: os.e4.ball.viewerCount });
     e4Room?.update(dt, os.era === 'e4');
+    /**
+     * ⚑ S398 (job 29 A6, his "okay") — 2026's light: the lamp in Maya's room fades through the assistant's conversation
+     * (cluster.ts E4_DUSK), a step at each of its beats, eased so it is felt before it is noticed (a fifth of the way in
+     * about five seconds); by the visor (`tryon`) the screen is her room's only light. Anywhere but 2026 it is undone.
+     */
+    {
+      let target = 0;
+      if (cluster?.era === 'e4') for (const [beat, k] of E4_DUSK_STEPS) if (e4Has(beat)) target = Math.max(target, k);
+      const step = dt * E4_DUSK_RATE;
+      e4Dusk += Math.max(-step, Math.min(step, target - e4Dusk));
+      if (cluster?.era !== 'e4') e4Dusk = 0;
+      setE4Dusk(e4Dusk);
+    }
     helper?.tick(dt);
     syncRacketDemo(dt); // the room follows the pressed step, moving between poses (see its doc)
     if (os.dirty) { frontTex.upload(); monitorQuad.changed(); os.dirty = false; }

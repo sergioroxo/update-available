@@ -249,6 +249,8 @@ function maltaAlertHold(): number { const R = vera.removals; return Math.max(9, 
 /** ⚑ S368 / F03 — the alert fires once this many of the group's Malta messages have landed: it says the group "is discussing",
  *  so two members (Bea, then Susan) have spoken first. Was 1 (Bea alone). */
 const MALTA_ALERT_AFTER = 4;
+/** ⚑ S399 — the room's light lifts once the news link has landed (s3_maiden.json `news[1]`, Bea's link) */
+const MALTA_LIFT_AFTER = 2;
 /** ⚑ S368 / F01·F02 (his screenshot: "Return the fa…" under the phone) — THE HANDSET WINDOW IS ONE FIXED WIDTH, docked at the
  *  right, and the board's layout RESERVES its column: nothing of the board is drawn under it. It used to be 188 px and grow to
  *  280 over the board (the cascade's "brought forward", and its title bar's own press). 200 × the 310 px phone draws it at
@@ -522,7 +524,11 @@ export class GraceQueueLite {
   }
   /** a job (or a story) is open on the platform: Malta's conducted clock waits for the board */
   private get jobOpen(): boolean { return this.mode === 'list' || !!this.openSurface; }
-  private get fourJobsDone(): boolean { return FOUR_JOBS.every(id => this.jobDone(id)); }
+  /** ⚑ S399 (job 29 B1) — the jobs ON the board, finished: the default visit's board holds the testimony and the places list
+   *  (s3_queue.json `startersSpeedrun`); the family calls and the group join it only through "The other jobs" or ?cut=full
+   *  ⚑ S403 (job 30 B1) — the family calls are back on the default board ("Answer the mothers"); only the group waits behind
+   *  "The other jobs" now */
+  private get fourJobsDone(): boolean { return FOUR_JOBS.filter(id => this.isUnlocked(id)).every(id => this.jobDone(id)); }
   /** ⚑ S332 — the Wick card is stamped BANNED once Orla's invitation has been read (era3Devices takes it) */
   wickBanPending = false;
   get wickBanReady(): boolean { return this.wickBanPending && this.phone.delivered('arrival') && !this.phone.voiceBusy && this.phone.atRest; }
@@ -691,6 +697,24 @@ export class GraceQueueLite {
   private cutQueue: { kind: CutKind; item: CorrectionDef }[] = [];
   private cutT = 0;
   private ownCutShown = false;
+  /** ⚑ S403 (UiB job 30 B2; his 17 Nov: "the "one story, four places" … could go?", then "Yes let's build the changes for
+   *  2016") — IN THE DEFAULT VISIT THE SEND IS IN THE EDITOR. The "Ready to share" page (drawVeraDistribution) leaves it:
+   *  when Renata's last rule is applied, her editor's own way on is "Send to all four" (`vera-send`, Vera's press, the same
+   *  id the page used, so Lamby's step and the glow point at it), and the receipt (s3_vera.json `send.sent`, "Sent to all
+   *  four. Shared across the network: 38 ministries in 9 countries.") shows there, before "Back to today". The press files
+   *  the ledger's `pipeline` and `veraDay.distributed` as the page did, so the testimony counts as done as before. The
+   *  page stays in ?cut=full. */
+  private get sendInEditor(): boolean { return isSpeedrun(); }
+  /** Renata's story done, in her editor, not yet sent: the editor offers the send in place of its way back */
+  private get editorSendPending(): boolean { return this.sendInEditor && this.mode === 'list' && !this.openSurface && this.renataOpen() && this.storyDone && !veraDay.distributed; }
+  /** …and once sent, the receipt stands where the press was */
+  private get editorReceipt(): boolean { return this.sendInEditor && this.renataOpen() && this.storyDone && veraDay.distributed; }
+  /** ⚑ S403 — the receipt (or the provenance before it), drawn in `w` at (x, y): up to `max` lines */
+  private drawSendLine(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, max: number): void {
+    studioFont(ctx, 11); ctx.fillStyle = ERA3.ink;
+    const lead = Math.round(textPx(11, 'e3')) + 3;
+    wrapText(ctx, vera.send.sent, w).slice(0, max).forEach((ln, i) => ctx.fillText(ln, x, y + i * lead));
+  }
   /** where her film was last drawn on the workstation canvas (for the probes and the measurements) */
   private filmRect: { x: number; y: number; w: number; h: number } | null = null;
   /** ⚑ S216 — the room the video was sent from, heard while it plays (his ear, 2026-10-04: 'the flat room tone works') */
@@ -1008,6 +1032,11 @@ export class GraceQueueLite {
    *  Bea's FIRST Malta message lands, as a pop-in over whatever is on the desk (the Handset Window included), with the platform's
    *  chime. One voice: if another system pop-in is up it waits for it, and while it is up the phone's news waits too. */
   private updateMaltaAlert(dt: number): void {
+    // ⚑ S399 (job 29 B1: "Malta and the light lifting" is a kept beat) — THE LIFT, re-attached. Its only call on a
+    //   visitor's path went with phoneE3's `showCard` on 7 Nov (fcc2bf5c), so since then the room lifted only by debug
+    //   beat. It answers the law again as S64 had it, on the news link (Bea's second message), whichever way she reads
+    //   it: the beat holds LIFT_DELAY_SECONDS, then the room's light lifts, before the platform's alert.
+    if (!this.liftFired && this.liftT < 0 && this.phone.newsLanded >= MALTA_LIFT_AFTER) { this.liftT = 0; this.bump(); }
     if (this.maltaAlertT < 0 && !this.maltaAlertDone && this.phone.newsLanded >= MALTA_ALERT_AFTER && !this.kitPopin && !this.storyOffer && !this.pauseOpen) {
       this.maltaAlertT = 0; this.phone.newsPaused = true; playOnce('lambient_chime.mp3'); this.bump();
     }
@@ -1105,7 +1134,13 @@ export class GraceQueueLite {
     if (this.mode !== 'board' && this.mode !== 'done' || this.veraPage) return;
     const wd = this.workDone();
     // A completed piece of work opens the pipeline before Malta, in either cut.
-    if (this.subComplete(SUBMISSIONS[0]) && !veraDay.distributed) { this.veraPage = 'send'; this.bump(); return; }
+    // ⚑ S403 — in the default visit the pipeline is the editor's own "Send to all four": if her story is done and unsent and
+    //   she is on the board anyway, the platform takes her back to the editor's last screen, where the send is (the page is
+    //   ?cut=full's only)
+    if (this.subComplete(SUBMISSIONS[0]) && !veraDay.distributed) {
+      if (this.sendInEditor) { this.reopenRenataDone(); return; }
+      this.veraPage = 'send'; this.bump(); return;
+    }
     if (veraDay.recordClosed && !veraDay.kitClosed) return;
 
     if (!this.maltaArrived) {
@@ -1471,7 +1506,8 @@ export class GraceQueueLite {
     //   lines, which is the cap.
     // ⚑ S227 — and the second line is the ORDER of the day's three (his: "the order of the three is Lambient's");
     //   in the Speedrun Version it sends her straight to Annette
-    this.lambSay([allow ? LAMBIENT.acceptReply : LAMBIENT.declineReply, isSpeedrun() && !extraOn('work') ? LAMBIENT.firstOrderSpeedrun : LAMBIENT.firstOrder]);
+    // ⚑ S399 (job 29 B1) — the line names the jobs ON the board, and "The other jobs" (`jobs`) is what decides the board
+    this.lambSay([allow ? LAMBIENT.acceptReply : LAMBIENT.declineReply, isSpeedrun() && !extraOn('jobs') ? LAMBIENT.firstOrderSpeedrun : LAMBIENT.firstOrder]);
     this.seenBoard = true;
     this.mode = 'board';
     this.bump();
@@ -1535,7 +1571,10 @@ export class GraceQueueLite {
 
   /** every job in the roster (the record is not a job — his Q8), installed or not, finished */
   private rosterComplete(): boolean {
-    return BOARD.filter((t) => t.id !== 'record' && (t.surface === 'testimony' || this.surfaces.has(t.id)))
+    // ⚑ S399 (job 29 B1) — the roster is this visit's: what is on the board plus what the platform will still offer as an
+    //   update (installed or not, as S227 had it); a job left off the default visit's board is not owed
+    const roster = new Set([...this.unlockedIds(), ...TOOLS.updates.map((u) => u.id)]);
+    return BOARD.filter((t) => t.id !== 'record' && roster.has(t.id) && (t.surface === 'testimony' || this.surfaces.has(t.id)))
       .every((t) => this.taskComplete(t));
   }
 
@@ -1615,6 +1654,16 @@ export class GraceQueueLite {
       this.seenTask = true;
       this.lambSay([LAMBIENT.firstTask1, LAMBIENT.firstTask2]);
     }
+    this.bump();
+  }
+
+  /** ⚑ S403 — Renata's editor, reopened on its last screen (her own 2014 cut and the send): the default visit's way to the
+   *  send if the board is reached with her story done and unsent (updateGate) */
+  private reopenRenataDone(): void {
+    this.openSurface = null; this.chipReturn = null;
+    this.subIdx = 0; this.submissionPage = 0;   // SUBMISSIONS[0] is Renata's
+    this.storyDone = true; this.ownCutShown = true; this.playing = false;
+    this.mode = 'list';
     this.bump();
   }
 
@@ -1879,6 +1928,7 @@ export class GraceQueueLite {
       if (this.doneT >= 0 || this.storyDone) ids.add('board-back');
       if (this.mode === 'list' && !this.openSurface && this.current()) ids.delete('board-back');
       if (this.veraPage === 'send') ids.add(this.sendReceipt ? 'vera-send-close' : 'vera-send');
+      if (this.editorSendPending) ids.add('vera-send');   // ⚑ S403 — the editor's own send (default visit)
       if (this.storyOffer) ids.add('update-accept');
       if (this.kitPopin) ids.add('kit-popin-open');
       if (this.veraPage === 'kit') ids.add(this.kitApproved ? 'vera-kit-close' : 'vera-kit-approve');   // S283: a finished job's one way on
@@ -2815,11 +2865,14 @@ export class GraceQueueLite {
       wrapText(ctx, vera.provenance, 158).forEach((ln, i) => ctx.fillText(ln, bx, by + 52 + i * 11));
     } else {
       studioFont(ctx, 15, true); ctx.fillStyle = ERA3.titleText; ctx.fillText(q.app.storyDone, c.x + 12, by + 12);
-      studioFont(ctx, 10); ctx.fillStyle = ERA3.greyDk; ctx.fillText(vera.provenance, c.x + 12, by + 37);
       const bw = 143, bx = c.x + c.w - bw - 10;
-      aero.button(ctx, bx, by + 12, bw, 28, this.boardBackLabel(), { primary: true, size: 11 });
-      this.rects.push({ x: bx, y: by + 12, w: bw, h: 28, id: 'board-back' });
-      if (SUBMISSIONS.some(sb => !this.subComplete(sb))) {
+      // ⚑ S403 — the default visit: "Send to all four" is the editor's way on until it is pressed, then its receipt
+      const send = this.editorSendPending;
+      if (this.editorReceipt) this.drawSendLine(ctx, c.x + 12, by + 36, bx - c.x - 24, 2);
+      else { studioFont(ctx, 10); ctx.fillStyle = ERA3.greyDk; ctx.fillText(vera.provenance, c.x + 12, by + 37); }
+      aero.button(ctx, bx, by + 12, bw, 28, send ? vera.send.press : this.boardBackLabel(), { primary: true, size: 11 });
+      this.rects.push({ x: bx, y: by + 12, w: bw, h: 28, id: send ? 'vera-send' : 'board-back' });
+      if (!send && SUBMISSIONS.some(sb => !this.subComplete(sb))) {
         aero.button(ctx, bx, by + 46, bw, 25, q.app.nextStory, { size: 11 });
         this.rects.push({ x: bx, y: by + 46, w: bw, h: 25, id: 'next-story' });
       }
@@ -2869,8 +2922,11 @@ export class GraceQueueLite {
       const bh = 34;
       this.drawOwnCut(ctx, c.x + 1, c.y + 1, c.w - 2, c.h - bh - 10, true);
       const bw = 143, bx = c.x + c.w - bw - 2, by = c.y + c.h - bh;
-      aero.button(ctx, bx, by, bw, 28, this.boardBackLabel(), { primary: true, size: 11 });
-      this.rects.push({ x: bx, y: by, w: bw, h: 28, id: 'board-back' });
+      // ⚑ S403 — the default visit: the send is offered here too (the film may end before she presses it), then its receipt
+      const send = this.editorSendPending;
+      if (this.editorReceipt) this.drawSendLine(ctx, c.x + 4, by, bx - c.x - 16, 2);
+      aero.button(ctx, bx, by, bw, 28, send ? vera.send.press : this.boardBackLabel(), { primary: true, size: 11 });
+      this.rects.push({ x: bx, y: by, w: bw, h: 28, id: send ? 'vera-send' : 'board-back' });
       return;
     }
     // the way back, and the system's one line
@@ -3506,7 +3562,10 @@ export class GraceQueueLite {
     if (this.saver) { this.saver = null; this.bump(); return; }   // S208 — a press wakes it, and does nothing else
     // S208 / A3 — the first-task beat, once seen on the board, closes when she acts there
     if (this.mode === 'board' && this.lambLines?.[0] === LAMBIENT.firstTask1) { this.lambLines = null; this.bump(); }
-    const r = this.rects.find(rr => hit(rr, x, y));
+    // ⚑ S403 — the "This week" card's Close is drawn ON TOP of the board, but its rect is pushed after the tiles', so a
+    //   press on Close found the tile under it first and OPENED THAT JOB (the walk: Close → the finished mothers' job →
+    //   Back). With a third tile on the default board, "Answer the mothers" sits under Close. The visible button wins.
+    const r = (this.pauseOpen ? this.rects.find(rr => rr.id === 'pause-close' && hit(rr, x, y)) : undefined) ?? this.rects.find(rr => hit(rr, x, y));
     if (!r) { if (this.startMap.menu) { this.startMap.close(); this.bump(); } return; }
     const model = buildStartModel(undefined, 'e3');
     if (r.id === 'account-activity') { this.startMap.close(); this.openRecordFromChip(); return; }

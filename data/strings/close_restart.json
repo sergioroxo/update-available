@@ -71,7 +71,7 @@
   "_doc": "⚑ S378 (UiB job 20 Part A; his 12 Nov: 'should we make one of the panels the computer… we can open fake html pages like the other panels') — THE COMPUTER AS A FIFTH PANEL, and its own page in the site viewer. The panel hangs in the Close's row beside the four rooms' panels (pointCloud.ts, the machine panel); a press anywhere on it opens the machine's page (src/frame/siteViewer/machine.ts), which holds everything the Restart card on the far glass held: the title, the file's size and the sentence that answers it, the four rooms, Start again, the Receipt, the dossier and the Lexicon. Frame voice: functional, plain, never playing. Every key below is NEW — a draft for his eye (T76); the card's own words above are reused unchanged. ⚑ 'Return to LambyOS Home' (`home`, above) is NOT on the page: the card has had no Home button since Home was dropped (his 27 Oct ruling: no Bob version) — T76 asks.",
   "panelHint": "Press anywhere on this screen to open the machine's page.",
   "panelButton": "Open",
-  "windowTitle": "LambyOS · 1997 — 2026",
+  "windowTitle": "Your Update Has Failed · 1997 — 2026",
   "tabs": { "machine": "Restart", "receipt": "Receipt", "lexicon": "The Lexicon" },
   "back": "Back",
   "roomsLabel": "The four rooms",

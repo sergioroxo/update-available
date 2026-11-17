@@ -130,6 +130,22 @@ const E3_LIFT = {
  * mode, tests), which is the correct behaviour rather than a guard: with no room
  * there is no light to lift.
  */
+/**
+ * ⚑ S398 (UiB job 29 A6; his "okay" to Fable's B4, 16 Nov) — 2026'S LIGHT. The plan of record says two lights fight for
+ * one room, and in the stills the lamp always won: 2026 stayed cosy to the end. Now, while the assistant talks to her
+ * (the search finishing her sentence, the bot, the map, Junie, her photo, the visor: e4Beats `search` … `tryon`), the
+ * lamp in MAYA'S room fades, and its bulb with it, until by the visor the screen's light (`mayaGlow`, a quarter stronger
+ * as the lamp goes) is the only light with a source in her room. `k` runs 0 → 1; app.ts eases it beat by beat. Room 3's
+ * ambient fill (`zoneE`) is left as it is: its range reaches Daniel's room, and fading it darkened his by a tenth
+ * (measured, S398). Daniel's room, where the stars and the Close come, keeps its light; the send to his seat is unchanged;
+ * the friends' arrival (the ball, `respite`) is lit by its own light on top, untouched, and nothing changes while it
+ * runs (the fade is over by the visor). Applied over the e4 rig only once that rig has settled, so a crossfade (the
+ * arrival, the Close's own rig) is never fought.
+ */
+const E4_DUSK = { lamp: 1, screenGain: 0.25 };
+let e4DuskHook: ((k: number) => void) | null = null;
+export function setE4Dusk(k: number): void { e4DuskHook?.(k); }
+
 let e3LiftHook: ((on: boolean) => void) | null = null;
 export function setEra3Lift(on: boolean): void {
   e3LiftHook?.(on);
@@ -545,7 +561,8 @@ export function buildClusterShell(
    * more: the static/settled split was the thing producing 61 duplicate batches,
    * and one group with one numeric id is what replaced it.
    */
-  const excluded = new Set([...BELONGINGS_IDS, ...UNBATCHED_IDS, ...neverBatch]);
+  // S398 (A6): the 2026 beacon's bulb dims with the lamp (updateDusk writes its glass), so it never shares a batch
+  const excluded = new Set([...BELONGINGS_IDS, ...UNBATCHED_IDS, ...neverBatch, 'e_lampBeacon']);
   let emphasisBatch = new Set<string>();
   function publishBatchStats(): void {
     const w = window as { __batchedProps?: number; __staticBatchedProps?: number; __settledBatchedProps?: number };
@@ -553,13 +570,170 @@ export function buildClusterShell(
     w.__settledBatchedProps = settledJoined;
     w.__batchedProps = settledJoined;
   }
+  /**
+   * ⚑ S398 (UiB job 29 A1, his "yes lets fix it") — THE ERA CHANGE NO LONGER UNBATCHES THE WHOLE ROOM.
+   *
+   * Until S398 the room's one batch was torn down before every cascade, so for the cascade's whole length every prop
+   * drew on its own: measured in the seated headset mock, 214 draws at the worst moment of 2016 → 2026 (204 on the
+   * computer), against the budget of 75 (Fable's review, §1.4). Now, at the cascade's start (`startBands`):
+   *   - every prop the cascade does not animate (the constants, the kept, the models and composites — they snap once,
+   *     at its start — and whatever the fold does not own) is baked straight back into the room's own group;
+   *   - the props it animates are cut into BANDS along its sweep (the morph's own order: each prop has a moment,
+   *     clusterMorph `planWindows`). A band is batched as it is while it waits, comes out of its batch just before its
+   *     first prop's moment (`stepBands`, before the morph writes that frame), and joins ONE done group, at its target,
+   *     the moment its last prop is done (the morph no longer writes to a done prop). The props that only flicker band
+   *     apart from the ones that change (they are out of their batch for 0.42 of a moment, the others for all of it).
+   *   - the Close's glitch sweep is banded the same way (`glitchSweep` → `startBands(SWEEP_SOURCE)`).
+   * So only the props being changed right now draw one by one. Nothing the morph does changed: the same props flicker,
+   * in the same order, with the same glitch (the morph's update is untouched but for leaving a finished prop alone).
+   * The check is a paired render (tools/s396-drawcalls-probe.mjs --change; `__morphBands` under ?debug=1 switches it,
+   * `?morphbands=0` is the A/B escape): at moments through each change the same frame drawn with the bands and with the
+   * old tear-down shows no prop in another state. It is NOT bit for bit: a batch draws its boxes pre-transformed and in
+   * another order, so draw-order ties between touching surfaces, single edge pixels and depth flips between layers a few
+   * millimetres apart far off differ, the same class the old build makes itself each time the room is batched or torn
+   * down. Measured peaks, and what still exceeds 75: BUILD_LOG S398. When the cascade ends the room is rebuilt as one
+   * group, exactly as before.
+   */
+  interface Band { name: string; ids: Set<string>; start: number; end: number; handle: BatchHandle | null; state: 'waiting' | 'live' | 'done' }
+  let bands: Band[] = [];
+  /** what the bands follow: the era's cascade, or (the same grammar) the Close's glitch sweep */
+  interface BandSource { clock(): number; windows(): { id: string; start: number; end: number; drawn: boolean; still: boolean }[]; done(id: string): boolean; animated(): ReadonlySet<string> }
+  const CASCADE_SOURCE: BandSource = { clock: () => morph.cascadeClock, windows: () => morph.planWindows(), done: (id) => morph.planDone(id), animated: () => morph.animatedIds };
+  const SWEEP_SOURCE: BandSource = { clock: () => morph.sweepClock, windows: () => morph.sweepWindows(), done: (id) => morph.sweepDone(id), animated: () => morph.sweptIds };
+  let source: BandSource = CASCADE_SOURCE;
+  /** the props that hold still while the bands run, and so stay in the room's own group */
+  let stillGroupNever: () => Set<string> = () => new Set([...excluded, ...emphasisBatch, ...source.animated()]);
+  /** the props of every band that is done, in ONE group (re-baked as each band joins it): a done band costs no draw of its own */
+  let doneBatch: BatchHandle | null = null;
+  const doneIds = new Set<string>();
+  /** the cost of the bands, for the probe: ms spent baking and clearing during the cascade, and the longest single step */
+  const bandCost = { ms: 0, max: 0, steps: 0 };
+  const timed = <T>(f: () => T): T => { const t0 = performance.now(); try { return f(); } finally { const d = performance.now() - t0; bandCost.ms += d; bandCost.steps++; if (d > bandCost.max) bandCost.max = d; } };
+  let bandsOn = !/[?&]morphbands=0\b/.test(typeof location === 'undefined' ? '' : location.search);
+  /** while the probe's paired render shows the old tear-down: the bands keep their states, unbaked */
+  let bandsSuspended = false;
+  /** props per band: the ones that only flicker are out of their batch for 0.42 of a moment, the ones that change for
+   *  all of it, so they band apart (measured, 2016 → 2026: 10 mixed → peak 126 on the computer; see the BUILD_LOG) */
+  const BAND_SIZE_STILL = 8, BAND_SIZE_CHANGING = 5;
+  /** s: a band leaves its batch this much before its first prop's moment (the morph must never write to a batched prop) */
+  const BAND_LEAD = 0.05;
+  let joinedCache: { key: unknown[]; set: ReadonlySet<string> | null } = { key: [], set: null };
+  function joinedIds(): ReadonlySet<string> | null {
+    const handles: unknown[] = [roomBatch, doneBatch, ...bands.map((b) => b.handle)];
+    if (handles.length === joinedCache.key.length && handles.every((h, i) => h === joinedCache.key[i])) return joinedCache.set;
+    const parts = handles.filter((h): h is BatchHandle => !!h);
+    const set = parts.length === 0 ? null : parts.length === 1 ? parts[0].idSet : new Set(parts.flatMap((h) => h.ids));
+    joinedCache = { key: handles, set };
+    return set;
+  }
+  function neverSet(): Set<string> { return new Set([...excluded, ...emphasisBatch]); }
+  function bakeBand(b: Band): void {
+    b.handle = bakeBatch(app, room, neverSet(), { name: b.name, only: b.ids });
+  }
+  function bakeDone(): void {
+    doneBatch = doneIds.size ? bakeBatch(app, room, neverSet(), { name: 'room-band-done', only: doneIds }) : clearBatch(app, room, doneBatch);
+  }
+  function clearBands(): void {
+    for (const b of bands) if (b.handle) b.handle = clearBatch(app, room, b.handle);
+    doneBatch = clearBatch(app, room, doneBatch);
+    doneIds.clear();
+    bands = [];
+    bandsSuspended = false;
+  }
+  function publishBatchStatsAll(): void {
+    settledJoined = (roomBatch?.joined ?? 0) + (doneBatch?.joined ?? 0) + bands.reduce((n, b) => n + (b.handle?.joined ?? 0), 0);
+    publishBatchStats();
+    (window as { __morphBandStats?: unknown }).__morphBandStats = bands.length
+      ? { bands: bands.length, waiting: bands.filter((b) => b.state === 'waiting').length, live: bands.filter((b) => b.state === 'live').length,
+          done: bands.filter((b) => b.state === 'done').length, suspended: bandsSuspended,
+          liveProps: bands.filter((b) => b.state === 'live').reduce((n, b) => n + b.ids.size, 0),
+          costMs: +bandCost.ms.toFixed(1), maxStepMs: +bandCost.max.toFixed(1), steps: bandCost.steps }
+      : null;
+  }
+  /** the cascade has just been planned (morph.goToState), or the sweep begun: the props that hold still back into the
+   *  room's group (unless the caller has baked it already), the rest in bands */
+  function startBands(src: BandSource = CASCADE_SOURCE, bakeStill = true): void {
+    if (!batch || !bandsOn || !morph.running) return;
+    source = src;
+    bandCost.ms = 0; bandCost.max = 0; bandCost.steps = 0;
+    if (bakeStill) roomBatch = bakeBatch(app, room, stillGroupNever());
+    const windows = src.windows().filter((w) => w.drawn).sort((a, b) => a.start - b.start);
+    bands = [];
+    for (const still of [true, false]) {
+      const ws0 = windows.filter((w) => w.still === still), size = still ? BAND_SIZE_STILL : BAND_SIZE_CHANGING;
+      for (let i = 0; i < ws0.length; i += size) {
+        const ws = ws0.slice(i, i + size);
+        bands.push({ name: `room-band-${bands.length}`, ids: new Set(ws.map((w) => w.id)), start: ws[0].start,
+          end: Math.max(...ws.map((w) => w.end)), handle: null, state: 'waiting' });
+      }
+    }
+    bands.sort((a, b) => a.start - b.start);
+    for (const b of bands) if (src.clock() + BAND_LEAD < b.start) bakeBand(b); else b.state = 'live';
+    publishBatchStatsAll();
+  }
+  /** `next`: the cascade's clock the morph is about to reach. Out of its batch: a band whose moment begins by then.
+   *  `now` (after the morph's update): back into a batch, at its target, a band whose every prop is done. */
+  function stepBands(next: number, now: number | null): void {
+    if (!bands.length || next < 0) return;
+    let changed = false;
+    let joined = false;
+    for (const b of bands) {
+      if (b.state === 'waiting' && next + BAND_LEAD >= b.start) {
+        if (b.handle) { const h = b.handle; b.handle = timed(() => clearBatch(app, room, h)); }
+        b.state = 'live'; changed = true;
+      }
+      if (b.state === 'live' && now !== null && now >= b.end && [...b.ids].every((id) => source.done(id))) {
+        b.state = 'done';
+        for (const id of b.ids) doneIds.add(id);
+        joined = true; changed = true;
+      }
+    }
+    if (joined && !bandsSuspended) timed(bakeDone);
+    if (changed) publishBatchStatsAll();
+  }
+  /** ?debug=1, the probe's paired render: off = the old tear-down (nothing batched while the cascade runs), on = the
+   *  bands as their states say. Synchronous: the next app.render() draws the switched state. */
+  function setBandsBatched(on: boolean): void {
+    if (!bands.length) return;
+    if (!on) {
+      if (bandsSuspended) return;
+      roomBatch = clearBatch(app, room, roomBatch);
+      doneBatch = clearBatch(app, room, doneBatch);
+      for (const b of bands) if (b.handle) b.handle = clearBatch(app, room, b.handle);
+      bandsSuspended = true;
+    } else {
+      if (!bandsSuspended) return;
+      bandsSuspended = false;
+      roomBatch = bakeBatch(app, room, stillGroupNever());
+      for (const b of bands) if (b.state === 'waiting') bakeBand(b);
+      bakeDone();
+    }
+    cullAbsentProps(room, joinedIds());
+    publishBatchStatsAll();
+  }
+
   function clearSettled(): void {
+    clearBands();
     roomBatch = clearBatch(app, room, roomBatch);
     settledJoined = 0;
-    publishBatchStats();
+    publishBatchStatsAll();
   }
   function rebuildSettled(): void {
     if (!batch) return;
+    // S398: mid-cascade (a travel wall fading, an emphasis change), the room is rebaked AS BANDS, never as one group:
+    //   one group would freeze every prop the cascade is still changing into the batch until it ends
+    if (bands.length && morph.running) {
+      for (const b of bands) if (b.handle) b.handle = clearBatch(app, room, b.handle);
+      doneBatch = clearBatch(app, room, doneBatch);
+      roomBatch = clearBatch(app, room, roomBatch);
+      if (!bandsSuspended) {
+        roomBatch = bakeBatch(app, room, stillGroupNever());
+        for (const b of bands) if (b.state === 'waiting') bakeBand(b);
+        bakeDone();
+      }
+      publishBatchStatsAll();
+      return;
+    }
     clearSettled();
     roomBatch = bakeBatch(app, room, new Set([...excluded, ...emphasisBatch]));
     settledJoined = roomBatch?.joined ?? 0;
@@ -571,6 +745,31 @@ export function buildClusterShell(
     pendingSettledRebatch = true;
   }
   if (batch) rebuildSettled();
+  if (typeof window !== 'undefined' && /[?&]debug=1\b/.test(location.search)) {
+    (window as { __morphBands?: unknown }).__morphBands = {
+      get on(): boolean { return bandsOn; },
+      set on(v: boolean) { bandsOn = v; },
+      /** the paired render's switch (see setBandsBatched) */
+      batched: (on: boolean): void => setBandsBatched(on),
+      get active(): boolean { return bands.length > 0; },
+      get suspended(): boolean { return bandsSuspended; },
+      /** which group holds each batched prop, and whether the cascade still owes it a write (a batched prop must not be owed one) */
+      inspect: (): unknown => {
+        const groups: Record<string, string[]> = {};
+        for (const h of [roomBatch, doneBatch, ...bands.map((b) => b.handle)]) if (h) groups[h.group] = h.ids;
+        const owed = Object.values(groups).flat().filter((id) => source.animated().has(id) && !source.done(id) && (source.clock() >= (source.windows().find((w) => w.id === id)?.start ?? Infinity)));
+        const lit = Object.values(groups).flat().filter((id) => { const h = room.props.get(id); const e = h?.material?.emissive; return h && !h.emissive && e && (e.r || e.g || e.b); });
+        return { clock: source.clock(), source: source === SWEEP_SOURCE ? 'sweep' : 'cascade', groups: Object.fromEntries(Object.entries(groups).map(([k, v]) => [k, v.length])), owed, lit };
+      },
+      /** the settled room, unbatched (off) or as its one group (on): what the old cascade did at its start and its end,
+       *  for the probe to measure (a batch draws its boxes pre-transformed: the same picture to within a level) */
+      settled: (on: boolean): void => {
+        if (bands.length || morph.running) return;
+        if (on) rebuildSettled(); else clearSettled();
+        cullAbsentProps(room, joinedIds());
+      }
+    };
+  }
 
   // W1-B11: E2's sends traverse the still-closed full-height partitions;
   // E3's dormant s4 does too. There is no over-wall gap (wall top 2.70,
@@ -831,6 +1030,7 @@ export function buildClusterShell(
     if (name === '_note') return;
     const rig = (clusterData.rigs as unknown as Record<string, Rig | undefined>)[name];
     if (!rig) return;
+    currentRig = name; duskApplied = -1;   // S398: the dusk re-applies over the new rig once it has settled
     rigFadeSeconds = seconds ?? RIG_FADE_SECONDS;
     e3Lifted = false; // any authored rig change ends the beat — see liftE3()
     fadeToRig(rig, animate);
@@ -912,6 +1112,30 @@ export function buildClusterShell(
     }, true);
   }
   e3LiftHook = liftE3;
+
+  // ── ⚑ S398 (A6) — 2026's light, see E4_DUSK at the top of this file ────────
+  let currentRig = '';
+  let duskK = 0, duskApplied = -1, bulbApplied = 0;
+  /** the beacon's glowing glass (its `partGlow` material, never batched — see `excluded`): its own emissive, saved once */
+  const beaconGlow: { m: pc.StandardMaterial; e: pc.Color }[] = [];
+  function updateDusk(): void {
+    // the bulb follows the lamp in any rig (it is the lamp's own glass); the lights only over the settled e4 rig
+    if (duskK !== bulbApplied) {
+      const beacon = room.props.get('e_lampBeacon');
+      if (beacon && !beaconGlow.length) for (const m of beacon.materials) if (m.emissive.r || m.emissive.g || m.emissive.b) beaconGlow.push({ m, e: m.emissive.clone() });
+      const f = 1 - duskK * E4_DUSK.lamp;
+      for (const g of beaconGlow) { g.m.emissive.set(g.e.r * f, g.e.g * f, g.e.b * f); g.m.update(); }
+      if (beaconGlow.length || !beacon) bulbApplied = duskK;
+    }
+    if (duskK === duskApplied || currentRig !== 'e4' || rigT < 1) return;
+    const rig = (clusterData.rigs as unknown as Record<string, Rig | undefined>).e4;
+    if (!rig) return;
+    const set = (id: string, v: number): void => { const e = app.root.findByName(`light-${id}`); if (e instanceof pc.Entity && e.light) e.light.intensity = v; };
+    set('lamp', (rig.lights.lamp?.intensity ?? 0) * (1 - duskK * E4_DUSK.lamp));
+    set('mayaGlow', (rig.lights.mayaGlow?.intensity ?? 0) * (1 + duskK * E4_DUSK.screenGain));
+    duskApplied = duskK;
+  }
+  e4DuskHook = (k: number): void => { duskK = Math.max(0, Math.min(1, k)); };
 
   // ── ⚑ THE BALL'S LIGHT — see BallLightState at the top of this file ────────
   /** what the beat has asked for; `null` = it is over and the room empties */
@@ -1036,6 +1260,10 @@ export function buildClusterShell(
       publishBatchStats();
       pendingSettledRebatch = true;   // the whole room is rebaked when the sweep is over
       morph.glitchSweep(from, to, seconds, 2.6, roomBatch?.idSet);
+      // ⚑ S398 (job 29 A1) — and the swept props in BANDS along the flight, as the cascade's: each prop glitches for its
+      //   moment as the wave passes it and is exactly itself before and after, so it is batched except while it glitches
+      //   (measured in the headset mock: the flight drew 117 at its worst with the whole room unbatched)
+      startBands(SWEEP_SOURCE, false);
     },
 
     reveal(): void {
@@ -1087,6 +1315,7 @@ export function buildClusterShell(
           { t: R + (reloc.morphDelaySeconds ?? 0), fn: () => {   // the space begins to change (Phase 7: E3→E4 later)
             beginMorphedStateBatch();
             morph.goToState(toIdx, true, pace);
+            startBands();   // S398: what holds still keeps its batch
             shell.onSpaceChange?.(cascade);   // S347/S348: the morph's own sound layer starts with the glob
             // S61: the record leaves the spine WITH the walls (see
             // setTerminalVisible) — one change, one moment, not two.
@@ -1134,6 +1363,7 @@ export function buildClusterShell(
         if (willAnimate) beginMorphedStateBatch();
         else clearSettled();
         morph.goToState(toIdx, willAnimate);
+        if (willAnimate) startBands();   // S398
         rebuildAfterLayout = !willAnimate;
       }
       applyRig(toEra, animate);
@@ -1174,7 +1404,11 @@ export function buildClusterShell(
           if (ev) ev.fn();
         }
       }
+      // S398: before the morph writes this frame, the bands whose moment begins now leave their batch; after it, the
+      //   bands it has finished go back into one
+      if (bands.length) stepBands(source.clock() + dt, null);
       morph.update(dt);
+      if (bands.length) stepBands(source.clock(), source.clock());
       if (pendingSettledRebatch && !morph.running) {
         pendingSettledRebatch = false;
         applyLayout();
@@ -1182,7 +1416,7 @@ export function buildClusterShell(
       }
       // ⚑ S287 — DRAWCALLS_ROOMS_EVAL_2026-11-01 option Z: a prop the era has removed is scaled to 0, not switched
       //   off, and the engine still drew each one (84 of the 144 draws west from Maya's seat). Hidden while at 0.
-      if (batch) cullAbsentProps(room, roomBatch?.idSet ?? null);
+      if (batch) cullAbsentProps(room, joinedIds());
       if (rigT < 1) {
         rigT = Math.min(1, rigT + dt / rigFadeSeconds);
         const k = rigT * rigT * (3 - 2 * rigT);
@@ -1205,6 +1439,7 @@ export function buildClusterShell(
       // ⚑ LAST, and after the rig on purpose: the ball adds warmth on top of
       // whatever the era's light is doing rather than replacing it, so a
       // crossfade and a ball can run in the same frame without a fight.
+      updateDusk();   // S398 (A6): after the rig, before the ball (the ball adds on top of whatever the room is doing)
       updateBall(dt);
       commonsFigures.update(dt);
       commonsHost.update(dt);

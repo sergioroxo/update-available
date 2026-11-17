@@ -48,9 +48,9 @@
   ],
   "origin_intake_e1#3": [
    {
-    "label": "APA Task Force (2009), Appropriate Therapeutic Responses to Sexual Orientation",
-    "url": "https://www.apa.org/pi/lgbt/resources/therapeutic-response.pdf",
-    "verifiedIn": "docs/SOURCE_VERIFICATION_RESULTS_2026-07-24.md"
+    "label": "Royal College of Psychiatrists, Position Statement: Sexual Orientation (PS02/2014)",
+    "url": "https://www.rcpsych.ac.uk/docs/default-source/improving-care/better-mh-policy/position-statements/ps02_2014.pdf?sfvrsn=b39bd77c_4",
+    "verifiedIn": "docs/reinterp/LEXICON_SOURCES_VERIFIED_2026-10-11.md"
    },
    {
     "label": "APA Resolution on Sexual Orientation Change Efforts (2021)",
@@ -89,9 +89,9 @@
   ],
   "pillow#3": [
    {
-    "label": "APA Task Force (2009), Appropriate Therapeutic Responses to Sexual Orientation",
-    "url": "https://www.apa.org/pi/lgbt/resources/therapeutic-response.pdf",
-    "verifiedIn": "docs/SOURCE_VERIFICATION_RESULTS_2026-07-24.md"
+    "label": "Royal College of Psychiatrists, Position Statement: Sexual Orientation (PS02/2014)",
+    "url": "https://www.rcpsych.ac.uk/docs/default-source/improving-care/better-mh-policy/position-statements/ps02_2014.pdf?sfvrsn=b39bd77c_4",
+    "verifiedIn": "docs/reinterp/LEXICON_SOURCES_VERIFIED_2026-10-11.md"
    },
    {
     "label": "APA Resolution on Sexual Orientation Change Efforts (2021)",
@@ -1038,6 +1038,11 @@
   ],
   "e4_offers#20": [
    {
+    "label": "Supreme Court of the United States, Chiles v. Salazar, No. 24–539, opinion of the Court (decided 31 March 2026)",
+    "url": "https://www.supremecourt.gov/opinions/25pdf/24-539_fd9g.pdf",
+    "verifiedIn": "docs/reinterp/SOURCES_JOB29_B2_2026-11-16.md"
+   },
+   {
     "label": "Cornell Legal Information Institute, Chiles v. Salazar (Supreme Court, 31 March 2026)",
     "url": "https://www.law.cornell.edu/supremecourt/text/24-539",
     "verifiedIn": "docs/reinterp/LINK_PASS_2026-11-13.md"
@@ -1063,6 +1068,16 @@
     "label": "Stonewall, Ban conversion practices — response to the draft Bill",
     "url": "https://stonewall.org.uk/get-involved/campaign-with-us/ban-conversion-practices",
     "verifiedIn": "docs/reinterp/LINK_PASS_2026-11-13.md"
+   },
+   {
+    "label": "Stonewall, Government finally publishes long overdue draft Bill to ban conversion practices (25 June 2026)",
+    "url": "https://www.stonewall.org.uk/news/government-finally-publishes-long-overdue-draft-bill-to-ban-conversion-practices",
+    "verifiedIn": "docs/reinterp/SOURCES_JOB29_B2_2026-11-16.md"
+   },
+   {
+    "label": "LBC, Jail time and fines for abusive conversion practices under proposed new law (25 June 2026): the Royal College of Psychiatrists' president",
+    "url": "https://www.lbc.co.uk/article/jail-time-fines-abusive-conversion-practices-5Hjdc8K_2/",
+    "verifiedIn": "docs/reinterp/SOURCES_JOB29_B2_2026-11-16.md"
    }
   ],
   "origin_intake_e1#4": [

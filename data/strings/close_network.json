@@ -35,8 +35,9 @@
    "era": 0
   },
   {
-   "text": "Exodus referral map 1996",
-   "era": 1
+   "text": "Exodus referral lists 1999",
+   "era": 1,
+   "_doc": "⚑ S399 (UiB job 29 B2 item 5; his 16 Nov: \"yes please\"). Was \"Exodus referral map 1996\": no map and nothing from 1996 was found (the Wayback index holds no Exodus capture before 1999). Reworded to what Exodus's own page says, 17 Apr 1999 (https://web.archive.org/web/19990417133357/http://www.exodusintl.org/, already the 1997 site's period link): \"a Christian referral and resource network founded in 1976\" and \"Referral lists and qualifications to join Exodus\". See docs/reinterp/SOURCES_JOB29_B2_2026-11-16.md."
   },
   {
    "text": "van den Aardweg questionnaire 1997",
@@ -51,16 +52,19 @@
    "era": 1
   },
   {
-   "text": "Love Won Out curricula",
-   "era": 2
+   "text": "Love Won Out conference guide",
+   "era": 2,
+   "_doc": "⚑ S399 (UiB job 29 B2 item 5). Was \"Love Won Out curricula\": Love Won Out was a conference series (The Christian Post, 12 Aug 2009: \"Launched in 1998, the Love Won Out conference…\", run by Focus on the Family, then Exodus from November 2009), and what the KB verified is its conference guide (docs/SOURCE_VERIFICATION_RESULTS_2026-07-24.md C4: a 'Prevention of Male Homosexuality' session; a separate session on school curricula). See docs/reinterp/SOURCES_JOB29_B2_2026-11-16.md."
   },
   {
-   "text": "NARTH position 2006",
-   "era": 2
+   "text": "NARTH home page 2003",
+   "era": 2,
+   "_doc": "⚑ S399 (UiB job 29 B2 item 5). Was \"NARTH position 2006\": no NARTH position dated 2006 was found (only a 2006 conference, seen as an archive listing, and 2006 controversies). Reworded to the NARTH source the 2003 site already links and that was read: its home page, 20 Jul 2003 (https://web.archive.org/web/20030720194858/http://www.narth.com/), \"National Association for Research and Therapy of Homosexuality (NARTH) -- a non-profit, educational organization dedicated to affirming a complementary, male-female model of gender and sexuality\". See docs/reinterp/SOURCES_JOB29_B2_2026-11-16.md."
   },
   {
    "text": "Exodus women's initiative 2008",
-   "era": 2
+   "era": 2,
+   "_doc": "⚑ S399 (UiB job 29 B2 item 5): kept, confirmed. The Christian Post, Lillian Kwon, Wednesday 27 Aug 2008, \"Exodus Launches Initiative to Help Women Affected by Lesbianism\" (http://www.christianpost.com/news/exodus-launches-initiative-to-help-women-affected-by-lesbianism.html): Exodus \"launched a new ministry this week to specifically cater to women struggling with unwanted same-sex attraction\"; \"Exodus has launched an initiative that is being led by Yvette Schneider.\" No Exodus page of its own was seen. See docs/reinterp/SOURCES_JOB29_B2_2026-11-16.md."
   },
   {
    "text": "APA task force review 2009",
@@ -142,7 +146,7 @@
    "era": 3,
    "years": "2016",
    "title": "GOVERN",
-   "text": "Vera works from her room, correcting other women’s writing for a platform — lesbian women, writing about their own lives — one rule at a time: remove anything unresolved, add the scripture. One afternoon the group chat on her phone is about a law: Malta has just made practices like hers an offence, unanimously. Nobody in the room says anything. Content rules and moderation work were among the tools these networks used to reach people at scale. In this room nobody is treated; the writing is edited.",
+   "text": "Vera works from her room, correcting other women’s writing for a platform — lesbian women, writing about their own lives — one rule at a time: remove anything unresolved, add the scripture. One afternoon the group chat on her phone is about a law: Malta has just made conversion practices an offence, unanimously. Nobody in the room says anything. Content rules and moderation work were among the tools these networks used to reach people at scale. In this room nobody is treated; the writing is edited.",
    "status": "contested",
    "practices": ["arrival", "queue", "places", "moderation", "record"],
    "image": "assets/close/era3.jpg"

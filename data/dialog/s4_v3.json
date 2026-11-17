@@ -202,7 +202,7 @@
       "mum": {"from": "Mum", "when": "08:01", "subject": "for your birthday", "lines": ["Happy birthday my love.", "I found this in the loft. You were such a happy little"], "after": ["I've been reading a lot. I don't understand all of it, but I'm trying.", "Please read these. For me.", "Mum x"], "attachment": "loft.jpg", "linksLabel": "Mum sent you 3 links", "replyLabel": "Your reply · not sent", "draft": "Mum, I", "read": "Read the first one", "label": "family", "snippet": "Happy birthday my love. I found this in the loft…"}
     },
     "ordinary": [
-      {"from": "Greenway Buses", "subject": "Your 16–17 Saver has ended", "snippet": "Happy birthday! From today your fares change.", "when": "07:00"},
+      {"from": "Greenway Buses", "subject": "Your GreenTeen pass has ended", "snippet": "Happy birthday! From today your fares change.", "when": "07:00"},
       {"from": "Promotions", "subject": "3 new", "snippet": "Birthday treat inside · 20% off · Last chance", "when": "Thu", "promo": true}
     ],
     "witnessClinic": "mail: the clinic — 'your referral has moved'; number {number}",

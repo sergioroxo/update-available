@@ -1100,6 +1100,9 @@ export function buildPointCloud(app: pc.Application, viewCamera?: () => pc.Entit
       const b = M.transformPoint(new pc.Vec3(f.c.x + f.r.x * bx + f.u.x * by, f.c.y + f.r.y * bx + f.u.y * by, f.c.z + f.r.z * bx + f.u.z * by));
       return { i, era: panelEra[i], machine: i === machineIdx, face: panelFace[i], hidden: panelHidden[i] === 1, x: w.x, y: w.y, z: w.z,
         hw: f.hw * root.getLocalScale().x, hh: f.hh * root.getLocalScale().x,
+        // S398 (job 29 A4): its four corners in the world, so a probe can say whether the whole panel is in the frame
+        corners: [[-1, 1], [1, 1], [1, -1], [-1, -1]].map(([sx, sy]) => { const q = M.transformPoint(new pc.Vec3(
+          f.c.x + f.r.x * f.hw * sx + f.u.x * f.hh * sy, f.c.y + f.r.y * f.hw * sx + f.u.y * f.hh * sy, f.c.z + f.r.z * f.hw * sx + f.u.z * f.hh * sy)); return [q.x, q.y, q.z]; }),
         button: panelFace[i] < 0 ? { x: b.x, y: b.y, z: b.z } : null };
     });
   };

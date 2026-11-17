@@ -111,6 +111,8 @@ function disableEngineFirstBatch(app: pc.Application): void {
 
 export interface BatchHandle {
   groupId: number;
+  /** S398: the group's name (the room's one group, or a cascade's band) */
+  group: string;
   /** how many props joined — published as `window.__batchedProps` by cluster.ts */
   joined: number;
   /** every prop in the batch, so the tear-down can give each its material back */
@@ -194,8 +196,10 @@ let vertexColourMerge = true;
 /** turn the vertex-colour merge on or off; takes effect at the next bake (cluster `rebake()`) */
 export function setVertexColourMerge(on: boolean): void { vertexColourMerge = on; }
 export function vertexColourMergeOn(): boolean { return vertexColourMerge; }
-/** each converted mesh instance → its own box mesh and its (canonical) colour material */
-const vcOriginal = new Map<pc.MeshInstance, { mesh: pc.Mesh; material: pc.StandardMaterial; defs: number }>();
+/** each converted mesh instance → its own box mesh and its (canonical) colour material, and the group it was baked
+ *  into (S398: a cascade bakes the room into several groups at once — see bakeBatch's `opts` — and tearing one down
+ *  gives back only its own instances) */
+const vcOriginal = new Map<pc.MeshInstance, { mesh: pc.Mesh; material: pc.StandardMaterial; defs: number; group: string }>();
 /** the engine computes a mesh instance's shader defines (which vertex streams it has) once, in its constructor; a swapped
  *  mesh must say it carries colours, or the shader ignores them (measured: every merged box came out white) */
 type Defs = { _shaderDefs: number };
@@ -284,13 +288,14 @@ function orderMergedLikeTheirBatches(app: pc.Application): void {
     return lists;
   };
 }
-/** every converted instance back to its box and its colour material */
-function restoreVertexColours(): void {
+/** every converted instance of one group (S398) back to its box and its colour material */
+function restoreVertexColours(group: string): void {
   for (const [mi, o] of vcOriginal) {
+    if (o.group !== group) continue;
+    vcOriginal.delete(mi);
     if (!mi.mesh) continue;   // destroyed with its prop (the morph re-spawns a box as a model only after a tear-down)
     mi.mesh = o.mesh; (mi as unknown as Defs)._shaderDefs = o.defs; mi.material = o.material;
   }
-  vcOriginal.clear();
 }
 
 /**
@@ -299,24 +304,31 @@ function restoreVertexColours(): void {
  * skipped until a later era brings them back.
  */
 export function bakeBatch(
-  app: pc.Application, room: RoomHandles, neverBatch: Set<string>
+  app: pc.Application, room: RoomHandles, neverBatch: Set<string>,
+  /** ⚑ S398 (job 29 A1) — a cascade keeps the room in several groups: the props that hold still in the room's own
+   *  group, and the props the cascade animates in BANDS along its sweep (cluster.ts), each batched while it waits and
+   *  again once it is done. `name` is the group (default: the room's one group); `only`, when given, the props it may
+   *  take. Without them this is exactly the old bake. */
+  opts: { name?: string; only?: ReadonlySet<string> } = {}
 ): BatchHandle | null {
   const batcher = app.batcher;
   if (!batcher) return null;
+  const NAME = opts.name ?? GROUP;
   disableEngineFirstBatch(app);
   orderMergedLikeTheirBatches(app);
-  for (const mi of hiddenAbsent) mi.visible = true; // a re-shown prop must batch as itself; cullAbsentProps re-hides next frame
+  for (const mi of hiddenAbsent) mi.visible = true; // a re-shown prop must batch as itself; cullAbsentProps re-hides (cluster.ts runs it after a bake, before the frame draws)
   hiddenAbsent.clear();
-  restoreVertexColours();   // S396: a bake never starts from a converted prop
-  const old = batcher.getGroupByName(GROUP);
+  restoreVertexColours(NAME);   // S396: a bake never starts from a converted prop
+  const old = batcher.getGroupByName(NAME);
   if (old) batcher.removeGroup(old.id);
-  const group = batcher.addGroup(GROUP, false, 100);
+  const group = batcher.addGroup(NAME, false, 100);
 
   const shared = new Map<string, pc.StandardMaterial>();
   const ids: string[] = [];
   let joined = 0;
 
   for (const [id, h] of room.props) {
+    if (opts.only && !opts.only.has(id)) continue;
     if (neverBatch.has(id)) continue;
     if (!h.entity.enabled || !hasDrawableScale(h.entity)) continue;
     const comps = renderComponents(h.entity);
@@ -334,7 +346,7 @@ export function bakeBatch(
         if (kind) {
           const colourMat = mi.material as pc.StandardMaterial;
           const defs = (mi as unknown as Defs)._shaderDefs;
-          vcOriginal.set(mi, { mesh: mi.mesh, material: colourMat, defs });
+          vcOriginal.set(mi, { mesh: mi.mesh, material: colourMat, defs, group: NAME });
           mi.mesh = vcMesh(app, mi.mesh, kind === 'lit' ? colourMat.diffuse : colourMat.emissive);
           (mi as unknown as Defs)._shaderDefs = defs | pc.SHADERDEF_VCOLOR;
           mi.material = vcMaterial(kind, colourMat);   // the material setter clears the instance's cached shaders
@@ -356,7 +368,7 @@ export function bakeBatch(
   if (joined === 0) { batcher.removeGroup(group.id); return null; }
   // ⚑ ALWAYS the numeric id, never a bare generate() — see the header.
   batcher.generate([group.id]);
-  return { groupId: group.id, joined, ids, idSet: new Set(ids) };
+  return { groupId: group.id, group: NAME, joined, ids, idSet: new Set(ids) };
 }
 
 /**
@@ -370,7 +382,7 @@ export function clearBatch(
 ): null {
   const batcher = app.batcher;
   if (!batcher || !handle) return null;
-  restoreVertexColours();   // S396: each box its own mesh and colour material back, before the private clones below
+  restoreVertexColours(handle.group);   // S396: each box its own mesh and colour material back, before the private clones below
   batcher.removeGroup(handle.groupId);
   for (const id of handle.ids) {
     const h = room.props.get(id);

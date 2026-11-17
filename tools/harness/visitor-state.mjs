@@ -486,6 +486,14 @@ const LAP = { w: 224, h: 140 };
       if (!on) return;
       const key = n.replace('era3-device-', '');
       if (surfaced.has(key) || surfaced.has('workstation:' + key)) return;
+      /**
+       * ⚑ S398 (UiB job 29 A2) — ONLY A PLANE THAT TAKES A PRESS IS OFFERED AS ONE. The room routes presses to the
+       * workstation, the phone, the laptop, the docked monitor and the visor (era3Devices.ts `test()` and the visor's
+       * sphere); the Commons' stream, backstage, side card and raid banner are pictures the hall shows, and nothing
+       * routes a press to them. The 16 Nov walk pressed "(press) stream" fourteen times while the stream played
+       * (steps 757–789): its own invention, counted as the piece's dead presses.
+       */
+      if (key === 'stream' || key === 'backstage' || key === 'sidecard' || key === 'raidbanner') return;
       const c = e.getPosition();
       const pt = toPage(c.x, c.y, c.z);
       /**
