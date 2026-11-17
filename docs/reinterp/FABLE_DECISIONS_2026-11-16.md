@@ -66,6 +66,17 @@ waits for his decision.*
 | B8 | The back-wall record and its stamp | "Yes it should go, and we can make the "your file" on the computer more present of the system tracking you, that way keeping the importance of the element tha the walk was bringing here — all of this should go for the research docuemnt as it was an importnat element of from the start of this research that had stopped functionign (include the previosu versions of the mages whete half the room had the side of the system etc). And now how Lamby keeps evoling into this helping figure that representeb by the system as well." | Job 29 Part D: the wall and the stamp go; the file comes onto each era's screen. A research note traces the system's side of the room and Lamby's evolution (`RESEARCH_NOTE_THE_BACK_WALL_AND_LAMBY_2026-11-16.md`) |
 | B11 | The hopeful ending | "I think it would work beautofully when we arrive at the desk of Daniel at the end, and we see that text anf the space transforms to the close" | Job 29 Part D: when the end of 2026 lands at Daniel's desk, his monitor shows his line and Caleb's answer (`s2_caleb.json` residue: "Then it was never me that was broken…" / "it never was, d. not once."); then the room becomes the Close. The closing cards are unchanged |
 
+## Decided, 17 Nov (after job 29 A and B were walked)
+
+| # | Item | His words | What follows |
+|---|---|---|---|
+| E20 | The era-change spike: lower now (83 / 100 / 121 / 89 in the headset), not under 75 | "Lets keep on the engne work" | Job 30 Part A: the animated props share draws; the look unchanged; after job 29 D |
+| A4 | 2016's cut: the family calls | "I do like the return the Family calls, maybe we can make it more clear and direct of what it is, and that way less text" | Job 30 Part B1 (held): "Answer the mothers", two mothers, about half the words |
+| A4 | 2016's cut: further cuts | "maybe the "one story, four places" and the campaign kit repeating her 2014 story could go? how woudl that look?" | Shown to him in chat (17 Nov); job 30 Part B2–B3 wait for his yes |
+| A4 | The before/after (17 Nov) | "1. I think this could be good 2. What if instead of seen by 1211, since that would require time passing, why isnt this a sent to the network with a X number of organizations, that way expand the scope of influence of SOGICE? 3. sounds okay" · "Yes let's build the chnages for 2016" | Job 30 Part B sent. The receipt becomes "Sent to all four. Shared across the network: 38 ministries in 9 countries." |
+| A4 | The editor's button, after the walk ("all four" read as four stories) | "Yes, change it" | Job 30 B4: "Send to the network", then "Sent. Shared with 38 ministries in 9 countries." Rides along with the next walked push |
+| — | The full version (`?cut=full`), raised by his question "There is not short/full version anymore … So we've been double working?" | "Yes, freeze it (include the situation to research document)" | One version: the full route frozen as a research state (tag `research/full-cut-2026-11-17`); `RESEARCH_NOTE_THE_TWO_CUTS_2026-11-17.md`; job 29 D5 |
+
 ## Asked in the first round (kept for the record)
 
 A2 (Proposal 1), A3 (Proposal 3), B5 (setup in four steps), B7 (2026's light, and the flow to Daniel's
