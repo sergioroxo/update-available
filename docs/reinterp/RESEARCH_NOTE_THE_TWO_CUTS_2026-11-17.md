@@ -81,7 +81,7 @@ questions, more presses). That is why it is kept, frozen, rather than deleted.
 
 - **The research state.** The full route is frozen at reinterp **403a0652** (job 29 A and B with job 30 B merged: the
   last build in which both routes were kept up), as the git tag **`research/full-cut-2026-11-17`**, and as a built copy
-  in `~/Documents/YUHF-research-archive/full-cut-2026-11-17/` (open it with `?cut=full`). It is never changed again.
+  in `~/Documents/YUHF-research-archive/full-cut-2026-11-17/` (open it with `?cut=full`; its README says how). Walked before freezing: 411 presses from the entrance to the Close's Restart page, console clean. It is never changed again.
 - **From now on, one version.** Every change is written once, for the visit. No new `…Speedrun` keys, no
   `"speedrun": false`, no full-route wording.
 - **The live build stops answering `?cut=full`** (his 15 Oct instruction, now carried out: "Turn the separate full
