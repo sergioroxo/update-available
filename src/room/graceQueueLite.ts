@@ -3562,7 +3562,10 @@ export class GraceQueueLite {
     if (this.saver) { this.saver = null; this.bump(); return; }   // S208 — a press wakes it, and does nothing else
     // S208 / A3 — the first-task beat, once seen on the board, closes when she acts there
     if (this.mode === 'board' && this.lambLines?.[0] === LAMBIENT.firstTask1) { this.lambLines = null; this.bump(); }
-    const r = this.rects.find(rr => hit(rr, x, y));
+    // ⚑ S403 — the "This week" card's Close is drawn ON TOP of the board, but its rect is pushed after the tiles', so a
+    //   press on Close found the tile under it first and OPENED THAT JOB (the walk: Close → the finished mothers' job →
+    //   Back). With a third tile on the default board, "Answer the mothers" sits under Close. The visible button wins.
+    const r = (this.pauseOpen ? this.rects.find(rr => rr.id === 'pause-close' && hit(rr, x, y)) : undefined) ?? this.rects.find(rr => hit(rr, x, y));
     if (!r) { if (this.startMap.menu) { this.startMap.close(); this.bump(); } return; }
     const model = buildStartModel(undefined, 'e3');
     if (r.id === 'account-activity') { this.startMap.close(); this.openRecordFromChip(); return; }
