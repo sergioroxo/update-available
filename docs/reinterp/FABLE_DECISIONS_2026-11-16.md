@@ -73,6 +73,7 @@ waits for his decision.*
 | E20 | The era-change spike: lower now (83 / 100 / 121 / 89 in the headset), not under 75 | "Lets keep on the engne work" | Job 30 Part A: the animated props share draws; the look unchanged; after job 29 D |
 | A4 | 2016's cut: the family calls | "I do like the return the Family calls, maybe we can make it more clear and direct of what it is, and that way less text" | Job 30 Part B1 (held): "Answer the mothers", two mothers, about half the words |
 | A4 | 2016's cut: further cuts | "maybe the "one story, four places" and the campaign kit repeating her 2014 story could go? how woudl that look?" | Shown to him in chat (17 Nov); job 30 Part B2–B3 wait for his yes |
+| A4 | The before/after (17 Nov) | "1. I think this could be good 2. What if instead of seen by 1211, since that would require time passing, why isnt this a sent to the network with a X number of organizations, that way expand the scope of influence of SOGICE? 3. sounds okay" · "Yes let's build the chnages for 2016" | Job 30 Part B sent. The receipt becomes "Sent to all four. Shared across the network: 38 ministries in 9 countries." |
 
 ## Asked in the first round (kept for the record)
 
