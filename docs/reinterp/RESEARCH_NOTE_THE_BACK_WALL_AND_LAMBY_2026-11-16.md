@@ -125,5 +125,74 @@ cabinet, drawer 12, the suitcase). Job 29 D1 photographs the corner in all four 
 
 ## 7. After (job 29, Part D4)
 
-*To be added by the builder:* the seat turned round in each era, before and after; each era's file on the screen; his
-line at Daniel's desk before the Close.
+*Added by the UiB builder (Opus 5.5), 17 Nov 2026. The wall went in S401 (commit c7d6ddfd, branch `job29/d-s401`).
+All paths below start at `/Users/sergiogalvaoroxo/update-available-uib/research/article-images-2026-11-17/job29-partD-S401/`.
+Each picture was looked at. Computer pictures are 1280 × 720 from the seat; headset pictures are the seated mock
+(1000 × 1000, 90° view); phone pictures are 390 × 844. Nothing here ran on a Quest or a phone. The build these
+describe was walked from the entrance to the Restart page at 7f574d64 (`walk-7f574d64/`: proof, console clean); the
+walk saw the file change in every era.*
+
+### 7.1 The seat turned round, before and after
+
+The **before** set was taken at c7059df0, the last build with the wall. Its `*-wide.png` frames show the institution's
+corner whole for the first time (the gap noted in §6): the door, the INTAKE RECORD panel, the intake terminal ("CASE 12
+PLAN"), the grey cabinet with drawer 12 pulled out, the brown suitcase and the "Ministries by state" leaflet. The
+**after** set was taken at 7f574d64, the walked build (`backwall/after-d1/` is the same views at c7d6ddfd, kept as a
+research state).
+
+| Era | Before | After | Draw calls turned round (before → after) |
+|---|---|---|---|
+| 1997 | `backwall/before/before-1997-turned.png`, `-wide.png` | `backwall/after/after-1997-turned.png`, `-wide.png` | 22 → 6 |
+| 2003 | `backwall/before/before-2003-turned.png`, `-wide.png` | `backwall/after/after-2003-turned.png`, `-wide.png` | 19 → 6 |
+| 2016, Daniel's room | `backwall/before/before-2016-daniel-turned.png`, `-wide.png` | `backwall/after/after-2016-daniel-turned.png`, `-wide.png` | 29 → 23 |
+| 2026, Daniel's room | `backwall/before/before-2026-daniel-turned.png`, `-wide.png` | `backwall/after/after-2026-daniel-turned.png`, `-wide.png` | 25 → 24 |
+
+The view from the seat (`*-front.png`) is the same before and after in every era (draw calls 15 / 20 / 25 / 27,
+unchanged). Vera's and Maya's rooms turned round (`*-2016-turned`, `*-2026-turned`) are their own rooms, which never
+held the wall; they are photographed for completeness. What is left behind Daniel's seat in 1997 is a door in a plain
+warm wall.
+
+### 7.2 The file on the screen
+
+The record did not leave; it moved to the tool the visitor is already using (D2). One item per era, in view from the
+first look at the desktop. When something is filed, its count goes up and it lights for a moment, without sound;
+pressing it opens that era's entries. Measured on each era (`file-on-screen/file-probe-computer.json`): drawn, the
+count up by one on a filing, lit, opened, no errors.
+
+| Era | The item | Pictures (`file-on-screen/`) |
+|---|---|---|
+| 1997 | a folder and its count in the tray, beside Lamby (3 → 4); opens "Your file (read only)" | `1997-computer-1-first-view.png`, `1997-canvas-2-filed-lit.png`, `1997-canvas-4-file-open.png` |
+| 2003 | the "Your file" icon that came with him, wearing its count (1997 and 2003 together) | `2003-computer-1-first-view.png`, `2003-canvas-2-filed-lit.png`, `2003-canvas-4-file-open.png` |
+| 2016 | "My account · activity" in GracePlatform's title bar (moved out of the Start menu) | `2016-computer-1-first-view.png`, `2016-canvas-2-filed-lit.png`, `2016-canvas-4-file-open.png` |
+| 2026 | "Memory" on GraceOS's taskbar | `2026-computer-1-first-view.png`, `2026-canvas-2-filed-lit.png`, `2026-canvas-4-file-open.png` |
+
+Lamby points at it once per era, as the helper who is also the system: "I've kept everything for you, Daniel. Your file
+is right down here — it grows as you go." (1997); "I keep everything for you, Maya. It's all in Memory." (2026). The
+same voice that guides is the one that keeps the file. That is the turn §5 traces: what the wall said from behind the
+visitor, Lamby now says to their face, kindly.
+
+The `*-canvas-*` frames are the desktop as the glass shows it; the `*-computer-*` frames are the room from the seat.
+`wip-opera-gx/file-on-screen/` holds the first pictures of the same items, taken in Opera GX on 17 Nov while Google
+Chrome would not start: a research state, superseded by these.
+
+### 7.3 His line at Daniel's desk, then the Close
+
+At the end of 2026 the crossing lands at Daniel's seat. His monitor (the 1997 CRT the Close keeps in its row) is brought
+before the eye, and on its dark glass, plain: his line, "Then it was never me that was broken…" (Sérgio's own wording,
+from 2003), and Caleb's answer, "it never was, d. not once." No sound, no Lamby, no frame. After about fourteen seconds
+the monitor goes back to the desk and the room becomes the Close as before.
+
+| Mode | Both lines held | Then the Close |
+|---|---|---|
+| computer | `line-at-the-desk/play-computer-3-both-lines.png` | `line-at-the-desk/play-computer-4-back-on-the-desk.png`, `-5-the-close.png` |
+| phone | `line-at-the-desk/play-phone-3-both-lines.png` | `line-at-the-desk/play-phone-4-back-on-the-desk.png`, `-5-the-close.png` |
+| headset | `line-at-the-desk/play-headset-3-both-lines.png` | `line-at-the-desk/play-headset-4-back-on-the-desk.png`, `-5-the-close.png` |
+
+Each mode also has `-1-dark` (the moment before) and `-2-his-line` (his line alone, Caleb's still to come). The
+`review-*` frames are the review route (`?close=1`), where the lines go on the 1997 room's own CRT. The measured numbers
+are in `line-at-the-desk/line-probe.json`.
+
+One thing the pictures show that the brief did not foresee: the crossing keeps the visitor's bearing (no spin at the
+Close: walkthrough 1, 8 Oct, W1-G1, "remove the rotation at the Close"; `src/engine/app.ts` `advanceClose`), so at the moment of the lines the seat is Daniel's but the view still faces east, through
+the doorway into Maya's room. His line is read with her room behind it. Whether that stays, or the desk itself should
+be seen first, is his call (T91·D).
