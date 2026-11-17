@@ -42,14 +42,16 @@ export class FileWatch {
   /** this person's entries, as of the last change */
   count = 0;
   private lit = 0;
-  /** once per frame from the surface's own update; true when the item must be redrawn */
-  tick(dt: number, era: RecordEra): boolean {
+  /** once per frame from the surface's own update; true when the item must be redrawn. `include`: the years this
+   *  person's file holds here (2003's Your file is Daniel's 1997 and 2003, as its window lists them) */
+  tick(dt: number, era: RecordEra, include: RecordEra[] = [era]): boolean {
     let changed = false;
     if (era !== this.era) { this.era = era; this.total = -1; this.primed = false; this.lit = 0; changed = true; }
     const t = recordCount();
     if (t !== this.total) {
       this.total = t;
-      const n = entriesByEra()[era].length;
+      const by = entriesByEra();
+      const n = include.reduce((sum, e) => sum + by[e].length, 0);
       if (n !== this.count) {
         // a filing lights the item; the era's first look (or a Restart's wipe) only sets the count
         if (n > this.count && this.primed) this.lit = FILE_LIT_SECONDS;

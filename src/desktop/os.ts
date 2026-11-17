@@ -2382,7 +2382,8 @@ export class DesktopOS {
   // ── update / draw ──────────────────────────────────────────────────────
   update(dt: number): void {
     // ⚑ S401 (job 29 D2) — the file's item changes on the glass when something is filed: two redraws, lit and unlit
-    if (this.reinterp && (this.desktopEra === 'e1' || this.desktopEra === 'e2') && this.fileWatch.tick(dt, this.desktopEra)) this.dirty = true;
+    if (this.reinterp && (this.desktopEra === 'e1' || this.desktopEra === 'e2')
+      && this.fileWatch.tick(dt, this.desktopEra, this.desktopEra === 'e2' ? ['e1', 'e2'] : ['e1'])) this.dirty = true;
     const highlights = ledger.view.highlights === true;
     if (highlights !== this.highlightPreference) {
       this.highlightPreference = highlights; this.dirty = true;

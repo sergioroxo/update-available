@@ -23,7 +23,7 @@ const ERAS = flag('eras', '1,2,3,4').split(',').map(Number);
 const MODE = flag('mode', 'computer');
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 fs.mkdirSync(OUT, { recursive: true });
-const browser = await puppeteer.launch({ executablePath: '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome', headless: true, timeout: 180000,
+const browser = await puppeteer.launch({ executablePath: process.env.CHROME || '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome', headless: true, timeout: 180000,
   args: ['--no-sandbox', '--enable-unsafe-swiftshader', '--use-gl=angle', '--disable-audio-output'] });
 const YEAR = { 1: 1997, 2: 2003, 3: 2016, 4: 2026 };
 const ITEM = { 1: 'file-tray', 2: 'icon-your-file', 3: 'account-activity', 4: 'mem-open' };
@@ -60,6 +60,18 @@ for (const era of ERAS) {
     if (era === 3) for (let i = 0; i < 3; i++) L.graceQueue.push({ cardId: `s401-${i}`, outcome: 'APPLY', witness: `card s401-${i}: approved as written` });
     if (era === 4) { for (const id of ['program', 'record']) L.e4Space.push({ id, outcome: 'filed', witness: `${id}: filed as care` }); }
   }, era);
+  if (era === 3) {
+    // signed in: the account is there only once she is (Sign in, then the consent card's Allow — a review state)
+    for (let i = 0; i < 12; i++) {
+      const done = await page.evaluate(() => {
+        const q = window.__graceQueue(); const r = (q.rects ?? []).find((h) => h.id === 'signin' || h.id === 'consent-allow');
+        if (!r) return !['dark', 'boot', 'install', 'signin', 'consent'].includes(q.mode);
+        q.handleClick(r.x + r.w / 2, r.y + r.h / 2); return false;
+      });
+      if (done) break;
+      await wait(1500);
+    }
+  }
   if (era === 4) {
     // the session open: the wake screen gives way to the two windows (the browser, Kettle) under GraceOS's taskbar
     await page.evaluate(() => { const b = window.__os.e4?.browser; if (b?.debugOpen) b.debugOpen(); });

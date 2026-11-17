@@ -101,8 +101,10 @@ export interface DanielLine {
   readonly phase: LinePhase;
   /** the lines have been read and the monitor is back on the desk */
   readonly done: boolean;
-  /** the monitor on the desk, dark; then the lines, brought before `eye` (the pose fixed now) */
-  begin(eye: pc.Entity, xr: boolean, cam: pc.CameraComponent | null): void;
+  /** the monitor on the desk, dark; then the lines, brought before `eye` (the pose fixed now). `inPlace`: the room's
+   *  own CRT already stands on the desk (the review route `?close=1` begins in 1997's room) — then the lines are on ITS
+   *  glass, where the eye already is, and nothing is lifted (two monitors in one place would fight) */
+  begin(eye: pc.Entity, xr: boolean, cam: pc.CameraComponent | null, inPlace?: boolean): void;
   tick(dt: number): void;
   /** gone, at once (the lights are out, or the Close was left) */
   hide(): void;
@@ -120,7 +122,10 @@ export function buildDanielLine(app: pc.AppBase): DanielLine {
   const restPos = new pc.Vec3(REST.x, REST.y, REST.z), restRot = new pc.Quat();
   const to = { pos: new pc.Vec3(), rot: new pc.Quat() };
   const via = new pc.Vec3();
-  let phase: LinePhase = 'off', t = 0;
+  let phase: LinePhase = 'off', t = 0, still = false;
+  const body = entity.findByName('close-crt-body') as pc.Entity | null;
+  /** in place: the glass laid on the room's own, just in front of the desktop's (z 0) and behind the bezel's face */
+  const IN_PLACE_Z = 0.006;
   const show = (n: number): void => { if (n !== shown) { shown = n; crt.redraw(); } };
   const place = (k: number, back: boolean): void => {
     const s = smooth(k), u = 1 - s;
@@ -135,7 +140,15 @@ export function buildDanielLine(app: pc.AppBase): DanielLine {
     get phase() { return phase; },
     get done() { return phase === 'rest'; },
     get shown() { return shown; },
-    begin(eye, xr, cam) {
+    begin(eye, xr, cam, inPlace = false) {
+      still = inPlace;
+      if (body) body.enabled = !inPlace;
+      if (inPlace) {
+        entity.setPosition(restPos.x, restPos.y, restPos.z + IN_PLACE_Z); entity.setRotation(restRot);
+        to.pos.copy(entity.getPosition()); to.rot.copy(restRot); via.copy(to.pos);
+        entity.enabled = true; show(0); phase = 'dark'; t = 0;
+        return;
+      }
       const { fwd, up } = eyeFrame(eye, xr);
       let d: number;
       if (xr) d = Math.max(0.5, S.xrDist);
@@ -166,16 +179,16 @@ export function buildDanielLine(app: pc.AppBase): DanielLine {
       if (phase === 'dark') {
         if (t >= PACE.arriveSeconds) { show(1); phase = 'lift'; t = 0; }
       } else if (phase === 'lift') {
-        place(Math.min(1, t / S.liftSeconds), false);
-        if (t >= S.liftSeconds) { phase = 'held'; t = 0; }
+        if (!still) place(Math.min(1, t / S.liftSeconds), false);
+        if (still || t >= S.liftSeconds) { phase = 'held'; t = 0; }
       } else if (phase === 'held') {
         if (shown < 2 && t >= S.answerAfter) show(2);
         if (t >= S.answerAfter + PACE.holdSeconds + S.holdExtra) { phase = 'return'; t = 0; }
       } else if (phase === 'return') {
-        place(Math.min(1, t / S.liftSeconds), true);
-        if (t >= S.liftSeconds) { phase = 'rest'; t = 0; }
+        if (!still) place(Math.min(1, t / S.liftSeconds), true);
+        if (still || t >= S.liftSeconds) { phase = 'rest'; t = 0; }
       }
     },
-    hide() { entity.enabled = false; phase = 'off'; show(0); }
+    hide() { entity.enabled = false; phase = 'off'; show(0); if (body) body.enabled = true; }
   };
 }

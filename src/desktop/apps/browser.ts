@@ -1310,13 +1310,13 @@ export class E4Browser {
     roundRect(ctx, x + 2, y + 3, w, h, 12, V3.grey);
     roundEdge(ctx, x, y, w, h, 12, V3.edge, V3.card);
     assistantMark(ctx, x + 14, y + 12, 22, V3.primary, V3.primaryInk);
-    setFont(ctx, 14); ctx.fillStyle = V3.ink; ctx.fillText(M.title ?? '', x + 44, y + 12);
-    setFont(ctx, 10); ctx.fillStyle = V3.ink2; ctx.fillText((M.sub ?? '').replace('{n}', String(all.length)), x + 44, y + 30);
+    setFont(ctx, 16); ctx.fillStyle = V3.ink; ctx.fillText(M.title ?? '', x + 44, y + 10);
+    setFont(ctx, 11); ctx.fillStyle = V3.ink2; ctx.fillText((M.sub ?? '').replace('{n}', String(all.length)), x + 44, y + 30);
     ctx.fillText(V.oneScreen.close, x + w - 18, y + 10);
-    px(ctx, x + 14, y + 46, w - 28, 1, V3.edge);
-    const rowH = 15, top = y + 54, room = Math.max(1, Math.floor((h - 54 - 30) / rowH));
+    px(ctx, x + 14, y + 48, w - 28, 1, V3.edge);
+    const rowH = 18, top = y + 58, room = Math.max(1, Math.floor((h - 58 - 32) / rowH));
     const rows = all.length > room ? all.slice(0, room - 1) : all;
-    setFont(ctx, 10);
+    setFont(ctx, 12);
     if (!all.length) { ctx.fillStyle = V3.ink2; ctx.fillText(M.empty ?? '', x + 14, top); }
     rows.forEach((e, i) => {
       ctx.save(); ctx.beginPath(); ctx.rect(x + 14, top + i * rowH - 2, w - 28, rowH); ctx.clip();
@@ -1325,7 +1325,7 @@ export class E4Browser {
       ctx.restore();
     });
     if (rows.length < all.length) { ctx.fillStyle = V3.ink2; ctx.fillText((M.more ?? '').replace('{n}', String(all.length - rows.length)), x + 14, top + rows.length * rowH); }
-    ctx.fillStyle = V3.ink2; ctx.fillText(M.footer ?? '', x + 14, y + h - 20);
+    setFont(ctx, 11); ctx.fillStyle = V3.ink2; ctx.fillText(M.footer ?? '', x + 14, y + h - 22);
     if (pressable) this.hits.push({ x, y, w, h, id: 'mem-close' });
   }
 

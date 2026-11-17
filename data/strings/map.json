@@ -413,7 +413,7 @@
      "label": "Your record",
      "done": "recordViewed",
      "optional": true,
-     "hint": "Your record: My account · activity, on the taskbar.",
+     "hint": "Your record: My account · activity, at the top of GracePlatform.",
      "where": "the workstation"
     },
     {

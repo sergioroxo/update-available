@@ -25,7 +25,7 @@ const ERAS = flag('eras', '1,2,3,4').split(',').map(Number);
 const VIEWS = flag('views', '') ? flag('views', '').split(',') : null;
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 fs.mkdirSync(OUT, { recursive: true });
-const browser = await puppeteer.launch({ executablePath: '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome', headless: true, timeout: 180000,
+const browser = await puppeteer.launch({ executablePath: process.env.CHROME || '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome', headless: true, timeout: 180000,
   args: ['--no-sandbox', '--enable-unsafe-swiftshader', '--use-gl=angle', '--disable-audio-output'] });
 
 /** a visit's worth of filings for each era's list (the ids record.ts reads; the corner's 1997 beats among them) */

@@ -41,6 +41,7 @@ import { buildClusterShell, relocationFor, RELOCATIONS, type ClusterShell, type 
   type RelocationPlan } from '../room/cluster';
 import { buildPointCloud, closeBackdropColor, type PointCloud } from '../room/pointCloud';
 import { buildDanielLine } from '../room/danielLine';
+import { foldedPos } from '../room/clusterMorph';
 import { fileHistory } from '../witness/fileItem';
 import { entriesByEra } from '../witness/record';
 import { createSendRuntime, type SendRuntime } from '../room/sends';
@@ -5706,7 +5707,9 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       //   held for the residue's own time. The transformation waits for them: the eyes rise only after (`line` → here).
       if (danielLine) {
         closeStage = 'line';
-        danielLine.begin(xr?.active ? logicalHead() : camera, !!xr?.active, xr?.active ? null : camera.camera ?? null);
+        // (the review route `?close=1` stands in 1997's room, where his own CRT is still on the desk: the lines go on its glass)
+        danielLine.begin(xr?.active ? logicalHead() : camera, !!xr?.active, xr?.active ? null : camera.camera ?? null,
+          !!cluster && foldedPos('crtBody', { e1: 0, e2: 1, e3: 2, e4: 3 }[cluster.era]) !== null);   // folded props scale, never disable
         return;
       }
       closeStage = 'line';
