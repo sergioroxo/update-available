@@ -345,7 +345,7 @@
   "howTitle": "How these sites work",
   "how": [
    "Each year's website is built from the same data the piece reads. When the piece changes, the sites are rebuilt, so the two cannot disagree.",
-   "The sites are plain pages. They have no scripts and no fonts from anywhere else. They make no requests and record nothing.",
+   "The sites are plain pages. Each year's page has one small script of its own: that year's game, on its Media tab. Nothing loads from anywhere else. The pages make no requests and record nothing.",
    "A link to an outside page opens in a new tab. That is your choice, never the site's."
   ]
  },

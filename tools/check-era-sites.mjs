@@ -10,8 +10,11 @@
  *      that is not verbatim in the document its row names);
  *   2. an outside link on a page is not one of the verified rows (data/dossier/links.json, era_links.json), each
  *      re-verified verbatim here too;
- *   3. a page has a script, an external stylesheet/font/frame/import, or any src that leaves the project;
- *   4. a local href/src points at a file that is not there;
+ *   3. a page has a script, an external stylesheet/font/frame/import, or any src that leaves the project — except
+ *      (S400) an era page's ONE game script, `game.js` beside it, under a Content-Security-Policy that refuses every
+ *      request; 3b. that script names a network, storage or permission API, evaluates a string, or carries an
+ *      outside address (and gen_era_sites --check fails it when it is stale against the game's code);
+ *   4. a local href/src (or, S400, a CSS url()) points at a file that is not there;
  *   5. an era page lacks one of its seven tabs, its h1, or its panels; the hub lacks its four doors;
  *   6. a picture, sound or film is not credited on the page, or its file is not claimed in assets/LICENSES.md or
  *      docs/reinterp/ATTRIBUTIONS.md (check-licences.mjs also fails any shipped file with no claim, and any NC);
@@ -67,14 +70,32 @@ const ownedRow = (name) => {
   return licenceRows.some((row) => { const cells = row.split('|'); return re.test(cells[1] ?? '') && OWNED.test(cells.slice(2).join('|')); });
 };
 
-let nExt = 0, nMedia = 0;
+let nExt = 0, nMedia = 0, nGames = 0;
 for (const page of PAGES) {
   if (!existsSync(join(ROOT, page))) { fail(`${page} does not exist (run: node tools/gen_era_sites.mjs)`); continue; }
   const html = text(page);
   const isHub = page === 'public/sites/index.html';
 
   // 3 — nothing that runs, nothing that loads from elsewhere
-  if (/<script\b/i.test(html)) fail(`${page}: has a <script>`);
+  // ⚑ S400 (UiB job 29 Part C) — an era page may carry ONE script: its year's game, `game.js` beside it (the piece's own
+  //   code, tools/build-site-games.mjs), with no inline code, under a Content-Security-Policy that refuses every request
+  //   (connect-src 'none') and every script but its own (script-src 'self'). The hub carries none. The script itself is
+  //   read below (§3b) for any network or storage API.
+  const scripts = [...html.matchAll(/<script\b[^>]*>([\s\S]*?)<\/script>/gi)];
+  if (/<script\b/i.test(html)) {
+    const ok = !isHub && scripts.length === 1 && /^<script src="game\.js" defer><\/script>$/.test(scripts[0][0]);
+    if (!ok) fail(`${page}: a script other than its one game (<script src="game.js" defer></script>) — ${scripts.length} script tag(s)`);
+    const csp = (html.match(/<meta http-equiv="Content-Security-Policy" content="([^"]*)">/) ?? [])[1] ?? '';
+    for (const need of ["default-src 'none'", "script-src 'self'", "connect-src 'none'", "object-src 'none'"]) if (!csp.split(';').map((s) => s.trim()).includes(need)) fail(`${page}: has a script but its Content-Security-Policy lacks "${need}"`);
+    if (!existsSync(join(dirname(join(ROOT, page)), 'game.js'))) fail(`${page}: its game.js is missing (run: node tools/gen_era_sites.mjs)`);
+    else nGames++;
+  }
+  // 4b — a stylesheet's local url() (a font) must be there too
+  for (const m of html.matchAll(/url\(\s*["']?([^"')]+)["']?\s*\)/g)) {
+    const u = m[1];
+    if (/^(data:|#|https?:)/.test(u)) continue;
+    if (!existsSync(resolve(dirname(join(ROOT, page)), u))) fail(`${page}: CSS url(${u}) does not exist`);
+  }
   if (/<link\b/i.test(html)) fail(`${page}: has a <link> (no external stylesheet or font)`);
   if (/<(iframe|object|embed|form|input\s+[^>]*type="(text|email|password)")/i.test(html)) fail(`${page}: has a frame, embed or text input`);
   if (/@import|url\(\s*['"]?https?:/i.test(html)) fail(`${page}: CSS imports or loads from outside`);
@@ -135,6 +156,21 @@ for (const page of PAGES) {
   if (/CC[- ]?BY[- ]?NC|non-?commercial licence/i.test(html)) fail(`${page}: mentions a non-commercial licence`);
 }
 
+// 3b — ⚑ S400: each year's game script makes no request and keeps nothing. The same tokens check-invariants.mjs refuses
+//   in src/ (the game code is src/, but the script is what ships), plus the ways a page script could reach further: a
+//   dynamic import, a worker, a peer connection, a cache, an outside address.
+const SCRIPT_FORBIDDEN = ['fetch(', 'XMLHttpRequest', 'WebSocket', 'EventSource', 'sendBeacon', 'localStorage', 'sessionStorage', 'indexedDB',
+  'document.cookie', 'getUserMedia', 'showOpenFilePicker', 'RTCPeerConnection', 'importScripts', 'serviceWorker', 'caches.open', 'import(', 'new Worker', 'requestPermission'];
+for (const y of ['1997', '2003', '2016', '2026']) {
+  const p = `public/sites/${y}/game.js`;
+  if (!existsSync(join(ROOT, p))) continue;
+  const js = text(p);
+  for (const t of SCRIPT_FORBIDDEN) if (js.includes(t)) fail(`${p}: names "${t}" (a network, storage or permission API)`);
+  if (/\beval\(|new Function\(/.test(js)) fail(`${p}: evaluates code from a string`);
+  const addr = js.match(/https?:\/\/[^\s"'`)]+/);
+  if (addr) fail(`${p}: carries an outside address (${addr[0]})`);
+}
+
 // 7 — STATUS on the docs touched
 const STATUS_LINE = /^STATUS:\s*(live|draft|history-only|UNREVIEWED|superseded-by\s+\S+)\s*$/;
 const docs = new Set(['docs/reinterp/ERA_SITES_2026-11-01.md']);
@@ -149,4 +185,4 @@ if (errors.length) {
   for (const e of errors) console.error('  ' + e);
   process.exit(1);
 }
-console.log(`era sites OK: ${PAGES.length} pages fresh against their data; ${nExt} outside links, all verified; ${nMedia} media files credited and claimed; no scripts, no outside requests; ${docs.size} docs carry STATUS`);
+console.log(`era sites OK: ${PAGES.length} pages fresh against their data; ${nExt} outside links, all verified; ${nMedia} media files credited and claimed; ${nGames} game scripts (one per era page, under a CSP, no network or storage API), no other script, no outside requests; ${docs.size} docs carry STATUS`);
