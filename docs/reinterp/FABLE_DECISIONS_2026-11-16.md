@@ -77,6 +77,16 @@ waits for his decision.*
 | A4 | The editor's button, after the walk ("all four" read as four stories) | "Yes, change it" | Job 30 B4: "Send to the network", then "Sent. Shared with 38 ministries in 9 countries." Rides along with the next walked push |
 | — | The full version (`?cut=full`), raised by his question "There is not short/full version anymore … So we've been double working?" | "Yes, freeze it (include the situation to research document)" | One version: the full route frozen as a research state (tag `research/full-cut-2026-11-17`); `RESEARCH_NOTE_THE_TWO_CUTS_2026-11-17.md`; job 29 D5 |
 
+## Decided, 18 Nov (job 29 D's calls and the ending)
+
+| # | Item | His words | What follows |
+|---|---|---|---|
+| B11 | The lines at Daniel's desk: facing Maya's room | "good, but I will expand later" | Kept for now |
+| B8 | 1997's file in the taskbar | "Okay, we can try that, as long as it doesnt steal too much attention" | "Your file" beside the number, small and quiet (job 30 C4) |
+| B8 | 2016's "My account · activity" | "good" (asked what it shows: Vera's own record, every action she took for the platform that day) | No change |
+| B11 | CRT or LCD; the text's design; the names | "I would say CRT, but the design of the Text should be more aesthetical" · "can we have a message for each stotyr line in diferent styles of the time shown on the CRT? in a way of dialoging with all the story lines" | Job 30 Part C |
+| B11 | The lines on the CRT (third draft, after he turned down two: unsent lines; then two mothers echoing, "triggering for consufion of lesbians and Trans") | "they can be sad, but self affirming when all combined, because reality it is sad" · "YES, this is much much better!" | Vera: "It wasn't dependency. I was in love with her." · Maya: "There's nothing to restore. I'm Maya." · Daniel's ⟨S⟩ line · Caleb's answer. Job 30 C |
+
 ## Asked in the first round (kept for the record)
 
 A2 (Proposal 1), A3 (Proposal 3), B5 (setup in four steps), B7 (2026's light, and the flow to Daniel's
