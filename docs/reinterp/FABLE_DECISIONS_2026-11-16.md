@@ -74,6 +74,7 @@ waits for his decision.*
 | A4 | 2016's cut: the family calls | "I do like the return the Family calls, maybe we can make it more clear and direct of what it is, and that way less text" | Job 30 Part B1 (held): "Answer the mothers", two mothers, about half the words |
 | A4 | 2016's cut: further cuts | "maybe the "one story, four places" and the campaign kit repeating her 2014 story could go? how woudl that look?" | Shown to him in chat (17 Nov); job 30 Part B2–B3 wait for his yes |
 | A4 | The before/after (17 Nov) | "1. I think this could be good 2. What if instead of seen by 1211, since that would require time passing, why isnt this a sent to the network with a X number of organizations, that way expand the scope of influence of SOGICE? 3. sounds okay" · "Yes let's build the chnages for 2016" | Job 30 Part B sent. The receipt becomes "Sent to all four. Shared across the network: 38 ministries in 9 countries." |
+| A4 | The editor's button, after the walk ("all four" read as four stories) | "Yes, change it" | Job 30 B4: "Send to the network", then "Sent. Shared with 38 ministries in 9 countries." Rides along with the next walked push |
 
 ## Asked in the first round (kept for the record)
 
