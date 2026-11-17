@@ -110,8 +110,10 @@ export function drawRetainedCopies(ctx: CanvasRenderingContext2D, a: SurfaceRect
     ctx.fillText(`${[4,2,1][i]} · ${D.visual.retainedLabels[i]}`, xx + 10, top + 10);
     px(ctx, xx + 10, top + 34, cw - 20, 1, P.glassEdge);
     studioFont(ctx, 10, true); ctx.fillStyle = P.greyDk; ctx.fillText(D.visual.archiveTitle, xx + 10, top + 43);
-    const excerpt = (i === 2 ? D.record.sentText : D.record.publishedText).split('. ')[0] + '.';
-    text(ctx, excerpt, xx + 10, top + 60, cw - 20, 10, 13, P.greyDk);
+    // ⚑ S403 (UiB job 30 B3; his 17 Nov: "the campaign kit repeating her 2014 story could go?") — the scheduled posts and
+    //   the external copies no longer print the published sentence (her 2014 story met a third time). The original keeps
+    //   her own words, "I came to the first night because of Nuala…": what they keep is what they edited out.
+    if (i === 2) text(ctx, D.record.sentText.split('. ')[0] + '.', xx + 10, top + 60, cw - 20, 10, 13, P.greyDk);
     studioFont(ctx, 9, true); ctx.fillStyle = P.greyDk; ctx.fillText(D.visual.retainedStates[i], xx + 10, top + 115);
   }
   let yy = top + 149;

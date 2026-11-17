@@ -58,13 +58,15 @@
    "items": {
     "record": "Your record — in the Start menu, under My account.",
     "jobs": "Jobs on the board, in any order.",
+    "family": "Answer the mothers.",
     "recommend": "Kindredraft — offered when the board is done.",
     "group": "Post to the group.",
     "floppy": "FloppySheep — on your phone."
    },
    "outro": "Small steps count.",
    "close": "Close",
-   "_docS307": "S307: the legacy video-tool offer is retired. The notice names the one story-record offer."
+   "_docS307": "S307: the legacy video-tool offer is retired. The notice names the one story-record offer.",
+   "_docS403": "⚑ S403 (UiB job 30 B1): `items.family` is new: the card names the mothers while their job is open (it follows the map's `family` beat, so it goes once they are answered), as Lambient's order and its waiting line do."
   },
   "e4": {
    "line": "While it settles, Maya — {items}. Or start with the search.",

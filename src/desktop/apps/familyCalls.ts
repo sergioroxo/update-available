@@ -25,10 +25,10 @@ import polish from '../../../data/strings/playtestPolish.json';
  * an indefinite holding pattern of patience and prayer, offered warmly, that
  * never answers the question that was asked.
  *
- * ⚑ THE THIRD MOTHER IS THE MECHANIC. Annette asks whether the organisation
+ * ⚑ THE LAST MOTHER IS THE MECHANIC. Annette asks whether the organisation
  * knows where her daughter is — she has GracePlatform's own address off a 2014
- * form and it is the most recent address she has for her child. No template
- * matches. A player may send her one of the four anyway, mark her handled
+ * form and it is the last address she has for her child. No template
+ * matches. A player may send her one of the three anyway, mark her handled
  * without replying, or leave her open and walk away. **All three file, all three
  * are identical to the software, and the tile can go grey with her unanswered.**
  * Nothing warns. Nothing praises. The interface does not distinguish.
@@ -40,6 +40,7 @@ import polish from '../../../data/strings/playtestPolish.json';
  */
 
 import { px, setFont, wrapText } from '../theme/chrome';
+import { textPx } from '../theme/fonts';
 import * as aero from '../theme/era3';
 import { ERA3 } from '../theme/era3';
 import { ledger } from '../../state/ledger';
@@ -65,9 +66,10 @@ export class FamilyCallsApp implements TaskSurface {
 
   private v = 0;
   // ⚑ S362 / H42a (his headset, 10 Nov, 21:07, and his answer to the question "should family calls open on Ruth or only on
-  //   Annette?": "open on Ruth", "so we can see the system") — the job opens on Ruth's thread, an ordinary message the four templates
-  //   do answer, so the system can be seen working before Annette's, the one it cannot answer, is met.
-  private sel = Math.max(0, PARENTS.findIndex(p => p.id === 'p_ruth'));
+  //   Annette?": "open on Ruth", "so we can see the system") — the job opens on an ordinary message the templates do answer,
+  //   so the system can be seen working before Annette's, the one it cannot answer, is met.
+  // ⚑ S403 (job 30 B1, "Answer the mothers") — Ruth left; Maureen is that ordinary message now, so the job opens on her.
+  private sel = Math.max(0, PARENTS.findIndex(p => p.id === 'p_maureen'));
   private outcomes = new Map<string, Outcome>();
   /** which reply was sent, for the row's own "sent" line */
   private sent = new Map<string, string>();
@@ -198,7 +200,15 @@ export class FamilyCallsApp implements TaskSurface {
   }
 
   // ── the open job ─────────────────────────────────────────────────────────
-  draw(ctx: CanvasRenderingContext2D, area: TaskArea, hit: (r: TaskHit) => void): void {
+  draw(ctx: CanvasRenderingContext2D, area0: TaskArea, hit: (r: TaskHit) => void): void {
+    // ⚑ S403 (job 30 B1) — ONE LINE AT THE TOP says what the job is, across the whole window: "Mothers write when a
+    //   daughter stops coming home. You answer for the ministry." It replaces the role line under the list (and the unused
+    //   `sub`), so the screen says what it is before the first name is read. Everything under it moves down by its height.
+    setFont(ctx, 11); ctx.fillStyle = ERA3.titleText;
+    const introLines = wrapText(ctx, f.app.intro, area0.w).slice(0, 2);
+    introLines.forEach((ln, i) => ctx.fillText(ln, area0.x, area0.y + i * 14));
+    const introH = introLines.length * 14 + 8;
+    const area = { ...area0, y: area0.y + introH, h: area0.h - introH };
     const listW = 170;
     const gap = 14;
     const readX = area.x + listW + gap;
@@ -231,16 +241,12 @@ export class FamilyCallsApp implements TaskSurface {
       hit({ x: area.x, y: ry, w: listW, h: rowH, id: 'family-sel-' + i });
     });
 
-    // ⚑ wrapped, not clipped. It ran under the reading pane as "Parents & Fam"
-    //   — and this line is the one that says what she IS on this screen, so it
-    //   is the last line in the era that should be cut off mid-word.
-    setFont(ctx, 9); ctx.fillStyle = ERA3.grey;
-    wrapText(ctx, f.app.roleLine, listW).slice(0, 3).forEach((ln, i) =>
-      ctx.fillText(ln, area.x, area.y + 22 + PARENTS.length * (rowH + 4) + 6 + i * 11));
+    // (⚑ S403 — the role line that stood here, "You are answering as Parents & Family Ministry.", is said by the intro
+    //   line at the top now: "You answer for the ministry.")
 
     // ⚑ S332 — Lambient teaches the rule here, in the list column (the tool's side), never on a mother's message
     {
-      const ny = area.y + 22 + PARENTS.length * (rowH + 4) + 46;
+      const ny = area.y + 22 + PARENTS.length * (rowH + 4) + 12;
       const note = this.note ?? { line: f.lambient.teach, voice: 'lambient' as Voice };
       const nh = measureLambientNote(ctx, listW - 10, note, 10);
       noteBand(ctx, area.x, ny - 5, listW, nh + 9);
@@ -250,8 +256,13 @@ export class FamilyCallsApp implements TaskSurface {
     // ── the message ────────────────────────────────────────────────────────
     const p = this.current();
     const done = this.outcomes.has(p.id);
-    px(ctx, readX, area.y, readW, 128, ERA3.memberBand);
-    px(ctx, readX, area.y, 3, 128, ERA3.memberSpine);
+    // ⚑ S403 — the message box fits the longest message (the two are short now: it was a fixed 128 px for three long ones),
+    //   the same height for both so nothing jumps between them; the intro line at the top took the room it gives back
+    setFont(ctx, 11);
+    const msgLines = Math.min(7, Math.max(...PARENTS.map((pp) => wrapText(ctx, pp.body, readW - 24).length)));
+    const msgH = Math.max(96, 30 + msgLines * 14 + 12);
+    px(ctx, readX, area.y, readW, msgH, ERA3.memberBand);
+    px(ctx, readX, area.y, 3, msgH, ERA3.memberSpine);
     setFont(ctx, 13); ctx.fillStyle = ERA3.titleText;
     ctx.fillText(p.from, readX + 12, area.y + 8);
     setFont(ctx, 11); ctx.fillStyle = ERA3.ink;
@@ -261,21 +272,25 @@ export class FamilyCallsApp implements TaskSurface {
     // ⚑ the quiet one is MARKED, and the mark is administrative rather than
     //   moral: the tool notes that its own library does not reach her, in the
     //   same flat voice it uses for everything else.
+    // ⚑ S403 — its lines are spaced by the type's real size (a headset raises 9 px to its floor; at a fixed 10 px lead the
+    //   two lines touched each other and the replies' label), and the replies start under the room two lines take
+    const noteLead = Math.round(textPx(9)) + 2;
     if (p.id === QUIET.id && !done) {
       setFont(ctx, 9); ctx.fillStyle = ERA3.alarm;
-      wrapText(ctx, polish.familyNote, readW - 24).forEach((line, i) => ctx.fillText(line, readX + 12, area.y + 132 + i * 10));
+      wrapText(ctx, polish.familyNote, readW - 24).slice(0, 2).forEach((line, i) => ctx.fillText(line, readX + 12, area.y + msgH + 4 + i * noteLead));
     }
 
     // ── the verbs ──────────────────────────────────────────────────────────
+    const verbsY = area.y + msgH + 4 + 2 * noteLead + 6;
     setFont(ctx, 10); ctx.fillStyle = ERA3.greyDk;
-    ctx.fillText(f.app.replyLabel, readX, area.y + 154);
-    px(ctx, readX, area.y + 168, readW, 1, ERA3.glassEdge);
+    ctx.fillText(f.app.replyLabel, readX, verbsY);
+    px(ctx, readX, verbsY + 14, readW, 1, ERA3.glassEdge);
 
     const bw = Math.floor((readW - 10) / 2);
     const bh = 32;
     REPLIES.forEach((r, i) => {
       const bx = readX + (i % 2) * (bw + 10);
-      const by = area.y + 176 + Math.floor(i / 2) * (bh + 6);
+      const by = verbsY + 22 + Math.floor(i / 2) * (bh + 6);
       aero.button(ctx, bx, by, bw, bh, '', { disabled: done, size: 10 });
       setFont(ctx, 10); ctx.fillStyle = done ? ERA3.grey : ERA3.ink;
       wrapText(ctx, r.label, bw - 12).forEach((line, n) => ctx.fillText(line, bx + 6, by + 4 + n * 12));
@@ -284,7 +299,7 @@ export class FamilyCallsApp implements TaskSurface {
 
     // ⚑ and the row that is always available and never labelled as a refusal:
     //   marking a mother handled without a word. It files. Nothing objects.
-    const hy = area.y + 176 + Math.ceil(REPLIES.length / 2) * (bh + 6) + 4;
+    const hy = verbsY + 22 + Math.ceil(REPLIES.length / 2) * (bh + 6) + 4;
     if (!this.complete()) aero.button(ctx, readX, hy, readW, bh, f.app.noReplyLabel, { disabled: done, size: 10 });
     if (!done) hit({ x: readX, y: hy, w: readW, h: bh, id: 'family-refuse' });
 

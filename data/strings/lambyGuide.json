@@ -251,7 +251,8 @@
         "target": []
       },
       "pipeline": {
-        "tip": "One story, four destinations. Send it when ready.",
+        "tip": "Renata's story is done. Send it when you're ready.",
+        "_docS403": "⚑ S403 (UiB job 30 B2): `tip` was \"One story, four destinations. Send it when ready.\" In the default visit the send is in the editor now (\"Send to all four\", the same `vera-send` id), and the four-places page is in ?cut=full only.",
         "target": [
           "vera-send",
           "vera-send-close",
@@ -288,19 +289,18 @@
         "act": "focus:task-1"
       },
       "family": {
-        "tip": "Next: the family calls. Three parents are waiting.",
-        "here": "The family calls are the third card.",
+        "tip": "Next: the mothers. Two are waiting.",
+        "here": "Answer the mothers is the third card.",
         "again": "Send a reply, or don’t send a script.",
+        "_docS403": "⚑ S403 (UiB job 30 B1): `tip` was \"Next: the family calls. Three parents are waiting.\", `here` \"The family calls are the third card.\"; Ruth and the parents' circle reply left, so `family-sel-2` and `family-reply-r_group` are no longer targets.",
         "target": [
           "task-2",
           "family-reply-r_grief",
           "family-reply-r_patience",
           "family-reply-r_boundaries",
-          "family-reply-r_group",
           "family-refuse",
           "family-sel-0",
           "family-sel-1",
-          "family-sel-2",
           "board-back"
         ],
         "act": "focus:task-2"

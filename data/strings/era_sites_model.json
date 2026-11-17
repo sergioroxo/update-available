@@ -4081,9 +4081,9 @@
         "where": "Where: the workstation."
        },
        {
-        "label": "The family calls",
+        "label": "The mothers",
         "opt": "",
-        "hint": "On the board: Return the family calls. Send a reply to each parent, or don’t.",
+        "hint": "On the board: Answer the mothers. Send each a reply, or don’t.",
         "where": "Where: the workstation."
        },
        {

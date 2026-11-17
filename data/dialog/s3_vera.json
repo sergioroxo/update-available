@@ -21,7 +21,8 @@
   ],
   "archive": "As sent · kept in archive · administrators only",
   "press": "Send to all four",
-  "sent": "Sent to all four · seen by 1,211 · 0 comments",
+  "sent": "Sent to all four. Shared across the network: 38 ministries in 9 countries.",
+  "_docS403": "⚑ S403 (UiB job 30 B2; his 17 Nov: \"What if instead of seen by 1211, since that would require time passing, why isnt this a sent to the network with a X number of organizations, that way expand the scope of influence of SOGICE?\"). `sent` was \"Sent to all four · seen by 1,211 · 0 comments\" (the only place 1,211 appeared): a view count needs time to pass, and the network's reach widens the practice's influence. 38 ministries and 9 countries are the fiction's figures (the network is invented), not a documented count. In the default visit this page (\"Ready to share\", `intro` \"So she is not alone. One story, four places.\") is folded into Renata's editor: when her last rule is applied the editor offers `press` (\"Send to all four\", her press) and shows `sent` before \"Back to today\" (graceQueueLite `sendInEditor`). The page itself stays in ?cut=full, unchanged.",
   "loop": "New story received. Awaiting review.",
   "back": "Back to today"
  },
@@ -69,7 +70,8 @@
   "witnessApproved": "campaign kit: approved — Vera’s 2014 story included under general consent",
   "witnessRemoved": "story: take-down requested — scheduled posts, external copies and original retained",
   "witnessAdmin": "campaign kit: left unapproved — administrator scheduled it under general consent",
-  "original": "2014 original · retained"
+  "original": "2014 original · retained",
+  "_docS403": "⚑ S403 (UiB job 30 B3; his 17 Nov: \"the campaign kit repeating her 2014 story could go?\"): on \"Take my story down\" (veraSurfaces `drawRetainedCopies`) the first two cards (4 · Scheduled posts, 2 · External copies) no longer print the first sentence of `record.publishedText` (\"I came to my first night with a heart that was looking for home in the wrong place.\"); the third (1 · Original account, RETAINED) keeps her own words from `record.sentText`. No string here changed."
  },
  "provenance": "As sent · kept in archive · administrators only",
  "desk": {

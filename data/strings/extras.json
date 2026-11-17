@@ -55,7 +55,8 @@
     {
       "id": "jobs",
       "label": "The other jobs",
-      "place": "On the board: the family calls and the group’s check-in"
+      "place": "On the board: the group’s check-in",
+      "_docS403": "⚑ S403 (UiB job 30 B1): was \"On the board: the family calls and the group’s check-in\" (S399); the family calls are back on the default board as \"Answer the mothers\", so this door opens the group's check-in only."
     }
   ],
   "e4": [
