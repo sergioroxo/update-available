@@ -1870,7 +1870,15 @@ async function main() {
     writeFileSync(join(OUT_DIR, 'TEXT_CENSUS_' + stamp + '.json'), JSON.stringify(keep, null, 1));
   }
 
+  // ⚑ S401 (job 29 D2) — the person's file on each era's screen: every change the faces showed (count, lit), from the page
+  const fileItems = await page.evaluate(() => window.__fileItems?.() ?? null).catch(() => null);
+  if (fileItems) {
+    const per = {};
+    for (const f of fileItems) { const e = (per[f.era] ??= { changes: 0, lit: 0, from: f.count, to: f.count }); e.changes++; if (f.lit) e.lit++; e.to = f.count; }
+    console.log('  file on the screen (S401): ' + (Object.entries(per).map(([e, v]) => `${e} ${v.from}→${v.to} (${v.changes} changes, ${v.lit} lit)`).join(' · ') || 'no change seen'));
+  }
   writeFileSync(join(OUT_DIR, 'WALK_' + stamp + '.json'), JSON.stringify({
+    fileItems,
     when: new Date().toISOString(), port: PORT, viewport: VIEW,
     jumpedTo: JUMP || null,
     setupEntrance: SETUP,

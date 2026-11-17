@@ -40,6 +40,8 @@ const WORLD_SKY = COMMONS_WORLD.sky;
 import { buildClusterShell, relocationFor, RELOCATIONS, type ClusterShell, type EraKey,
   type RelocationPlan } from '../room/cluster';
 import { buildPointCloud, closeBackdropColor, type PointCloud } from '../room/pointCloud';
+import { buildDanielLine } from '../room/danielLine';
+import { fileHistory } from '../witness/fileItem';
 import { entriesByEra } from '../witness/record';
 import { createSendRuntime, type SendRuntime } from '../room/sends';
 import { buildMovementNodes, type MovementNodes } from '../room/movementNodes';
@@ -4723,7 +4725,11 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       if (relocLeg && !camMove) advanceRelocation();
       // ⚑ the Close's four legs hand over the same way; `hold` is the one
       //   without a camera move, so it runs on its own small clock
-      if (closeStage === 'message') {
+      if (closeStage === 'line') {
+        // ⚑ S401 — his line is read on its own clock (danielLine.ts); then the eyes rise
+        danielLine?.tick(dt);
+        if (!danielLine || danielLine.done) advanceClose();
+      } else if (closeStage === 'message') {
         // ⚑ S226 (his, 2026-10-10, cadence study Q6: "Press") — a card waits for a press, never for a clock: 39 words
         //   in 9 s was ~260 words a minute for readers in their second language. Each card says how to go on.
         void CLOSE_CARD_SECONDS;
@@ -5557,7 +5563,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
    * The review route (`?close=1`) starts at Daniel's seat, so it keeps the old
    * order: lookUp, night on the stars, then the opening.
    */
-  type CloseStage = 'lead' | 'travel' | 'lookUp' | 'message' | 'hold' | 'open' | 'settled' | null;
+  type CloseStage = 'lead' | 'travel' | 'line' | 'lookUp' | 'message' | 'hold' | 'open' | 'settled' | null;
   /** ⚑ S209 / P7-48 — THE CLOSE'S MESSAGE (data/strings/close_message.json): with the eyes on the stars and before
    *  the panels open, a few plain cards in the frame's voice — what SOGICE is, that it persists, that the law did not
    *  come, and his last line. Each holds CLOSE_CARD_SECONDS or until a press; the frame never plays. */
@@ -5604,6 +5610,10 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     openClosePanels();
   }
   let closeStage: CloseStage = null;
+  /** ⚑ S401 (UiB job 29 D3) — his line at Daniel's desk, before the Close (src/room/danielLine.ts) */
+  const danielLine = options.reinterp === true && cloud ? buildDanielLine(app) : null;
+  if (debugOn && danielLine) (window as { __danielLine?: unknown }).__danielLine = danielLine;
+  if (debugOn) (window as { __fileItems?: () => unknown }).__fileItems = () => fileHistory.slice();   // S401: the file on each screen
   let closeHoldT = 0;
   /** true once the night/constellation began during the sweep (C-01) */
   let closeMorphBegun = false;
@@ -5691,6 +5701,17 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       closeStage = 'travel';
     }
     if (closeStage === 'travel') {
+      // ⚑ S401 (UiB job 29 D3; his 16 Nov, B11) — LANDED AT DANIEL'S DESK: before the room becomes the Close, his monitor
+      //   is on the desk again and on it, plain, his line and Caleb's answer (danielLine.ts), brought before the eye and
+      //   held for the residue's own time. The transformation waits for them: the eyes rise only after (`line` → here).
+      if (danielLine) {
+        closeStage = 'line';
+        danielLine.begin(xr?.active ? logicalHead() : camera, !!xr?.active, xr?.active ? null : camera.camera ?? null);
+        return;
+      }
+      closeStage = 'line';
+    }
+    if (closeStage === 'line') {
       closeStage = 'lookUp';
       // ⚑ W1-G1 — the eyes rise to the stars and come round only HALF of the quarter-turn to Daniel's desk (the other
       //   half is spent while the gaze comes down, in `open`): 45° over 20 s and 45° over 16 s, 4 and 5 °/s at the
@@ -5706,6 +5727,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       //   start of lookUp the whole rise was through a black room, and a ceiling you cannot see is not a ceiling.
       // ⚑ S361 / H50 — night falls first (CLOSE_DUSK_SECONDS), then the messages; no constellation yet
       closeStage = 'hold'; closeHoldT = 0;
+      danielLine?.hide();   // S401: the lights go out on the stars; his monitor goes with the room's light
       cluster.applyRig('close', true, CLOSE_LIGHTS_SECONDS);
       return;
     }
@@ -5758,6 +5780,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   function leaveClose(era: EraKey, navigation = false): void {
     if (!cluster || !cloud) return;
     cloud.hide();
+    danielLine?.hide();   // S401
     if (closeStage === 'message') { closeMsgEl.style.opacity = '0'; xrFrame?.setCard(null); closeCard = -1; }
     closeStage = null;
     closeMorphBegun = false;

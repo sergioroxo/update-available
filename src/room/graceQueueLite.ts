@@ -1,4 +1,5 @@
 import mirrorCopy from '../../data/strings/e3_mirror.json';
+import { FileWatch } from '../witness/fileItem';
 import { voiceHeld, filmAudible } from '../state/voiceHold';
 import { GuideWait } from '../narrative/guideWait';
 import { drawVeraArchive, drawVeraDistribution, drawRetainedCopies, studioFont } from '../desktop/apps/veraSurfaces';
@@ -433,7 +434,7 @@ export class GraceQueueLite {
   private guideWait = new GuideWait();
   private guideReady(key: string): boolean { if (this.personalQuiet) return false; return this.guideWait.ready(key, !!this.lambyGuide?.active); }
   pressGuideTarget(id: string): void {
-    if (!['signin', 'start-menu'].includes(id) || this.guideSilent || this.guideVoice) return;
+    if (!['signin', 'start-menu', 'account-activity'].includes(id) || this.guideSilent || this.guideVoice) return;   // S401: the file
     const r = this.rects.find(h => h.id === id);
     if (r) this.handleClick(r.x + r.w / 2, r.y + r.h / 2);
   }
@@ -816,6 +817,8 @@ export class GraceQueueLite {
   private floppyOpened = false;
 
   update(dt: number): void {
+    // ⚑ S401 (UiB job 29 D2) — her file on the taskbar changes when something is filed (count up, lit a moment): two redraws
+    if (this.fileWatch.tick(dt, 'e3')) this.bump();
     // ⚑ S369 — "This device is no longer supported. Phone disconnected." holds its reading time (was 3 s for 8 words)
     if (this.disconnectT >= 0 && this.disconnectT <= DISCONNECT_SECONDS) { this.disconnectT += dt; if (this.disconnectT > DISCONNECT_SECONDS) this.bump(); }
     if (this.guideFocus) { this.guideFocus.t += dt; if (this.guideFocus.t >= 6) { this.guideFocus = null; this.bump(); } }
@@ -1017,6 +1020,37 @@ export class GraceQueueLite {
 
   // ── the list ─────────────────────────────────────────────────────────────
   private bump(): void { this.ownVersion++; }
+  /** ⚑ S401 (UiB job 29 D2) — Vera's file: its count and its light (src/witness/fileItem.ts) */
+  private readonly fileWatch = new FileWatch();
+  /**
+   * ⚑ S401 (UiB job 29 D2; his 16 Nov, B8: "make the 'your file' on the computer more present of the system tracking
+   * you") — MY ACCOUNT · ACTIVITY, OUT OF THE START MENU. Her record was a Start-menu row nobody had to see; it is a
+   * taskbar button now, right of GracePlatform's own, always in view from the sign-in on: her account, and the number of
+   * things the platform has filed on her, which goes up while she works and lights for a moment, silently. A press
+   * opens Your record (S145/S149: hers only), over whatever is up; Back returns there. Reading it is optional.
+   */
+  private drawAccountButton(ctx: CanvasRenderingContext2D, platformW: number, H: number): void {
+    const bh = 28, ty = H - bh, label = mirrorCopy.account, n = String(this.fileWatch.count), lit = this.fileWatch.on;
+    setFont(ctx, 11);
+    const lw = Math.ceil(ctx.measureText(label).width);
+    setFont(ctx, 10);
+    const nw = Math.ceil(ctx.measureText(n).width) + 10;
+    const bw = 10 + 14 + 6 + lw + 8 + nw + 8;
+    const bx = Math.max(246, platformW - 192 - bw);
+    px(ctx, bx, ty + 4, bw, bh - 8, lit ? ERA3.accent : ERA3.taskMid);
+    px(ctx, bx, ty + bh - 6, bw, 2, lit ? ERA3.accentHi : ERA3.taskTopB);
+    // her avatar: a head and shoulders in two flat blocks, the platform's profile mark
+    px(ctx, bx + 10, ty + 8, 14, 12, ERA3.white);
+    px(ctx, bx + 14, ty + 9, 6, 5, lit ? ERA3.accent : ERA3.taskMid);
+    px(ctx, bx + 12, ty + 15, 10, 4, lit ? ERA3.accent : ERA3.taskMid);
+    setFont(ctx, 11); ctx.fillStyle = ERA3.white;
+    ctx.fillText(label, bx + 30, ty + 8);
+    const cx = bx + 30 + lw + 8;
+    px(ctx, cx, ty + 7, nw, 14, lit ? ERA3.white : ERA3.accent);
+    setFont(ctx, 10); ctx.fillStyle = lit ? ERA3.accent : ERA3.white;
+    ctx.fillText(n, cx + 5, ty + 9);
+    this.rects.push({ x: bx, y: ty + 4, w: bw, h: bh - 8, id: 'account-activity' });
+  }
 
   /** ⚑ S362 / H41 + H42b — the board's two pop-ins keep their own clocks: the kit's URGENT card (flashes twice a second; the
    *  platform opens the kit itself if it is left) and Kindredraft's draft (types itself in). Both redraw only when they change. */
@@ -1941,6 +1975,8 @@ export class GraceQueueLite {
       const S = startCopy.desktop.startMenu;
       aero.button(ctx, 3, H - 25, 51, 22, S.button, { size: 10 });
       this.rects.unshift({ x: 3, y: H - 25, w: 51, h: 22, id: 'start-menu' });
+      // ⚑ S401 (job 29 D2) — her file on the taskbar, once she is signed in (before that there is no account to open)
+      if (this.mode === 'board' || this.mode === 'done' || this.mode === 'list') this.drawAccountButton(ctx, platformW, H);
       const nav = this.startMap.draw(ctx, platformW, H, 'e3', buildStartModel(undefined, 'e3'), this.startMapSilent || this.pauseOpen);
       if (nav.length) this.rects = [...nav, ...this.rects.filter(r => r.id === 'start-menu' || r.id === 'whattodo')];
     }

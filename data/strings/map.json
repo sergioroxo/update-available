@@ -413,7 +413,7 @@
      "label": "Your record",
      "done": "recordViewed",
      "optional": true,
-     "hint": "Your record is in the Start menu, under My account.",
+     "hint": "Your record: My account · activity, on the taskbar.",
      "where": "the workstation"
     },
     {

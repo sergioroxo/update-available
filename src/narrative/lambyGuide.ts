@@ -4,7 +4,7 @@ import copy from '../../data/strings/lambyGuide.json';
 import decisions from '../../data/strings/cx3b.json';
 import type { MapState } from '../witness/map';
 export type GuideEra = 'e1' | 'e2' | 'e3' | 'e4';
-export type GuideRung = 'silent' | 'cue' | 'tip' | 'show' | 'again' | 'start' | 'form' | 'personalise' | 'root' | 'harbor' | 'choice' | 'tv' | 'tvcall';
+export type GuideRung = 'silent' | 'cue' | 'tip' | 'show' | 'again' | 'start' | 'form' | 'personalise' | 'root' | 'harbor' | 'choice' | 'tv' | 'tvcall' | 'file';
 export interface GuideStep { tip: string; here?: string; again?: string; target: string[]; act?: string; noAgain?: boolean; once?: boolean }
 export interface GuideView {
   era: GuideEra; beat: string; rung: GuideRung; hidden: boolean; text: string | null;
@@ -14,7 +14,7 @@ export interface GuideView {
   frame: number; time: number;
 }
 export interface GuideInput { era: GuideEra; map: Pick<MapState, 'current' | 'quiet'>; silent: boolean; voice: boolean;
-  personaliseOffer?: string; deferredUpdate?: boolean; formAvailable?: boolean; formOpened?: boolean; formForced?: boolean; formFiled?: boolean; rootOpened?: boolean; racketDone?: boolean; robDone?: boolean; harborDue?: boolean; tvOffer?: string; tvCall?: string; fillText?: (text: string) => string; idleScale?: number; startTarget?: string; reducedMotion?: boolean }
+  personaliseOffer?: string; deferredUpdate?: boolean; formAvailable?: boolean; formOpened?: boolean; formForced?: boolean; formFiled?: boolean; rootOpened?: boolean; racketDone?: boolean; robDone?: boolean; harborDue?: boolean; tvOffer?: string; tvCall?: string; fileOffer?: string; fileTarget?: string; fillText?: (text: string) => string; idleScale?: number; startTarget?: string; reducedMotion?: boolean }
 interface StepMemory { dismissed: number; finished: boolean; offered: boolean }
 export class LambyGuide {
   readonly view: GuideView = { era: 'e1', beat: '', rung: 'silent', hidden: true, text: null, targets: [], frame: 0, time: 0 };
@@ -33,6 +33,8 @@ export class LambyGuide {
   private readonly tvOffered = new Set<GuideEra>();
   /** ⚑ S392 — the eras in which Lamby has made the teaching TV's call (once each), and whether that call is up now */
   private readonly tvCalled = new Set<GuideEra>();
+  /** ⚑ S401 — the eras in which Lamby has pointed at the person's file (once each) */
+  private readonly fileOffered = new Set<GuideEra>();
   private calling = false;
   private formWait = 0;
   private requested = false;
@@ -56,7 +58,7 @@ export class LambyGuide {
     Object.assign(this.view, { rung, text, targets, act, alt }); this.version++;
   }
   /** the offers that are said once, ignorable, and logged by their own name (not by the era's beat) */
-  private get isOffer(): boolean { const r = this.view.rung; return r === 'form' || r === 'root' || r === 'harbor' || r === 'choice' || r === 'tv' || r === 'tvcall'; }
+  private get isOffer(): boolean { const r = this.view.rung; return r === 'form' || r === 'root' || r === 'harbor' || r === 'choice' || r === 'tv' || r === 'tvcall' || r === 'file'; }
   tick(dt: number, input: GuideInput): void {
     this.input = input;
     const alias: Record<string, string> = { l: 'browser', search: 'results' };   // ⚑ S293: 2026's other beats are their own ids
@@ -109,6 +111,15 @@ export class LambyGuide {
     if (input.tvOffer && !this.tvOffered.has(input.era) && !this.active && this.canOffer()
       && this.idle >= copy.timing.tipSeconds * (input.idleScale ?? 1) * 1.5) {
       this.tvOffered.add(input.era); this.counts[input.era]++; this.idle = 0; this.set('tv', input.tvOffer, [], 'open:tv'); return;
+    }
+    // ⚑ S401 (UiB job 29 D2; his 16 Nov, B8) — THE FILE: once per era, Lamby points at the person's file on the screen, as
+    //   the helper who is also the system ("I've kept everything for you"). Ignorable, inside the era's cap, never over a
+    //   voice or a quiet scene (the gates above), and only on a stall with nothing better to say: after the TV's offer
+    //   would have come. The pointer lands on the item; Take me there opens it (navigation, read only).
+    if (input.fileOffer && input.fileTarget && !this.fileOffered.has(input.era) && !this.active && this.canOffer()
+      && this.idle >= copy.timing.tipSeconds * (input.idleScale ?? 1) * 1.5) {
+      this.fileOffered.add(input.era); this.counts[input.era]++; this.idle = 0;
+      this.set('file', input.fileOffer, [input.fileTarget], `press:${input.fileTarget}`); return;
     }
     // Available form waits through free exploration; only one unsolicited offer. ⚑ S343: once the game has been
     //   played (or offered) and closed, the form is offered after a breath, not after the full tip wait.
