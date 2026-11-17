@@ -703,7 +703,10 @@ export class GraceQueueLite {
    *  id the page used, so Lamby's step and the glow point at it), and the receipt (s3_vera.json `send.sent`, "Sent to all
    *  four. Shared across the network: 38 ministries in 9 countries.") shows there, before "Back to today". The press files
    *  the ledger's `pipeline` and `veraDay.distributed` as the page did, so the testimony counts as done as before. The
-   *  page stays in ?cut=full. */
+   *  page stays in ?cut=full.
+   *  ⚑ S403b (job 30 B4, his "Yes, change it") — the editor no longer says "all four" (nothing on it names the four): its
+   *  button is `send.editorPress` ("Send to the network") and its receipt `send.editorSent` ("Sent. Shared with 38
+   *  ministries in 9 countries."); the page keeps `send.press` / `send.sent`. */
   private get sendInEditor(): boolean { return isSpeedrun(); }
   /** Renata's story done, in her editor, not yet sent: the editor offers the send in place of its way back */
   private get editorSendPending(): boolean { return this.sendInEditor && this.mode === 'list' && !this.openSurface && this.renataOpen() && this.storyDone && !veraDay.distributed; }
@@ -713,7 +716,7 @@ export class GraceQueueLite {
   private drawSendLine(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, max: number): void {
     studioFont(ctx, 11); ctx.fillStyle = ERA3.ink;
     const lead = Math.round(textPx(11, 'e3')) + 3;
-    wrapText(ctx, vera.send.sent, w).slice(0, max).forEach((ln, i) => ctx.fillText(ln, x, y + i * lead));
+    wrapText(ctx, vera.send.editorSent, w).slice(0, max).forEach((ln, i) => ctx.fillText(ln, x, y + i * lead));   // ⚑ S403b
   }
   /** where her film was last drawn on the workstation canvas (for the probes and the measurements) */
   private filmRect: { x: number; y: number; w: number; h: number } | null = null;
@@ -2870,7 +2873,7 @@ export class GraceQueueLite {
       const send = this.editorSendPending;
       if (this.editorReceipt) this.drawSendLine(ctx, c.x + 12, by + 36, bx - c.x - 24, 2);
       else { studioFont(ctx, 10); ctx.fillStyle = ERA3.greyDk; ctx.fillText(vera.provenance, c.x + 12, by + 37); }
-      aero.button(ctx, bx, by + 12, bw, 28, send ? vera.send.press : this.boardBackLabel(), { primary: true, size: 11 });
+      aero.button(ctx, bx, by + 12, bw, 28, send ? vera.send.editorPress : this.boardBackLabel(), { primary: true, size: 11 });   // ⚑ S403b
       this.rects.push({ x: bx, y: by + 12, w: bw, h: 28, id: send ? 'vera-send' : 'board-back' });
       if (!send && SUBMISSIONS.some(sb => !this.subComplete(sb))) {
         aero.button(ctx, bx, by + 46, bw, 25, q.app.nextStory, { size: 11 });
@@ -2925,7 +2928,7 @@ export class GraceQueueLite {
       // ⚑ S403 — the default visit: the send is offered here too (the film may end before she presses it), then its receipt
       const send = this.editorSendPending;
       if (this.editorReceipt) this.drawSendLine(ctx, c.x + 4, by, bx - c.x - 16, 2);
-      aero.button(ctx, bx, by, bw, 28, send ? vera.send.press : this.boardBackLabel(), { primary: true, size: 11 });
+      aero.button(ctx, bx, by, bw, 28, send ? vera.send.editorPress : this.boardBackLabel(), { primary: true, size: 11 });   // ⚑ S403b
       this.rects.push({ x: bx, y: by, w: bw, h: 28, id: send ? 'vera-send' : 'board-back' });
       return;
     }
@@ -3539,7 +3542,8 @@ export class GraceQueueLite {
     }
     if (vh?.id === 'vera-send') {
       veraDay.distributed = true; this.sendReceipt = true;
-      ledger.era3Jobs.push({ id: 'pipeline', witness: vera.send.sent }); this.bump(); return;
+      // ⚑ S403b — the record files the receipt the screen showed: the editor's in the default visit, the page's in ?cut=full
+      ledger.era3Jobs.push({ id: 'pipeline', witness: this.veraPage === 'send' ? vera.send.sent : vera.send.editorSent }); this.bump(); return;
     }
     if (vh?.id === 'vera-send-close') {
       this.veraPage = null; this.bump(); return;   // S332: her record is offered after all four jobs

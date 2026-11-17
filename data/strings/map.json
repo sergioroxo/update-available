@@ -368,6 +368,8 @@
      "label": "Four places, one story",
      "done": "pipelineSent",
      "hint": "Send the story to all four destinations.",
+     "labelSpeedrun": "The story, sent out",
+     "hintSpeedrun": "When Renata's story is done, send it to the network from her editor.",
      "where": "the workstation"
     },
     {
@@ -638,5 +640,6 @@
  "controlsHintTouch": "The II button, bottom left, opens the menu.",
  "_docControlsHintTouch": "⚑ S397 (the orchestrator, 16 Nov: a phone has no Esc) — the idle reminder on a touch screen (phone, tablet: pointer coarse) names the menu button the screen really has, the II glyph at the bottom left (gameMenu.json pauseGlyphSymbol). The computer keeps controlsHint; the headset says its own line (gameMenu.json xrMenuHint, S269).",
  "_docS332": "⚑ S332 — 2016 is four jobs plus Malta (DESIGN_2016_CONNECTIONS, his second answers): places, family and the group are main beats now; the optional `jobs` beat (story clip, flagged replies) is retired with those tiles.",
+ "_docS403b": "⚑ S403b (UiB job 30 B4, his \"Yes, change it\"): 2016's `pipeline` beat in the DEFAULT visit reads `labelSpeedrun` \"The story, sent out\" and `hintSpeedrun` \"When Renata's story is done, send it to the network from her editor.\" (S227's mechanism, src/witness/map.ts): the send is the editor's \"Send to the network\" there, and nothing on it names four places. Old, still ?cut=full's (and the era sites', which list each beat's own label and hint): \"Four places, one story\" / \"Send the story to all four destinations.\"",
  "_docS403": "⚑ S403 (UiB job 30 B1): 2016's `family` beat is on the default visit again (its `\"speedrun\": false` from S399 removed): label was \"The family calls\", hint was \"On the board: Return the family calls. Send a reply to each parent, or don’t.\" The job is \"Answer the mothers\" now (s3_family.json)."
 }
