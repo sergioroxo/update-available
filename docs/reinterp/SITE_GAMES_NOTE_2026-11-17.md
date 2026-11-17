@@ -86,10 +86,11 @@ None of the four was much harder than the others, so all four are built.
 
 ## What it does not do (open)
 
-- **The in-piece site viewer** (the Close's canvas copy of the sites, also in the headset) does not run the games. It
-  shows the same Media tab without them. In the browser its "Open as a web page" button reaches the page with the game.
-  Running a game inside that viewer would mean routing presses through `xrMount.ts`. That is a separate job, if he wants
-  it.
+- **The in-piece site viewer** (the Close's canvas copy of the sites, also in the headset) does not run the games, by his
+  ruling of 17 Nov ("nothing there may look playable when it isn't"). In the viewer, the Story tab's game row and the
+  top of the Media tab say "… plays on this year's web page, not in this window." (`common.gameElsewhere`, S400b). In
+  the browser its "Open as a web page" button reaches the page with the game. Running a game inside the viewer would
+  mean routing presses through `xrMount.ts`: a separate job, if he ever wants it.
 - **No storage, so no best score.** That is right for these games (FloppySheep's law: "no best is kept"), and the heap in
   FIT IN lives only as long as the page.
 - **MATCH MADE SIMPLE on the page has no chat.** In the piece the AI's chat sets the handle at its beats. On the page the

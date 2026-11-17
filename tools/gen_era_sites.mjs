@@ -970,6 +970,8 @@ const srcModel = (file, index) => {
   const ls = linkRows(`${file}#${index}`);
   return { k: 'src', status: s.status, tag: short(s.status), conf: s.confidence || '', t: plain(s.text), links: ls, nolink: ls.length ? '' : S.common.noLink };
 };
+/** ⚑ S400b — the in-piece viewer's one line about the year's game: it plays on the web page, not in the window */
+const gameElsewhere = (G, it = false) => S.common.gameElsewhere.replace('{game}', it ? 'It' : G.name);
 function panelsModel(year) {
   const E = S.eras[year];
   const C = S.common;
@@ -984,7 +986,8 @@ function panelsModel(year) {
     { k: 'h3', t: C.storyFromPanel },
     { k: 'quote', t: pn.text, status: pn.status, tag: short(pn.status), long: long(pn.status) },
     { k: 'h3', t: C.whatYouMeet }, { k: 'p', t: C.whatYouMeetLead },
-    { k: 'dl', rows: E.interfaces },
+    // ⚑ S400b (his ruling 17 Nov) — the window does not run the game, so its row says where it plays (no link that looks playable)
+    { k: 'dl', rows: E.interfaces.map(([a, b]) => [a, E.game && E.game.row === a ? `${b}. ${gameElsewhere(E.game, true)}` : b]) },
     ...scriptModel(E.script),
     { k: 'h3', t: C.endsTitle }, { k: 'p', t: C.endsLead }, { k: 'mono', lines: endLines }
   ];
@@ -1039,7 +1042,7 @@ function panelsModel(year) {
     ...(period.length ? [{ k: 'p', t: C.periodLead }, { k: 'links', items: period.map((l) => ({ label: l.label, url: l.url, note: l.note })) }] : [{ k: 'p', t: C.periodNone }])
   ];
   out.media = [
-    { k: 'h2', t: S.tabs.media }, { k: 'lede', t: C.mediaLead },
+    { k: 'h2', t: S.tabs.media }, ...(E.game ? [{ k: 'note', t: gameElsewhere(E.game) }] : []), { k: 'lede', t: C.mediaLead },
     ...E.media.map(mediaModel)
   ];
   const terms = wordsOf(year);

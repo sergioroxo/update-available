@@ -458,7 +458,7 @@
        ],
        [
         "Handheld games",
-        "FIT IN on the handheld: whatever does not fit the mould stays on a heap that never goes away"
+        "FIT IN on the handheld: whatever does not fit the mould stays on a heap that never goes away. It plays on this year's web page, not in this window."
        ],
        [
         "The update",
@@ -1248,6 +1248,10 @@
       "t": "Media"
      },
      {
+      "k": "note",
+      "t": "FIT IN plays on this year's web page, not in this window."
+     },
+     {
       "k": "lede",
       "t": "Sound and film made for this project. They play only when you press play. Nothing loads before that."
      },
@@ -1849,7 +1853,7 @@
        ],
        [
         "Phone games",
-        "CLEAR, on Daniel's flip phone"
+        "CLEAR, on Daniel's flip phone. It plays on this year's web page, not in this window."
        ]
       ]
      },
@@ -2310,6 +2314,10 @@
      {
       "k": "h2",
       "t": "Media"
+     },
+     {
+      "k": "note",
+      "t": "CLEAR plays on this year's web page, not in this window."
      },
      {
       "k": "lede",
@@ -2833,7 +2841,7 @@
        ],
        [
         "Mobile games",
-        "FloppySheep, on Vera's phone"
+        "FloppySheep, on Vera's phone. It plays on this year's web page, not in this window."
        ],
        [
         "The assistant",
@@ -3619,6 +3627,10 @@
       "t": "Media"
      },
      {
+      "k": "note",
+      "t": "FloppySheep plays on this year's web page, not in this window."
+     },
+     {
       "k": "lede",
       "t": "Sound and film made for this project. They play only when you press play. Nothing loads before that."
      },
@@ -4237,7 +4249,7 @@
        ],
        [
         "Console games",
-        "MATCH MADE SIMPLE"
+        "MATCH MADE SIMPLE. It plays on this year's web page, not in this window."
        ],
        [
         "The data subject's file",
@@ -5779,6 +5791,10 @@
      {
       "k": "h2",
       "t": "Media"
+     },
+     {
+      "k": "note",
+      "t": "MATCH MADE SIMPLE plays on this year's web page, not in this window."
      },
      {
       "k": "lede",

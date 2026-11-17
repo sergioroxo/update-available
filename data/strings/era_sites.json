@@ -97,7 +97,9 @@
   "gameKeyDown": "Down",
   "gameKeyLeft": "Left",
   "gameKeyRight": "Right",
-  "recordsGame": "This page has one script: the year's game, on the Media tab. It sends nothing, records nothing and asks nothing of you."
+  "recordsGame": "This page has one script: the year's game, on the Media tab. It sends nothing, records nothing and asks nothing of you.",
+  "_docGameViewer": "⚑ S400b (his ruling 17 Nov, item 3: the in-piece viewer does not run the games, \"but nothing there may look playable when it isn't\") — the one line the in-piece site viewer (era_sites_model.json) shows in the Story tab's game row and at the top of the Media tab. The web pages carry the game itself and do not show this line.",
+  "gameElsewhere": "{game} plays on this year's web page, not in this window."
  },
  "hub": {
   "title": "Four years, four websites",
@@ -336,6 +338,7 @@
    ],
    "game": {
     "id": "fitin",
+    "name": "FIT IN",
     "row": "Handheld games",
     "jump": "Play it on this page",
     "title": "Play FIT IN",
@@ -460,6 +463,7 @@
    ],
    "game": {
     "id": "clear",
+    "name": "CLEAR",
     "row": "Phone games",
     "jump": "Play it on this page",
     "title": "Play CLEAR",
@@ -558,6 +562,7 @@
    ],
    "game": {
     "id": "floppysheep",
+    "name": "FloppySheep",
     "row": "Mobile games",
     "jump": "Play it on this page",
     "title": "Play FloppySheep",
@@ -712,6 +717,7 @@
    ],
    "game": {
     "id": "matchmade",
+    "name": "MATCH MADE SIMPLE",
     "row": "Console games",
     "jump": "Play it on this page",
     "title": "Play MATCH MADE SIMPLE",
