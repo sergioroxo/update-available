@@ -67,6 +67,12 @@ Plan of record: `docs/REINTERP_RESTRUCTURE_R28_2026-07-10.md`.
   2D work without the room. **It is not an audience target and no design
   decision should be justified by it.** The fallback for "VR is not possible"
   is **the browser 3D room**, which is a first-class build.
+- **⚑ ONE VERSION (Sérgio, 17 Nov 2026: "Yes, freeze it").** There is one visit.
+  The old full route (`?cut=full`) is FROZEN as a research state (git tag
+  `research/full-cut-2026-11-17`; `docs/reinterp/RESEARCH_NOTE_THE_TWO_CUTS_2026-11-17.md`).
+  Write every change once, for the visit: no new `…Speedrun` keys, no
+  `"speedrun": false`, no full-route wording. ("speedrun" in the code is only the
+  visit's old internal name.)
 - **⚑ DEVICE REALITY (verified 2026-08-06, and it drives the above):** Safari
   implements WebXR **only on visionOS** — there is **no WebXR on iOS, iPadOS or
   macOS Safari**, and `navigator.xr` will never fire there. So for every Apple
