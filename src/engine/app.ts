@@ -1031,7 +1031,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
             && !os.irc?.open && !os.packet?.open && !os.diary?.open && !os.provotype && !os.kit?.onPrayerPage && !os.kit?.dialing;
         }
         if (tape === '2016') return !!era3Devices?.debugQueue().tvMomentFree && !era3Devices?.phoneInHand;
-        return !!os.e4 && os.e4.stage === 'closed';   // Dad's own notification may still be up: his link replaces it
+        return !!os.e4 && os.e4.stage === 'closed' && !os.e4.browser.draftLive;   // Dad's own notification may still be up: his link replaces it · ⚑ S404: never while Maya types her unsent line
       },
       held: () => os.paused || gameMenuBus.isOpen,
       eye: () => (xr?.active ? logicalHead() : camera),

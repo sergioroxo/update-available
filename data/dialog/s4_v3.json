@@ -327,6 +327,15 @@
     "typing": "Second Thoughts is typing…",
     "_docS363": "⚑ S363 / UiB job 14 Part A (his N7: 'should be similar to a ChatGPT style of conversational AI. We cannot even see the responses of Maya… fix this'; 'needs to be the point of weaponised care'; 'Your week, so far' goes). One conversation column: the assistant's words as plain text beside its mark, HER words in her own bubbles on the right (a suggested reply, pressed, becomes her bubble), what it shows her as cards inside the conversation (the clip, the circle, the picture), the composer at the foot with the suggested replies above it, and 'Memory updated' each time it files something about her — with the sentence it saved, in the flat, kind voice of a 2026 assistant's memory (`memory` on each chip; Claude's wording, his edit wins). The composer takes no typing (R28: no free text); a press on it points to the suggestions. Invented mark; no real product's look copied (no logo, no colours, no layout taken from one).",
     "composer": "Message Second Thoughts",
+    "unsent": {
+      "register": "felt",
+      "text": "There's nothing to restore. I'm Maya.",
+      "mark": "Not sent",
+      "after": 2,
+      "cps": 9,
+      "hold": 2.2,
+      "_docS404": "⚑ S404 (UiB job 30 C2; his 18 Nov yes to the three refusals, \"YES, this is much much better!\"): Maya's own words, in her own message box, never sent. Right after the assistant's \"You, restored. 2027. Calm. Accepted.\" (the `heading` beat), `after` seconds from that line, she types `text` into the box (`cps` letters a second, a caret, no sound); when it is written the box marks it `mark` and the send button stays grey; `hold` seconds later the beat's own press (\"Show me how\") comes, unchanged, under it in the same box. It is never sent: it stays in her box, marked, while the conversation goes on (her pressed replies go up as her bubbles past it), to the end. Nothing speaks while she types: the assistant has finished its lines and waits; Lamby and the quiet lines wait too. No free text, no new choice: the visitor's press is the one it was. The record files it once, as a gap: `witness.residue`. It belongs only to Maya's story (the system's word for her is \"restored\"); the same line ends the piece on Daniel's CRT (data/strings/close_line.json)."
+    },
     "footer": "Second Thoughts can make mistakes. It is always on your side.",
     "memoryUpdated": "Memory updated",
     "cards": {"clip": "Video · made for you", "map": "Your circle", "goal": "Your picture"},
@@ -494,6 +503,8 @@
     "muted": "contacts: Junie muted by the assistant — and the lot, the Lantern line",
     "help": "messages: Junie (muted by the assistant) — Maya wrote 'help'",
     "read": "mail and messages: read by the assistant — three screenshots",
-    "game": "console: the assistant's game opened on her screen"
+    "game": "console: the assistant's game opened on her screen",
+    "residue": "— entry could not be classified —",
+    "_docS404": "⚑ S404 — `residue`: what Memory files when Maya writes the line she never sends (bot.unsent), once, in 2026's file, word for word as Daniel's 2003 line files (s2_caleb.json `witness.residue`). Never the line itself."
   }
 }

@@ -93,6 +93,7 @@ interface BotBeat { id: string; lines: string[]; chips?: BotChip[]; button?: str
 interface WebPage { id: string; url: string; site: string; head: string; lines: string[] }
 const BOT = V.bot as unknown as { tab: string; mark: string; online: string; lineSeconds: number; typing: string; beats: BotBeat[];
   composer: string; footer: string; memoryUpdated: string; cards: Record<string, string>;
+  unsent: { text: string; mark: string; after: number; cps: number; hold: number };
   agent: { banner: string; control: string; pointer: string; mute: string; toastApp: string; mutedToast: string; mutedMore: string; shot: string };
   shots: { label: string; dad: string; dadLine: string; dadWhen: string };
   pages: { stamp: string; tap: string; close: string; items: WebPage[] };
@@ -286,6 +287,10 @@ export class E4Browser {
   get herWords(): string[] { return this.botSaid.filter((s) => s.who === 'her').map((s) => s.text); }
   private botDone = new Set<string>();
   private botNextIn = -1;
+  /** ⚑ S404 (UiB job 30 C2) — Maya's own line in her message box, never sent (s4_v3.json bot.unsent): seconds since she began
+   *  typing it (−1 before), and whether it is written (then it stays in her box, marked, to the end; filed once) */
+  private draftT = -1;
+  private draftWritten = false;
   /**
    * ⚑ S367 (UiB job 15 Part B, his B "a tug of war") — ONE NUMBER. The chat's ring ("Becoming") IS the handle of
    * MATCH MADE SIMPLE's filter (src/room/consoleSession.ts `progress`): her matches pull it down, the AI's counter-moves
@@ -355,7 +360,7 @@ export class E4Browser {
   get feltUp(): boolean { return this.messenger.felt; }
   get guideSilent(): boolean {
     return this.startMap.active || !this.pressable || this.phase !== 'open' || !!this.idleOrb || this.mode === 'game'
-      || this.messenger.felt || this.enquiryOpen;
+      || this.messenger.felt || this.enquiryOpen || this.draftLive;
   }
   // ⚑ S370 — and while the clip owns the page (its narrator is the voice; one voice at a time): its 58 s now outlast the
   //   guide's 50 s tip, which would otherwise pop over the end slate
@@ -388,7 +393,22 @@ export class E4Browser {
   private get botLinesShown(): number { const b = this.bot; return b && this.botT >= 0 ? this.botOnsets(b).filter((o) => o <= this.botT).length : 0; }
   /** ⚑ the clip owns the page before the map beat speaks (the review: "the over-the-top moment, direct and brute") */
   private get clipTakeover(): boolean { return this.bot?.id === 'clip' && this.botT < 0; }
-  private get botBeatReady(): boolean { const b = this.bot; if (!b) return false; const n = this.botLines(b).length; return this.botLinesShown >= n && this.botT >= (n ? this.botOnsets(b)[n - 1] : 0) + 0.5; }
+  private get botBeatReady(): boolean {
+    const b = this.bot; if (!b) return false; const n = this.botLines(b).length;
+    if (!(this.botLinesShown >= n && this.botT >= (n ? this.botOnsets(b)[n - 1] : 0) + 0.5)) return false;
+    // ⚑ S404 — after "You, restored. 2027." the beat's press waits until her own line is written in her box and held
+    return b.id !== 'heading' || this.botDone.has('heading') || this.draftHeld;
+  }
+  /** ⚑ S404 — the letters of her unsent line on the glass now */
+  private get draftLetters(): number { return this.draftWritten ? Infinity : this.draftT < 0 ? 0 : Math.floor(this.draftT * BOT.unsent.cps); }
+  /** ⚑ S404 — written, and held for `hold` seconds: the beat's press may come */
+  private get draftHeld(): boolean { return this.draftWritten && this.draftT >= BOT.unsent.text.length / BOT.unsent.cps + BOT.unsent.hold; }
+  /** ⚑ S404 — she is typing it, or it has just been written: nobody else speaks (the guide, the quiet lines, the TV) */
+  get draftLive(): boolean { return this.draftT >= 0 && !this.draftHeld; }
+  /** ⚑ S404 — the probes' handle: the unsent line's state */
+  get draftNow(): { started: boolean; written: boolean; held: boolean; letters: number } {
+    return { started: this.draftT >= 0, written: this.draftWritten, held: this.draftHeld, letters: Math.min(this.draftLetters, BOT.unsent.text.length) };
+  }
   private get enquiryOpen(): boolean { return this.enquiry === 'draft' || this.enquiry === 'sending' || this.enquiry === 'replied'; }
 
   // ── conducted looks ──────────────────────────────────────────────────────
@@ -472,7 +492,7 @@ export class E4Browser {
   }
   private mailPane = { x: 0, y: 0, w: 0, h: 0 };
 
-  private file(id: string, outcome: 'read' | 'opened' | 'answered' | 'done', witness: string): void {
+  private file(id: string, outcome: 'read' | 'opened' | 'answered' | 'done' | 'residue', witness: string): void {
     if (ledger.e4Space.some((e) => e.id === id)) return;
     ledger.e4Space.push({ id, outcome, witness });
   }
@@ -858,7 +878,7 @@ export class E4Browser {
         if (t?.word) { this.wotdSaid = true; meetWord(t.id, 'e4-wotd'); this.sayLine(`${app.title}: ${t.word}. ${t.line ?? ''}`); }
       }
       // ⚑ S364 / item 7 — the console is lit by the AI's offer now: this quiet line only follows her "Not now"
-      if (!this.waitSaid && this.quietT > 25 && consoleSession.lit && this.gameAnswer === 'later' && !this.gameWin && !ledger.games.some((g) => g.id === 'matchmade')) {
+      if (!this.waitSaid && !this.draftLive && this.quietT > 25 && consoleSession.lit && this.gameAnswer === 'later' && !this.gameWin && !ledger.games.some((g) => g.id === 'matchmade')) {
         this.waitSaid = true; this.waitNow = true; this.version++;
       }
     }
@@ -1029,6 +1049,20 @@ export class E4Browser {
     this.botT += dt;
     if (Math.floor(before / 0.3) !== Math.floor(this.botT / 0.3) && this.botT < 14) this.version++;
     if (b.id === 'heading' && this.botT < 5 && Math.floor(before * 12) !== Math.floor(this.botT * 12)) this.version++;   // the filter's slide
+    // ⚑ S404 (UiB job 30 C2) — her own words, typed in her own box right after "You, restored. 2027. Calm. Accepted.", never sent
+    if (b.id === 'heading' && !this.botDone.has('heading') && this.draftT < 0 && !this.draftWritten) {
+      const n = this.botLines(b).length;
+      if (this.botLinesShown >= n && this.botT >= this.botOnsets(b)[n - 1] + BOT.unsent.after) { this.draftT = 0; this.version++; }
+    }
+    if (this.draftT >= 0 && !this.draftHeld) {
+      const was = this.draftT; this.draftT += dt;
+      if (!this.draftWritten && this.draftT * BOT.unsent.cps >= BOT.unsent.text.length) {
+        this.draftWritten = true;
+        this.file('v3:residue', 'residue', W3.residue);   // Memory files a gap, once: never the line (s4_v3.json witness.residue)
+        this.version++;
+      }
+      if (Math.floor(was * 10) !== Math.floor(this.draftT * 10)) this.version++;
+    }
     if (this.clipTakeover && Math.floor(before * 8) !== Math.floor(this.botT * 8)) this.version++;
     if (b.id === 'clip' && before < 0 && this.botT >= 0) stopClipSound();   // S360: the clip ends, its sound with it
     // ⚑ S360 — the clip's two lines ask nothing: after them, the bot moves on to the mute by itself (the tour stalled here)
@@ -2384,16 +2418,21 @@ export class E4Browser {
       chipRows[chipRows.length - 1].push({ ...c, w });
       rowW += (rowW ? CHIP_GAP : 0) + w;
     }
-    const compH = 30 + (sugg.length ? chipRows.length - 1 : 0) * (CHIP_H + 4), compY = H - 17 - compH;
+    // ⚑ S404 (UiB job 30 C2) — once she begins her own line it holds the box's first row, to the end; the replies, when there
+    //   are any, sit under it in the same box (the box grows upward, as it does for a second row of replies)
+    const draft = this.draftT >= 0 || this.draftWritten;
+    const DRAFT_ROW = draft && sugg.length ? 24 : 0;
+    const compH = 30 + DRAFT_ROW + (sugg.length ? chipRows.length - 1 : 0) * (CHIP_H + 4), compY = H - 17 - compH;
     roundEdge(ctx, colX, compY, colW, compH, 15, V3.edge, V3.page);
     plusGlyph(ctx, colX + 13, compY + compH - 21, V3.ink2);
     roundRect(ctx, colX + colW - 28, compY + compH - 26, 22, 22, 11, V3.grey);
     sendGlyph(ctx, colX + colW - 23, compY + compH - 21, V3.card);
-    if (!sugg.length) { setFont(ctx, 13); ctx.fillStyle = V3.ink2; ctx.fillText(BOT.composer, inX, compY + 7); }
+    if (draft) this.drawDraft(ctx, inX, compY + 7, inW);
+    else if (!sugg.length) { setFont(ctx, 13); ctx.fillStyle = V3.ink2; ctx.fillText(BOT.composer, inX, compY + 7); }
     // the replies are published BEFORE the box (a press resolves to the first rect it falls in)
     chipRows.forEach((row, r) => {
       let sx = inX;
-      const sy = compY + 4 + r * (CHIP_H + 4);
+      const sy = compY + 4 + DRAFT_ROW + r * (CHIP_H + 4);
       for (const c of row) {
         setFont(ctx, 13);
         if (c.primary) pill(ctx, sx, sy, c.w, CHIP_H, V3.primary);
@@ -2412,6 +2451,23 @@ export class E4Browser {
     const convBottom = compY - 8;
     this.drawConversation(ctx, colX, top + 30, colW, convBottom);
     this.drawLightbox(ctx, W, H);
+  }
+
+  /** ⚑ S404 (UiB job 30 C2) — her unsent line in her own box: typed in (a caret while she types), then marked not sent at the
+   *  row's end — a small red ring with its mark and the words; the send button beside it stays grey. No sound. */
+  private drawDraft(ctx: CanvasRenderingContext2D, x: number, y: number, w: number): void {
+    const U = BOT.unsent;
+    setFont(ctx, 10);
+    const markW = this.draftWritten ? 12 + 4 + Math.ceil(ctx.measureText(U.mark).width) : 0;
+    setFont(ctx, 13); ctx.fillStyle = V3.ink;
+    const typed = fitText(ctx, U.text.slice(0, Math.min(U.text.length, this.draftLetters)), w - markW - 8);
+    ctx.fillText(typed, x, y);
+    if (!this.draftWritten && Math.floor(this.draftT * 2) % 2 === 0) px(ctx, x + Math.ceil(ctx.measureText(typed).width) + 1, y - 1, 1, 15, V3.ink);
+    if (!this.draftWritten) return;
+    const mx = x + w - markW;
+    roundRect(ctx, mx, y, 12, 12, 6, V3.danger);
+    px(ctx, mx + 5, y + 2, 2, 5, V3.card); px(ctx, mx + 5, y + 8, 2, 2, V3.card);
+    setFont(ctx, 10); ctx.fillStyle = V3.danger; ctx.fillText(U.mark, mx + 16, y + 1);
   }
 
   /** ⚑ S363 — a beat's rows as she sees them: its lines so far, and its card where it belongs (BEAT_CARD) */

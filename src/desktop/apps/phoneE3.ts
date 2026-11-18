@@ -18,6 +18,7 @@ import d from '../../../data/strings/era3_devices.json';
 import { playOnce } from '../../audio/tapeAudio';
 import vera from '../../../data/dialog/s3_vera.json';
 import { readHold } from '../readHold';
+import { ledger } from '../../state/ledger';
 
 type Msg = { from: string; time: string; text?: string; kind?: string };
 type Rect = { x: number; y: number; w: number; h: number; id: string };
@@ -86,10 +87,18 @@ function newsWait(i: number): number {
 /** ⚑ S362 / H28 + H42 — Mam's unfinished reply is TYPED in (it was a block that appeared), then held: seconds in all
  *  ⚑ S368 / F08 — the held part is the reading rule's, counted from the last letter (it was 8 s in all, 3 s after typing) */
 const NOTES_TYPE_CPS = 9;
-function notesSeconds(): number {
-  const e = m.notes.entries[0] as { title?: string; text: string };
-  return e.text.length / NOTES_TYPE_CPS + readHold([e.title ?? '', e.text]);
-}
+type NoteEntry = { id?: string; title?: string; text: string };
+const NOTE_ENTRIES = m.notes.entries as NoteEntry[];
+/** Mam's unfinished reply (the draft the piece shows her typing after Mam's message) */
+const MAM_NOTE = NOTE_ENTRIES.find((e) => e.id === 'mam') ?? NOTE_ENTRIES[0];
+/** ⚑ S404 (UiB job 30 C2) — her newest note, above Mam's, no title: "It wasn't dependency. I was in love with her." */
+const REFUSAL_NOTE = NOTE_ENTRIES.find((e) => e.id === 'refusal') ?? null;
+/** ⚑ S404 — the breath between Mam's unfinished reply and the new note opening above it */
+const REFUSAL_BREATH = 1.2;
+function typedSeconds(e: NoteEntry): number { return e.text.length / NOTES_TYPE_CPS + readHold([e.title ?? '', e.text]); }
+function notesSeconds(): number { return typedSeconds(MAM_NOTE); }
+/** ⚑ S404 — the system's word is met first: Renata's testimony is done (graceQueueLite files `e3-job:testimony`) */
+const testimonyDone = (): boolean => ledger.records.includes('e3-job:testimony');
 /** ⚑ S362 / H43 — the platform's "intervene immediately" alert holds this long before its first removal.
  *  ⚑ S368 / F04 — by the reading rule (was 4.5 s for 18 words), or until its OK (`endTakeoverAlert`) */
 const TAKEOVER_ALERT = Math.max(9, readHold([vera.removals.alertTag, vera.removals.takeoverLine, vera.removals.takeoverSub]));
@@ -219,10 +228,34 @@ export class PhoneE3 {
   get unreviewed(): number { return this.liveMsgs().filter(x => x.from !== 'system' && !this.removed.has(x.key)).length; }
   private notesT = -1;
   private notesDone = false;
-  get conductingNotes(): boolean { return this.notesT >= 0; }
+  /** ⚑ S404 (UiB job 30 C2) — her newest note: seconds into its typing (−1 when not being written), whether it is written
+   *  (then it is in the Notes for good, and filed once), and whether it waits for the testimony to be done */
+  private refusalT = -1;
+  private refusalWritten = false;
+  private refusalPending = false;
+  get conductingNotes(): boolean { return this.notesT >= 0 || this.refusalT >= 0; }
+  /** ⚑ S404 — the probes' handle: which note the piece is showing her write ('mam', 'refusal', or null) and the new one's state */
+  get notesNow(): { writing: 'mam' | 'refusal' | null; refusalWritten: boolean; refusalPending: boolean } {
+    return { writing: this.notesT >= 0 ? 'mam' : this.refusalT >= 0 ? 'refusal' : null, refusalWritten: this.refusalWritten, refusalPending: this.refusalPending };
+  }
   conductNotes(): void {
     if (this.notesDone) return;
     this.notesDone = true; this.notesT = 0; this.notesReturn = this.screen === 'notes' ? 'home' : this.screen; this.screen = 'notes'; this.bump();
+  }
+  /** ⚑ S404 — the new note: a breath after Mam's (`chained`, the Notes already up), or the Notes brought back for it */
+  private conductRefusal(chained: boolean): void {
+    if (!REFUSAL_NOTE || this.refusalWritten || this.refusalT >= 0) return;
+    this.refusalPending = false;
+    if (!chained) { this.notesReturn = this.screen === 'notes' ? 'home' : this.screen; this.screen = 'notes'; }
+    this.refusalT = 0; this.refusalLead = chained ? REFUSAL_BREATH : 0;
+    this.bump();
+  }
+  /** ⚑ S404 — seconds of the new note's conduct before its first letter (the breath after Mam's) */
+  private refusalLead = 0;
+  /** ⚑ S404 — how many of the new note's letters are written (Infinity once it is) */
+  private refusalLetters(): number {
+    if (this.refusalWritten) return Infinity;
+    return this.refusalT < 0 ? 0 : Math.max(0, Math.floor((this.refusalT - this.refusalLead) * NOTES_TYPE_CPS));
   }
   /** ⚑ S327 — the cascade, conducted: the group thread is put on the glass while it fills (the piece takes her there) */
   showGroup(): void {
@@ -302,7 +335,7 @@ export class PhoneE3 {
   }
   get eveningClock(): string { return this.clockShown; }
   disconnected = false;
-  disconnect(): void { this.disconnected = true; this.evening = []; this.eventQueue = []; this.readMessages.clear(); veraDay.personalMessageSeen = false; this.banner = null; this.openMessage = null; this.notesT = -1; this.screen = 'lock'; this.bump(); }
+  disconnect(): void { this.disconnected = true; this.evening = []; this.eventQueue = []; this.readMessages.clear(); veraDay.personalMessageSeen = false; this.banner = null; this.openMessage = null; this.notesT = -1; this.refusalT = -1; this.refusalPending = false; this.screen = 'lock'; this.bump(); }
   get hitRects(): Rect[] { return this.rects; }
   get unreadCount(): number { return BACKLOG.filter(b => !this.readMessages.has(b.from + b.time)).length + this.groupUnread() + this.evening.filter(e => e.from !== m.group.name && !this.readMessages.has('evening:' + e.id)).length; }
   private bump(): void { this.version++; }
@@ -340,8 +373,31 @@ export class PhoneE3 {
     if (this.notesT >= 0) {
       // ⚑ S362 / H28 + H42 — the draft types itself in (NOTES_TYPE_CPS) and is then held; the hand-back waits a beat
       const old = Math.floor(this.notesT * 10); this.notesT += dt;
-      if (this.notesT >= notesSeconds()) { this.notesT = -1; this.screen = this.notesReturn; this.bannerAge = 0; this.holdFor = 5; this.bump(); }
+      if (this.notesT >= notesSeconds()) {
+        this.notesT = -1;
+        // ⚑ S404 — then, if the testimony has been met, a new note opens above Mam's and she writes it; else it waits
+        if (REFUSAL_NOTE && !this.refusalWritten) {
+          if (testimonyDone() && !this.disconnected) this.conductRefusal(true);
+          else this.refusalPending = true;
+        }
+        if (this.refusalT < 0) { this.screen = this.notesReturn; this.bannerAge = 0; this.holdFor = 5; }
+        this.bump();
+      }
       else if (old !== Math.floor(this.notesT * 10)) this.bump();
+    }
+    // ⚑ S404 — the new note, waiting for the testimony: the Notes come back for it at the platform's next rest
+    if (this.refusalPending && !this.disconnected && testimonyDone() && this.atRest && this.bannerAge >= this.holdFor && !this.bannersHidden
+      && !this.notesPending && this.eventQueue.length === 0 && !this.rolling) this.conductRefusal(false);
+    if (this.refusalT >= 0 && REFUSAL_NOTE) {
+      const old = Math.floor(this.refusalT * 10); this.refusalT += dt;
+      if (!this.refusalWritten && this.refusalLetters() >= REFUSAL_NOTE.text.length) {
+        // written: it stays in her Notes, and the record files the gap, once (s3_maiden.json witness.residue)
+        this.refusalWritten = true;
+        if (!ledger.era3Jobs.some((j) => j.id === 'residue')) ledger.era3Jobs.push({ id: 'residue', witness: m.witness.residue });
+      }
+      if (this.refusalT >= this.refusalLead + typedSeconds(REFUSAL_NOTE)) {
+        this.refusalT = -1; this.screen = this.notesReturn; this.bannerAge = 0; this.holdFor = 5; this.bump();
+      } else if (old !== Math.floor(this.refusalT * 10)) this.bump();
     }
     // ⚑ S332 — MALTA, the era's own beat (conducted: the platform holds every other voice while it runs).
     //   news: Bea's messages land one at a time; then her one reply is offered (never required).
@@ -669,23 +725,36 @@ export class PhoneE3 {
     const y0 = statusBar(ctx, W, this.clockText);
     let y = appBar(ctx, W, y0, HOME.fNotes);
     this.pushBack(y0, y);
-    for (const entry of (this.conductingNotes ? m.notes.entries.slice(0, 1) : m.notes.entries)) {
+    // which notes are on the glass, newest first, and how much of each is written:
+    //   · while the piece shows Mam's unfinished reply, that note alone, typing (S362);
+    //   · ⚑ S404 (UiB job 30 C2) — while it shows her new note, the new note above Mam's (written), opened empty with the
+    //     caret for a breath, then typing; nothing else;
+    //   · otherwise the Notes as she keeps them: the new note only once she has written it.
+    const caretOn = (t: number): boolean => Math.floor(t * 2) % 2 === 0;
+    const shown: { entry: NoteEntry; letters: number; caret: boolean }[] =
+      this.notesT >= 0 ? [{ entry: MAM_NOTE, letters: Math.floor(this.notesT * NOTES_TYPE_CPS), caret: caretOn(this.notesT) }]
+        : this.refusalT >= 0 && REFUSAL_NOTE ? [{ entry: REFUSAL_NOTE, letters: this.refusalLetters(), caret: caretOn(this.refusalT) },
+          { entry: MAM_NOTE, letters: Infinity, caret: false }]
+          : NOTE_ENTRIES.filter((e) => e !== REFUSAL_NOTE || this.refusalWritten).map((entry) => ({ entry, letters: Infinity, caret: false }));
+    for (const { entry, letters, caret } of shown) {
       y += 12;
-      if ('title' in entry) {
+      if (entry.title) {
         phoneFont(ctx, 14, 600); ctx.fillStyle = PHONE.ink;
-        ctx.fillText(entry.title ?? '', 12, y); y += 21;
+        ctx.fillText(entry.title, 12, y); y += 21;
       }
       phoneFont(ctx, 13); ctx.fillStyle = PHONE.ink;
       // ⚑ S362 / H42 (his headset: "it should appear differently", not as a sudden block) — while the piece shows this draft it
       //   TYPES itself in, the way a note being written does (lines wrapped on the whole text, so words never jump), caret last
-      let left = this.conductingNotes ? Math.floor(this.notesT * NOTES_TYPE_CPS) : Infinity;
+      let left = letters;
       let tail = '', tailY = y;
-      for (const line of phoneWrap(ctx, entry.text, W - 24)) {
+      // ⚑ S404 — her new note keeps its two sentences on their own lines (she starts the second on a new line); the others wrap
+      const rows = entry === REFUSAL_NOTE ? entry.text.split(/(?<=[.!?])\s+/).flatMap((t) => phoneWrap(ctx, t, W - 24)) : phoneWrap(ctx, entry.text, W - 24);
+      for (const line of rows) {
         const seg = line.slice(0, Math.max(0, left)); left -= line.length + 1;
         if (seg) { ctx.fillText(seg, 12, y); tail = seg; tailY = y; }
         y += 18;
       }
-      if (this.conductingNotes && Math.floor(this.notesT * 2) % 2 === 0) {
+      if (caret) {
         ctx.fillStyle = PHONE.ink; ctx.fillRect(12 + Math.ceil(ctx.measureText(tail).width) + 1, tailY, 1, 14);
       }
       y += 12; ctx.fillStyle = PHONE.hairline; ctx.fillRect(12, y, W - 24, 1);
