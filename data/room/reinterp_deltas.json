@@ -941,7 +941,7 @@
     ],
     "color": "#E6D2BC"
    },
-   {"id": "w_floor", "pos": [-3.88, -0.02, 0.7], "size": [3.5, 0.04, 3.7], "color": "#C9A07A", "yaw": 90, "_docS177": "⚑ S177 / R4-21 — THE FLOOR FLICKER. This box was centred on y 0 with 4 cm of height, so its top sat at 0.020 — and the rug (rugRectangle, 1.9 cm tall, its base on y 0) topped out at 0.019: two coplanar faces a millimetre apart streak through each other at any distance. Lowered 2 cm: the floor's top IS y 0 now, where every prop in the room already stands."},
+   {"id": "w_floor", "pos": [-3.88, -0.021, 0.7], "size": [3.5, 0.04, 3.7], "color": "#C9A07A", "yaw": 90, "_docS402": "⚑ S402 (UiB job 30 Part A) — 1 mm lower (was y -0.02, top at 0). Turned 90°, this floor's 3.7 m side runs along x, so it reaches 10 cm into Room 1 (x -2.13 to -2.03), its top coplanar with Room 1's floor: which of the two showed in that strip depended on how each was drawn (measured at the Close's flight in the headset: a 10 cm band of the wrong floor at the doorway, in the old build too). Now Room 1's floor always wins on its own side of the wall; the rugs (their base at y 0) are untouched. The same for e_floor.", "_docS177": "⚑ S177 / R4-21 — THE FLOOR FLICKER. This box was centred on y 0 with 4 cm of height, so its top sat at 0.020 — and the rug (rugRectangle, 1.9 cm tall, its base on y 0) topped out at 0.019: two coplanar faces a millimetre apart streak through each other at any distance. Lowered 2 cm: the floor's top IS y 0 now, where every prop in the room already stands."},
    {
     "id": "w_ceil",
     "pos": [
@@ -1417,7 +1417,7 @@
     "id": "e_floor",
     "pos": [
      3.88,
-     -0.02,
+     -0.021,
      0.7
     ],
     "size": [
@@ -1426,7 +1426,8 @@
      3.7
     ],
     "color": "#C9A07A",
-    "yaw": 270
+    "yaw": 270,
+    "_docS402": "⚑ S402 (UiB job 30 Part A) — 1 mm lower (was y -0.02, top at 0): turned 270°, this floor reaches 10 cm into Room 1 (x 2.03 to 2.13), its top coplanar with Room 1's floor, and which showed in that strip depended on the draw path (measured: the Close's flight in the headset). Room 1's floor now always wins on its side of the wall. See w_floor."
    },
    {
     "id": "e_ceil",
