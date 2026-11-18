@@ -58,19 +58,21 @@ async function headsetMock(page) {
   await wait(1500);
 }
 /** the seat's still, then a narrower look at `entityName` (the screen) — computer: a step closer; headset: a 34° lens */
-async function seatAndClose(page, mode, name, entityName) {
+/** `side`: aim that far along the screen's own right (a fraction of its half-width; 2016's Handset Window is at its right edge) */
+async function seatAndClose(page, mode, name, entityName, side = 0) {
   await page.screenshot({ path: path.join(OUT, `${mode}-${name}.png`) });
   if (!entityName) return;
   if (mode === 'computer') {
     const seat = await page.evaluate(() => window.__camPose?.());
-    const ok = await page.evaluate((n, s) => {
+    const ok = await page.evaluate((n, s, side) => {
       const a = window.__app, c = a.root.findByName('camera'), e = a.root.findByName(n);
       if (!e || !window.__camFree) return false;
-      const p = c.getPosition(), t = e.getPosition();
+      const hw = e.render?.meshInstances?.[0]?.aabb?.halfExtents;
+      const p = c.getPosition(), t = e.getPosition().clone().add(e.right.clone().mulScalar(side * (hw ? Math.max(hw.x, hw.z) : 0)));
       const k = 0.45, x = p.x + (t.x - p.x) * k, y = p.y + (t.y - p.y) * k, z = p.z + (t.z - p.z) * k;
-      window.__camFree(x, y, z, s.pitch + (s.lookPitch || 0), s.yaw + (s.lookYaw || 0));
+      window.__camFree(x, y, z, s.pitch + (s.lookPitch || 0), s.yaw + (s.lookYaw || 0) - (side ? 12 * side : 0));
       return true;
-    }, entityName, seat);
+    }, entityName, seat, side);
     if (ok) {
       await wait(700);
       await page.screenshot({ path: path.join(OUT, `${mode}-${name}-close.png`) });
@@ -78,13 +80,15 @@ async function seatAndClose(page, mode, name, entityName) {
       await wait(400);
     }
   } else {
-    const ok = await page.evaluate((n) => {
+    const ok = await page.evaluate((n, side) => {
       const a = window.__app, h = a.root.findByName('camera'), e = a.root.findByName(n);
       if (!e) return false;
       window.__lean = { fov: h.camera.fov, rot: h.getLocalRotation().clone() };
-      const c = window.__xrComfort; h.lookAt(c?.physicalPoint ? c.physicalPoint(e.getPosition().clone()) : e.getPosition()); h.camera.fov = 34;
+      const hw = e.render?.meshInstances?.[0]?.aabb?.halfExtents;
+      const at = e.getPosition().clone().add(e.right.clone().mulScalar(side * (hw ? Math.max(hw.x, hw.z) : 0)));
+      const c = window.__xrComfort; h.lookAt(c?.physicalPoint ? c.physicalPoint(at) : at); h.camera.fov = 34;
       return true;
-    }, entityName);
+    }, entityName, side);
     if (ok) {
       await wait(700);
       await page.screenshot({ path: path.join(OUT, `${mode}-${name}-close.png`) });
@@ -127,12 +131,12 @@ async function vera(mode) {
   }));
   await until(page, () => window.__graceQueue().phone.notesNow.writing === 'mam' , 5000);
   await wait(2600); await watchVoices();
-  await seatAndClose(page, mode, '2016-1-mam-typing', 'era3-device-workstation'); if (mode === 'computer') await canvas('1-mam-typing');
+  await seatAndClose(page, mode, '2016-1-mam-typing', 'era3-device-workstation', 0.7); if (mode === 'computer') await canvas('1-mam-typing');
   await until(page, () => window.__graceQueue().phone.notesNow.writing === 'refusal', 30000); await watchVoices();
   await wait(2200); await watchVoices();
-  await seatAndClose(page, mode, '2016-2-new-note-typing', 'era3-device-workstation'); if (mode === 'computer') await canvas('2-new-note-typing');
+  await seatAndClose(page, mode, '2016-2-new-note-typing', 'era3-device-workstation', 0.7); if (mode === 'computer') await canvas('2-new-note-typing');
   await until(page, () => window.__graceQueue().phone.notesNow.refusalWritten, 20000); await wait(900); await watchVoices();
-  await seatAndClose(page, mode, '2016-3-new-note-written', 'era3-device-workstation'); if (mode === 'computer') await canvas('3-new-note-written');
+  await seatAndClose(page, mode, '2016-3-new-note-written', 'era3-device-workstation', 0.7); if (mode === 'computer') await canvas('3-new-note-written');
   const back = await until(page, () => window.__graceQueue().phone.notesNow.writing === null, 20000);
   await wait(800);
   const after = await page.evaluate(() => {
