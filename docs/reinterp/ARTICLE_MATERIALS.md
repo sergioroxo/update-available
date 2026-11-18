@@ -263,3 +263,4 @@ checksum: `figures-2026-10-31/`, `reference-shots-2026-10-31/`, `research/` (all
 
 **Rule:** whenever a session copies new photos into `research/article-images-<date>/`, it also copies them here
 (`rsync -a`, never `--delete`), and adds a line to the README there. Add only; never delete or overwrite his files.
+- 2026-11-18 · S402+S404 merged (UiB job 30 A + C) at 1a55ecba, walked as one build · `research/article-images-2026-11-18/job30-AC-merge-1a55ecba/`: `walk-1a55ecba/` (WALK + TEXT_CENSUS json/md, walk.log, shots/met_vera-2016_1.png, met_maya-2026_1.png), `crt-ending/` (the four lines on Daniel's CRT, computer · phone · headset, play and review routes, card by card), `drawcalls/` (the four era changes on the merged build, report-merge.json, 50/50), out-crt.log, out-dc.log.
