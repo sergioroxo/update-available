@@ -108,6 +108,19 @@ function recordWitness(id: string): string {
 
 /** ⚑ S267 — ids `ledger.records` holds for the map (src/witness/map.ts), never meant for Your file */
 const MAP_BEATS = new Set(['e3-signed-in', 'e3-job-done', 'e3-two-jobs', 'e3-day-done']);
+/** ⚑ S405 (UiB job 31, T94) — and 2016's job marks (graceQueueLite.ts updateConnections: `e3-job:<id>` as each job is
+ *  finished, `e3-jobs-done` when all are): progress marks for the map and the day (map.ts, phoneE3.ts, app.ts read them),
+ *  not filings. Each job files its own entry (the testimony: graceQueue + era3Jobs 'pipeline'; the places list: era3Jobs
+ *  'places'; the mothers: their check-ins below; the group: era3Jobs 'group'), so the marks belong in no file. Until S405
+ *  they fell through recordKind() into 1997's file as "The exercise", with the bare word after the colon as their line. */
+const isMapMark = (id: string): boolean => MAP_BEATS.has(id) || id.startsWith('e3-job:') || id === 'e3-jobs-done';
+
+/** ⚑ S405 (UiB job 31, T94) — the mothers' messages ("Answer the mothers", familyCalls.ts) are Vera's job in 2016. They
+ *  file into `ledger.checkins` (the list the record reads as attention paid to a message), and every 2003 reader of that
+ *  list (the pocket pet's mood, checkinDone, Restorify) skips ids that start with `e3`, so their ids carry this prefix.
+ *  Until S405 they were filed bare (`p_maureen`), so Daniel's 2003 file said he had opened Maureen's message. */
+export const FAMILY_CHECKIN = 'e3-family:';
+export const familyCheckinId = (parentId: string): string => FAMILY_CHECKIN + parentId;
 
 const FLAG_OUTCOMES = new Set(['abandoned', 'declined', 'dismissed', 'skipped', 'stood', 'held', 'committed', 'stoppedMidway', 'kept']);
 
@@ -118,7 +131,7 @@ export function recordEntries(): RecordEntry[] {
   };
   // ── 1997 ──
   for (const r of ledger.records) {
-    if (MAP_BEATS.has(r)) continue;   // S267: the map's own progress marks, not filings (2016's jobs file themselves)
+    if (isMapMark(r)) continue;   // S267 / S405: the map's own progress marks, not filings (2016's jobs file themselves)
     const k = recordKind(r);
     push(r.startsWith('forum-') || r.startsWith('testimony-') || r === 'harbor-partner' || r === 'harbor-parents' ? 'e2' : 'e1', k.kind, r, k.outcome, recordWitness(r), k.flagged);   // S191: 2003's forum files in 2003 (S205: and its testimony)
   }
@@ -131,7 +144,10 @@ export function recordEntries(): RecordEntry[] {
   // ── 2003 ──
   for (const b of ledger.belongings) push('e2', 'belongings', b.id, b.outcome, b.witness);
   for (const l of ledger.lamby) push(l.id.startsWith('e3') ? 'e3' : 'e2', 'assistant', l.id, l.outcome, l.witness);   // Lambient's consent files here too
-  for (const c of ledger.checkins) push(c.id.startsWith('e3') ? 'e3' : 'e2', c.id.startsWith('e3') ? 'contact' : 'checkin', c.id, 'answered', c.witness, false);
+  for (const c of ledger.checkins) {
+    if (c.id.startsWith(FAMILY_CHECKIN)) continue;   // S405: the mothers are 2016's (filed below, under Moderation)
+    push(c.id.startsWith('e3') ? 'e3' : 'e2', c.id.startsWith('e3') ? 'contact' : 'checkin', c.id, 'answered', c.witness, false);
+  }
   if (ledger.guidePersonalisation.personalised) push('e2', 'assistant', 'guide-personalised', 'personalised', rigCopy.personalise.record, false);
   for (const m of ledger.media) push('e2', 'media', m.id, m.outcome, m.witness);
   for (const cb of ledger.caleb) push('e2', 'contact', cb.id, cb.outcome, cb.witness);
@@ -139,6 +155,9 @@ export function recordEntries(): RecordEntry[] {
   for (const a of ledger.era3Arrival) push('e3', 'arrival', 'arrival', 'migrated', a.witness, false);
   for (const g of ledger.graceQueue) push('e3', 'queue', `card ${g.cardId}`, g.outcome, g.witness);
   for (const c of ledger.comments) push('e3', 'moderation', c.commentId, c.follow ? 'followed' : 'own words', c.witness, !c.follow);
+  // ⚑ S405 (T94) — the mothers' messages, opened and answered: Moderation ("had you answer families in the platform's voice",
+  //   documentary, e3_theday #8), the card that describes this job; the witness lines are familyCalls' own, word for word
+  for (const c of ledger.checkins) if (c.id.startsWith(FAMILY_CHECKIN)) push('e3', 'moderation', c.id, 'answered', c.witness, false);
   // S192 — Tag the video: the recommendation, filed as media (a practice of its own awaits his approval)
   for (const j of ledger.era3Jobs) {
     // ⚑ S404 (UiB job 30 C2) — her newest note, filed as a gap (phoneE3; s3_maiden.json witness.residue): under the practice
