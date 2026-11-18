@@ -30,7 +30,7 @@ const R = (q as unknown as { record: {
   title: string; heading: string; sub: string;
   fields: { name: string; status: string; consent: string; work: string; today: string };
   statusValue: string; consentAllowed: string; consentDeclined: string; workValue: string;
-  todayLabel: string; todayEmpty: string; footer: string; witness: string;
+  todayLabel: string; todayEmpty: string; todayMore: string; footer: string; witness: string;
 } }).record;
 
 export class YourRecordApp implements TaskSurface {
@@ -107,8 +107,10 @@ export class YourRecordApp implements TaskSurface {
     px(ctx, x, y, w, 1, ERA3.glassEdge);
     y += 6;
     const fit = Math.max(0, Math.floor((bottom - y) / rowH));
+    // ⚑ S405 — when the day holds more than fits, the last row counts the earlier ones (2003's file does the same)
+    const shown = today.length > fit ? Math.max(0, fit - 1) : today.length;
     setFont(ctx, 9);
-    for (const e of today.slice(0, fit)) {
+    for (const e of today.slice(0, shown)) {
       ctx.fillStyle = ERA3.grey;
       ctx.fillText('2016', x, y);
       ctx.fillStyle = e.flagged ? ERA3.accent : ERA3.greyDk;
@@ -117,6 +119,7 @@ export class YourRecordApp implements TaskSurface {
       ctx.restore();
       y += rowH;
     }
+    if (shown < today.length) { ctx.fillStyle = ERA3.grey; ctx.fillText(R.todayMore.replace('{n}', String(today.length - shown)), x + 40, y); }
     // the footer: continuity of care, in the platform's words
     setFont(ctx, 8); ctx.fillStyle = ERA3.grey;
     const foot = wrapText(ctx, R.footer, w);

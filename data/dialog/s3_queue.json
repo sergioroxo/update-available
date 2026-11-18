@@ -465,7 +465,9 @@
   "footer": "Maintained by GracePlatform for continuity of care. Requests to amend it are reviewed by your provider.",
   "witness": "record: viewed — profile and activity",
   "todayLabel": "events today: {n}",
-  "todayEmpty": "no activity yet"
+  "todayEmpty": "no activity yet",
+    "todayMore": "… and {n} earlier",
+    "_docS405": "⚑ S405 (UiB job 31, T94) — with the mothers' messages filed here (they had been filed in 2003's file), a full day holds more entries than the page has rows, and the oldest were dropped without a word. Now, when they do not all fit, the last row says how many earlier ones there are, as 2003's Your file (read only) does (institution.json yourFile.more). Platform voice; nothing else on the page changes."
  },
  "_docS332Board": "⚑ S332 — FOUR JOBS PLUS MALTA (his 8 Nov, second answers): Correct a testimony, The places list, Return the family calls, Post to the group. \"Cut the Story\" and \"Clear the comments\" are retired as tiles (their surfaces stay in the code, unmounted from the board); their moderation content folds into the places list (a place named in a post is the danger) and into Malta (the platform removing posts by itself).",
  "refusal": {

@@ -86,13 +86,31 @@ async function boot(query) {
 // ── 2003: "Your file (read only)" ──
 {
   const page = await boot('era=2');
+  // the evening check-in opens over the desktop on this review route: closed as the os closes it for the messenger
+  //   (os.ts openCaleb), before the visit is poured, so nothing it files survives the pour
+  //   (a review route with no check-in on file forces one, after its loading screen: let it arrive, then close it and
+  //   mark the evening done, as the os does once she has answered)
+  await wait(9000);
+  await page.evaluate(() => { const os = window.__os; if (os.restorify) os.restorify.open = false; os.checkinForced = false; os.eveningCheckin = 'done'; os.dirty = true; });
+  await wait(1500);
   await page.evaluate(`(${POUR})(${JSON.stringify(VISIT)})`);
   await wait(1500);
   const hit = await page.evaluate(() => (window.__os.hits ?? []).find((h) => h.id === 'icon-your-file') ?? null);
   let opened = false;
   if (hit) { opened = await page.evaluate((h) => { window.__os.handleClick(h.x + h.w / 2, h.y + h.h / 2); return !!window.__os.yourFileOpen; }, hit); await wait(1200); }
-  savePng(await page.evaluate(() => window.__os.canvas.toDataURL()), '2003-your-file.png');
-  report.surfaces['2003'] = { item: 'icon-your-file', pressed: !!hit, opened };
+  savePng(await page.evaluate(() => window.__os.canvas.toDataURL()), '2003-desktop.png');
+  // the 2003 review route keeps opening its own windows over the icon, so the file's window is drawn as os.ts draws it
+  //   (drawYourFile, the same call its frame makes when the icon is pressed) over the desktop as it stands
+  const drawn = await page.evaluate(() => {
+    const os = window.__os; const W = os.canvas.width, H = os.canvas.height;
+    const c = document.createElement('canvas'); c.width = W; c.height = H; const g = c.getContext('2d');
+    g.drawImage(os.canvas, 0, 0);
+    const old = os.ctx; os.ctx = g;
+    try { os.drawYourFile(W, H); } finally { os.ctx = old; }
+    return c.toDataURL();
+  });
+  savePng(drawn, '2003-your-file.png');
+  report.surfaces['2003'] = { item: 'icon-your-file', pressed: !!hit, opened, drawnDirect: true };
   await page.close();
 }
 
