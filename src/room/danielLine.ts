@@ -17,7 +17,7 @@
  *   1. a small "2016" — Vera's phone Notes: the app's bar and her newest note (s3_maiden.json notes `refusal`);
  *   2. a small "2026" — Maya's own message box, the line in it, marked not sent, its send button grey (s4_v3.json
  *      bot.unsent);
- *   3. a small "2003" — the Messenger's window, Daniel's bubble (s2_caleb.json `residue.line`, Sérgio's ⟨S⟩ wording,
+ *   3. a small "2003" — the Messenger's window (its title bar bare: his 18 Nov call c), Daniel's bubble (s2_caleb.json `residue.line`, Sérgio's ⟨S⟩ wording,
  *      VERBATIM and on one row: the type is sized to fit, never re-wrapped);
  *   4. no year — Caleb's answer arrives in the same window (`residue.answer`), a little larger, and stays longest.
  * No names (his 5): no nicks, no "says:", no labels; only the years. Daniel and Caleb come last because it is Daniel's
@@ -51,7 +51,6 @@ import staging from '../../data/strings/close_line.json';
 
 const RESIDUE = caleb.residue as { line: string; answer: string };
 const PACE = (caleb.pacing as unknown as { residue: { arriveSeconds: number } }).residue;
-const MSGR_TITLE = (caleb.window as unknown as { title: string }).title;
 const NOTES = (maiden.notes as unknown as { entries: { id?: string; text: string }[] }).entries;
 const VERA = NOTES.find((e) => e.id === 'refusal')?.text ?? '';
 const NOTES_TITLE = (maiden.home as unknown as { fNotes: string }).fNotes;
@@ -179,7 +178,8 @@ function chatWindow(c: CanvasRenderingContext2D, measureOnly: boolean, at: { x: 
   c.fillStyle = ERA1.navy; c.fillRect(x + 2, y + WIN.bar - 2, w - 4, 4);
   c.fillStyle = alpha(ERA1.white, 0.45); c.fillRect(x + 4, y + 2, w - 8, 3);
   c.fillStyle = ERA1.black; c.fillRect(x, y, 4, 4); c.fillRect(x + w - 4, y, 4, 4);
-  c.font = face(18); c.fillStyle = ERA1.white; c.fillText(MSGR_TITLE, x + 14, y + 7);
+  // ⚑ his 18 Nov call (c): the bar is bare. No programme's name over Daniel's and Caleb's words (the in-era Messenger keeps
+  //   its title, s2_caleb.json `window.title`); only the close box.
   const bx = x + w - 30, by = y + 6;
   c.fillStyle = ERA1.warn; c.fillRect(bx, by, 20, 20); c.fillStyle = ERA1.white; c.fillRect(bx, by, 20, 2);
   c.strokeStyle = ERA1.white; c.lineWidth = 3; c.lineCap = 'butt';
