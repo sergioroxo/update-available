@@ -163,7 +163,7 @@ function materialKey(m: pc.StandardMaterial): string {
   ].join('|');
 }
 
-function hasDrawableScale(e: pc.Entity): boolean {
+export function hasDrawableScale(e: pc.Entity): boolean {
   const s = e.getLocalScale();
   return Math.abs(s.x) > 0.0001 && Math.abs(s.y) > 0.0001 && Math.abs(s.z) > 0.0001;
 }
@@ -280,9 +280,14 @@ function orderMergedLikeTheirBatches(app: pc.Application): void {
   b.prepare = function (this: unknown, ...args: Parameters<Prepare>): pc.MeshInstance[][] {
     const lists = prepare.apply(this, args);
     for (const list of lists) {
-      if (list.length < 2 || !vcOriginal.has(list[0])) continue;
+      // S402: the palette's dynamic batch the same way, by each prop's own material (see bakePalette)
+      const own = vcOriginal.has(list[0]) ? vcOriginal : palOriginal.has(list[0]) ? palOriginal : null;
+      // S402: a dynamic batch leaves out a member that is invisible when it is made (an absent prop's cull, which another
+      //   caller may run without knowing it is batched); the palette's members are the batch's to draw, at any scale
+      if (own === palOriginal) for (const mi of list) if (!mi.visible) { mi.visible = true; hiddenAbsent.delete(mi); }
+      if (list.length < 2 || !own) continue;
       const at = new Map(list.map((mi, i) => [mi, i]));
-      const id = (mi: pc.MeshInstance): number => (vcOriginal.get(mi)?.material as unknown as { id: number } | undefined)?.id ?? 0;
+      const id = (mi: pc.MeshInstance): number => (own.get(mi)?.material as unknown as { id: number } | undefined)?.id ?? 0;
       list.sort((x, y) => id(y) - id(x) || at.get(x)! - at.get(y)!);
     }
     return lists;
@@ -433,7 +438,17 @@ export function cullAbsentProps(room: RoomHandles, joined: ReadonlySet<string> |
     }
   };
   for (const [id, h] of room.props) {
-    if (h.model || h.composite || joined?.has(id)) continue;
+    if (h.model || h.composite) continue;
+    if (joined?.has(id)) {
+      // ⚑ S402: a box in the palette's dynamic batch may have a part that is not (its print, drawn alone through the
+      //   change): that part is hidden while the box is at 0, as any print is (the box itself is the batch's to draw)
+      const own = h.entity.render?.meshInstances;
+      if (own?.length && palOriginal.has(own[0])) {
+        const absent = !hasDrawableScale(h.entity);
+        for (const c of h.entity.children) { const r = (c as pc.Entity).render; if (r && !r.meshInstances.some((mi) => palOriginal.has(mi))) apply(r.meshInstances, absent); }
+      }
+      continue;
+    }
     const mis = h.entity.render?.meshInstances;
     if (!mis) continue;
     const absent = !hasDrawableScale(h.entity);
@@ -445,4 +460,397 @@ export function cullAbsentProps(room: RoomHandles, joined: ReadonlySet<string> |
     for (const c of h.entity.children) { const r = (c as pc.Entity).render; if (r) apply(r.meshInstances, absent); }
   }
   return hidden;
+}
+
+/**
+ * ⚑ S402 (UiB job 30 Part A, his "Lets keep on the engne work") — THE PROPS IN THEIR MOMENT SHARE DRAWS.
+ *
+ * S398 batched everything an era change does not animate, and the animated props in bands that leave their batch for
+ * their moment. What was left over 75 was the moment itself: at the worst instant of 2016 → 2026 about 55 props are
+ * being changed at once, and each drew alone because the morph writes to it every frame (its colour lerps, its scale and
+ * place ease, and the glitch flickers its emissive and jitters its size). A static batch bakes a prop's transform and
+ * shares its material, so it cannot hold a prop that is being written to.
+ *
+ * So the animated props of a change go into ONE DYNAMIC batch for the whole change (`bakePalette`). A dynamic batch
+ * (the engine's own: `BatchGroup` dynamic) keeps each prop's own node as a bone and reads its world transform every
+ * frame, so the morph's position, scale and jitter show exactly as they do on the prop drawn alone. The COLOURS cannot
+ * ride a shared material, so each prop draws its colour from a small float texture, the PALETTE: one slot per mesh
+ * instance, two texels (its diffuse, its emissive). Its mesh is swapped for a copy whose UVs point at its slot (uv0 at
+ * the diffuse texel, uv1 at the emissive texel), and its material for the palette material of its kind: the same
+ * material in every other respect (cloned from the first prop of that kind), with diffuse and emissive white and the
+ * palette as diffuseMap (uv0) and emissiveMap (uv1). Before every render (`prerender`) the palette is rewritten from
+ * each prop's OWN private material — the one the morph and the Close's glitch write to, untouched — converted exactly as
+ * the engine converts a material colour into its uniform (`Color.linear`, float32), so the shader computes
+ * `1 × texel` where it computed `uniform`: the same numbers. RGBA32F, so the glitch's emissive above 1 is kept as it is.
+ *
+ * THE PROPS THAT HOLD STILL share the same palette, in a STATIC group of their own (`name-still`): baked once, like the
+ * room's group, but where the room's group shares a material only between props of the same colour (the models' wood,
+ * carpet and metal were one draw each: 33 of the 79 draws left at 2016 → 2026's worst moment in the headset), the
+ * palette's materials are shared across colours. A static batch bakes positions and normals on the CPU exactly as the
+ * room's group does, so a model of any scale may join it; nothing is asked of a still prop but to be plain.
+ *
+ * What may join (`paletteKey`): a mesh instance that is plain — a standard material with no texture, opaque, no custom
+ * chunks, a triangle mesh with normals (a model's vertex colour is kept: the slot copy carries the stream as it is
+ * stored, and the palette material the flag) — and, in the DYNAMIC group, for anything but a box, a uniform world
+ * scale: a dynamic batch turns normals by the bone's own 3×3, a single draw by its inverse transpose, and those agree
+ * only for a box's axis normals or a uniform scale. The kind is every other material parameter, so props that differ in
+ * anything but colour never share a palette material (one draw per kind and group). A model joins whole or not at all; a
+ * box may leave its print out (drawn alone through the change, as it is one draw of its own in any batch). The rest (a
+ * calendar page, a model with a part that may not) stays with the S398 bands or the room's group. Nothing that writes to
+ * a prop's material needs to know: the palette reads it.
+ *
+ * Draw order: the merged list is drawn in the order the props' own materials would have been (id, highest first), as
+ * the vertex-colour merge does (S396). Measured (tools/s396-drawcalls-probe.mjs --change, the paired render against
+ * the old tear-down): no prop in another state at any moment of the four changes; costs and peaks in BUILD_LOG S402.
+ * ROLLBACK: `?morphpalette=0` (the S398 bands alone), or delete this block and its calls in cluster.ts.
+ */
+const PALETTE_W = 256;   // texels a row: a slot is two texels (diffuse, emissive), so 128 slots a row
+const PAL_UV_DEFS = pc.SHADERDEF_UV0 | pc.SHADERDEF_UV1 | pc.SHADERDEF_VCOLOR | pc.SHADERDEF_TANGENTS;
+interface PalSlot { mi: pc.MeshInstance; rc: pc.RenderComponent; mesh: pc.Mesh; material: pc.StandardMaterial; defs: number; slot: number; group: string }
+/** each joined mesh instance → what it had, and its slot */
+const palOriginal = new Map<pc.MeshInstance, PalSlot>();
+/** the slot copies of a source mesh, per (slot, palette height, primitive) — kept for the life of the app (one reference here) */
+const palMeshes = new Map<pc.Mesh, Map<string, pc.Mesh>>();
+/** one palette material per kind (the material's every parameter but its colours) */
+const palMaterials = new Map<string, pc.StandardMaterial>();
+let palTexture: pc.Texture | null = null;
+let palData: Float32Array | null = null;
+let palRows = 0;
+/** each mesh instance's slot, for the life of the app (a destroyed prop's instance simply leaves its slot unused) */
+const palSlotOf = new WeakMap<pc.MeshInstance, number>();
+let palSlotNext = 0;
+/** how many slots have been given out (the probe reads it: the texture holds 1,024 before it must grow) */
+export function paletteSlotsGiven(): number { return palSlotNext; }
+function slotFor(mi: pc.MeshInstance): number {
+  let s = palSlotOf.get(mi);
+  if (s === undefined) { s = palSlotNext++; palSlotOf.set(mi, s); }
+  return s;
+}
+const palColour = new pc.Color();
+/** the cost of keeping the palette, for the probe: the frames it was rewritten, the time it took (ms), the longest; the bakes */
+export const paletteCost = { frames: 0, ms: 0, max: 0, uploads: 0, bakeMs: 0, bakeMax: 0, bakes: 0, selectMs: 0, swapMs: 0, generateMs: 0, meshesMade: 0 };
+let paletteSyncHooked = false;
+
+export interface PaletteHandle {
+  /** the palette's groups: `name` (dynamic: the props that move) and `name-still` (static: the props that hold still) */
+  groupIds: number[];
+  group: string;
+  /** how many props joined, and which (and how many of them in the static group) */
+  joined: number;
+  ids: string[];
+  idSet: ReadonlySet<string>;
+  still: number;
+  /** mesh instances (slots) in the batch, and how many palette materials (kinds) they use */
+  slots: number;
+  kinds: number;
+  /** the props offered that could not join, with why (for the probe) */
+  skipped: Record<string, string>;
+}
+
+/** every standard-material parameter that is not a texture or one of the two colours the palette carries (PlayCanvas
+ *  2.19 `standardMaterialParameterTypes`, which the package does not export) */
+const PAL_PARAMS = ['ambient', 'aoIntensity', 'aoDetailMode', 'diffuseDetailMode', 'vertexColorGamma', 'specular', 'specularTint', 'occludeSpecular',
+  'specularityFactor', 'specularityFactorTint', 'useMetalness', 'metalness', 'enableGGXSpecular', 'metalnessTint', 'useMetalnessSpecularColor',
+  'anisotropyIntensity', 'anisotropyRotation', 'gloss', 'glossInvert', 'clearCoat', 'clearCoatGloss', 'clearCoatGlossInvert', 'clearCoatBumpiness',
+  'useSheen', 'sheen', 'sheenGloss', 'sheenGlossInvert', 'fresnelModel', 'emissiveIntensity', 'bumpiness', 'normalDetailMapBumpiness', 'heightMapFactor',
+  'alphaToCoverage', 'alphaTest', 'alphaFade', 'alphaDither', 'opacity', 'opacityFadesSpecular', 'opacityDither', 'opacityShadowDither', 'reflectivity',
+  'refraction', 'refractionTint', 'refractionIndex', 'dispersion', 'thickness', 'thicknessTint', 'attenuation', 'attenuationDistance',
+  'useDynamicRefraction', 'cubeMapProjection', 'useIridescence', 'iridescence', 'iridescenceTint', 'iridescenceThicknessTint',
+  'iridescenceThicknessMin', 'iridescenceThicknessMax', 'iridescenceRefractionIndex', 'depthTest', 'depthFunc', 'depthWrite', 'depthBias',
+  'slopeDepthBias', 'cull', 'blendType', 'useFog', 'useLighting', 'useSkybox', 'useTonemap', 'twoSidedLighting', 'shadowCatcher'] as const;
+const PAL_TEXTURED = ['ao', 'aoDetail', 'diffuse', 'diffuseDetail', 'specular', 'specularityFactor', 'metalness', 'anisotropy', 'gloss', 'clearCoat',
+  'clearCoatGloss', 'clearCoatNormal', 'sheen', 'sheenGloss', 'emissive', 'normal', 'normalDetail', 'height', 'opacity', 'refraction', 'thickness',
+  'iridescence', 'iridescenceThickness', 'light'] as const;
+
+/** the kind of a plain material (every parameter but diffuse and emissive), or why it cannot join */
+function paletteKey(m: pc.Material | null | undefined, hasColour: boolean): { key: string } | { why: string } {
+  if (!(m instanceof pc.StandardMaterial)) return { why: 'not a standard material' };
+  const r = m as unknown as Record<string, unknown>;
+  // a vertex colour stays (a model's own colours: the slot copy keeps the stream, the palette material the flag, so the
+  //   shader multiplies the same colour into the same texel-for-uniform), and is part of the kind. A flag on a mesh with
+  //   no colour stream is inert (the engine reads it only when the mesh has one), and is keyed as off.
+  const vc: unknown[] = [];
+  for (const t of PAL_TEXTURED) {
+    if (r[`${t}Map`]) return { why: `${t}Map` };
+    const on = hasColour && !!r[`${t}VertexColor`];
+    vc.push(on, on ? r[`${t}VertexColorChannel`] : null);
+  }
+  if (m.sphereMap || m.cubeMap || m.envAtlas) return { why: 'environment map' };
+  // custom chunks only: the engine makes an EMPTY chunk set on any material it has drawn (`hasShaderChunks` is then true),
+  //   and a clone copies it — measured: a prop drawn alone once lost its place at the next bake
+  const sc = (m as unknown as { _shaderChunks?: { glsl: Map<string, string>; wgsl: Map<string, string>; version: string } | null })._shaderChunks;
+  if (sc && (sc.glsl.size || sc.wgsl.size || sc.version)) return { why: 'shader chunks' };
+  if (m.blendType !== pc.BLEND_NONE || m.opacity !== 1 || m.alphaTest !== 0) return { why: 'not opaque' };
+  const parts: unknown[] = [];
+  for (const p of PAL_PARAMS) {
+    const v = r[p];
+    parts.push(v instanceof pc.Color ? [v.r, v.g, v.b, v.a] : v);
+  }
+  parts.push(vc);
+  return { key: JSON.stringify(parts) };
+}
+
+/** one mesh instance: may it join, and as which kind */
+function paletteSlotKind(rc: pc.RenderComponent, mi: pc.MeshInstance, moving: boolean): { key: string } | { why: string } {
+  if (mi.skinInstance || mi.morphInstance || mi.instancingData) return { why: 'skinned, morphed or instanced' };
+  const mesh = mi.mesh;
+  const prim = mesh?.primitive?.[0];
+  if (!mesh || !prim || prim.type !== pc.PRIMITIVE_TRIANGLES || !mesh.vertexBuffer) return { why: 'not a triangle mesh' };
+  const names = mesh.vertexBuffer.format.elements.map((e) => e.name);
+  if (!names.includes(pc.SEMANTIC_POSITION) || !names.includes(pc.SEMANTIC_NORMAL)) return { why: 'no normals' };
+  // (a still prop goes to the static group, which bakes its normals by the inverse transpose, as the room's group does)
+  if (moving && rc.type !== 'box') {
+    const s = mi.node.getWorldTransform().getScale();
+    const a = Math.abs(s.x), b = Math.abs(s.y), c = Math.abs(s.z), hi = Math.max(a, b, c);
+    if (hi > 0 && (Math.abs(a - b) > hi * 1e-4 || Math.abs(a - c) > hi * 1e-4)) return { why: 'non-uniform scale (a batch turns its normals otherwise)' };
+  }
+  return paletteKey(mi.material, names.includes(pc.SEMANTIC_COLOR));
+}
+
+/** the palette texture, at least `slots` slots (rows of 128, the row count a power of two, at least 8: 1,024 slots, more than a
+ *  visit gives out, so it is made once — a larger one would make every slot copy again, as their UVs follow its height) */
+function paletteTexture(app: pc.Application, slots: number): void {
+  let rows = 8;
+  while (rows * (PALETTE_W / 2) < slots) rows *= 2;
+  if (palTexture && rows <= palRows) return;
+  palTexture?.destroy();
+  palRows = rows;
+  palTexture = new pc.Texture(app.graphicsDevice, {
+    name: 'room-palette', width: PALETTE_W, height: rows, format: pc.PIXELFORMAT_RGBA32F, mipmaps: false,
+    minFilter: pc.FILTER_NEAREST, magFilter: pc.FILTER_NEAREST, addressU: pc.ADDRESS_CLAMP_TO_EDGE, addressV: pc.ADDRESS_CLAMP_TO_EDGE
+  });
+  palData = palTexture.lock() as Float32Array;
+  palData.fill(0);
+  palTexture.unlock();
+  for (const m of palMaterials.values()) { m.diffuseMap = palTexture; m.emissiveMap = palTexture; m.update(); }
+}
+
+/** the palette material of a kind (cloned from the first plain material of that kind) */
+function paletteMaterial(key: string, from: pc.StandardMaterial): pc.StandardMaterial {
+  let m = palMaterials.get(key);
+  if (m) return m;
+  m = from.clone();
+  m.name = `room-palette-${palMaterials.size}`;
+  m.diffuse = new pc.Color(1, 1, 1);
+  m.emissive = new pc.Color(1, 1, 1);
+  m.diffuseMap = palTexture; m.diffuseMapUv = 0; m.diffuseMapChannel = 'rgb';
+  m.emissiveMap = palTexture; m.emissiveMapUv = 1; m.emissiveMapChannel = 'rgb';
+  m.update();
+  palMaterials.set(key, m);
+  return m;
+}
+
+/** a copy of `src`'s first primitive with positions and normals only (compacted to the vertices it uses), and both UV
+ *  sets pointing at `slot`'s two texels */
+function paletteMesh(app: pc.Application, src: pc.Mesh, slot: number): pc.Mesh {
+  const prim = src.primitive[0];
+  const key = `${slot}|${palRows}|${prim.base}|${prim.count}|${prim.baseVertex ?? 0}`;
+  let per = palMeshes.get(src);
+  if (!per) { per = new Map(); palMeshes.set(src, per); }
+  let mesh = per.get(key);
+  if (mesh) return mesh;
+  const pos: number[] = [], nrm: number[] = [];
+  src.getPositions(pos); src.getNormals(nrm);
+  let idx: number[];
+  if (prim.indexed) {
+    const all: number[] = []; src.getIndices(all);
+    idx = all.slice(prim.base, prim.base + prim.count).map((i) => i + (prim.baseVertex ?? 0));
+  } else idx = Array.from({ length: prim.count }, (_, i) => prim.base + i);
+  // the vertex colour, if the mesh has one, copied as it is stored (its type and normalisation): a model's own colours
+  const cEl = src.vertexBuffer.format.elements.find((e) => e.name === pc.SEMANTIC_COLOR);
+  const col: number[] = [];
+  if (cEl) src.getVertexStream(pc.SEMANTIC_COLOR, col);
+  const cn = cEl?.numComponents ?? 0;
+  const remap = new Map<number, number>();
+  const P: number[] = [], N: number[] = [], C: number[] = [], out: number[] = [];
+  for (const i of idx) {
+    let j = remap.get(i);
+    if (j === undefined) {
+      j = remap.size; remap.set(i, j); P.push(pos[i * 3], pos[i * 3 + 1], pos[i * 3 + 2]); N.push(nrm[i * 3], nrm[i * 3 + 1], nrm[i * 3 + 2]);
+      for (let c = 0; c < cn; c++) C.push(col[i * cn + c]);
+    }
+    out.push(j);
+  }
+  const x = (slot % (PALETTE_W / 2)) * 2, y = Math.floor(slot / (PALETTE_W / 2));
+  const v = (y + 0.5) / palRows, u0 = (x + 0.5) / PALETTE_W, u1 = (x + 1.5) / PALETTE_W;
+  const n = remap.size;
+  const uv0 = new Array<number>(n * 2), uv1 = new Array<number>(n * 2);
+  for (let k = 0; k < n; k++) { uv0[k * 2] = u0; uv0[k * 2 + 1] = v; uv1[k * 2] = u1; uv1[k * 2 + 1] = v; }
+  mesh = new pc.Mesh(app.graphicsDevice);
+  mesh.setPositions(P); mesh.setNormals(N); mesh.setUvs(0, uv0); mesh.setUvs(1, uv1); mesh.setIndices(out);
+  if (cEl) mesh.setVertexStream(pc.SEMANTIC_COLOR, C, cn, undefined, cEl.dataType, cEl.normalize);
+  mesh.update(pc.PRIMITIVE_TRIANGLES, true);
+  mesh.incRefCount();   // the cache's own reference (as vcMesh)
+  paletteCost.meshesMade++;
+  per.set(key, mesh);
+  return mesh;
+}
+
+/** rewrite the palette from each joined mesh instance's own material; upload only if a value changed */
+function syncPalette(): void {
+  if (!palOriginal.size || !palTexture || !palData) return;
+  const t0 = performance.now();
+  const d = palData;
+  let changed = false;
+  const put = (o: number, c: pc.Color): void => {
+    palColour.linear(c);
+    const r = Math.fround(palColour.r), g = Math.fround(palColour.g), b = Math.fround(palColour.b);
+    if (d[o] !== r || d[o + 1] !== g || d[o + 2] !== b) { d[o] = r; d[o + 1] = g; d[o + 2] = b; d[o + 3] = 1; changed = true; }
+  };
+  for (const s of palOriginal.values()) {
+    const x = (s.slot % (PALETTE_W / 2)) * 2, y = Math.floor(s.slot / (PALETTE_W / 2));
+    const o = (y * PALETTE_W + x) * 4;
+    put(o, s.material.diffuse);
+    put(o + 4, s.material.emissive);
+  }
+  if (changed) { palTexture.upload(); paletteCost.uploads++; }
+  const dt = performance.now() - t0;
+  paletteCost.frames++; paletteCost.ms += dt; if (dt > paletteCost.max) paletteCost.max = dt;
+}
+
+/**
+ * Bake the props `ids` (those that may: see the header) into one dynamic group, `name`. Each joined mesh instance keeps
+ * its own material as the colour source (the handle's `material(s)` are left pointing at it), its mesh and material are
+ * swapped for its slot copy and its kind's palette material. Returns null if none could join.
+ */
+export function bakePalette(
+  app: pc.Application, room: RoomHandles, ids: Iterable<string>, neverBatch: ReadonlySet<string>,
+  /** `moving`: the props something moves or scales through the change (the morph, the glitch) — they go into the
+   *  DYNAMIC group, which reads their transforms every frame; every other prop holds still and goes into a STATIC group
+   *  (`name-still`), baked once like the room's own group but sharing the palette's materials across colours (without
+   *  `moving`, every prop moves). `partial`: the props that may join with only their plain parts (an animated box whose
+   *  print is drawn alone: in a band it would draw alone too); any other prop joins whole or not at all, so a model with
+   *  one part that may not keeps all its parts in the room's group, sharing its materials there as before. `demote`: a
+   *  prop asked to move that the dynamic group cannot take (a model of uneven scale) joins the static one (the warm-up) */
+  opts: { name?: string; moving?: ReadonlySet<string>; partial?: ReadonlySet<string>; demote?: boolean } = {}
+): PaletteHandle | null {
+  const name = opts.name ?? 'room-palette';
+  const stillName = `${name}-still`;
+  const batcher = app.batcher;
+  if (!batcher) return null;
+  const t0 = performance.now();
+  disableEngineFirstBatch(app);
+  orderMergedLikeTheirBatches(app);
+  if (!paletteSyncHooked) { paletteSyncHooked = true; app.on('prerender', syncPalette); }
+  // as bakeBatch: a hidden (zero-scale) prop must join as itself — and a dynamic batch leaves out whatever is invisible
+  //   when it is made, so a prop that grows in from nothing would never be drawn
+  for (const mi of hiddenAbsent) mi.visible = true;
+  hiddenAbsent.clear();
+  restorePalette(name);
+  for (const n of [name, stillName]) { const old = batcher.getGroupByName(n); if (old) batcher.removeGroup(old.id); }
+
+  // which props may join, and their mesh instances
+  const skipped: Record<string, string> = {};
+  type Part = { rc: pc.RenderComponent; mi: pc.MeshInstance; key: string };
+  const joins: { id: string; moving: boolean; rcs: pc.RenderComponent[]; mis: Part[] }[] = [];
+  for (const id of ids) {
+    const h = room.props.get(id);
+    if (!h) continue;
+    if (neverBatch.has(id)) { skipped[id] = 'never batched'; continue; }
+    if (!h.entity.enabled) continue;
+    const rcs = renderComponents(h.entity);
+    if (!rcs.length) continue;
+    // per render component: the prop's own box joins if it is plain; a part that is not (a poster's print, a window's
+    //   view: a textured plane parented to the box) stays drawn alone through the change, as each is one draw of its own
+    //   in any batch (its texture is its own) — and, unbatched, it follows its box's jitter exactly
+    const evaluate = (moving: boolean): { why: string; mis: Part[]; joinRcs: pc.RenderComponent[] } => {
+      const mis: Part[] = [];
+      const joinRcs: pc.RenderComponent[] = [];
+      for (const rc of rcs) {
+        if (rc.batchGroupId !== -1) return { why: 'already in a batch', mis, joinRcs };
+        const part: Part[] = [];
+        let partWhy = '';
+        for (const mi of rc.meshInstances) {
+          const k = paletteSlotKind(rc, mi, moving);
+          if ('why' in k) { partWhy = k.why; break; }
+          part.push({ rc, mi, key: k.key });
+        }
+        // a part may stay out only on a box prop (its print), never on a model (a model part that may not join keeps the
+        //   whole model in its band or group, sharing its materials there)
+        if (partWhy) { if (rc.entity === h.entity || !h.entity.render || !opts.partial?.has(id)) return { why: partWhy, mis, joinRcs }; continue; }
+        mis.push(...part); joinRcs.push(rc);
+      }
+      return { why: mis.length ? '' : 'no plain part', mis, joinRcs };
+    };
+    let moving = !opts.moving || opts.moving.has(id);
+    let e = evaluate(moving);
+    // `demote` (the warm-up, where nothing moves): a prop asked to move that the dynamic group cannot take joins the static one
+    if (e.why && moving && opts.demote) { const s = evaluate(false); if (!s.why) { e = s; moving = false; } }
+    if (e.why) { skipped[id] = e.why; continue; }
+    joins.push({ id, moving, rcs: e.joinRcs, mis: e.mis });
+  }
+  const slots = joins.reduce((n, j) => n + j.mis.length, 0);
+  if (!slots) return null;
+  paletteCost.selectMs += performance.now() - t0; const tSwap = performance.now();
+  // each mesh instance keeps ONE slot for the life of the app, so its slot copy is made once and reused by every later
+  //   bake (the next change, the probe's paired renders, the warm-up's)
+  let maxSlot = 0;
+  for (const j of joins) for (const { mi } of j.mis) maxSlot = Math.max(maxSlot, slotFor(mi));
+  paletteTexture(app, maxSlot + 1);
+  const groups = {
+    moving: joins.some((j) => j.moving) ? batcher.addGroup(name, true, Number.POSITIVE_INFINITY) : null,
+    still: joins.some((j) => !j.moving) ? batcher.addGroup(stillName, false, 100) : null   // 100 m: the room group's own limit
+  };
+  const kinds = new Set<string>();
+  for (const j of joins) {
+    for (const { rc, mi, key } of j.mis) {
+      const own = mi.material as pc.StandardMaterial;
+      const defs = (mi as unknown as Defs)._shaderDefs;
+      const slot = slotFor(mi);
+      palOriginal.set(mi, { mi, rc, mesh: mi.mesh, material: own, defs, slot, group: name });
+      mi.mesh = paletteMesh(app, mi.mesh, slot);
+      (mi as unknown as Defs)._shaderDefs = (defs & ~PAL_UV_DEFS) | pc.SHADERDEF_UV0 | pc.SHADERDEF_UV1 | (mi.mesh.vertexBuffer.format.hasColor ? pc.SHADERDEF_VCOLOR : 0);
+      mi.material = paletteMaterial(key, own);   // the material setter clears the instance's cached shaders
+      kinds.add(key);
+    }
+    const g = j.moving ? groups.moving : groups.still;
+    if (g) for (const rc of j.rcs) rc.batchGroupId = g.id;
+    // the handle keeps its OWN materials, every part's, in the same order (what the morph and the glitch write, what the
+    //   palette reads)
+    const h = room.props.get(j.id);
+    if (h) {
+      h.materials = renderComponents(h.entity).flatMap((rc) => rc.meshInstances.map((mi) => palOriginal.get(mi)?.material ?? (mi.material as pc.StandardMaterial)));
+      if (h.materials[0]) h.material = h.materials[0];
+    }
+  }
+  syncPalette();
+  paletteCost.swapMs += performance.now() - tSwap; const tGen = performance.now();
+  // ⚑ always the numeric ids, never a bare generate() (see the header)
+  const groupIds = [groups.moving, groups.still].filter((g): g is pc.BatchGroup => !!g).map((g) => g.id);
+  batcher.generate(groupIds);
+  paletteCost.generateMs += performance.now() - tGen;
+  const ms = performance.now() - t0;
+  paletteCost.bakeMs += ms; paletteCost.bakes++; if (ms > paletteCost.bakeMax) paletteCost.bakeMax = ms;
+  const idsOut = joins.map((j) => j.id);
+  return { groupIds, group: name, joined: idsOut.length, ids: idsOut, idSet: new Set(idsOut), still: joins.filter((j) => !j.moving).length,
+    slots, kinds: kinds.size, skipped };
+}
+
+/** every joined mesh instance of one group back to its own mesh, material and defines */
+function restorePalette(group: string): pc.RenderComponent[] {
+  const rcs = new Set<pc.RenderComponent>();
+  for (const [mi, o] of palOriginal) {
+    if (o.group !== group) continue;
+    palOriginal.delete(mi);
+    rcs.add(o.rc);
+    if (!mi.mesh) continue;   // destroyed with its prop
+    mi.mesh = o.mesh; (mi as unknown as Defs)._shaderDefs = o.defs; mi.material = o.material;
+  }
+  return [...rcs];
+}
+
+/** take the palette group down: every prop drawn alone again, with its own material (which the morph kept writing to) */
+export function clearPalette(app: pc.Application, room: RoomHandles, handle: PaletteHandle | null): null {
+  const batcher = app.batcher;
+  if (!batcher || !handle) return null;
+  const rcs = restorePalette(handle.group);
+  for (const id of handle.groupIds) batcher.removeGroup(id);
+  for (const rc of rcs) rc.batchGroupId = -1;
+  for (const id of handle.ids) {
+    const h = room.props.get(id);
+    if (!h) continue;
+    h.materials = renderComponents(h.entity).flatMap((rc) => rc.meshInstances.map((mi) => mi.material as pc.StandardMaterial));
+    if (h.materials[0]) h.material = h.materials[0];
+  }
+  return null;
 }
