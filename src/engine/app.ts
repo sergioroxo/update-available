@@ -2321,6 +2321,9 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   // ⚑ S401 (UiB job 29 D1) — the institution's corner (S181–S183, src/room/institution.ts) is gone with the back wall;
   //   the devices still move, so they still never batch
   if (options.reinterp === true) cluster?.setNeverBatch([...DEVICE_PROP_IDS]);
+  // ⚑ S402 (UiB job 30 A) — no entrance holds the room (a review route): compile the era change's palette shaders now.
+  //   With the entrance, it is done when the story begins (beginStory, and the two ways of cancelling the entrance).
+  if (!options.restoreEntrance) cluster?.warmPalette();
 
   // R28-2c: the belongings beat's visual mark — a PERSISTENT warm lift on a
   // kept prop, distinct from setPropEmphasis above in both mechanism-detail
@@ -3460,6 +3463,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       camPos.set(EYE.x, EYE.y, EYE.z); camPitch = 0; camYaw = 0;
       authoredRig.setLocalPosition(camPos); authoredRig.setLocalEulerAngles(0, 0, 0);
       cluster?.setNeverBatch(['tennisRacketModel']);
+      cluster?.warmPalette();   // S402: the entrance has let go of the room
     }
     flipBtn.style.display = 'none';
     if (xr?.active) xr.end();
@@ -5817,6 +5821,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       restoreEntrance.cancel();
       const resolve = restoreSeatDone; restoreSeatDone = null; resolve?.();
       cluster?.setNeverBatch(['tennisRacketModel']);
+      cluster?.warmPalette();   // S402: the entrance has let go of the room
     }
     messageSeatPending = false;
     wakeActive = false; descentActive = false;
@@ -6022,7 +6027,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
             startCamMove({ x: EYE.x, y: EYE.y, z: EYE.z, pitch: 0, yaw: 0 }, Math.max(DESCENT_SECONDS, 1.875 * Math.hypot(((camYaw + 180) % 360 + 360) % 360 - 180, camPitch) / 9.1), true, DESCENT_VIA);
           });
         },
-        beginStory: () => { startFirstBed(); cluster?.setNeverBatch(['tennisRacketModel']); wakeActive = true; wakeT = WAKE_DARK_SECONDS + WAKE_RAMP_SECONDS; finishWake(); }
+        beginStory: () => { startFirstBed(); cluster?.setNeverBatch(['tennisRacketModel']); cluster?.warmPalette(); wakeActive = true; wakeT = WAKE_DARK_SECONDS + WAKE_RAMP_SECONDS; finishWake(); }
       });
     } else {
       // fresh load (past the interim log-in panel): the room is already there,

@@ -494,6 +494,9 @@ export interface ClusterShell {
   /** W1-B11: fade only a closed partition approached by a scripted camera
    * path. Distance uses the live mesh bounds, so cancellation inside it stays clear. */
   updateTravelClearance(eye: { x: number; y: number; z: number }, moving: boolean): void;
+  /** ⚑ S402 — the room is free (the story has begun, or no entrance holds it): in `frames` updates, draw it for one frame
+   *  from the era change's palette so its shaders are compiled before the first change (see `warmPalette` inside) */
+  warmPalette(frames?: number): void;
   update(dt: number): void;
 }
 
@@ -638,13 +641,15 @@ export function buildClusterShell(
    * ⚑ S402 — THE PALETTE'S SHADERS ARE COMPILED BEFORE A CHANGE ASKS FOR THEM. Its materials (a colour map on uv0 and
    * uv1, in a dynamic batch and a static one) are shader variants the room never draws otherwise, and the engine compiles
    * a variant the first time it is drawn: without this, at the first change's first frame (measured: a 330 ms frame in
-   * headless Chrome with an empty program cache; a Quest compiles slower). So, once the room has been drawn for a
-   * while after load, the settled room is drawn for ONE frame from the palette — every plain prop, half of each kind in
-   * the dynamic group and half in the static one, so both variants of each kind compile — and goes back into its own
-   * group on the next update. The two pictures are the same (the paired render's whole point), so nothing shows.
-   * Kinds the room only gains later (a model an era brings) compile at their first change, as any new material does.
+   * headless Chrome with an empty program cache; a Quest compiles slower). So, when app.ts says the room is free
+   * (`warmPalette()`: the story has begun, or a review route with no entrance has booted), the settled room is drawn
+   * for ONE frame from the palette — every plain prop, half of each kind in the dynamic group and half in the static
+   * one, so both variants of each kind compile — and goes back into its own group on the next update. The two pictures
+   * are the same (the paired render's whole point), so nothing shows. NEVER during the restore entrance: it captures the
+   * room's batches at boot and hides them, and a rebuilt group would show through its stars. Kinds the room only gains
+   * later (a model an era brings) compile at their first change, as any new material does.
    */
-  let warmIn = batch && bandsOn && paletteOn ? 60 : -1;
+  let warmIn = -1;
   let warmHandle: PaletteHandle | null = null;
   function warmPalette(): void {
     if (banding() || morph.running || timeline.length || !roomBatch) return;
@@ -1315,6 +1320,7 @@ export function buildClusterShell(
       rebuildSettled();
     },
     rebake(): void { if (!morph.running) rebuildSettled(); else pendingSettledRebatch = true; },
+    warmPalette(frames = 30): void { if (batch && bandsOn && paletteOn) warmIn = Math.max(1, frames); },
     get state(): ClusterState { return state; },
     get era(): EraKey { return era; },
     get homeYaw(): number { return era === 'e4' ? 270 : era === 'e3' ? 90 : 0; },
