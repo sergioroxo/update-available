@@ -92,8 +92,16 @@ export function attachPrintToTop(box: pc.Entity, id: PrintId): void {
  * ⚑ S179 / R5-02 — a PRINT on a box prop (a poster, a sign, a flyer): one plane over the box's
  * front face (+Z in its own frame, which its yaw turns to face the room), a hair proud of it.
  * The box is scaled to its size, so a unit plane inside it is exactly the face.
+ *
+ * ⚑ S402 (UiB job 30 Part A) — "a hair proud" was 2 % of the box's depth: 0.08 mm on a 4 mm poster board (2026's ball
+ * poster, the 2016 flyer, the window views). From across the building that is under the depth buffer's step, so which
+ * of the two showed depended on how they were drawn: measured in 2016 → 2026, the ball poster's print vanished under its
+ * dark board while the props were drawn one by one (the old tear-down, in both draw orders) and showed in a batch. The
+ * print is now at least 1 mm proud (the size 2026's sign mat was given for the same tie, S398), so it shows in every
+ * draw path: `depth` is the box's own depth (its size, metres) when the caller knows it.
  */
-export function attachPrintToBox(box: pc.Entity, id: PrintId): void {
+const PRINT_PROUD_M = 0.001;
+export function attachPrintToBox(box: pc.Entity, id: PrintId, depth = 0): void {
   const app = pc.Application.getApplication();
   if (!app) return;
   const [w, h] = PRINT_SIZE[id];
@@ -103,6 +111,6 @@ export function attachPrintToBox(box: pc.Entity, id: PrintId): void {
   plane.addComponent('render', { type: 'plane' });
   if (plane.render) plane.render.material = mat;
   plane.setLocalEulerAngles(90, 0, 0);
-  plane.setLocalPosition(0, 0, 0.5 + 0.02);
+  plane.setLocalPosition(0, 0, 0.5 + (depth > 0 ? Math.max(0.02, PRINT_PROUD_M / depth) : 0.02));
   box.addChild(plane);
 }

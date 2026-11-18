@@ -58,6 +58,16 @@ const CHANGE = has('change');
  *  the same frame drawn both ways). --changes e1-e2,e2-e3,e3-e4,close picks some. The computer is measured and its
  *  peak reported beside; its moments are asserted for pixels, and for the budget too (it shares the room). */
 const CHANGES_ONLY = flag('changes', '');
+/** ⚑ S402 (UiB job 30 Part A) — --frames: at each change's worst moment (the sample with the most draws in the build), save
+ *  the paired render as pictures: `<change>-<mode>-peak-on.png` (the build), `-off.png` (the old tear-down, the same frame),
+ *  `-diff.png` (black; any differing pixel grey; a pixel more than one level from both of the old tear-down's draw orders
+ *  red). --frames-at <report.json>: also at the moment nearest that report's peak for the same change and mode
+ *  (`-at-<t>-…`), so a before run and an after run can be laid side by side at one moment. */
+const FRAMES = has('frames');
+/** S402: --modes desktop|xr picks one (both by default) */
+const MODES = flag('modes', '');
+const FRAMES_AT = flag('frames-at', '');
+const framesAt = FRAMES_AT && fs.existsSync(FRAMES_AT) ? JSON.parse(fs.readFileSync(FRAMES_AT, 'utf8')).changes ?? [] : [];
 const BUDGET = 75;
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 fs.mkdirSync(OUT, { recursive: true });
@@ -314,8 +324,8 @@ for (const r of ROOMS) {
  *  verdict counts INTERIOR pixels (all four neighbours real): at most INTERIOR_PIXELS a moment, which a strip three
  *  pixels tall and up to 64 long stays under and any prop seen at reading size does not. The strict counts are kept. */
 const INTERIOR_PIXELS = 64;
-async function bandsRender(page, settled = false) {
-  return page.evaluate(async (settled) => {
+async function bandsRender(page, settled = false, capture = false) {
+  return page.evaluate(async (settled, capture) => {
     const app = window.__app, gl = app.graphicsDevice.gl, W = gl.drawingBufferWidth, H = gl.drawingBufferHeight, R = app.renderer, mb = window.__morphBands;
     if (!mb || (!settled && !mb.active)) return { active: false };
     const grab = () => { const px = new Uint8Array(W * H * 4); gl.readPixels(0, 0, W, H, gl.RGBA, gl.UNSIGNED_BYTE, px); return px; };
@@ -358,8 +368,51 @@ async function bandsRender(page, settled = false) {
       }
       return { pixels: n, maxDelta, over1, real, clustered, interior, ties, where };
     };
-    return { active: true, diff: compare(on1, off), noise: compare(on1, on2).pixels, draws: { on: on1.draws, off: off.draws }, stats: window.__morphBandStats };
-  }, settled);
+    const diff = compare(on1, off);
+    // S402 (--frames): the pictures, as PNG data URLs (rows flipped: readPixels is bottom-up) — asked for, or a moment that fails
+    let pngs = null;
+    if (capture || (capture !== null && diff.interior > 64)) {
+      const png = (px) => {
+        const c = document.createElement('canvas'); c.width = W; c.height = H; const x = c.getContext('2d'); const img = x.createImageData(W, H);
+        for (let y = 0; y < H; y++) img.data.set(px.subarray((H - 1 - y) * W * 4, (H - y) * W * 4), y * W * 4);
+        for (let i = 3; i < img.data.length; i += 4) img.data[i] = 255;
+        x.putImageData(img, 0, 0); return c.toDataURL('image/png');
+      };
+      const d = new Uint8Array(W * H * 4);
+      for (let i = 0; i < d.length; i += 4) {
+        if (!delta(on1, off, i)) continue;
+        const real = delta(on1, off, i) > 1 && delta(on1, offR, i) > 1;
+        d[i] = real ? 255 : 90; d[i + 1] = real ? 0 : 90; d[i + 2] = real ? 0 : 90;
+      }
+      pngs = { on: png(on1.px), off: png(off.px), diff: png(d) };
+    }
+    return { active: true, diff, noise: compare(on1, on2).pixels, draws: { on: on1.draws, off: off.draws }, stats: window.__morphBandStats, pngs };
+  }, settled, capture);
+}
+/** S402 (--list with --change): what one frame of the build draws, draw by draw (the node, its material, how many props a
+ *  batch holds) — to see what is left at a change's worst moment */
+async function listDraws(page) {
+  return page.evaluate(() => {
+    const app = window.__app, R = app.renderer, orig = R.renderForwardInternal, list = [];
+    R.renderForwardInternal = function (camera, prepared, ...rest) {
+      for (const dc of prepared.drawCalls) {
+        let node = dc.node; const p = []; while (node && p.length < 3) { p.unshift(node.name); node = node.parent; }
+        const b = app.batcher?._batchList?.find((x) => x.meshInstance === dc);
+        list.push({ camera: camera.node?.name, node: p.join('/'), material: dc.material?.name, batch: b ? b.origMeshInstances.length : 0, dynamic: b ? b.dynamic : undefined,
+          group: b ? app.batcher.getGroupById(b.batchGroupId)?.name : undefined });
+      }
+      return orig.call(this, camera, prepared, ...rest);
+    };
+    try { window.__seatCull.enabled = true; app.render(); } finally { R.renderForwardInternal = orig; }
+    return list;
+  });
+}
+/** S402: write a bandsRender's pictures */
+function savePngs(prefix, pngs) {
+  if (!pngs) return [];
+  const out = [];
+  for (const [k, url] of Object.entries(pngs)) { const f = `${prefix}-${k}.png`; fs.writeFileSync(path.join(OUT, f), Buffer.from(url.split(',')[1], 'base64')); out.push(f); }
+  return out;
 }
 
 if (CHANGE) {
@@ -373,7 +426,7 @@ if (CHANGE) {
     { key: 'e3-e4', label: '2016 → 2026', era: 3, start: () => window.__os.onEraShift('e4') },
     { key: 'close', label: '2026 → the Close', era: 4, start: () => window.__enterClose() }
   ].filter((c) => !CHANGES_ONLY || CHANGES_ONLY.split(',').includes(c.key));
-  for (const c of CHANGES) for (const mode of ['desktop', 'xr']) {
+  for (const c of CHANGES) for (const mode of ['desktop', 'xr'].filter((m) => !MODES || MODES.split(',').includes(m))) {
     const page = await browser.newPage();
     await page.setViewport({ width: 1280, height: 720, deviceScaleFactor: 1 });
     const errors = [];
@@ -396,6 +449,10 @@ if (CHANGE) {
     const t0 = Date.now(); const samples = [];
     await page.evaluate(c.start);
     let landedAt = -1, closeLeft = false;
+    // S402 (--frames): the worst moment's pictures so far, and the moment to match from another run's report
+    let bestDraws = -1, peakFrames = null, atFrames = null, peakList = null, listBest = -1;
+    const failFrames = [];
+    const atT = framesAt.find((x) => x.key === c.key && x.mode === mode)?.peak?.t;
     while ((Date.now() - t0) / 1000 < (c.key === 'close' ? 120 : 100)) {
       const t = (Date.now() - t0) / 1000;
       const pose = await page.evaluate(() => { const p = window.__camPose(); const cs = window.__closeState?.();
@@ -403,7 +460,23 @@ if (CHANGE) {
       // a look back toward the rest of the building at every other sample, in the headset (the head turns; the flight does not)
       if (mode === 'xr') await page.evaluate((k) => window.__app.root.findByName('camera').setLocalEulerAngles(-10, k % 2 ? 160 : 0, 0), samples.length);
       const pr = await pairedRender(page, true);
-      const br = await bandsRender(page);
+      if (LIST && pr.draws.cull > listBest) { listBest = pr.draws.cull; peakList = { t: +t.toFixed(1), draws: pr.draws.cull, list: await listDraws(page) }; }
+      const newPeak = FRAMES && pr.draws.cull > bestDraws;
+      const atNow = FRAMES && atT !== undefined && !atFrames && t >= atT - 0.2;
+      const br = await bandsRender(page, false, newPeak || atNow);
+      if (newPeak) {
+        bestDraws = pr.draws.cull;
+        const prefix = `${c.key}-${mode}-peak`;
+        if (br.pngs) peakFrames = { t: +t.toFixed(1), draws: pr.draws.cull, files: savePngs(prefix, br.pngs), real: br.diff.real, interior: br.diff.interior };
+        else { const f = `${prefix}-on.png`; await page.screenshot({ path: path.join(OUT, f) }); peakFrames = { t: +t.toFixed(1), draws: pr.draws.cull, files: [f], bands: false }; }
+      }
+      // a moment whose bands show a filled shape: its pictures, to see what it is (the first three)
+      if (br.pngs && br.diff.interior > INTERIOR_PIXELS && failFrames.length < 3) failFrames.push({ t: +t.toFixed(1), files: savePngs(`${c.key}-${mode}-fail-${t.toFixed(1)}`, br.pngs), real: br.diff.real, interior: br.diff.interior });
+      if (atNow) {
+        const prefix = `${c.key}-${mode}-at-${atT}`;
+        if (br.pngs) atFrames = { t: +t.toFixed(1), draws: pr.draws.cull, files: savePngs(prefix, br.pngs), real: br.diff.real, interior: br.diff.interior };
+        else { const f = `${prefix}-on.png`; await page.screenshot({ path: path.join(OUT, f) }); atFrames = { t: +t.toFixed(1), draws: pr.draws.cull, files: [f], bands: false }; }
+      }
       samples.push({ t: +t.toFixed(1), ...pose, diff: pr.cull.pixels, where: pr.cull.where.slice(0, 3), noise: pr.noise, hidden: pr.hidden, drawsOff: pr.draws.none, drawsOn: pr.draws.cull, eyeRoom: pr.cullLast.region, faces: pr.cullLast.faces,
         bands: br.active ? { diff: br.diff.pixels, over1: br.diff.over1, real: br.diff.real, clustered: br.diff.clustered, interior: br.diff.interior, ties: br.diff.ties, maxDelta: br.diff.maxDelta, where: br.diff.where.slice(0, 6), noise: br.noise, drawsOn: br.draws.on, drawsOld: br.draws.off, stats: br.stats } : null });
       if (c.key === 'close') {
@@ -426,9 +499,13 @@ if (CHANGE) {
     const settledDiff = settledPair && settledPair.active ? { pixels: settledPair.diff.pixels, over1: settledPair.diff.over1, real: settledPair.diff.real, ties: settledPair.diff.ties, maxDelta: settledPair.diff.maxDelta, noise: settledPair.noise, draws: settledPair.draws } : null;
     report.changes.push({ change: c.label, key: c.key, mode, peak: { draws: peak.drawsOn, t: peak.t, leg: peak.leg, stage: peak.stage }, peakOldTearDown: peakOld,
       bandPixels: withBands.length ? { moments: withBands.length, strictZero: bandJudged.length - strict, maxPixels: Math.max(...withBands.map((x) => x.bands.diff)), maxOver1: Math.max(...withBands.map((x) => x.bands.over1)), maxReal: Math.max(...withBands.map((x) => x.bands.real)), maxInterior: Math.max(...withBands.map((x) => x.bands.interior)), maxDelta: Math.max(...withBands.map((x) => x.bands.maxDelta)) } : null,
-      settledBatchVsNone: settledDiff, samples, errors });
+      settledBatchVsNone: settledDiff, frames: FRAMES ? { peak: peakFrames, at: atFrames, fail: failFrames } : (failFrames.length ? { fail: failFrames } : undefined), peakList: peakList ?? undefined,
+      // S402: the palette's dynamic batch (cluster.ts / batching.ts bakePalette) as the last sample of the change saw it
+      palette: [...withBands].reverse().find((x) => x.bands.stats?.palette)?.bands.stats.palette ?? null,
+      samples, errors });
     console.log(`[change ${c.label} ${mode}] ${samples.length} moments (${judged.length} repeatable), the cull hiding something in ${culledAt} (${culledJudged} repeatable); legs ${[...new Set(samples.map((x) => x.leg))].join(',')}; ` +
-      `peak ${peak.drawsOn} draws at t ${peak.t} s (the old tear-down at the same moments: peak ${peakOld}); the cascade's bands live at ${withBands.length} moments`);
+      `peak ${peak.drawsOn} draws at t ${peak.t} s (the old tear-down at the same moments: peak ${peakOld}); the cascade's bands live at ${withBands.length} moments` +
+      (report.changes.at(-1).palette ? `; palette ${JSON.stringify(report.changes.at(-1).palette)}` : ''));
     check(`change ${c.label}`, `${mode}: at every repeatable moment of the change the cull changes no pixel`, bad.length === 0 && judged.length >= samples.length * 0.8,
       bad.length ? JSON.stringify(bad.slice(0, 3)) : `${judged.length}/${samples.length} moments repeatable, ${culledJudged} of them with something hidden, 0 px differ`);
     check(`change ${c.label}`, `${mode}: every moment ≤ ${BUDGET} draw calls (${samples.length} moments)`, peak.drawsOn <= BUDGET,

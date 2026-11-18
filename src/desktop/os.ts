@@ -10,6 +10,8 @@ const E2_COL2 = 60;
 /** ⚑ S401 (job 29 D2) — 1997's file in the tray: the status well ends this far from the right edge (it ended at 116),
  *  and the file's well sits between it and Lamby's tray (W − 108) */
 const FILE_TRAY_RIGHT = 160;
+/** ⚑ S404 (UiB job 30 C4) — room for the words "Your file" beside the well (measured each draw; this until the first) */
+const FILE_LABEL_ROOM = 56;
 const FILE_TRAY_W = 46;
 const GLOW_MAY = new Set(['icon-folder1997', 'icon-rootcause', 'icon-provotype', 'icon-netvision']);
 import * as pc from 'playcanvas';
@@ -591,6 +593,8 @@ export class DesktopOS {
   yourFileSeen = false;
   /** ⚑ S401 (UiB job 29 D2) — the person's file on the screen: its count and its light (src/witness/fileItem.ts) */
   readonly fileWatch = new FileWatch();
+  /** ⚑ S404 — how far from the right edge 1997's file begins (the well and its words; drawFileTray measures it) */
+  private fileTrayRight = FILE_TRAY_RIGHT + FILE_LABEL_ROOM;
   /** ⚑ S190 — the 1997 browser: the search, between the dial-up and the channel */
   web: Web1997App | null = null;
   /** ⚑ S191 — 2003's forum: recommended after the first check-in; opened from its desktop icon */
@@ -3363,7 +3367,7 @@ export class DesktopOS {
     if (this.reinterp && this.phase === 'desktop' && (this.desktopEra === 'e1' || this.desktopEra === 'e2')) {
       const bw = 64;
       for (const w of this.taskbarWindows()) {
-        if (wellX + bw > W - (this.desktopEra === 'e1' ? FILE_TRAY_RIGHT : 116)) break;   // the well keeps at least its stub
+        if (wellX + bw > W - (this.desktopEra === 'e1' ? this.fileTrayRight : 116)) break;   // the well keeps at least its stub
         if (xp) {
           // 2003: flat blue tabs, the window that is up a shade darker, white type
           ui.px(ctx, wellX, H - 19, bw, 16, this.windowOpen(w.key) ? ERA1.tealDark : ERA1.titleBlue);
@@ -3381,7 +3385,7 @@ export class DesktopOS {
       }
     }
     if (this.reinterp && this.desktopEra === 'e1') {
-      const wellW = Math.max(0, W - FILE_TRAY_RIGHT - wellX);
+      const wellW = Math.max(0, W - this.fileTrayRight - wellX);
       // ⚑ S401 (UiB job 29 D2) — THE FILE IN THE TRAY: a folder and its count beside Lamby, on every 1997 screen
       this.drawFileTray(W, H);
       ui.bevel(ctx, wellX, H - 19, wellW, 16, false);
@@ -3701,8 +3705,11 @@ export class DesktopOS {
     const ink = ctx.fillStyle;
     rows.forEach((row, i) => {
       const tw = ctx.measureText(row).width;
-      if (shadow) { ctx.fillStyle = ERA1.black; ctx.fillText(row, Math.round(x + 18 - tw / 2) + 1, y + 20 + i * 10 + 1); ctx.fillStyle = ink; }
-      ctx.fillText(row, Math.round(x + 18 - tw / 2), y + 20 + i * 10);
+      // ⚑ S404 (UiB job 30 C4; his mark on the 1997 still: "lamby_rig.exe" ran off the desktop's left edge) — centred under
+      //   the icon, but never past the screen's left edge: a label wider than the column starts at the edge instead
+      const lx = Math.max(2, Math.round(x + 18 - tw / 2));
+      if (shadow) { ctx.fillStyle = ERA1.black; ctx.fillText(row, lx + 1, y + 20 + i * 10 + 1); ctx.fillStyle = ink; }
+      ctx.fillText(row, lx, y + 20 + i * 10);
     });
     if (enabled) hits.push({ x, y, w: 38, h: rows.length > 1 ? 42 : 32, id });
   }
@@ -3785,7 +3792,13 @@ export class DesktopOS {
   private drawFileTray(W: number, H: number): void {
     if (this.diary?.open) return;
     const { ctx } = this;
-    const x = W - FILE_TRAY_RIGHT + 4, y = H - 19, w = FILE_TRAY_W, h = 16;
+    // ⚑ S404 (UiB job 30 C4; his 18 Nov on B8: "Okay, we can try that, as long as it doesnt steal too much attention") — the
+    //   words "Your file" beside the well, on the taskbar's own face, small and quiet: the clock's size and ink. Only the well
+    //   lights when something is filed; the words never do. A press on either opens the file.
+    ui.setFont(ctx, 10);
+    const label = FILE_ITEM.e1.label ?? '', lw = label ? Math.ceil(ctx.measureText(label).width) : 0;
+    this.fileTrayRight = FILE_TRAY_RIGHT + (lw ? lw + 8 : 0);
+    const x = W - this.fileTrayRight + 4, y = H - 19, w = FILE_TRAY_W, h = 16;
     const lit = this.fileWatch.on;
     ui.bevel(ctx, x, y, w, h, false);
     if (lit) ui.px(ctx, x + 1, y + 1, w - 2, h - 2, ERA1.navy);
@@ -3797,7 +3810,8 @@ export class DesktopOS {
     ui.setFont(ctx, 9);
     ctx.fillStyle = lit ? ERA1.white : ERA1.black;
     ctx.fillText(String(this.fileWatch.count), fx + 15, H - 16);
-    this.hits.push({ x, y, w, h, id: 'file-tray' });
+    if (lw) { ui.setFont(ctx, 10); ctx.fillStyle = ERA1.black; ctx.fillText(label, x + w + 4, H - 16); }
+    this.hits.push({ x, y, w: w + (lw ? lw + 6 : 0), h, id: 'file-tray' });
   }
 
   /** ⚑ S401 — 2003's Your file wears its count: a small white tag at the icon's corner, XP blue while it is lit */

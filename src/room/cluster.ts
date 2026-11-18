@@ -21,7 +21,7 @@
 import * as pc from 'playcanvas';
 import type { RoomHandles } from './era1room';
 import { ClusterMorph } from './clusterMorph';
-import { bakeBatch, clearBatch, cullAbsentProps, type BatchHandle } from './batching';
+import { bakeBatch, clearBatch, cullAbsentProps, bakePalette, clearPalette, paletteCost, paletteSlotsGiven, hasDrawableScale, type BatchHandle, type PaletteHandle } from './batching';
 import clusterData from '../../data/room/cluster.json';
 import nicheData from '../../data/room/fluid_niche.json';
 import belongingsData from '../../data/room/belongings.json';
@@ -494,6 +494,9 @@ export interface ClusterShell {
   /** W1-B11: fade only a closed partition approached by a scripted camera
    * path. Distance uses the live mesh bounds, so cancellation inside it stays clear. */
   updateTravelClearance(eye: { x: number; y: number; z: number }, moving: boolean): void;
+  /** ⚑ S402 — the room is free (the story has begun, or no entrance holds it): in `frames` updates, draw it for one frame
+   *  from the era change's palette so its shaders are compiled before the first change (see `warmPalette` inside) */
+  warmPalette(frames?: number): void;
   update(dt: number): void;
 }
 
@@ -602,7 +605,8 @@ export function buildClusterShell(
   const SWEEP_SOURCE: BandSource = { clock: () => morph.sweepClock, windows: () => morph.sweepWindows(), done: (id) => morph.sweepDone(id), animated: () => morph.sweptIds };
   let source: BandSource = CASCADE_SOURCE;
   /** the props that hold still while the bands run, and so stay in the room's own group */
-  let stillGroupNever: () => Set<string> = () => new Set([...excluded, ...emphasisBatch, ...source.animated()]);
+  // S402: … and not the props in the palette (they hold still in it)
+  let stillGroupNever: () => Set<string> = () => new Set([...excluded, ...emphasisBatch, ...source.animated(), ...paletteIds]);
   /** the props of every band that is done, in ONE group (re-baked as each band joins it): a done band costs no draw of its own */
   let doneBatch: BatchHandle | null = null;
   const doneIds = new Set<string>();
@@ -617,11 +621,54 @@ export function buildClusterShell(
   const BAND_SIZE_STILL = 8, BAND_SIZE_CHANGING = 5;
   /** s: a band leaves its batch this much before its first prop's moment (the morph must never write to a batched prop) */
   const BAND_LEAD = 0.05;
+  /**
+   * ⚑ S402 (UiB job 30 Part A) — THE ANIMATED PROPS SHARE DRAWS (batching.ts `bakePalette`, its header says how). At the
+   * change's start every animated prop that may (a plain box: every one the morph animates; a poster's print stays
+   * out, drawn alone) goes into ONE dynamic batch for the whole change, its colour read each frame from its own
+   * material into a palette, and every still prop that may (the models too) into one static batch on the same palette;
+   * only the rest are banded (animated) or kept in the room's group (still) as S398 does. The morph is not touched: it
+   * writes to the same private materials and transforms, in the same order, with the same glitch. When the change ends
+   * the room is rebuilt as one group, as before. `?morphpalette=0` is the A/B escape (S398 alone).
+   */
+  let palette: PaletteHandle | null = null;
+  let paletteIds: string[] = [];
+  /** the animated ones among them: they may join with their plain parts only (see bakePalette `partial`) */
+  let paletteAnimated: ReadonlySet<string> = new Set();
+  const paletteOn = !/[?&]morphpalette=0\b/.test(typeof location === 'undefined' ? '' : location.search);
+  /** S402: is a change being drawn in parts (bands, or the palette) */
+  const banding = (): boolean => bands.length > 0 || paletteIds.length > 0;
+  /**
+   * ⚑ S402 — THE PALETTE'S SHADERS ARE COMPILED BEFORE A CHANGE ASKS FOR THEM. Its materials (a colour map on uv0 and
+   * uv1, in a dynamic batch and a static one) are shader variants the room never draws otherwise, and the engine compiles
+   * a variant the first time it is drawn: without this, at the first change's first frame (measured: a 330 ms frame in
+   * headless Chrome with an empty program cache; a Quest compiles slower). So, when app.ts says the room is free
+   * (`warmPalette()`: the story has begun, or a review route with no entrance has booted), the settled room is drawn
+   * for ONE frame from the palette — every plain prop, half of each kind in the dynamic group and half in the static
+   * one, so both variants of each kind compile — and goes back into its own group on the next update. The two pictures
+   * are the same (the paired render's whole point), so nothing shows. NEVER during the restore entrance: it captures the
+   * room's batches at boot and hides them, and a rebuilt group would show through its stars. Kinds the room only gains
+   * later (a model an era brings) compile at their first change, as any new material does.
+   */
+  let warmIn = -1;
+  let warmHandle: PaletteHandle | null = null;
+  function warmPalette(): void {
+    if (banding() || morph.running || timeline.length || !roomBatch) return;
+    clearSettled();
+    const never = neverSet();
+    const ids = [...room.props].filter(([id, h]) => !never.has(id) && h.entity.enabled && (h.model || h.composite || hasDrawableScale(h.entity))).map(([id]) => id);
+    const moving = new Set(ids.filter((_, i) => i % 2 === 0));
+    warmHandle = bakePalette(app, room, ids, never, { name: 'room-palette-warm', moving, partial: moving, demote: true });
+    if (!warmHandle) rebuildSettled();
+  }
+  function bakePaletteNow(): PaletteHandle | null {
+    palette = paletteIds.length ? bakePalette(app, room, paletteIds, neverSet(), { moving: paletteAnimated, partial: paletteAnimated }) : null;
+    return palette;
+  }
   let joinedCache: { key: unknown[]; set: ReadonlySet<string> | null } = { key: [], set: null };
   function joinedIds(): ReadonlySet<string> | null {
-    const handles: unknown[] = [roomBatch, doneBatch, ...bands.map((b) => b.handle)];
+    const handles: unknown[] = [roomBatch, doneBatch, palette, ...bands.map((b) => b.handle)];
     if (handles.length === joinedCache.key.length && handles.every((h, i) => h === joinedCache.key[i])) return joinedCache.set;
-    const parts = handles.filter((h): h is BatchHandle => !!h);
+    const parts = handles.filter((h): h is BatchHandle | PaletteHandle => !!h);
     const set = parts.length === 0 ? null : parts.length === 1 ? parts[0].idSet : new Set(parts.flatMap((h) => h.ids));
     joinedCache = { key: handles, set };
     return set;
@@ -636,18 +683,26 @@ export function buildClusterShell(
   function clearBands(): void {
     for (const b of bands) if (b.handle) b.handle = clearBatch(app, room, b.handle);
     doneBatch = clearBatch(app, room, doneBatch);
+    palette = clearPalette(app, room, palette);   // S402
+    warmHandle = clearPalette(app, room, warmHandle);   // S402: a change that starts on the warm-up's frame finds the room whole
+    paletteIds = [];
     doneIds.clear();
     bands = [];
     bandsSuspended = false;
   }
   function publishBatchStatsAll(): void {
-    settledJoined = (roomBatch?.joined ?? 0) + (doneBatch?.joined ?? 0) + bands.reduce((n, b) => n + (b.handle?.joined ?? 0), 0);
+    settledJoined = (roomBatch?.joined ?? 0) + (doneBatch?.joined ?? 0) + (palette?.joined ?? 0) + bands.reduce((n, b) => n + (b.handle?.joined ?? 0), 0);
     publishBatchStats();
-    (window as { __morphBandStats?: unknown }).__morphBandStats = bands.length
+    (window as { __morphBandStats?: unknown }).__morphBandStats = banding()
       ? { bands: bands.length, waiting: bands.filter((b) => b.state === 'waiting').length, live: bands.filter((b) => b.state === 'live').length,
           done: bands.filter((b) => b.state === 'done').length, suspended: bandsSuspended,
           liveProps: bands.filter((b) => b.state === 'live').reduce((n, b) => n + b.ids.size, 0),
-          costMs: +bandCost.ms.toFixed(1), maxStepMs: +bandCost.max.toFixed(1), steps: bandCost.steps }
+          costMs: +bandCost.ms.toFixed(1), maxStepMs: +bandCost.max.toFixed(1), steps: bandCost.steps,
+          // S402: the palette's dynamic batch — its props, slots and kinds, the props that could not join, and its cost
+          palette: palette ? { props: palette.joined, still: palette.still, slots: palette.slots, kinds: palette.kinds, offered: paletteIds.length,
+            skipped: Object.keys(palette.skipped).length, bakeMs: +paletteCost.bakeMs.toFixed(1), bakeMaxMs: +paletteCost.bakeMax.toFixed(1), bakes: paletteCost.bakes,
+            syncFrames: paletteCost.frames, syncMs: +paletteCost.ms.toFixed(2), syncMaxMs: +paletteCost.max.toFixed(3),
+            bakeParts: { selectMs: +paletteCost.selectMs.toFixed(1), swapMs: +paletteCost.swapMs.toFixed(1), generateMs: +paletteCost.generateMs.toFixed(1), meshesMade: paletteCost.meshesMade }, slotsGiven: paletteSlotsGiven() } : null }
       : null;
   }
   /** the cascade has just been planned (morph.goToState), or the sweep begun: the props that hold still back into the
@@ -656,8 +711,26 @@ export function buildClusterShell(
     if (!batch || !bandsOn || !morph.running) return;
     source = src;
     bandCost.ms = 0; bandCost.max = 0; bandCost.steps = 0;
+    let windows = src.windows().filter((w) => w.drawn).sort((a, b) => a.start - b.start);
+    // S402: every animated prop that may joins the palette's one dynamic batch for the whole change, and so does every
+    //   prop that holds still and may (measured, 2016 → 2026 in the headset: the still props' own materials — the models'
+    //   wood, carpet, metal, one draw each — were 33 of the 79 draws left at its worst moment); the room's group takes
+    //   the still props that may not, the bands the animated ones that may not
+    palette = clearPalette(app, room, palette);
+    paletteIds = [];
+    if (paletteOn) {
+      const never = neverSet(), animated = src.animated();
+      const still = [...room.props].filter(([id, h]) => !never.has(id) && !animated.has(id) && h.entity.enabled &&
+        (h.model || h.composite || hasDrawableScale(h.entity))).map(([id]) => id);
+      paletteAnimated = new Set(windows.map((w) => w.id));
+      paletteIds = [...paletteAnimated, ...still];
+      paletteCost.frames = 0; paletteCost.ms = 0; paletteCost.max = 0; paletteCost.uploads = 0; paletteCost.bakeMs = 0; paletteCost.bakeMax = 0; paletteCost.bakes = 0;
+      paletteCost.selectMs = 0; paletteCost.swapMs = 0; paletteCost.generateMs = 0; paletteCost.meshesMade = 0;
+      const p = bakePaletteNow();
+      paletteIds = p ? p.ids : [];
+      if (p) windows = windows.filter((w) => !p.idSet.has(w.id));
+    }
     if (bakeStill) roomBatch = bakeBatch(app, room, stillGroupNever());
-    const windows = src.windows().filter((w) => w.drawn).sort((a, b) => a.start - b.start);
     bands = [];
     for (const still of [true, false]) {
       const ws0 = windows.filter((w) => w.still === still), size = still ? BAND_SIZE_STILL : BAND_SIZE_CHANGING;
@@ -694,17 +767,19 @@ export function buildClusterShell(
   /** ?debug=1, the probe's paired render: off = the old tear-down (nothing batched while the cascade runs), on = the
    *  bands as their states say. Synchronous: the next app.render() draws the switched state. */
   function setBandsBatched(on: boolean): void {
-    if (!bands.length) return;
+    if (!banding()) return;
     if (!on) {
       if (bandsSuspended) return;
       roomBatch = clearBatch(app, room, roomBatch);
       doneBatch = clearBatch(app, room, doneBatch);
+      palette = clearPalette(app, room, palette);   // S402
       for (const b of bands) if (b.handle) b.handle = clearBatch(app, room, b.handle);
       bandsSuspended = true;
     } else {
       if (!bandsSuspended) return;
       bandsSuspended = false;
       roomBatch = bakeBatch(app, room, stillGroupNever());
+      bakePaletteNow();   // S402
       for (const b of bands) if (b.state === 'waiting') bakeBand(b);
       bakeDone();
     }
@@ -722,12 +797,14 @@ export function buildClusterShell(
     if (!batch) return;
     // S398: mid-cascade (a travel wall fading, an emphasis change), the room is rebaked AS BANDS, never as one group:
     //   one group would freeze every prop the cascade is still changing into the batch until it ends
-    if (bands.length && morph.running) {
+    if (banding() && morph.running) {
       for (const b of bands) if (b.handle) b.handle = clearBatch(app, room, b.handle);
       doneBatch = clearBatch(app, room, doneBatch);
+      palette = clearPalette(app, room, palette);   // S402
       roomBatch = clearBatch(app, room, roomBatch);
       if (!bandsSuspended) {
         roomBatch = bakeBatch(app, room, stillGroupNever());
+        bakePaletteNow();   // S402
         for (const b of bands) if (b.state === 'waiting') bakeBand(b);
         bakeDone();
       }
@@ -751,20 +828,22 @@ export function buildClusterShell(
       set on(v: boolean) { bandsOn = v; },
       /** the paired render's switch (see setBandsBatched) */
       batched: (on: boolean): void => setBandsBatched(on),
-      get active(): boolean { return bands.length > 0; },
+      get active(): boolean { return banding(); },
       get suspended(): boolean { return bandsSuspended; },
-      /** which group holds each batched prop, and whether the cascade still owes it a write (a batched prop must not be owed one) */
+      /** which group holds each batched prop, and whether the cascade still owes it a write (a statically batched prop must
+       *  not be owed one; S402: the palette's dynamic batch is made to be written to, and is listed apart) */
       inspect: (): unknown => {
         const groups: Record<string, string[]> = {};
         for (const h of [roomBatch, doneBatch, ...bands.map((b) => b.handle)]) if (h) groups[h.group] = h.ids;
         const owed = Object.values(groups).flat().filter((id) => source.animated().has(id) && !source.done(id) && (source.clock() >= (source.windows().find((w) => w.id === id)?.start ?? Infinity)));
         const lit = Object.values(groups).flat().filter((id) => { const h = room.props.get(id); const e = h?.material?.emissive; return h && !h.emissive && e && (e.r || e.g || e.b); });
-        return { clock: source.clock(), source: source === SWEEP_SOURCE ? 'sweep' : 'cascade', groups: Object.fromEntries(Object.entries(groups).map(([k, v]) => [k, v.length])), owed, lit };
+        return { clock: source.clock(), source: source === SWEEP_SOURCE ? 'sweep' : 'cascade', groups: Object.fromEntries(Object.entries(groups).map(([k, v]) => [k, v.length])), owed, lit,
+          palette: palette ? { props: palette.joined, still: palette.still, slots: palette.slots, kinds: palette.kinds, skipped: palette.skipped } : null };
       },
       /** the settled room, unbatched (off) or as its one group (on): what the old cascade did at its start and its end,
        *  for the probe to measure (a batch draws its boxes pre-transformed: the same picture to within a level) */
       settled: (on: boolean): void => {
-        if (bands.length || morph.running) return;
+        if (banding() || morph.running) return;
         if (on) rebuildSettled(); else clearSettled();
         cullAbsentProps(room, joinedIds());
       }
@@ -1241,6 +1320,7 @@ export function buildClusterShell(
       rebuildSettled();
     },
     rebake(): void { if (!morph.running) rebuildSettled(); else pendingSettledRebatch = true; },
+    warmPalette(frames = 30): void { if (batch && bandsOn && paletteOn) warmIn = Math.max(1, frames); },
     get state(): ClusterState { return state; },
     get era(): EraKey { return era; },
     get homeYaw(): number { return era === 'e4' ? 270 : era === 'e3' ? 90 : 0; },
@@ -1397,6 +1477,9 @@ export function buildClusterShell(
     updateTravelClearance,
 
     update(dt: number): void {
+      // S402: the warm-up's one frame has been drawn: the room goes back into its group
+      if (warmHandle) { warmHandle = clearPalette(app, room, warmHandle); if (!banding() && !morph.running) rebuildSettled(); }
+      else if (warmIn > 0 && --warmIn === 0) warmPalette();
       if (timeline.length) {
         timelineT += dt;
         while (timeline.length && timeline[0].t <= timelineT) {

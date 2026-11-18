@@ -250,7 +250,9 @@
   "groupOpened": "phone: group opened — Maiden-to-be",
   "backlogOpened": "phone: unread messages opened",
   "backlogRead": "phone: read — {who}",
-  "cascadeSeen": "phone: the cascade — the block was outnumbered"
+  "cascadeSeen": "phone: the cascade — the block was outnumbered",
+  "residue": "— entry could not be classified —",
+  "_docS404": "⚑ S404 — `residue`: what the record files when Vera writes her newest note (notes.entries `refusal`), once, in 2016's file, word for word as Daniel's 2003 line files (s2_caleb.json `witness.residue`). Never the line itself."
  },
  "linkVote": {
   "masthead": "The Continental Wire",
@@ -288,8 +290,15 @@
  "notes": {
   "register": "felt",
   "_doc": "Approved 7 Nov. Read-only, newest first; no typing, send, preview or explanation. Period unsent notes practice [VERIFY SOURCE].",
+  "_docS404": "⚑ S404 (UiB job 30 C2; his 18 Nov yes to the three refusals, \"YES, this is much much better!\"): `refusal` is the newest note, above Mam's, with no title. It is not in the Notes until she writes it: when the piece shows her the Notes after Mam's message (phoneE3 conductNotes), Mam's unfinished reply types itself in as before, and then a new note opens above it and she types this line. It is typed only once Renata's testimony is done (the ledger's `e3-job:testimony`), so the visitor has met the system's word, \"dependency\", in the editor first; if the mothers come first, the Notes come back for it when the testimony is done. Felt: nothing speaks over it (the platform and Lambient keep quiet while the Notes are up), no sound, nothing to press. The record files it once, as a gap: `witness.residue`. It belongs only to Vera's story (the women's strand's word, Renata's rule \"Name the dependency, not the person\", her own 2014 \"I don't have a word for the part that wasn't\"); the same line ends the piece on Daniel's CRT (data/strings/close_line.json). Mam's note and the list are unchanged.",
   "entries": [
    {
+    "id": "refusal",
+    "register": "felt",
+    "text": "It wasn't dependency. I was in love with her."
+   },
+   {
+    "id": "mam",
     "title": "Mam",
     "text": "Mam — I won't make Sunday. It isn't you. It's"
    },

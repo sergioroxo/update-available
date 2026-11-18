@@ -408,7 +408,7 @@ export function spawnProp(room: RoomHandles, p: PropDef): PropHandle {
     e = new pc.Entity(p.id);
     e.addComponent('render', { type: 'box' });
     if (e.render) e.render.material = material;
-    if (room.reinterp && p.print) attachPrintToBox(e, p.print);
+    if (room.reinterp && p.print) attachPrintToBox(e, p.print, p.size[2]);   // S402: the depth, so the print is 1 mm proud
   }
   if (!isModel) {
     e.setLocalPosition(p.pos[0], p.pos[1], p.pos[2]);

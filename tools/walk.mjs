@@ -1126,8 +1126,42 @@ async function main() {
 
   /** S221 — the text census: every distinct screen of words the walk saw, keyed by era, canvas and text */
   const census = new Map();
+  /**
+   * ⚑ S404 (UiB job 30 C2) — LINES THAT MUST BE MET, not only exist (content-that-cannot-be-met): each watched line, the
+   * first step it stood whole on each canvas it reached (its era, its phase, the canvas's size), and a still of that
+   * moment (met_<key>_<n>.png). A line typed in counts once it is all there; rows a surface wraps are read as one text.
+   */
+  const WATCH = (() => {
+    try {
+      const rd = (p) => JSON.parse(readFileSync(join(ROOT, p), 'utf8'));
+      const out = [];
+      const vera = (rd('data/dialog/s3_maiden.json').notes?.entries ?? []).find((e) => e.id === 'refusal');
+      if (vera) out.push(['vera-2016', vera.text]);
+      const maya = rd('data/dialog/s4_v3.json').bot?.unsent;
+      if (maya) out.push(['maya-2026', maya.text]);
+      const res = rd('data/dialog/s2_caleb.json').residue;
+      out.push(['daniel-2003', res.line], ['caleb-2003', res.answer]);
+      return out;
+    } catch { return []; }
+  })();
+  const watched = {};
+  const watchLines = async (st, step, now) => {
+    now ??= await page.evaluate(() => (window.__textNow ? window.__textNow() : [])).catch(() => []);
+    for (const c of now) {
+      const flat = c.text.replace(/ \| /g, ' ');
+      for (const [key, line] of WATCH) {
+        if (!flat.includes(line)) continue;
+        const seen = (watched[key] ??= []);
+        if (seen.some((x) => x.size === c.size)) continue;
+        seen.push({ step, era: st.era, phase: st.phase, size: c.size, at: new Date().toISOString() });
+        console.log(`  met (S404): ${key} on canvas ${c.size} at step ${step} (${st.era} · ${st.phase})`);
+        try { mkdirSync(SHOT_DIR, { recursive: true }); await page.screenshot({ path: join(SHOT_DIR, `met_${key}_${seen.length}.png`) }); } catch { /* a still is a bonus */ }
+      }
+    }
+  };
   const takeCensus = async (st, step) => {
     const now = await page.evaluate(() => (window.__textNow ? window.__textNow() : [])).catch(() => []);
+    await watchLines(st, step, now);
     for (const c of now) {
       const words = c.text.split(/[\s|]+/).filter((w) => /[A-Za-z]/.test(w)).length;
       if (words < 1) continue;
@@ -1297,7 +1331,7 @@ async function main() {
     if (await page.evaluate(() => { const t = window.__os?.testimony; return t?.open && t.stage === 'prep' && !t.hits.some(h => h.id === 'ts-next' || h.id === 'ts-prep-done'); })) {
       await wait(1600); s = await probe(); continue;
     }
-    if (s.driven) { await wait(1600); s = await probe(); continue; }   // a travelling is playing
+    if (s.driven) { await watchLines(s, i); await wait(1600); s = await probe(); continue; }   // a travelling is playing (S404: the lines are watched through it)
     // ⚑ S226 — the Close's cards wait for a press now (his, 2026-10-10): a press anywhere turns one, as the card says
     {
       const card = await page.evaluate(() => window.__closeCard && window.__closeCard.on ? window.__closeCard.i : -1).catch(() => -1);
@@ -1877,8 +1911,11 @@ async function main() {
     for (const f of fileItems) { const e = (per[f.era] ??= { changes: 0, lit: 0, from: f.count, to: f.count }); e.changes++; if (f.lit) e.lit++; e.to = f.count; }
     console.log('  file on the screen (S401): ' + (Object.entries(per).map(([e, v]) => `${e} ${v.from}→${v.to} (${v.changes} changes, ${v.lit} lit)`).join(' · ') || 'no change seen'));
   }
+  // ⚑ S404 — the watched lines: where each was met (or that it never was)
+  for (const [key] of WATCH) console.log(`  line met (S404): ${key} — ` + (watched[key]?.map((x) => `step ${x.step} ${x.era}/${x.phase} canvas ${x.size}`).join(' · ') || 'NOT MET'));
   writeFileSync(join(OUT_DIR, 'WALK_' + stamp + '.json'), JSON.stringify({
     fileItems,
+    watched,
     when: new Date().toISOString(), port: PORT, viewport: VIEW,
     jumpedTo: JUMP || null,
     setupEntrance: SETUP,

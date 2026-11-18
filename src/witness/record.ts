@@ -140,7 +140,12 @@ export function recordEntries(): RecordEntry[] {
   for (const g of ledger.graceQueue) push('e3', 'queue', `card ${g.cardId}`, g.outcome, g.witness);
   for (const c of ledger.comments) push('e3', 'moderation', c.commentId, c.follow ? 'followed' : 'own words', c.witness, !c.follow);
   // S192 — Tag the video: the recommendation, filed as media (a practice of its own awaits his approval)
-  for (const j of ledger.era3Jobs) push('e3', 'recommendation', j.id, 'tagged', j.witness, false);   // S195: The recommendation
+  for (const j of ledger.era3Jobs) {
+    // ⚑ S404 (UiB job 30 C2) — her newest note, filed as a gap (phoneE3; s3_maiden.json witness.residue): under the practice
+    //   whose rule gave her the word she refuses ("Name the dependency, not the person"), as Daniel's sits under his messenger's
+    if (j.id === 'residue') { push('e3', 'queue', j.id, 'residue', j.witness, false); continue; }
+    push('e3', 'recommendation', j.id, 'tagged', j.witness, false);   // S195: The recommendation
+  }
   // ── 2026 ──
   for (const e of ledger.e4Space) {
     // ⚑ S321 — 2026 v3's filings: the new you and the photograph are `photos`; the clinic's number is `record`; the

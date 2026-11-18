@@ -221,7 +221,7 @@ export interface Ledger {
    *  between the screens (messenger + browser) and the room (restyle, ticket, wall strips, ceiling map, mirror):
    *  the screens mark, the room reads. Memory only. */
   e4Beats: string[];
-  e4Space: { id: string; outcome: 'installed' | 'worn' | 'turned' | 'read' | 'joined' | 'begun' | 'done' | 'pressed' | 'answered' | 'opened'; witness: string }[];   // S160: the saver's press, L's turns answered, a thread opened
+  e4Space: { id: string; outcome: 'installed' | 'worn' | 'turned' | 'read' | 'joined' | 'begun' | 'done' | 'pressed' | 'answered' | 'opened' | 'residue'; witness: string }[];   // S160: the saver's press, L's turns answered, a thread opened · ⚑ S404: 'residue', her unsent line filed as a gap
   /**
    * ⚑ L, ERA 4's CONVERSATION (Session 77 — `data/dialog/s4_l.json`,
    * `src/desktop/apps/lVoice.ts`). Witness-symmetric in both directions, which
