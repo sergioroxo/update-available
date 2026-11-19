@@ -23,6 +23,24 @@ import { px, setFont, wrapText } from '../theme/chrome';
 import { ERA3 } from '../theme/era3';
 import { ledger } from '../../state/ledger';
 import { entriesByEra } from '../../witness/record';
+
+/** ⚑ S357eq (his 20 Nov: "fix Vera's activity page so the corrections show") — her corrections of the testimony (the
+ *  correction queue's cards, `card <n>`) are the work this page exists to show (CORRECTIONS THIS SHIFT, above the list).
+ *  Since S405 the mothers' four lines filed here too, and newest-first put the corrections under the cut. Now, when the day
+ *  holds more than fits, the corrections stay; the other entries fill the rows that are left, newest first; the last row
+ *  counts the ones not shown. Order is kept (newest first). Pure, so it can be checked without a canvas. */
+export const isCorrection = (e: { kind: string; id: string }): boolean => e.kind === 'queue' && e.id.startsWith('card ');
+export function activityRows<T extends { kind: string; id: string }>(today: T[], fit: number): T[] {
+  if (today.length <= fit) return today;
+  const keep = Math.max(0, fit - 1);   // the last row says how many more
+  let room = Math.max(0, keep - today.filter(isCorrection).length);
+  const rows: T[] = [];
+  for (const e of today) {
+    if (isCorrection(e)) rows.push(e);
+    else if (room > 0) { rows.push(e); room--; }
+  }
+  return rows.slice(0, keep);   // more corrections than rows: the newest of them
+}
 import type { TaskSurface, TaskArea, TaskHit } from './taskSurface';
 import q from '../../../data/dialog/s3_queue.json';
 
@@ -97,7 +115,7 @@ export class YourRecordApp implements TaskSurface {
     // ⚑ S149 — what the platform files TODAY, newest first: hers, and only hers
     y += 6;
     const bottom = area.y + area.h - 30;
-    const rowH = 13;
+    const rowH = 12;   // ⚑ S357eq: 13 → 12, one more row in the same space (the type is unchanged, 9 px)
     const today = entriesByEra().e3.slice().reverse();
     setFont(ctx, 9); ctx.fillStyle = ERA3.grey;
     ctx.fillText(R.fields.today.toUpperCase(), x, y);
@@ -107,10 +125,11 @@ export class YourRecordApp implements TaskSurface {
     px(ctx, x, y, w, 1, ERA3.glassEdge);
     y += 6;
     const fit = Math.max(0, Math.floor((bottom - y) / rowH));
-    // ⚑ S405 — when the day holds more than fits, the last row counts the earlier ones (2003's file does the same)
-    const shown = today.length > fit ? Math.max(0, fit - 1) : today.length;
+    // ⚑ S405 — when the day holds more than fits, the last row counts the rest (2003's file does the same)
+    // ⚑ S357eq — and her corrections are never the ones cut (activityRows)
+    const rows = activityRows(today, fit);
     setFont(ctx, 9);
-    for (const e of today.slice(0, shown)) {
+    for (const e of rows) {
       ctx.fillStyle = ERA3.grey;
       ctx.fillText('2016', x, y);
       ctx.fillStyle = e.flagged ? ERA3.accent : ERA3.greyDk;
@@ -119,7 +138,7 @@ export class YourRecordApp implements TaskSurface {
       ctx.restore();
       y += rowH;
     }
-    if (shown < today.length) { ctx.fillStyle = ERA3.grey; ctx.fillText(R.todayMore.replace('{n}', String(today.length - shown)), x + 40, y); }
+    if (rows.length < today.length) { ctx.fillStyle = ERA3.grey; ctx.fillText(R.todayMore.replace('{n}', String(today.length - rows.length)), x + 40, y); }
     // the footer: continuity of care, in the platform's words
     setFont(ctx, 8); ctx.fillStyle = ERA3.grey;
     const foot = wrapText(ctx, R.footer, w);
