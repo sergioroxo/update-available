@@ -44,6 +44,8 @@ import { textPx } from '../theme/fonts';
 import * as aero from '../theme/era3';
 import { ERA3 } from '../theme/era3';
 import { ledger } from '../../state/ledger';
+// ⚑ S405 (UiB job 31, T94): the mothers file under 2016's prefix, so no 2003 reader takes them for Daniel's check-in
+import { familyCheckinId } from '../../witness/record';
 import type { TaskSurface, TaskArea, TaskHit } from './taskSurface';
 import f from '../../../data/dialog/s3_family.json';
 import { refuse, drawLambientNote, measureLambientNote, noteBand, type DeskNote, type Voice } from './lambientDesk';
@@ -93,7 +95,7 @@ export class FamilyCallsApp implements TaskSurface {
   private markOpened(p: ParentDef): void {
     if (this.opened.has(p.id)) return;
     this.opened.add(p.id);
-    ledger.checkins.push({ id: p.id, witness: p.witnessOpened });
+    ledger.checkins.push({ id: familyCheckinId(p.id), witness: p.witnessOpened });
   }
 
   private select(i: number): void {
@@ -114,7 +116,7 @@ export class FamilyCallsApp implements TaskSurface {
     // ⚑ the quiet one files its OWN witness when a template is sent at it, so
     //   the record distinguishes an answer from a thing sent instead of one.
     const witness = p.id === QUIET.id ? QUIET.witnessSentAnyway : r.witness;
-    ledger.checkins.push({ id: p.id, witness });
+    ledger.checkins.push({ id: familyCheckinId(p.id), witness });
     this.bump();
   }
 
@@ -131,7 +133,7 @@ export class FamilyCallsApp implements TaskSurface {
       this.outcomes.set(p.id, 'replied');
       this.sent.set(p.id, r.label);
       this.forcedBy.set(p.id, ans.voice);
-      ledger.checkins.push({ id: p.id, witness: p.id === QUIET.id ? QUIET.witnessSentAnyway : r.witness });
+      ledger.checkins.push({ id: familyCheckinId(p.id), witness: p.id === QUIET.id ? QUIET.witnessSentAnyway : r.witness });
     }
     this.bump();
   }
