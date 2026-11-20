@@ -15,7 +15,7 @@ words. All counts were taken on 20 Nov from git and the repo, at reinterp 7421a7
 - **Comp.** = `ARTICLE_COMPILATION_2026-10-03.md` §3, which tells rows 2–18 in full, with line references.
 - **Memory** = a dated note in Claude's local memory folder (`~/.claude/projects/…/memory/`). It is not in the repo.
 - **Early** = `RESEARCH_NOTE_EARLY_VERSIONS_2026-11-18.md`, written by another Claude session from the oldest logs and
-  chats. It is on this Mac only, not in git, because it holds links to his private chats. Every quote in rows E1–E19
+  chats. It was committed on 20 Nov at his request; it holds links to his chats. Every quote in rows E1–E19
   was checked again on 20 Nov against the session logs. "(summary)" means the session's own summary quotes him; the
   message itself is not in the logs.
 - **This is a log of changes, so it leaves out what he accepted.** Most AI proposals were accepted as they were, or
