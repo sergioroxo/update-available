@@ -46,7 +46,7 @@ first sessions' logs. Where the log does not show what the AI had proposed, the 
 | E16 | 2 Jul | "even if you try to be the "enforcer" the queer side always win"; a new version "without deleting the previous one" | The witness panel, dissolved, left visitors without a grasp of SOGICE | Small games you cannot win; the old build kept | Early §4 |
 | E17 | 3 Jul | "we should ALWAYS be fully realizing the project. Both version will be presented, this is a research aspect for the article" | A 19 October target smaller than the full piece | The full piece, with a faster festival cut beside it (he reversed this in October: row 21) | Early §4 |
 | E18 | 3 Jul | "Thsi is not symbolic erasure of TransMasculine, but it is a choice to focus on the community thats suffers the most" | Not recorded | Three rooms; 2026 in the trans room, focused on a trans woman | Early §4 |
-| E19 | 5 Jul | "lets be bold we need emotion"; "You already had a morph from the previous version that was extremely good"; the disc "too impersonal" | A round space with a disc at its centre (ChatGPT images); a guide named Echo | The old morph kept; no disc; the guide called "L" | Early §4 |
+| E19 | 5 Jul | "You already had a morph from the previous version that was extremely good"; the disc "too impersonal"; "I would not use Echo, maybe just "L", hyper minimal" | A round space with a disc at its centre (ChatGPT images); a guide named Echo | The old morph kept; no disc; the guide called "L". *Corrected 20 Nov:* his "lets be bold we need emotion", the same day, was not a redirection but his yes to Fable's proposed turn (◆N3; `SERGIO_SAID_ALL_SESSIONS.md`:1481). The turn has since gone from the piece | Early §4 |
 
 **Where a model shaped him** (from the chats before the build; read by the early-versions note on 18 Nov, not on this
 Mac, so not checked again here):
@@ -87,7 +87,7 @@ update itself ("update yourself", 10 Jun, as the script document records his ide
 | 17 | 2 Oct | "They are real, so they have a reason to be in the Close" | Make the real organisations at the Close generic | Kept, named as citations only | Comp. 3.13 (B6) |
 | 18 | 2 Oct | "this can only exist in writing, not in the room jumping" | His 3 Jul ruling had been switched off in the code for 90 days (an audit found it) | He ruled again: it lives in Noa's unresolved submission | Comp. 3.14 |
 | 19 | 10 Oct | "We should not expect people to look around at any part, we need to take the viewer there. This is a rule for all." | Keep a 30-second clock, or wait for a held look, in the 2026 session | A rule for the whole piece: nothing waits on a look; the piece takes you there | `CADENCE_STUDY_2026-10-10.md` §9.8; CLAUDE.md |
-| 20 | 15 Oct | "We need to reinstate Lamby as the connection point of the correction and forcing you to do stuff." | The rule "Era 1 has NO assistant character" | Lamby guides from 1997: hints when you stall, "take me there", always ignorable | `OPENING_NOTES_2026-10-15.md`; CLAUDE.md |
+| 20 | 15 Oct | "We need to reinstate Lamby as the connection point of the correction and forcing you to do stuff." | The rule "Era 1 has NO assistant character", which was **his own** ruling of 10 Jul, made against Fable's proposal of a guide from boot (`REINTERP_RESTRUCTURE_R28_2026-07-10.md`:99–102, 144) | Lamby guides from 1997: hints when you stall, "take me there", always ignorable. So the piece now has what Fable proposed in July, adopted on the visitors' evidence | `OPENING_NOTES_2026-10-15.md`; CLAUDE.md |
 | 21 | 15 Oct, 17 Nov | "Turn the separate full version off (keep the code)"; a month later: "So we've been double working is that what you meant?" "Yes, freeze it" | The full route kept open "for review", so every change was written twice | One visit; the full route frozen as a tagged research state | `RESEARCH_NOTE_THE_TWO_CUTS_2026-11-17.md` |
 | 22 | 27 Oct | "I think that is not for this project" | A second phase built on a 1990s home-screen design | Dropped; more Lexicon and story work instead | Memory `no-bob-version` |
 | 23 | 7 Nov | "We need to go more over the top than just clinical, that way we are just being as bad as the SOGICE." | 2026 as a neutral, step-by-step chatbot walk-through | Maya pressured and bullied toward being "a guy"; bolder forms; the clinical debate still not satirised | Memory `2026-pressure-not-clinical` |
@@ -166,6 +166,13 @@ which only reads 16 of today's dialogue files. So this count applies a copy of i
 - "those days were for the wife you'll have when you're well — not for him."
 - "Then it was never me that was broken…"
 - "The next update is still being written, but their perpetrators are already making more victims."
+
+*Checked 20 Nov (`CO_CREATION_ACCOUNT_2026-11-20.md` §4):* the first three of these lines first appear in model
+documents: "for no one special" and "those days were for the wife …" in the June storytelling pass
+(`~/update-available/docs/ERA2_STORYTELLING_PASS_2026-06-16.md`), and "I caught it in time" as a model's
+PLACEHOLDER in the 12 Jul homecoming script. He may have chosen and kept them rather than written them. The June
+logs that could settle it are missing; the question is his to answer. Until then, "his own wording" is safe for the
+last two lines only.
 
 **Limits of this count:**
 - `data/` holds more than the visit shows. That is why its 71,211 words are far more than the 9,346 on the path.
