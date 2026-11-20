@@ -7,20 +7,69 @@ abstract", 20 Nov). It answers two gaps named in `FABLE_REVIEW_FINDINGS_2026-11-
 `ABSTRACT_DRAFT_2026-11-18.md` §4, point 10: one decision log a reader can audit, and a count of who wrote the
 words. All counts were taken on 20 Nov from git and the repo, at reinterp 7421a7e0.*
 
-## 1. The decision log: 31 times his direction changed what the AI had made or proposed
+## 1. The decision log: 50 times his direction changed what the AI had made or proposed
 
 **How to read it.**
 - His words are quoted exactly as he wrote them, spelling included.
 - "What the AI had" is the proposal, design or default that his words changed.
 - **Comp.** = `ARTICLE_COMPILATION_2026-10-03.md` §3, which tells rows 2–18 in full, with line references.
 - **Memory** = a dated note in Claude's local memory folder (`~/.claude/projects/…/memory/`). It is not in the repo.
+- **Early** = `RESEARCH_NOTE_EARLY_VERSIONS_2026-11-18.md`, written by another Claude session from the oldest logs and
+  chats. It is on this Mac only, not in git, because it holds links to his private chats. Every quote in rows E1–E19
+  was checked again on 20 Nov against the session logs. "(summary)" means the session's own summary quotes him; the
+  message itself is not in the logs.
 - **This is a log of changes, so it leaves out what he accepted.** Most AI proposals were accepted as they were, or
   with small edits. The log shows where he steered, not how often.
+
+### 1a. Before the repository (7 June – 5 July): 19 rows
+
+Before 6 July the work lived in other folders, and much of June's build was never committed. The decisions survive in the
+first sessions' logs. Where the log does not show what the AI had proposed, the row says "not recorded".
+
+| # | Date | His words | What the AI had | What was built | Source |
+|---|---|---|---|---|---|
+| E1 | 7 Jun | "we should not make everyone the victim … we should critique the system" (after Djamila Ribeiro's "Speaking Place") | Not recorded | Satire only on the system's side: a law of the piece to this day | Early §2 |
+| E2 | 7 Jun | "Why only prompt one era only? shouldnt we try and make this into stages?" | A prompt for one era | Stages through time: later the four eras | Early §2 |
+| E3 | 7 Jun | "We are here to criticise society as a whole." | Not recorded | The critique includes LGB organisations that use conversion practices on trans people | Early §2 |
+| E4 | 8 Jun | "I am not going to use Twine, because it doesnt work in VR , this is a game/VR experience" | ChatGPT's advice of 14 Feb: Twine first, Construct 3 second, "You do NOT need WebXR" | WebXR first, built on PlayCanvas | Early §0b, §2 |
+| E5 | 8 Jun | "theres no win95 prototype done, correct that" | The AI had recorded a Windows 95 prototype that did not exist | Corrected: nothing had been built yet | Early §2 |
+| E6 | 8 Jun | "we need to work on a script and actually create the strcute of narrative before implementing" | Not recorded | Script before build: the production scripts of 10–12 June | Early §2, §3 |
+| E7 | 8 Jun | "Don't like any of the storyboard images. Not in pixel art aesthetics, they dont have any narrative intention" | A first storyboard in pixel art | Each era's operating system is the narrative element | Early §2 |
+| E8 | 10 Jun | "soft lo-fi, not dark rooms" (as the script document records his notes) | Dark rooms | The Soft Lo-Fi rule: cozy rooms, never horror-dark | Early §3; `docs/SCRIPT_UPDATE_v0.5.md` §3 |
+| E9 | 12–13 Jun | "too fast, ESL audience" (as the build log records it) | Text that ran too fast to read | Slower typing and longer pauses: time to read | BUILD_LOG.md, 12 Jun |
+| E10 | June | "It should be on the keyboard at the table not on the screen" (summary) | The name keyboard on the screen | A 3D keyboard on the desk | Early §4 |
+| E11 | June | "why you feel the need to say 'Detransition is not failure'... the coercion being the harm is what it is relevant" (summary) | A help note: "Detransition is not failure" | "The harm here is coercion." | Early §4 |
+| E12 | 30 Jun | "the whole Era-4 is one screen... no dynamism... point-and-click has to create a logic, not just a slideshow" (summary) | 2026 as one screen; TransJesus as a button | 2026 rebuilt; TransJesus later the people's respite, not a button | Early §4 |
+| E13 | 30 Jun | "I dont really like the "No Category Live" … It needs like a influencer name" | The stream named "No Category Live" | An influencer-style name, from "the culture of Twitch" | Early §4 |
+| E14 | 1 Jul | "the witness side is not working fully and that the changing through time is somewhat limiting the narrative" | The June build: one person per era, watched from a witness side (Witness Mode was his own choice on 8 Jun) | Rooms for different people: by 3 July, three rooms (gay, lesbian, trans) | Early §4 |
+| E15 | 1 Jul | "The system needs to actually demand you because it represents the violence of Sogice" | A system you only watched | A system that gives you tasks | Early §4 |
+| E16 | 2 Jul | "even if you try to be the "enforcer" the queer side always win"; a new version "without deleting the previous one" | The witness panel, dissolved, left visitors without a grasp of SOGICE | Small games you cannot win; the old build kept | Early §4 |
+| E17 | 3 Jul | "we should ALWAYS be fully realizing the project. Both version will be presented, this is a research aspect for the article" | A 19 October target smaller than the full piece | The full piece, with a faster festival cut beside it (he reversed this in October: row 21) | Early §4 |
+| E18 | 3 Jul | "Thsi is not symbolic erasure of TransMasculine, but it is a choice to focus on the community thats suffers the most" | Not recorded | Three rooms; 2026 in the trans room, focused on a trans woman | Early §4 |
+| E19 | 5 Jul | "lets be bold we need emotion"; "You already had a morph from the previous version that was extremely good"; the disc "too impersonal" | A round space with a disc at its centre (ChatGPT images); a guide named Echo | The old morph kept; no disc; the guide called "L" | Early §4 |
+
+**Where a model shaped him** (from the chats before the build; read by the early-versions note on 18 Nov, not on this
+Mac, so not checked again here):
+- **14 Feb, ChatGPT.** It turned his idea of Christ "promoting" conversion into showing "how the system simulates
+  persuasion". He answered: "you are absolutely right, this is about stimulating the systems that reinforce
+  conversion." The first ethical reframing in the record came from a model. ChatGPT's "fake the intelligence" option
+  also became a law: no live AI in the piece.
+- **29 Mar, Claude (claude.ai).** It framed the choice (the archive as a place to browse, or a story that cites it) and
+  argued for the story. He chose the story. It also claimed "documented cases" with no source, and he asked for the
+  reference.
+- **Before 7 Jun, Grok.** It refused twice to make a satirical advert. When he asked for "a satirical script" instead,
+  it wrote one, and its invented names (EuroRepent) entered the piece.
+
+**Four rules older than the build:** the rhetoric of failure (his "every choice it gets more queer", 14 Feb; JUST
+CHANGE™, 24 May); satire only on the system's side (7 Jun); each era's operating system as the story (8–9 Jun); the
+update itself ("update yourself", 10 Jun, as the script document records his idea).
+
+### 1b. In the repository (3 July – 18 November): 31 rows
 
 | # | Date | His words | What the AI had | What was built | Source |
 |---|---|---|---|---|---|
 | 1 | 3 Jul | "don't overfixate on the end date, fixate on making this project good, detailed and actually an immersive storytelling experience" | The 19 Oct date treated as urgent; outreach pushed to start at once | Depth over deadline, as a standing rule | Memory `reinterp-feedback-pacing` |
-| 2 | 6 Jul | "it divided the space into 4 separate areas when it should be 3 rooms" | Four areas, with a rear spine as a fourth stop | Three rooms; the spine is something you see, never a stop | Comp. 3.1 |
+| 2 | 6 Jul | "it divided the space into 4 separate areas when it should be 3 rooms" | Four areas, with a rear spine as a fourth stop, three days after his ruling for three rooms (E18) | Three rooms; the spine is something you see, never a stop | Comp. 3.1 |
 | 3 | 10 Jul | "My suggestion is for you to make creative decisions and adjustments instead of waiting for me to approve the next steps." | Every step waited for his approval | The AI decides and logs each call for his checklist | Comp. §2.1 |
 | 4 | 25 Jul | "Lamby should be a ridiculous game, that helps understand that Update-Available is about the DIGITAL aspects of SOGICE" | A game about the witness side | A game whose genre updates each era; later the four era games | Comp. 3.2 |
 | 5 | 25 Jul | "I did the debugJump, but this shouldn't be the issue right? That would defeat the purpose of the debug." | The AI blamed his use of the debug jump for missing content | The fault was the AI's own; an automatic check now guards it | Comp. 3.3 |
@@ -51,18 +100,23 @@ words. All counts were taken on 20 Nov from git and the repo, at reinterp 7421a7
 | 30 | 16 Nov | "NO — why would we need to read the file? that is even more text to read" | Fable's proposal (the file comes to your hands), which the orchestrator recommended | Dropped | `FABLE_DECISIONS_2026-11-16.md` A1 |
 | 31 | 18 Nov | "the connection of both mom parts are just triggering for consufion of lesbians and Trans" | An ending where Vera's note to her mother is answered by Maya's to hers | Each person refuses the system's word for them: "broken", "dependency", "restore" | Memory `each-story-its-own-words`; `UIB_JOB_30_2026-11-17.md` Part C |
 
-**What the log shows** (row numbers in brackets):
-1. **More direct about harm, and less hedged** (14, 16, 23, 28). The AI's defaults leaned soft or neutral; he moved
+**What the log shows** (row numbers in brackets; E = before the repository):
+1. **More direct about harm, and less hedged** (E11, E12, 14, 16, 23, 28). The AI's defaults leaned soft or neutral; he moved
    them toward plain speech.
 2. **But bearable.** He also set limits: no death figures in the stream (25). The direction is honesty, not shock.
 3. **Bigger satire** (15, 23). The AI's versions were clever but too tame.
-4. **Take the visitor there** (2, 7, 8, 19, 24, 29). Space, the body and the headset are where he overruled most often.
+4. **Take the visitor there** (E4, E19, 2, 7, 8, 19, 24, 29). Space, the body and the headset are where he overruled most often.
 5. **Each story its own** (11, 15, 31). The AI tended to connect the three stories. He kept them apart.
 6. **Less text, fewer things** (11, 22, 30).
-7. **Correcting the process** (5, 10, 18, 21, 26, 27). The AI lost asks, kept a second version going and gave a wrong
+7. **Correcting the process** (E5, E6, 5, 10, 18, 21, 26, 27). The AI lost asks, kept a second version going and gave a wrong
    credit. He caught each one. Each time the answer was a lasting tool: a check, a list, an audit, a freeze or a rule.
 8. **Handing over the work, with a rule attached** (3, 9). Both times he gave the AI more authority. The rule written
    with it asked for more care (CLAUDE.md: no invented deadnames, no borrowed testimony).
+9. **The look of each era is the story** (E7, E8). The visual rules came from his objections, not from the AI's
+   first images.
+10. **He changes his own decisions too** (E14, E17 → 21, E18 → 2). He chose Witness Mode on 8 June and dropped it
+    on 1 July. He wanted two versions on 3 July and froze one in November. The direction comes from playing the
+    build, not from a plan fixed at the start.
 
 ## 2. The making in numbers: 30 July against 20 November
 
