@@ -108,4 +108,31 @@ assert.ok(ledger.records.includes('e3-jobs-done'), 'ledger.records still holds e
 const lists = ['records', 'provotypes', 'sends', 'guidance', 'tapes', 'belongings', 'lamby', 'checkins', 'media', 'caleb', 'era3Arrival', 'graceQueue', 'comments', 'e4Space', 'updates', 'tags', 'games', 'era3Jobs'];
 assert.equal(recordCount(), lists.reduce((n, k) => n + ledger[k].length, 0) + Number(ledger.guidePersonalisation.personalised), 'recordCount() still counts every list, the marks included');
 
-console.log(`Record eras (S405): the mothers file in 2016 under Moderation (${mothers.length}), 2016's job marks in no file, 1997 and 2003 unchanged by 2016; the 2003 readers unchanged; the marks kept for the map.`);
+// ── ⚑ S357eq (his 20 Nov: "fix Vera's activity page so the corrections show"): when her day holds more than the
+//    page's rows, her corrections of the testimony stay; the rest fill what is left, newest first, in order ──
+const yr = await esbuild.build({
+  stdin: { contents: "export { activityRows, isCorrection } from './src/desktop/apps/yourRecord.ts';", resolveDir: process.cwd(), loader: 'ts', sourcefile: 'activity-entry.ts' },
+  bundle: true, write: false, format: 'esm', platform: 'neutral', logLevel: 'silent'
+});
+const { activityRows, isCorrection } = await import('data:text/javascript;base64,' + Buffer.from(yr.outputFiles[0].text).toString('base64'));
+ledger.graceQueue.push({ cardId: 3, outcome: 'applied', witness: 'list: applied — renata (clip for the broadcast)' },
+  { cardId: 7, outcome: 'applied', witness: 'list: applied — renata (route for mentorship)' });
+ledger.era3Jobs.push({ id: 'take-down', witness: 'story: take-down requested' }, { id: 'kit', witness: 'campaign kit: left unapproved' });
+ledger.era3Arrival.push({ witness: 'record: viewed — profile and activity' });
+const day = entriesByEra().e3.slice().reverse();   // the page's own order: newest first
+const corrections = day.filter(isCorrection);
+assert.equal(corrections.length, 3, 'the scripted day holds three corrections');
+assert.ok(day.length > 12, `the scripted day overflows the page (${day.length} entries)`);
+for (const fit of [4, 8, 11, 12]) {
+  const rows = activityRows(day, fit);
+  assert.ok(rows.length <= fit - 1, `fit ${fit}: one row is left for "… and n more"`);
+  for (const c of corrections) assert.ok(rows.includes(c), `fit ${fit}: the correction "${c.witness}" is on the page`);
+  const at = rows.map((r) => day.indexOf(r));
+  assert.deepEqual(at, [...at].sort((a, b) => a - b), `fit ${fit}: the rows keep the page's order (newest first)`);
+  const others = rows.filter((r) => !isCorrection(r));
+  assert.deepEqual(others, day.filter((r) => !isCorrection(r)).slice(0, others.length), `fit ${fit}: the other rows are the newest of the rest`);
+}
+assert.deepEqual(activityRows(day, day.length), day, 'a day that fits is shown whole');
+assert.deepEqual(activityRows(day, 2).length, 1, 'more corrections than rows: only the rows there are');
+
+console.log(`Record eras (S405): the mothers file in 2016 under Moderation (${mothers.length}), 2016's job marks in no file, 1997 and 2003 unchanged by 2016; the 2003 readers unchanged; the marks kept for the map; her corrections stay on her activity page (S357eq).`);
