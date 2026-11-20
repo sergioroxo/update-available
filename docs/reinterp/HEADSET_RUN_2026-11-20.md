@@ -11,8 +11,10 @@ transcribed offline on the Mac Studio (mlx-whisper). The headset view was cast t
 - **Times are the transcript's.** The transcript runs 33 seconds early: the QuickTime timer in the frames shows the
   recording began at 21:24:33. So the picture for a remark is the frame named transcript time + 33 s
   (`python3 out/cast-2026-11-20/sheet.py <name> <time>` does this).
-- **The cast was lost at 22:40:39.** His last ten minutes (the end of 2026 and the whole Close) have his voice but no
-  pictures.
+- **The cast was lost at 22:40:39**, 64 seconds after the frame rate fell to 13 fps. His reading: the piece was breaking
+  inside the headset, and the cast went with it. That fits the numbers, though the frames cannot prove it. His last ten
+  minutes (the end of 2026 and the whole Close) have his voice but no pictures. They were read from the transcript
+  line by line (§9 from 26-19, §10).
 - **BROKEN** = it does not do what it is meant to. **CHANGE** = he said clearly what he wants. **HIS CALL** = a design
   question for him. **↺** = he said he had asked for this before. **♥** = he loved it: keep it.
 - Speech-to-text slips are corrected in [brackets]: "lumpy vision" is [LambyVision], "Dren Jesus" is [TransJesus].
@@ -34,6 +36,28 @@ transcribed offline on the Mac Studio (mlx-whisper). The headset view was cast t
    text should be much shorter.
 6. **Across the whole piece:** you cannot see what you are pointing at on the panels and web pages, presses go
    through panels, text is still serrated, and the view feels choppy.
+
+
+## 0b. His suggestions for the story (the narrative changes, in one place)
+
+Each is a **CHANGE** item below, in his words:
+- **1997:** introduce the TV through "Did you know" (97-8); Release Work gives examples, as the booklet did (97-21);
+  keep the pressure of the Family Form but leave time to read it (97-13).
+- **2003:** Lamby's first line, "now I am even more your friend" (03-3); the daily check-in first, the Today panel after
+  (03-5); a women's-group step as a bridge to 2016 (03-11, his call); Caleb's messages already there, earlier attempts
+  flagged by the system (03-15); Caleb from his own side, with more exchange after the account line (03-16); after
+  "Remind me later", Lamby offers what else to do (03-19).
+- **2016:** the Grace Platform as a tutorial that teaches Vera, which moves the visitor a little away from being the
+  perpetrator (16-6, 16-11); "This week" first (16-8); no jumping clock (16-12); the notes app typing while you read
+  (16-13); Kindredraft as a "memory from 2014", answered by her note "It wasn't dependency, I was in love with her"
+  (16-14); the campaign kit as the system's choice for her, with "conversion practices" in the network's quote marks
+  (16-15); the moderation seen happening (16-17).
+- **2026:** open on the Second Thoughts chat and let the AI take over slowly, asking before it opens things (26-1); L
+  as the helper, not "Read your friends" (26-2); Dad's course sent to Mum by email (26-4); Second Thoughts as part of L
+  (26-9); the AI's video built in front of you (26-13); the restore moment step by step, the picture greyed or censored
+  (26-15); the stream as the system reaching out to you (26-20); the takeover changes the space, and Junie invades the
+  system to protect Maya (26-21); a way out at the end (26-22).
+- **The Close:** the stars come down around you; say it directly, with much less text (C-2, C-3).
 
 ---
 
@@ -100,6 +124,8 @@ transcribed offline on the Mac Studio (mlx-whisper). The headset view was cast t
   don't force me to yet I wanted to read" (21:41:46). CHANGE: keep the pressure, but give time to read the form.
 - **97-14 CHANGE · Lamby's song should stop after the cascade** when you choose "Remind me later" (21:42:52).
 - **97-15 BROKEN · The "Update deferred" toast covers the form's Close/Hold buttons** (214342, not mentioned).
+- **97-21 CHANGE · Release Work's steps could give examples, as the booklet did:** "address the person linked to the
+  injury you can say you can even say you can put examples like it had on the book" (21:40:25, 214121).
 
 ## 4. 1997 → 2003
 
@@ -115,7 +141,8 @@ transcribed offline on the Mac Studio (mlx-whisper). The headset view was cast t
 ## 5. 2003
 
 - **03-1 ♥** the intro film ("This is so 2003 tech. So cool."), the background, the cascading effects, the song on the
-  upload page ("I love the song").
+  upload page ("I love the song"), Restorify opening the placement text ("I think we should keep this this is really
+  good", 21:47:47).
 - **03-2 CHANGE · Fade from the film into Lamby's dialog**, not a hard cut, since Lamby is in both (21:45:21). Also
   BROKEN: the film's last caption stays under the dialog after the cut (214554).
 - **03-3 CHANGE · Lamby's first line:** "now I am even more of your friend", to push the possessive side (21:45:21).
@@ -139,8 +166,9 @@ transcribed offline on the Mac Studio (mlx-whisper). The headset view was cast t
 - **03-15 CHANGE ↺ · Caleb's messages are already there** when the Messenger comes back. Show his latest attempt;
   mark the earlier ones as flagged, to show the system blocked them (21:54:12). He asked for this on 8 Nov.
 - **03-16 CHANGE · Caleb speaks from his own side.** "how does he know that it changes your settings?" (21:55:23).
-  After "Go on", wait for his reply, like a real chat (21:56:25). "It feels a little bit too rushed … But also it's an
-  experience. It doesn't have to be realistic."
+  After "Go on", wait for his reply, like a real chat (21:56:25). "Maybe we need a little more of interaction after he
+  says this about the account" (21:55:48). "It feels a little bit too rushed … But also it's an experience. It doesn't
+  have to be realistic."
 - **03-17 BROKEN · A pause before "I caught it in time"** that "didn't make much sense" (21:57:35; not in the frames).
 - **03-18 BROKEN · The NetVision film jumps up and down**, "like scan lines" (21:58:09, 215842; 55 fps).
 - **03-19 CHANGE · After "Remind me later", Lamby offers what else there is to do**, and gives time to play (22:00:13).
@@ -163,7 +191,9 @@ transcribed offline on the Mac Studio (mlx-whisper). The headset view was cast t
   head (22:05:58, 220544–220714). "This needs to be stable."
 - **16-5 CHANGE · The testimony video plays on its own**; it should play when you press (22:04:37).
 - **16-6 CHANGE · "Correct a testimony" as a lesson from Lambient**, step by step: "instead of just being us playing
-  the system is the Lambian teaching us how to correct the content" (22:05:16). Less text (22:04:30, 22:06:20); remove
+  the system is the Lambian teaching us how to correct the content" (22:05:16). His reason: it "removes us … just a tiny
+  bit … from the point of being the perpetrator and gives us a little bit more of the system trying to teach us how to
+  apply it" (22:05:36). Less text (22:04:30, 22:06:20); remove
   "As sent · kept in archive · administrators only" (22:06:28); "As Renata sent it, I don't like this" (22:04:44).
 - **16-7 CHANGE · The Heartwood disc should not be forced.** LambyVision came to the eyes and played by itself, too close
   to fit in view (22:08:09, 220844–220852): "I think we need to rethink how to introduce this."
@@ -179,14 +209,16 @@ transcribed offline on the Mac Studio (mlx-whisper). The headset view was cast t
   hate it" (22:17:44). Also two messages at the same minute (Orla, 18:41): "should be like one minute less".
 - **16-13 CHANGE · The notes app and Kindredraft collide.** The notes app opens and types by itself while Mam's
   message is unanswered, then Kindredraft opens (22:12:42–22:13:22): "it needs to be something that happens by itself
-  without colliding with other stuff". Kindredraft's text box and "Install" button confuse; the Install button can't be
+  without colliding with other stuff". His idea: "maybe while we're reading this, we see the notes app opening and we see
+  her typing the message" (22:14:36). Kindredraft's text box and "Install" button confuse; the Install button can't be
   pressed (22:13:22).
 - **16-14 CHANGE · Kindredraft as a memory, like Facebook's.** "do you want to see back a memory from 2014", then her
   2014 post, then the notes app showing her typing "It wasn't dependency, I was in love with her" (22:14:59–22:15:21):
   "like please be sure to do that I think that would be really good".
 - **16-15 CHANGE · The campaign kit:** clearer that "the system chose this for her"; put "conversion practices" in
   quote marks in the network's own words, "because they don't believe it's conversion practices"; cut the consent and
-  terms lines; keep "These stories show that people can choose a different path"; less text (22:15:21–22:17:28,
+  terms lines ("Maybe it's just this one, the last one": perhaps only "Original kept"); keep "These stories show that
+  people can choose a different path"; less text (22:15:21–22:17:28,
   221713–221800).
 - **16-16 CHANGE · A scrolling chat**, not one bubble replacing the last: "No, I wasn't reading because it didn't allow
   me to read" (22:17:56). The Malta link opens a blank page (22:18:01, 221838).
@@ -245,7 +277,8 @@ flow of this?". He gave a direction for the whole era (26-1); the items after it
   (22:33:56).
 - **26-15 CHANGE · The restore moment, step by step.** The restored picture shows too early (22:35:16). His sequence:
   she types "There's nothing to restore. I'm Maya."; the system refuses and deletes it for her; then it shows the
-  picture ("I'm so sorry, I know you've tried but this is not working"). The "Not sent" line stayed in the input for
+  picture ("I'm so sorry, I know you've tried but this is not working"). And the "You, restored" picture: "maybe
+  doesn't need to even have Maya there or just Maya … put a greyed out or like a censored information". The "Not sent" line stayed in the input for
   minutes (from 223544, still there at 223818), and the chat did not change for 70 s while he pressed (223544–223657); later a "Memory updated" note sat under the input
   and could not be read (223818).
 - **26-16 CHANGE · Too conversational, no instruction:** "I'll be right here. I'm always right here" doesn't say what to
@@ -254,25 +287,39 @@ flow of this?". He gave a direction for the whole era (26-1); the items after it
   needs to be designed, not accidental.
 - **26-18 BROKEN · The crash at the profile photo:** 13–16 fps for about 13 seconds (223922–223935), "it's all flashing",
   then the seat jumped twice and a debug list ("EVERYTHING ON TODAY'S LIST") appeared (22:38:39–22:39:24, 223952).
-- **26-19 BROKEN · The stream is seen from outside and to the side.** LambyVision floats in the void in front, the
+- **26-19 BROKEN · The stream is seen from outside and to the side.** *HIS CALL on where it goes:* "to the side" was
+  his answer on 10 Nov (a question card; the side was the recommended option), because he did not want to be made to
+  turn round. In the headset it leaves him outside: "we are outside of like the trans-Jesus thing, it's just to the side"
+  (22:42:22); "I don't understand why I'm going to the side" (22:41:29). His new direction: "if you want to show me
+  something like it opens the window" (22:42:22). LambyVision floats in the void in front, the
   billboard is seen from below (22:39:29–43, 224005): "if [TransJesus] is there why were you looking at the void?"
+- **26-19b ♥ The people in the stream:** "I like that we can see the people" (22:41:29).
 - **26-20 CHANGE · The stream's lines:** "someone has read your week", "Every door closed at once", "some people slow you
-  down" don't land; "one viewer" and the partner are too much information; no music (22:39:43–22:40:14).
+  down" don't land; "one viewer" and the partner are too much information; no music (22:39:43–22:40:14). His direction (no
+  picture): "this needs to be the system trying to reach out to you" (22:40:21); "if this is happening here it should
+  not happen beforehand" (22:40:39).
 - **26-21 CHANGE (no picture) · The takeover should change the space:** "if it took over, like the space should change
   color and size" (22:42:10). "Maybe we don't need to accept Junie entering or the link and maybe it's just she invades
-  the system to try and protect us" (22:42:22). Don't make him look behind him; Junie should be present (22:42:22).
+  the system to try and protect us" (22:42:22). ↺ Don't make him look behind him: "I told you that I don't want you to go back … not what is in my back". Junie needs
+  a presence: "we don't see her Juni … it's not a pop-up it's not nothing" (22:42:22). The chat in front of him "is
+  removing my way of looking".
 - **26-22 BROKEN (no picture) · The end of 2026:** the dance appears late; there is no way out; "session terminated,
   reason social contagion" works ("this is the only part that is working"); the TransJesus image appears in front;
-  LambyVision closes with sound but its screen keeps playing; heavy flashing; "we should not be flowing backwards we
-  should rotate so we can see the room … it doesn't need to morph" (22:43:30–22:45:04). ↺ "I thought this was better
+  LambyVision closes with sound but its screen keeps playing; heavy flashing; "Oh, this is all destroyed. Please, just
+  fix this" (22:41:21); "we should not be flowing backwards we
+  should rotate so we can see the room … it doesn't need to morph" (22:43:30–22:45:04): the move from 2026 into the
+  Close rotates to the room, with no morph. ↺ "I thought this was better
   already and fixed".
 
 ## 10. The Close (no pictures)
 
-- **C-1 CHANGE · "There's nothing to restore" moves by itself:** "Just leave it in the table"; the "Not sent" line is
+- **C-1 CHANGE · "There's nothing to restore" moves by itself:** "Just leave it in the table … you don't need to put
+  it in one side"; the "Not sent" line is
   "so unnecessary now" (22:45:11–20).
 - **C-2 CHANGE · The stars come down** from the ceiling and float around you, so you can read them (22:45:20–22:46:02).
-- **C-3 CHANGE ↺ · Much less text, said directly.** "Today the pressure to change falls twice as hard on trans people.
+- **C-3 CHANGE ↺ · Much less text, said directly.** *These are the Close's eight cards he approved on 12 Nov ("Yes keep
+  them!"), drafted in the style of his Meridian card; card 2 ("Meridian is invented, but the movement behind it is
+  not…") is in his own words, and "a recommendation for 2027" is card 5. How far to cut is HIS CALL.* His words: "Today the pressure to change falls twice as hard on trans people.
   This is why the piece ends with Maya. This is overly explaining. We just need to tell it directly" (22:46:24). "this
   is such a crazy amount of text" (22:47:30). "I thought we work this out" (22:47:35). He also flags "the part of 2027".
 - **C-4 BROKEN · Meridian:** "we didn't even interact with Meridian because it's completely broken" (22:46:36).
@@ -280,6 +327,8 @@ flow of this?". He gave a direction for the whole era (26-1); the items after it
 - **C-6 BROKEN · Pressing play jumps the message to the other side**; the stars are in front (22:47:35).
 - **C-7 BROKEN · The panels are too high and lopsided:** "it should be in front of me, on my eye level" (22:49:08).
 - **C-8 BROKEN · The pointer goes under the white web pages and the Lexicon** (see H1).
+- **C-10 BROKEN · Things from the room are still visible behind him in the Close:** "still seeing stuff behind me"
+  (22:45:20).
 - **C-9 Note:** the Restart works: "open start again then it goes out okay" (22:49:13).
 
 ## 11. What he loved (keep)
@@ -287,7 +336,8 @@ flow of this?". He gave a direction for the whole era (26-1); the items after it
 The new lettering and the Lexicon; the dust and the moon; the bigger screen; the new font; opening the disk; the FIT IN
 ad; the private message sound; Root Cause Digger's song; Release Work's sound and animation; the jump from 1997; the 2003
 intro film and its background; the cascading effects; the upload song; the 2016 → 2026 flight, with the space opening up
-and the room changing colour; "session terminated, reason social contagion".
+and the room changing colour; the people in the stream; Restorify opening the placement text;
+"session terminated, reason social contagion".
 
 ## 12. Frame rate (read from the debug display in the pictures)
 
