@@ -245,8 +245,8 @@ flow of this?". He gave a direction for the whole era (26-1); the items after it
   (22:33:56).
 - **26-15 CHANGE · The restore moment, step by step.** The restored picture shows too early (22:35:16). His sequence:
   she types "There's nothing to restore. I'm Maya."; the system refuses and deletes it for her; then it shows the
-  picture ("I'm so sorry, I know you've tried but this is not working"). The "Not sent" line stayed in the input for over
-  a minute, and the chat froze for 70 s while he pressed (223544–223657); later a "Memory updated" note sat under the input
+  picture ("I'm so sorry, I know you've tried but this is not working"). The "Not sent" line stayed in the input for
+  minutes (from 223544, still there at 223818), and the chat did not change for 70 s while he pressed (223544–223657); later a "Memory updated" note sat under the input
   and could not be read (223818).
 - **26-16 CHANGE · Too conversational, no instruction:** "I'll be right here. I'm always right here" doesn't say what to
   do (22:37:59).
@@ -304,7 +304,8 @@ little higher. Draw calls never reached the 75 limit.
 | 2016 desk | 65–75 | 23–38 | |
 | 2016 update and terms | 52–58 | 27–34 | |
 | 2016 → 2026 flight | 59–80 | **72** peak | |
-| 2026 room and chat | 65–75 | 19–52 | |
+| 2026, before the console | 64–80 | 19–37 | the cut to the bare wall: 52 draws (222458) |
+| **2026, from the mute to the end of the cast** | **52–58** for ~5 min | 23–33 | below the floor |
 | **2026, the console moment** | **32–33** | 26–27 | 223414 |
 | **2026, the profile photo** | **13–16 for ~13 s** | 24–29 | 223922–223935 |
 | The stream (void) | 73–82 | 9–12 | |
