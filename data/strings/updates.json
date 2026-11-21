@@ -65,14 +65,18 @@
   },
   "changelog": [
    "RESTORIFY 2003 — WHAT'S NEW",
+   "LambyOS 2003 · build 5.1.2 — replaces 4.0.7 (1997)",
    "+ fresh look, brighter rooms",
    "+ accountability web (always on)",
    "= your history: retained",
    "= Daniel's file: carried over, scanned",
+   "= contact requests: 3 · declined on your behalf",
    "= your goal: unchanged",
    "- nothing is ever removed",
-   "Root Cause — migrated"
+   "Root Cause — migrated",
+   "RESTORIFY IS NOW PART OF THIS COMPUTER."
   ],
+  "_docChangelogS408": "⚑ S408 / 97-20 (his 21 Nov answer: one installer moment — \"Yes\": keep the one read while rising out of 1997, carry 'replaces 4.0.7 … Restorify is now part of this computer' there, and 2003 starts straight at 'Welcome back, Daniel') — the 2003 boot crawl and its 'finishing installation' line are gone from the visit (os.ts: the return press → the machine's beep → the cartoon), so what they said is said here, once: the version it replaces, the three contact requests declined on his behalf (Caleb's, 03-15), and the last line. The crawl's other lines already had their twins here (profile → history retained, journey file → Daniel's file, accountability services → the accountability web); 'companion process starting' is Lamby's own arrival, which follows. 11 lines at 1.5 s: the install holds 20.5 s, the restart ends 24.5 s into the 28.3 s flight (src/room/cluster.ts e1-e2). It rises with him (src/room/risingInstaller.ts, 97-17). Was: the 8 lines without the second, the seventh and the last.",
   "restarting": "Restarting…",
   "_sourceGrounding": {
    "_proposed": "S47 2026-07-25 — grounding added per SOURCE_VERIFICATION_RESULTS; awaiting Sérgio",
@@ -99,7 +103,8 @@
   "remindLater": "Remind me later",
   "remindedStatus": "Restorify is being removed. It will ask again.",
   "_docRemindedStatus": "S156 / R3-60 (Sérgio: 'Update Later → the story app says continue; should say it is being removed'): u3's own deferral line — the shared one under `remindedStatus` at the root serves u2.",
-  "remindSeconds": 22,
+  "remindSeconds": 40,
+  "_docRemindS408": "⚑ S408 / 03-19 (his headset, 20 Nov 22:00: \"it didn't give me much time to play other stuff\") — 22 → 40 s of quiet, and the clock stands still while he plays or reads (os.ts deferBusy: the phone in the hand, Harbor, his file, the 1997 folder, a player, Lamby's line; at most 240 s). The deferral no longer reopens the Messenger: Lamby says what is still on the desk (lambyGuide.json remind).",
   "_docRemindS339": "⚑ S339 (his 8 Nov: 'remind me later, it doesn't work because there's no place to come back to') — the deferral now returns to the Messenger, where Caleb answers Daniel once (s2_caleb.json residue.answer); 22 s is enough to read it and sit with it, then the notice returns with its Remind spent.",
   "eulaTitle": "GracePlatform — Community Guidelines",
   "eula": [

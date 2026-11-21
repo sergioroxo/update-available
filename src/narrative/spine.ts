@@ -200,8 +200,14 @@ export function createSpine(os: DesktopOS, opts: { onClose: () => void }): Spine
           break;
         case 'e2_s1':
           if (residueFiled()) { step = 'e2_residue'; t = 0; break; }
-          // ⚑ S223 cloud / W1-B3 — the second summons also waits for a bare desktop (the gap is a floor, not a trigger)
-          if (sendResolved('s1') && t >= SEND_GAP && os.desktopIdleForProps()) offer('s2', 'e2_s2');
+          // ⚑ S408 / 03-12 (his headset, 20 Nov 21:53: "What is the adjoining room?"; his 21 Nov answer: "Cut it") — the second
+          //   summons, s2 ("Your pattern matches a severer classification. The counselling diagram is available for review in
+          //   the adjoining room." — icon "Referral", Go there / Not now; witness "pattern match: severer classification —
+          //   referral drafted" / "classification reviewed by subject — slip issued" / "referral declined — noted"; a visit
+          //   foregrounded Room 3's 'transfem' facet, tagged send:continuum and laid a referral slip on Daniel's desk) is cut
+          //   from data/sends.json, PLACEHOLDER to the end. Nothing else read it: the map's send beat is any send resolved,
+          //   the record files whatever sends were made, and the update never waited on it (S2R.7). 2003 has one summons.
+          //   (was: sendResolved('s1') && t >= SEND_GAP && os.desktopIdleForProps() → offer('s2', 'e2_s2'))
           break;
         case 'e2_s2':
           if (residueFiled()) { step = 'e2_residue'; t = 0; break; }

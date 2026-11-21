@@ -37,6 +37,7 @@ import { ledger } from '../../state/ledger';
 import { playLoop, playOnce, stopClip } from '../../audio/tapeAudio';
 import { readHold } from '../readHold';
 import T from '../../../data/dialog/s2_testimony.json';
+import mediaCopy from '../../../data/dialog/s2_media.json';
 import guidedCopy from '../../../data/strings/extras.json';
 import { drawWebView } from './web2003';
 
@@ -70,7 +71,8 @@ function blockAt(v: number, t: number): { bi: number; into: number } {
 const EXPORT_SECONDS = 4;
 /** ⚑ W1-D12 — the cross-fade between the cuts of the final playback */
 const FADE_SECONDS = 0.35;
-const BUFFER_SECONDS = 4.5;
+/** ⚑ S408 / 03-8 — broadband (300k), not dial-up: the stream opens in 2 s (was 4.5 s at 56k) */
+const BUFFER_SECONDS = 2.0;
 
 export class TestimonyApp {
   open = true;
@@ -152,9 +154,10 @@ export class TestimonyApp {
   private theme: HTMLAudioElement | null = null;
   private bed: HTMLAudioElement | null = null;
   private bedBase = 1;
-  /** s of the bed's ring-out still to run after the final playback has ended (17 s song − 13.3 s picture) */
+  /** s of the bed's ring-out still to run after the final playback has ended (⚑ S408 / 03-9: read off the element — the
+   *  32 s song against the 28 s picture — so a re-render can never put the two out of step again) */
   private bedTail = 0;
-  private static readonly BED_SECONDS = 17;
+  private static readonly BED_SECONDS = 32;
   private get bedWanted(): boolean {
     if (!this.open) return false;
     if (this.stage === 'cut') return this.previewT >= 0;
@@ -171,7 +174,9 @@ export class TestimonyApp {
   }
   private syncSongs(): void {
     if (this.themeWanted) {
-      if (!this.theme) { this.theme = playLoop('restorify_media_theme_2003.mp3'); if (this.theme) this.theme.volume = Math.min(1, this.theme.volume * 0.8); }
+      // ⚑ S408 / 03-7 (his headset, 20 Nov: "a bit too disco… maybe not for here"; his 21 Nov "Yes") — the brand's calm loop,
+      //   and lower; the dance-pop theme's file stays registered for a place he will choose
+      if (!this.theme) { this.theme = playLoop('restorify_media_calm_2003.mp3'); if (this.theme) this.theme.volume = Math.min(1, this.theme.volume * 0.6); }
       else if (this.theme.ended) this.theme = null;
     } else if (this.theme) { stopClip(this.theme); this.theme = null; }
     if (this.bedWanted) {
@@ -192,10 +197,12 @@ export class TestimonyApp {
     const want = this.open && this.stage === 'online' && this.web === 'teaser' && this.webT < TEASER.cutSeconds;
     if (!want) { for (const a of this.teaserSound ?? []) stopClip(a); this.teaserSound = null; return; }
     if (this.teaserSound) return;
-    const bed = playOnce('discover_the_new_you_infomercial_tape03.mp3'), room = playLoop('testimony_hall_tone_2003.mp3');
-    if (bed) bed.volume = Math.min(1, bed.volume * 0.55);
-    if (room) room.volume = Math.min(1, room.volume * 0.35);
-    this.teaserSound = [bed, room].filter((a): a is HTMLAudioElement => !!a);
+    // ⚑ S408 / 03-10 (his headset, 20 Nov: "do not use the New You… and also the noise of a wind… distracting with unable to
+    //   read the text") — the DVD's own quiet piano bed (tools/make_restorify_media_songs.py teaser), alone: no infomercial
+    //   song, no hall tone under it. It still stops dead on the cut.
+    const bed = playOnce('restorify_teaser_bed_2003.mp3');
+    if (bed) bed.volume = Math.min(1, bed.volume * 0.7);
+    this.teaserSound = [bed].filter((a): a is HTMLAudioElement => !!a);
   }
 
   update(dt: number): void {
@@ -229,7 +236,9 @@ export class TestimonyApp {
       if (this.web === 'buffer' && this.webT >= BUFFER_SECONDS) { this.web = 'play'; this.webT = 0; }
       else if (this.web === 'play' && this.webT >= versionDur(2)) {
         this.web = 'done'; this.webT = 0; this.dirty = true;
-        this.bedTail = Math.max(0, TestimonyApp.BED_SECONDS - versionDur(2));   // ⚑ S362 / H37: the song rings out past the picture
+        // ⚑ S362 / H37: the song rings out past the picture — ⚑ S408 / 03-9: what is left of it, from the element itself
+        const b = this.bed, left = b && Number.isFinite(b.duration) ? b.duration - b.currentTime : TestimonyApp.BED_SECONDS - versionDur(2);
+        this.bedTail = Math.max(0, left);
       }
     }
     if (this.stage === 'online' && this.web === 'teaser') {
@@ -645,7 +654,7 @@ export class TestimonyApp {
     ui.setFont(ctx, 12); ctx.fillStyle = ERA1.navy; ctx.fillText(O.storyTitle, px0 + 12, py0 + 36);
     // the picture: a still, or the player
     const vx = px0 + 12, vy = py0 + 56, vw = 176, vh = 132;
-    if (this.web === 'page' || this.web === 'done') drawFootage(ctx, 'daniel', 9, vx, vy, vw, vh, 0, true);
+    if (this.web === 'page' || this.web === 'done') drawStoryStill(ctx, vx, vy, vw, vh);   // ⚑ S408 / 03-8
     // ⚑ S208 / A9 (REVIEW_ROUND_5, ERA03-10) — the still is the play button too, as a 2003 page's was: a big ▶ on it,
     //   the whole picture pressable, so the beat no longer hangs on finding two 9 px links
     if (this.web === 'page') {
@@ -678,9 +687,10 @@ export class TestimonyApp {
       if (id) this.hits.push({ x: tx - 2, y: y - 2, w: Math.ceil(w) + 4, h: 14, id });
       y += 16;
     };
+    // ⚑ S408 / 03-8 (his headset, 20 Nov: "watching dial-up… no, we should watch it in the broadband because it's 2003";
+    //   "it's very fast, this ADSL") — the page streams on broadband: one link, and the stream opens at 300k
     const watchable = this.web === 'page';
-    link(O.watch56, watchable ? 'ts-watch' : null);
-    link(polish.broadbandDisabled, null);
+    link(O.watchBB, watchable ? 'ts-watch' : null);
     ui.setFont(ctx, 8); ctx.fillStyle = ERA1.grey; ctx.fillText(O.requires, tx, y); y += 18;
     // ⚑ S271 (his 31 Oct: "Applications available in this restore page… What is this information?") — the frame's
     //   own refusal ("unavailable in this restored page") read as the ministry's words. Now the page simply shows its
@@ -807,7 +817,9 @@ export class TestimonyApp {
     const t = this.webT;
     const cut = t >= TEASER.cutSeconds;
     // the picture: Caleb, live until the cut, then held on the frame where the word stopped
-    drawFootage(ctx, 'caleb', 2 + Math.min(t, TEASER.cutSeconds), vx, vy, vw, vh, cut ? 2 + TEASER.cutSeconds : this.tick, cut);
+    // ⚑ S408 / 03-10 (his headset, 215148: white speckle over the picture) — the DVD's teaser is the ministry's own clean copy:
+    //   no sensor noise over it (the raw take in the tape folder keeps its noise)
+    drawFootage(ctx, 'caleb', 2 + Math.min(t, TEASER.cutSeconds), vx, vy, vw, vh, cut ? 2 + TEASER.cutSeconds : this.tick, cut, true);
     if (cut) {
       // the tear: a band of black across the held frame and the card over it
       ui.px(ctx, vx, vy + Math.round(vh * 0.42), vw, Math.round(vh * 0.16), F.black);
@@ -842,6 +854,52 @@ export class TestimonyApp {
     ui.setFont(ctx, 8); ctx.fillStyle = ERA1.greyDark;
     ctx.fillText(TEASER.file, c.x + 8, ty + 28);
   }
+}
+
+// ── the story's still ────────────────────────────────────────────────────────
+/**
+ * ⚑ S408 / 03-8 (his headset, 20 Nov: "we kind of need to revamp this image… this one is a little bit bleh", 215022) — the
+ * still the ministry puts on his story was a raw frame of the shoot (the grey set, a slumped silhouette): the camera's
+ * picture, not the programme's. A 2003 ministry page shows its own packaging, so the still is the infomercial's own
+ * grammar (netvision.ts drawTestimonySet, the set he called "awesome"): BEFORE | AFTER, side by side — the grey set and
+ * the window, a man folded on a stool; the warm paper wall and the olive floor, the same man standing, open, the
+ * family-shaped shadows behind him. Faceless, as every body in the piece; invented; the palette's colours only. The
+ * programme's self-presentation (operable): the packaging of a person is the point, and PureMail takes it apart.
+ * Used by the page and by the file in his "1997" folder (folder1997.ts).
+ */
+export function drawStoryStill(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number): void {
+  ctx.save();
+  ctx.beginPath(); ctx.rect(x, y, w, h); ctx.clip();
+  const half = Math.floor(w / 2), floorY = y + Math.round(h * 0.82), sc = h / 132;
+  // BEFORE: the grey set, the band above, the window, the dark floor; folded over on the stool
+  ui.px(ctx, x, y, half, h, ERA1.grey);
+  ui.px(ctx, x, y, half, Math.round(h * 0.2), ERA1.greyDark);
+  ui.px(ctx, x, floorY, half, h - (floorY - y), ERA1.greyDark);
+  const ww = Math.round(half * 0.34), wh = Math.round(h * 0.3), wx = x + half - ww - Math.round(half * 0.1), wy = y + Math.round(h * 0.26);
+  ui.px(ctx, wx - 2, wy - 2, ww + 4, wh + 4, ERA1.greyDark);
+  ui.px(ctx, wx, wy, ww, wh, ERA1.silver);
+  ui.px(ctx, wx + Math.round(ww / 2) - 1, wy, 2, wh, ERA1.greyDark);
+  ui.px(ctx, wx, wy + Math.round(wh / 2) - 1, ww, 2, ERA1.greyDark);
+  const stoolX = x + Math.round(half * 0.38);
+  ui.px(ctx, stoolX - Math.round(9 * sc), floorY - Math.round(16 * sc), Math.round(20 * sc), Math.max(2, Math.round(3 * sc)), ERA1.black);
+  figure(ctx, stoolX, floorY + 2, { scale: 0.62 * sc, seated: true, lean: 7, headDrop: 8, turn: 0.7, handsFolded: true });
+  // AFTER: the paper wall, the beige band, the olive floor; standing, open, the family-shaped shadows behind him
+  const ax = x + half, aw = w - half;
+  ui.px(ctx, ax, y, aw, h, ERA1.paper);
+  ui.px(ctx, ax, y, aw, Math.round(h * 0.16), ERA1.beige);
+  ui.px(ctx, ax, floorY, aw, h - (floorY - y), ERA1.olive);
+  const acx = ax + Math.round(aw * 0.52);
+  figure(ctx, acx - Math.round(aw * 0.3), floorY + 1, { scale: 0.4 * sc, color: ERA1.silver, turn: 0.8, armSpread: 0.12 });
+  figure(ctx, acx + Math.round(aw * 0.3), floorY + 1, { scale: 0.32 * sc, color: ERA1.silver, turn: 0.8, armSpread: 0.1 });
+  figure(ctx, acx, floorY + 3, { scale: 0.7 * sc, armSpread: 0.3, armLift: 0.14, headDrop: -1 });
+  // the seam, and the ad's two words in its own colours, under the bands (not on a thumbnail too small to carry them)
+  ui.px(ctx, x + half - 1, y, 2, h, ERA1.white);
+  if (w < 140) { ctx.restore(); return; }
+  ui.setFont(ctx, 9);
+  const by = y + Math.round(h * 0.2) + 3;
+  ctx.fillStyle = ERA1.warnDark; ctx.fillText(mediaCopy.before, x + 5, by);
+  ctx.fillStyle = ERA1.ok; ctx.fillText(mediaCopy.after, ax + 5, by);
+  ctx.restore();
 }
 
 // ── the footage ──────────────────────────────────────────────────────────────
@@ -901,7 +959,7 @@ function figure(ctx: CanvasRenderingContext2D, cx: number, baseY: number, p: Pos
 const ease = (k: number): number => { const c = Math.max(0, Math.min(1, k)); return c * c * (3 - 2 * c); };
 
 /** the camcorder's raw picture of the shoot at time t, then the camera's own words */
-export function drawFootage(ctx: CanvasRenderingContext2D, clip: ClipId, t: number, x: number, y: number, w: number, h: number, tick: number, still = false): void {
+export function drawFootage(ctx: CanvasRenderingContext2D, clip: ClipId, t: number, x: number, y: number, w: number, h: number, tick: number, still = false, clean = false): void {
   ctx.save();
   ctx.beginPath(); ctx.rect(x, y, w, h); ctx.clip();
   if (clip === 'tone') {
@@ -914,7 +972,7 @@ export function drawFootage(ctx: CanvasRenderingContext2D, clip: ClipId, t: numb
     ctx.restore();
     return;
   }
-  if (clip === 'caleb') { drawWebcam(ctx, t, x, y, w, h, tick, still); ctx.restore(); return; }
+  if (clip === 'caleb') { drawWebcam(ctx, t, x, y, w, h, tick, still, clean); ctx.restore(); return; }
   const s = w / 400, S = (n: number): number => Math.round(n * s);
   // Daniel_A is the shoot (Caleb_B is his own webcam, above): the set's one hard light, off at "cut"; the studio's flat work lights after
   const hardOn = 1 - ease((t - 16.9) / 0.3);
@@ -1031,7 +1089,7 @@ function webcamPose(t: number): [number, number, number, number] {
   }
   const e = P[P.length - 1]; return [e[1], e[2], e[3], e[4]];
 }
-function drawWebcam(ctx: CanvasRenderingContext2D, t: number, x: number, y: number, w: number, h: number, tick: number, still: boolean): void {
+function drawWebcam(ctx: CanvasRenderingContext2D, t: number, x: number, y: number, w: number, h: number, tick: number, still: boolean, clean = false): void {
   const lw = Math.max(48, Math.round(w / 3)), lh = Math.max(27, Math.round(h / 3));
   if (!camBuf) camBuf = document.createElement('canvas');
   if (camBuf.width !== lw || camBuf.height !== lh) { camBuf.width = lw; camBuf.height = lh; }
@@ -1100,7 +1158,7 @@ function drawWebcam(ctx: CanvasRenderingContext2D, t: number, x: number, y: numb
   // a poor sensor: interlace, and noise that never settles
   for (let yy = 0; yy < lh; yy += 2) R(ERA1.black, 0, yy, lw, 1, 0.08);
   if (!still) {
-    for (let i = 0; i < Math.round(lw * lh / 70); i++) R(i % 3 ? F.osd : F.black, rnd(i) * lw, rnd(i + 999) * lh, 1, 1, 0.3);
+    if (!clean) for (let i = 0; i < Math.round(lw * lh / 70); i++) R(i % 3 ? F.osd : F.black, rnd(i) * lw, rnd(i + 999) * lh, 1, 1, 0.3);
     // the little light that says the camera is on — it is the only thing on the picture
     if (Math.floor(tick * 1.2) % 2 === 0) R(F.rec, 4, 4, 2, 2);
   }

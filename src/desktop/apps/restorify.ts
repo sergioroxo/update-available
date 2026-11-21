@@ -33,7 +33,16 @@ const TODAY_W = 336; const TODAY_X = 512 - TODAY_W - 10;
 
 export class RestorifyApp {
   open = true;
-  today = true;
+  /** ⚑ S408 / 03-5 (his headset, 20 Nov: "you're forced to do the daily check-in … and then you have the rest of the
+   *  information so we don't have repeated information there") — the programme opens ON the day's check-in while it is
+   *  owed; its Today comes after it (Continue), or after the Companion if he opens that from the answer */
+  today = ledger.checkins.some(ch => !ch.id.startsWith('e3'));
+  /** ⚑ S408 / 03-5 — the Companion closed: back into the programme. An answer still on the card is taken as read (the
+   *  Companion was opened from it), so what comes back is the one Today, never the answer again */
+  returnFromCompanion(): void {
+    if (this.lastChip && !this.evening) { this.showToday(); this.onCheckinAcknowledged?.(); return; }
+    this.open = true; this.dirty = true;
+  }
   private readonly todayPanel = new StartPanel('e2');
   showToday(): void { this.settings = false; this.lastChip = null; this.today = true; this.open = true; this.dirty = true; }
   offerPending = false;
@@ -159,8 +168,11 @@ export class RestorifyApp {
     this.hits.push({ ...c.closeBox, id: this.lastChip ? 'checkin-continue' : 'restorify-close' });
     ui.px(ctx, c.x, c.y, c.w, c.h, ERA1.beige);
     const L = c.x + 10;
-    ui.button(ctx, c.x + c.w - 76, c.y + 5, 66, 18, decisions.restorify.back);
-    this.hits.push({ x: c.x + c.w - 76, y: c.y + 5, w: 66, h: 18, id: 'restorify-today' });
+    // ⚑ S408 / 03-5 — no way round the day's check-in to the Today before it is answered (the check-in comes first)
+    if (ledger.checkins.some(ch => !ch.id.startsWith('e3'))) {
+      ui.button(ctx, c.x + c.w - 76, c.y + 5, 66, 18, decisions.restorify.back);
+      this.hits.push({ x: c.x + c.w - 76, y: c.y + 5, w: 66, h: 18, id: 'restorify-today' });
+    }
 
     // the purity streak — front and center; it counted while he was away
     ui.setFont(ctx, 18);

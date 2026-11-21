@@ -212,6 +212,8 @@ export class UpdateApp {
 
   /** Actual deferral state, including when the reference map has already ticked the update. */
   get installing(): boolean { return this.phase === 'install' || this.phase === 'restart'; }
+  /** ⚑ S408 / 97-17 — the install screen itself is up (its changelog typing), not yet the restart's black */
+  get installShowing(): boolean { return this.open && this.phase === 'install'; }
   /** ⚑ S382 — the install's glitch window (the bar's stutter, `draw` below): the room's motes jump with it (src/room/specks.ts) */
   get glitching(): boolean { if (this.phase !== 'install') return false; const k = this.t / this.installTotal; return k > 0.72 && k < 0.96; }
   get deferred(): boolean { return this.phase === 'reminded'; }

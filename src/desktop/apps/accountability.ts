@@ -69,6 +69,8 @@ const MAIL = calebPacing.mail;
 /** ⚑ S342 (his 9 Nov answer 1: "the accountability alert runs too fast… a Next button… if nobody presses, it moves on
  *  by itself after about 20 s. No visible countdown") — each step now waits for Next, or this many seconds */
 const AUTO_NEXT = (A as unknown as { autoNextSeconds: number }).autoNextSeconds;
+/** ⚑ S408 / 03-17 — the hurt silence before "I caught it in time": short, and shown as his (the ellipsis), not a load */
+const SAD_HOLD = A.sadHoldSeconds;
 /** ⚑ S345 (his 9 Nov answer 5) — the silent steps (the falling streak, the sad hold) move on by themselves */
 const SILENT_NEXT = (A as unknown as { silentNextSeconds: number }).silentNextSeconds;
 const STREAK_FALL = A.streakFallSeconds;   // s for the counter to run 412 → 0
@@ -330,7 +332,7 @@ export class AccountabilityApp {
     // ⚑ S342 — the player sets the pace: Next, or AUTO_NEXT of quiet (the authored HOLDs are the floor a press
     //   cannot undercut only for the falling streak, which finishes its fall before the step can go)
     //   ⚑ S345 — the silent steps have no Next: they go after SILENT_NEXT (the streak's fall fits inside it)
-    const hold = this.silentStep() ? Math.max(SILENT_NEXT, STREAK_FALL) : this.nextPressed ? 0 : AUTO_NEXT;
+    const hold = this.step === 'sad' ? SAD_HOLD : this.silentStep() ? Math.max(SILENT_NEXT, STREAK_FALL) : this.nextPressed ? 0 : AUTO_NEXT;
     if (this.stepT < hold) return;
     this.nextPressed = false;
     this.stepT = 0;
@@ -499,6 +501,13 @@ export class AccountabilityApp {
       // rendered unattributed and cold, exactly as the shipped build files it.
       lines = caleb.alert.systemLines as string[];
       color = ERA1.warnDark;
+    } else if (this.step === 'sad') {
+      // ⚑ S408 / 03-17 (his headset, 20 Nov 21:57: "there was like a loaded time there that didn't make much sense before
+      //   I caught it in time") — the hold was six seconds of nothing: no word, no button, read as the machine loading. It
+      //   is his silence now, and short: the ellipsis in his own place while he deflates, then the ⟨S⟩ line.
+      // his silence, as three dots big enough to be his and not a stray mark (the data's sadLine is the ellipsis it draws)
+      for (let i = 0; i < 3; i++) ui.px(ctx, x + 2 + i * 9, y + 8, 4, 4, ERA1.greyDark);
+      return;
     } else if (this.step === 'caught') {
       // ⟨S⟩ "I caught it in time." leads, in the assistant's own type; the
       // reassurance follows it, quieter — care as the thing that closes the trap.

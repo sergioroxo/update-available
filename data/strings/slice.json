@@ -82,9 +82,9 @@
     "status": "journey file migrated",
     "tagline": "one day at a time",
     "icons": [
-     "Restorify",
-     "Care Log"
-    ]
+     "Restorify"
+    ],
+    "_docS408": "⚑ S408 / 03-6 (his headset, 20 Nov 21:47: \"care log, what is the care log, it doesn't do anything\") — REMOVED. 'Care Log' was a placeholder label from this minimal shell (the `_doc` above: labels only, no mechanics) and opened nothing. What a care log would hold — every check-in, every answer, filed — is already on the desk as 'Your file (read only)', so a second door to the same record would say it twice, and 2003 already asks for more reading than he wants ('a little bit too fast'). The first column closes up one slot (os.ts). Was: icons [\"Restorify\", \"Care Log\"]."
    },
    "e3": {
     "clock": "2016",

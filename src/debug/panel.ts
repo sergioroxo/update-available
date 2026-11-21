@@ -261,7 +261,6 @@ const OS_BEATS: BeatRow[] = [
 
   { heading: 'Sends — desktop offer review' },
   { label: 'Offer send s1 (desktop)', id: 'send-s1' },
-  { label: 'Offer send s2 (desktop)', id: 'send-s2' },
   { label: 'Offer send s3 (desktop)', id: 'send-s3' },
   { label: 'Offer send s4 (desktop)', id: 'send-s4' }
 ];

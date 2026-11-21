@@ -36,6 +36,7 @@ import { StartMenuMap } from './apps/startMenuMap';
 import { mapState, beatDone } from '../witness/map';
 import { gameMenuBus as startMenuBus } from '../state/gameMenuBus';
 import { meetWord } from '../room/lexicon';
+import { WomensTrackApp } from './apps/womensTrack';
 import lexStrings from '../../data/strings/lexicon.json';
 import { ERA1, ERA1_CANVAS, RENDER_SCALE } from './theme/era1';
 import { xrCanvasScale } from '../engine/screenTexture';
@@ -162,12 +163,20 @@ const GUIDE_TIP_SECONDS = 7;
 // ⚑ S369 (UiB job 16, the reading rule) — "Loading, please wait…" under the program's name: 3.6 s (2 s + 0.4 s a word, and the
 //   window's own arrival; was 1.6)
 const PROGRAM_SPLASH_SECONDS = 3.6;
+/** ⚑ S408 / 03-19 — the longest the 2003 update's deferral stands still while he plays (then it returns regardless) */
+const DEFER_HOLD_MAX = 240;
 const MEDIA_PLAYER_TITLE = 'Media Player';
 const E2_LAMBY_BLACK = 0.9;
 // ⚑ S369 (UiB job 16 Part B, the flow audit: "RESTORIFY IS NOW PART OF THIS COMPUTER." left 2.3 s after it was typed; it needs 4.8) —
 //   the completed crawl holds the reading time of its last two lines (never under the old 2.2 s) before the installer line
 const E2_BOOT_HOLD = Math.max(2.2, readHold((lambyStrings.osBootLines as string[]).slice(-6)));   // the after-run: 8.2 s of 10 — the block is read whole
 const LAMBY_BOOT_HOLD = 4.4; // s — black (S156), then the "finishing installation…" line's hold (S369: 2.4 → the line's reading time + its black)
+/** ⚑ S408 / 03-2 — the film dissolves into Lamby's dialog: 8 × 8 blocks in a 4 × 4 ordered (Bayer) order, PowerPoint 2003's
+ *  own "Dissolve", over this many seconds in DISSOLVE_STEPS steps (so the screen re-uploads only on a step; no alpha, so no
+ *  colour that is not the palette's). On the monitor's content only — the view never fades, so it is the headset's too. */
+const FILM_DISSOLVE_SECONDS = 1.4;
+const FILM_DISSOLVE_STEPS = 14;
+const BAYER4 = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5];
 /** S2R.5: s of ordinary desktop between the video beat ending and the
  *  PureMail envelope. The collapse is triggered by the apparatus's own
  *  documented failure, never by the player — the delay is only pacing.
@@ -320,6 +329,10 @@ export class DesktopOS {
    * the system appearing as the song still plays."*
    */
   private e2SplashFade = 0;
+  /** ⚑ S408 / 03-2 (his headset, 20 Nov: "fade into this one instead of just being a hard cut… Lamby also appears in the
+   *  first one") — the film's last frame, held, and how far it has dissolved into Lamby's dialog (s left) */
+  private e2FilmLast: HTMLCanvasElement | null = null;
+  private e2FilmDissolve = 0;
   private e2BootChars = 0;
   private e2BootDoneAt = Infinity; // e2StageT at which the crawl completed (typed OR click-completed)
   private readonly e2BootTotal = (lambyStrings.osBootLines as string[])
@@ -333,6 +346,17 @@ export class DesktopOS {
    *  While true, the Messenger sits on the desktop with its unread mark — the
    *  door stays there whether or not Lamby's notice was dismissed. */
   private messagePending = false;
+  /** ⚑ S408 / 03-13 — the message has landed and Lamby is to say so (his one prompt; the toast only when his balloons are spent) */
+  private messageOfferDue = false;
+  /** ⚑ S408 / 03-19 — the 2003 update was put off: Lamby's line about what else is on the desk, and its Yes (or none) */
+  private remindOfferDue: string | null = null;
+  private remindOfferAct: string | undefined = undefined;
+  /** ⚑ S408 / 03-19 — seconds the deferral has stood still for him (capped: the update does come back) */
+  private deferHeldT = 0;
+  /** ⚑ S408 / 03-19 — set by the engine: a device (the phone) is in the hand */
+  heldExternal?: () => boolean;
+  /** ⚑ S408 / 03-19 — set by the engine: hand him the 2003 phone (CLEAR), as the press on it does */
+  onClearTake?: () => void;
   /** Lamby's notice ABOUT that message (one conduction beat, two lines, both
    *  answers work). Never open during a felt scene: it is armed only from the
    *  check-in card's own Continue press, on the ordinary desktop. */
@@ -592,7 +616,8 @@ export class DesktopOS {
     if (this.restorify) this.restorify.open = false;   // one window at a time: the pet stands alone on the desk
     // ⚑ S286 (headset B: "the companion appears out of the blue… then it disappeared") — it came out of Restorify, so
     //   closing it goes back into Restorify: a window you opened from somewhere returns you there
-    this.companion.onClose = () => { if (this.restorify && this.desktopEra === 'e2' && !this.caleb?.open) this.restorify.open = true; this.dirty = true; };
+    // ⚑ S408 / 03-5 — and if he opened it from the check-in's answer, what he comes back to is the day's Today
+    this.companion.onClose = () => { if (this.restorify && this.desktopEra === 'e2' && !this.caleb?.open) this.restorify.returnFromCompanion(); this.dirty = true; };
     this.companion.open = true; this.dirty = true;
   }
   private yourFilePage: 'record' | 'conduct' = 'record';
@@ -612,6 +637,8 @@ export class DesktopOS {
   web: Web1997App | null = null;
   /** ⚑ S191 — 2003's forum: recommended after the first check-in; opened from its desktop icon */
   forum: Web2003App | null = null;
+  /** ⚑ S408 / 03-11 — the women's track, one page: what the women's-group task opens in 2003 */
+  womensTrack: WomensTrackApp | null = null;
   private forumRecommended = false;
   private lambyWaitShown = false;
   /** ⚑ S194 — seconds since the last press on the desktop (the helpers wait for quiet) */
@@ -656,6 +683,8 @@ export class DesktopOS {
     if (act === 'open:personalise') { this.openRestorify(); this.restorify?.showPersonalise(); return; }
     if (act === 'open:rootcause') { this.openRootCause(); return; }
     if (act === 'open:harbor') { this.recommendForum(true); this.openForum(); this.forum?.showThread(); return; }   // S345
+    if (act === 'open:messenger') { this.messageOfferDue = false; this.fileLambyRecord('begun', 'message-notice', lambyStrings.witness.messageOpened); this.openMessenger(); return; }   // S408 / 03-13
+    if (act === 'take:clear') { this.onClearTake?.(); return; }   // S408 / 03-19
     if (act === 'open:form') { this.openProvotype(originIntakeProvotypeData as unknown as Provotype); return; }
     // ⚑ S362 / H33 — the other answer of Lamby's "Release Work or the Family Form": the racket exercise, the way the room's racket opens it
     if (act === 'open:releasework') { this.openProvotype(pillowProvotypeData as unknown as Provotype); return; }
@@ -714,6 +743,8 @@ export class DesktopOS {
       tvOffer: this.tvOffer?.() ?? undefined,   // S390
       tvCall: this.tvCall?.() ?? undefined,   // S392: the TV's call (the moment is taking the visitor there)
       ...this.fileOffer(),   // S401: Lamby's one pointer per era at the person's file
+      messageDue: this.messageOfferDue && this.messagePending && !this.caleb ? lambyGuideCopy.message.text : undefined,   // S408 / 03-13
+      remindDue: this.remindOfferDue && this.updateApp?.deferred ? this.remindOfferDue : undefined, remindAct: this.remindOfferAct,   // S408 / 03-19
       idleScale: this.guideIdleScale(), reducedMotion: reducedMotion(), startTarget: 'start-menu' };
     this.lambyGuide.tick(dt, input);
     // ⚑ S283 (headset B: "I pressed show me, and it didn't show me because the NetPilot window is closed, so it needs to
@@ -1077,7 +1108,7 @@ export class DesktopOS {
 
   private desktopIdle(): boolean {
     return this.e1DesktopIdle()
-      && !this.dossierOpen && !this.yourFileOpen && !this.folder1997?.open && !this.yesOpen && !this.forum?.open && !this.testimony?.open
+      && !this.dossierOpen && !this.yourFileOpen && !this.folder1997?.open && !this.yesOpen && !this.forum?.open && !this.testimony?.open && !this.womensTrack?.open
       && !this.restorify?.open && !this.caleb && !this.accountability
       && !this.netvision && !this.netvisionOfferOpen && !this.messageNoticeOpen
       && !this.updateApp && !this.sendOffer?.open;
@@ -1157,7 +1188,23 @@ export class DesktopOS {
     //   'Remind me later' defers the update once and opens nothing in the room. The beat's code stays (one flag)
     //   so it can return; its lines in data/ are gone.
     // ⚑ S339 — u3's deferral has somewhere to be: the Messenger, where Caleb answers what Daniel just said
-    if (key === 'u3') this.updateApp.onRemindLaterUsed = () => { this.caleb?.afterword(); this.dirty = true; };
+    // ⚑ S408 / 03-19 (his headset, 20 Nov 22:00: "I should be able to press Lamby after this and it should tell me other stuff
+    //   that I can do… it didn't give me much time to play") — the deferral used to bring the Messenger back with nothing new
+    //   in it (S342: Caleb's answer already stands). Now the conversation is put down (its icon opens it again, whole) and
+    //   Lamby, the programme's guide, says what is still on the desk; the update's clock stands still while he plays.
+    if (key === 'u3') this.updateApp.onRemindLaterUsed = () => {
+      if (this.caleb) this.caleb.open = false;
+      const R = lambyGuideCopy.remind as { lead: string; items: Record<string, string>; none: string };
+      const left = (['clear', 'forum', 'yourfile'] as const).filter((id) => !beatDone(({ clear: 'clearPlayed', forum: 'forumRules', yourfile: 'yourFileSeen' } as const)[id], this));
+      const line = left.length ? `${R.lead} ${left.map((id) => R.items[id]).join('; ')}.` : R.none;
+      // Lamby says it — or, when his balloons for the era are spent (the cap), the corner line does, so it is never lost
+      if (this.lambyGuide.offersLeft('e2') > 0) {
+        this.remindOfferDue = line;
+        this.remindOfferAct = left.includes('clear') && this.onClearTake ? 'take:clear' : undefined;
+      } else this.afterGuide('remind-toast', () => { this.toast = { text: line, t: 12 }; this.dirty = true; });
+      this.deferHeldT = 0;
+      this.dirty = true;
+    };
     const GATHERING = false;
     const pass = key === 'u2' ? 1 : key === 'u3' ? 2 : 0;
     if (GATHERING && pass !== 0 && this.belongings) {
@@ -1405,7 +1452,8 @@ export class DesktopOS {
       this.restorify = new RestorifyApp();
       // ⚑ S205 — the first check-in brings the testimony request; Caleb's message waits for the story to be out
       this.restorify.onCheckinFiled = () => { this.offerTestimony(); this.recommendForum(true); };
-      this.restorify.onCheckinAcknowledged = () => this.maybeAnnounceMessage();
+      // ⚑ S408 / 03-5 — the Today he comes back to says what the old pause card and the 'while you wait' line said
+      this.restorify.onCheckinAcknowledged = () => { this.lambyWaitShown = true; this.maybeAnnounceMessage(); };
       this.restorify.onOpenCompanion = () => this.openCompanion();
       this.restorify.storyPending = () => this.testimonyOffered && !ledger.records.includes('testimony-online');   // S358 / H03
       this.restorify.onOpenStory = () => this.openTestimony();
@@ -1543,8 +1591,11 @@ export class DesktopOS {
       // ⚑ S339 (his 8 Nov / T21: "This today in Restorify appears very late now") — it comes as soon as the first
       //   check-in has been answered and its card put down (2 s of quiet, was 12: the player was usually already
       //   inside Your Story by then, and the card waited for that whole window to close)
-      due = this.e2Stage === 'active' && this.testimonyOffered && this.idleSeconds > 2 && this.desktopIdle()
-        && this.toast?.act !== 'message-open';
+      // ⚑ S408 / 03-5 (his headset, 20 Nov: two "Today" windows, "very similar", the second over the Companion) — 2003 has
+      //   ONE Today: Restorify's own, after the day's check-in (and after the Companion, if he opens it from the answer).
+      //   This card said the same things again, so 2003 no longer has it; its one line of its own (the desktop is yours to
+      //   explore, his T21) is on Restorify's Today now (startPanel.json e2).
+      due = false;
     }
     if (!due || !this.guideReady('pause')) return;
     this.pauseShown.add(era);
@@ -1668,6 +1719,15 @@ export class DesktopOS {
     this.programSplash = { title, t: 0 };
     this.dirty = true;
   }
+  private deferBusy(dt: number): boolean {
+    if (!this.updateApp?.deferred || this.desktopEra !== 'e2' || this.deferHeldT >= DEFER_HOLD_MAX) return false;
+    const busy = !!this.heldExternal?.() || !!this.forum?.open || this.yourFileOpen || !!this.folder1997?.open || !!this.mediaPlayer?.open
+      || (this.lambyGuide.active && this.lambyGuide.view.rung === 'remind');
+    if (busy) this.deferHeldT += dt;
+    return busy;
+  }
+  /** ⚑ S408 — the program named `title` is still loading (its window waits behind the box) */
+  private loadingWindow(title: string): boolean { return this.programSplash?.title === title; }
   private drawProgramSplash(W: number, H: number): void {
     const sp = this.programSplash;
     if (!sp) return;
@@ -1732,7 +1792,9 @@ export class DesktopOS {
    *  menu, the screensaver or an update. */
   private restorifyLoop: HTMLAudioElement | null = null;
   private syncRestorifyLoop(): void {
-    const want = this.phase === 'desktop' && this.desktopEra === 'e2' && !!this.restorify?.open && !this.caleb?.open
+    // ⚑ S408 / 03-5 (his: "if I am touching the companion from the daily realignment, the music should continue") — the
+    //   Companion is the programme's too: its loop plays on while the pet stands on the desk in Restorify's place
+    const want = this.phase === 'desktop' && this.desktopEra === 'e2' && (!!this.restorify?.open || this.companion.open) && !this.caleb?.open
       && !this.mediaPlayer?.open && !this.netvision?.open && !this.accountability && !this.pauseOpen && !this.saver
       && !this.updateApp && !this.testimony?.playbackActive && !this.releaseWorkUp
       // ⚑ S362 / H37 — Restorify Media (the story window) has its own theme (testimony.ts); the programme's menu loop yields to it
@@ -1812,7 +1874,10 @@ export class DesktopOS {
     // ⚑ W1-D17 (walkthrough 1: "the pop-up doesn't work with Caleb's message") — the line was text only: nothing
     //   answered a press on it, and it was gone in eight seconds. It is the door now, for as long as it is up
     //   (and the Messenger's unread mark stays on the desktop after it) — still one line, no card (S150).
-    this.toast = { text: lambyStrings.messageToast, t: 14, act: 'message-open' };
+    // ⚑ S408 / 03-13 (his headset, 20 Nov: the toast and Lamby's balloon both pointed at the message) — Lamby says it, once;
+    //   the corner line stays only for a visit whose balloons are already spent, so the door is never lost
+    if (this.lambyGuide.offersLeft('e2') > 0) this.messageOfferDue = true;
+    else this.toast = { text: lambyStrings.messageToast, t: 14, act: 'message-open' };
     this.lambyPoseT = 0;
     this.dirty = true;
   }
@@ -2207,7 +2272,18 @@ export class DesktopOS {
     this.dirty = true;
     this.sendOfferVersion++;
     this.onSendResolve?.(id, outcome);
+    // ⚑ S408 / 03-11 (his 21 Nov answer: "Yes, or even a manuel, brochure something") — the women's-group task's "Go there"
+    //   opens its one page here, on the monitor (it used to file and change nothing)
+    if (outcome === 'visited' && id === 's1' && this.desktopEra === 'e2') this.openWomensTrack();
     this.maybeLandMessage();
+  }
+  private openWomensTrack(): void {
+    if (this.womensTrack?.open) return;
+    const wt = new WomensTrackApp();
+    wt.onClose = () => { this.womensTrack = null; this.dirty = true; this.wayBack('e2'); };
+    this.womensTrack = wt;
+    meetWord('dependency', 'e2-womens-track');   // the Lexicon: where the word reached him
+    this.dirty = true;
   }
 
   private drawSendOffer(W: number, H: number): void {
@@ -2219,7 +2295,8 @@ export class DesktopOS {
     if (!this.sendOffer || this.sendOffer.open) return;
     const def = (sendsData as unknown as { sends: { id: string; offer: { icon: string } }[] }).sends
       .find(s => s.id === this.sendOffer?.id);
-    if (def) this.drawIconInto(ctx, hits, this.desktopEra === 'e1' ? 10 : E2_COL1, 188, def.offer.icon, 'icon-send');
+    // ⚑ S408 / 03-6 — 2003's first column closes up where Care Log was (one slot higher)
+    if (def) this.drawIconInto(ctx, hits, this.desktopEra === 'e1' ? 10 : E2_COL1, this.desktopEra === 'e2' ? 140 : 188, def.offer.icon, 'icon-send');
   }
 
   /**
@@ -2572,7 +2649,9 @@ export class DesktopOS {
     // both in the room, and a canvas that happens to be dark must not stop a
     // ritual the player is watching somewhere else. (It also makes the review
     // jumps honest: `?era=3` + the update4 button now actually runs.)
-    if (this.updateApp) this.updateApp.update(dt);
+    // ⚑ S408 / 03-19 — while the 2003 update waits, its clock stands still as long as he is playing or reading (the phone in
+    //   the hand, Harbor, his file, the "1997" folder, a player, Lamby's line), up to DEFER_HOLD_MAX: then it comes back
+    if (this.updateApp) this.updateApp.update(this.deferBusy(dt) ? 0 : dt);
     // the era's shell keeps its own slow clock (the standby light, quantised —
     // see space.ts). It runs whether or not the device has been touched.
     // S105: its `version` is read below, the way era3Devices reads it for the visor.
@@ -2580,7 +2659,8 @@ export class DesktopOS {
     if (this.e4) this.e4.update(dt);
     if (this.phase === 'desktop' && this.netvision) this.netvision.update(dt);
     // S2R.3–S2R.6: the person's window and the apparatus's answer to it
-    if (this.phase === 'desktop' && this.caleb) this.caleb.update(dt);
+    // ⚑ S408 / 03-14 — the conversation's clock starts when the Messenger has loaded, not under its loading box
+    if (this.phase === 'desktop' && this.caleb && !this.loadingWindow(calebStrings.window.title)) this.caleb.update(dt);
     if (this.phase === 'desktop' && this.accountability) this.accountability.update(dt);
     // ⚑ S339 (his answer 14 / T13) — Caleb no longer knocks during the video or the network's failure: no corner toast,
     //   no "1 new message". The order is the video → the network tried → the 404 → PureMail → THEN the Messenger.
@@ -2602,8 +2682,17 @@ export class DesktopOS {
       const a = this.e2Jingle;
       const left = (Number.isFinite(a.duration) ? a.duration : 30.77) - a.currentTime;
       a.volume = JINGLE_VOLUME * Math.max(0, Math.min(1, left / JINGLE_FADE_SECONDS));
-      const key = this.jingleKey();
+      // ⚑ S408 / 03-2 — the words are the film's: once the film has handed over, the song plays on without them
+      //   (and changes nothing on the screen, so it costs no redraw)
+      const key = this.e2Stage === 'lambyCartoon' ? this.jingleKey() : '';
       if (key !== this.jingleLyricKey) { this.jingleLyricKey = key; this.dirty = true; }
+    }
+    // ⚑ S408 / 03-2 — the dissolve redraws only when a step turns
+    if (this.e2FilmDissolve > 0) {
+      const before = this.filmDissolveStep();
+      this.e2FilmDissolve = Math.max(0, this.e2FilmDissolve - dt);
+      if (this.filmDissolveStep() !== before) this.dirty = true;
+      if (this.e2FilmDissolve <= 0) this.e2FilmLast = null;
     }
     // ⚑ Phase 7 — a new line rises in full above the bar for a moment (see the taskbar's tooltip)
     if ((this.guide?.activeText ?? null) !== guideTextBefore) { this.guideTipAt = this.t; this.guideTipPinned = false; }
@@ -2630,7 +2719,11 @@ export class DesktopOS {
       // ⚑ S166: the machine boots in SILENCE — post → the crawl; the jingle is the
       //   software's now and plays over Lamby's cartoon (`lambyCartoon`, below).
       //   The CD-ROM splash (S116) is retired from play; `e2Splash` reviews it.
-      if (this.e2Stage === 'post' && this.e2StageT >= E2_POST_SECONDS) this.startE2Boot();
+      // ⚑ S408 / 97-20 (his 21 Nov answer: ONE installer moment, the one read while rising out of 1997; "Yes") — 2003 starts
+      //   at "Welcome back, Daniel": after the return press and the machine's own beep, the programme's film. The crawl and
+      //   the second "finishing installation" are gone from the visit (their words are the rising installer's, updates.json
+      //   u2); `e2Crawl` still reviews the crawl.
+      if (this.e2Stage === 'post' && this.e2StageT >= E2_POST_SECONDS) this.startE2Cartoon();
       if (this.e2Stage === 'lambyBoot' && e2Before < E2_LAMBY_BLACK && this.e2StageT >= E2_LAMBY_BLACK) this.dirty = true;
       if (this.e2Stage === 'splash') {
         // the surface only re-uploads when something on it has actually moved
@@ -2668,6 +2761,8 @@ export class DesktopOS {
       if (this.e2Stage === 'lambyCartoon') {
         if (e2CartoonVersion(this.e2StageT) !== e2CartoonVersion(e2Before)) this.dirty = true;
         if (this.e2StageT >= E2_CARTOON.handoff) {
+          // ⚑ S408 / 03-2 — the film's last frame is kept (its lyric band with it) and dissolves into the dialog
+          this.holdFilmFrame();
           // ⚑ and here he is, for the first time in the piece
           this.e2Stage = 'lambyIntro';
           playOnce('chime_2003.mp3');   // S141: the machine has a sound card now, and it is pleased about it — Lamby arrives on it
@@ -2851,6 +2946,7 @@ export class DesktopOS {
     if (this.packet?.open) return this.packet;
     if (this.web?.open) return this.web;
     if (this.testimony?.open) return this.testimony;
+    if (this.womensTrack?.open) return this.womensTrack;   // S408 / 03-11
     if (this.forum?.open) return this.forum;
     if (this.restorify?.open && (this.restorify.contains(x, y) || !hit?.id.startsWith('icon-'))) return this.restorify;
     if (hit) return this;
@@ -2918,7 +3014,10 @@ export class DesktopOS {
       case 'r_profile': this.drawReinterpProfile(W, H); break;       // O3
       case 'r_recap': this.drawReinterpRecap(W, H); break;           // O3 close
     }
-    if (this.phase === 'desktop' && this.desktopEra === 'e2' && this.e2Jingle) this.drawJingleLyrics(W, H);
+    // ⚑ S408 / 03-2 (his headset, 20 Nov: "The purest joy you've ever seen" stayed under Lamby's dialog, 214554) — the
+    //   lyric band belongs to the film; it goes with the film (dissolving with its last frame) and the song plays on bare
+    if (this.phase === 'desktop' && this.desktopEra === 'e2' && this.e2Jingle && this.e2Stage === 'lambyCartoon') this.drawJingleLyrics(W, H);
+    if (this.phase === 'desktop' && this.e2FilmLast && this.e2FilmDissolve > 0) this.drawFilmDissolve(W, H);
     // ⚑ S219 / W1-B10 (walkthrough 1: "those bars" sat against the windows' close boxes) — the build's dev marker
     //   is gone from the player's screen; kept for review under ?debug=1 only
     if (this.reinterp && runtimeQuery().get('debug') === '1') this.drawReinterpMarker(W);
@@ -2929,6 +3028,36 @@ export class DesktopOS {
       if (st) drawGlow(this.ctx, st, 'path', ERA1.tooltip, ERA1.silver);
     }
     if (this.xrScale && this.xrHover) xrOutline(this.ctx, this.xrHover, this.hits);   // S406 / H2: never across Lamby's balloon
+  }
+
+  /** ⚑ S408 / 03-2 — keep the film's last drawn frame (the screen as it stands, its lyric band included) to dissolve away */
+  private holdFilmFrame(): void {
+    if (reducedMotion()) return;   // reduced motion: the cut, as before
+    const c = document.createElement('canvas');
+    c.width = this.canvas.width; c.height = this.canvas.height;
+    c.getContext('2d')?.drawImage(this.canvas, 0, 0);
+    this.e2FilmLast = c;
+    this.e2FilmDissolve = FILM_DISSOLVE_SECONDS;
+  }
+  private filmDissolveStep(): number {
+    return Math.min(FILM_DISSOLVE_STEPS, Math.floor((1 - this.e2FilmDissolve / FILM_DISSOLVE_SECONDS) * FILM_DISSOLVE_STEPS));
+  }
+  /** the film's frame over the dialog, its 8 × 8 blocks going in Bayer order: a block stays while its rank is above the step */
+  private drawFilmDissolve(W: number, H: number): void {
+    const snap = this.e2FilmLast;
+    if (!snap) return;
+    const k = this.filmDissolveStep() / FILM_DISSOLVE_STEPS;
+    const { ctx } = this;
+    ctx.save();
+    ctx.beginPath();
+    const B = 8;
+    for (let y = 0; y < H; y += B) for (let x = 0; x < W; x += B) {
+      const rank = (BAYER4[((y / B) % 4) * 4 + ((x / B) % 4)] + 0.5) / 16;
+      if (rank > k) ctx.rect(x, y, B, B);
+    }
+    ctx.clip();
+    ctx.drawImage(snap, 0, 0, W, H);
+    ctx.restore();
   }
 
   /** the line being sung (index) and how many of its words are lit — '' when none is up */
@@ -3311,7 +3440,7 @@ export class DesktopOS {
     // never announced, never rewarded. It is there for the player who looks.
     if (this.reinterp && this.dossierUnlocked && (this.desktopEra === 'e2' ? this.e2IconsShown() : this.desktopIdle())) {
       // ⚑ Phase 7 — on its column's 48 px grid in 2003 (it sat 12 px under it)
-      this.drawIcon(this.desktopEra === 'e1' ? 10 : E2_COL1, this.desktopEra === 'e1' ? 296 : 284, strings.dossier.icon, true, 'icon-found-file');
+      this.drawIcon(this.desktopEra === 'e1' ? 10 : E2_COL1, this.desktopEra === 'e1' ? 296 : 236, strings.dossier.icon, true, 'icon-found-file');   // S408: 284 → 236 (03-6)
     }
     // ⚑ Phase 7 (his: the Route sheet "is not lined" and "appears on top of other stuff") — the summons'
     //   icon is a desktop object: drawn here with the others, UNDER every window, on the first column's grid
@@ -3320,7 +3449,7 @@ export class DesktopOS {
     // (finding B8): the door stays visible whether or not Lamby's notice was
     // taken, so nothing depends on having said yes to him.
     if (this.desktopEra === 'e2' && (this.messagePending || (this.caleb && !this.caleb.open))) {
-      this.drawIcon(E2_COL1, 236, lambyStrings.messengerIcon, true, 'icon-messenger', true);
+      this.drawIcon(E2_COL1, 188, lambyStrings.messengerIcon, true, 'icon-messenger', true);   // S408: 236 → 188 (03-6)
     }
     // ⚑ S229 / W1-A6 — "what you can do here": a desktop object, so UNDER every window (and drawn only while the
     //   desktop is calm, which is when its close box is published; hits go first so nothing behind can take it)
@@ -3353,7 +3482,10 @@ export class DesktopOS {
       this.drawYesViewer(W, H);
       this.irc?.covered();
     }
-    if (this.restorify?.open && !this.startMapSilent) this.restorify.draw(ctx);
+    // ⚑ S408 / 03-4, 03-14 (his headset, 20 Nov: "the loading bar doesn't make sense to already have the Restorify there
+    //   written"; "if it's loading it shouldn't appear the rest of it", 215438) — a 2003 program's window is not drawn while
+    //   its loading box is up: the box comes first, on the desktop, and the window after it
+    if (this.restorify?.open && !this.startMapSilent && !this.loadingWindow(lambyStrings.restorifyTitle)) this.restorify.draw(ctx);
     // the summons is a DESKTOP object, so it belongs under the windows. It was
     // drawn after them, and a real playthrough caught it: the s1 "Route sheet"
     // icon sat on top of the Caleb transcript, inside the felt window, next to
@@ -3363,11 +3495,12 @@ export class DesktopOS {
     this.drawSendOffer(W, H);
     // ⚑ S191 — 2003's forum: over the desktop's objects and Restorify, under the felt window and the intrusions
     if (this.forum?.open) { this.forum.storyReady = ledger.records.includes('testimony-cut'); this.forum.draw(ctx); }   // S342: Post posts his story
+    if (this.womensTrack?.open) { this.womensTrack.draw(ctx); this.hits.push(...this.womensTrack.hits); }   // S408 / 03-11
     if (this.testimony?.open) this.testimony.draw(ctx);   // S205
     // S2R.3: the person's window FIRST (felt), then every intrusion on it
     // (operable) drawn over it. Lamby lives only in the second of these two
     // calls — he is never drawn inside the chat's frame, in any beat.
-    if (this.caleb?.open) {
+    if (this.caleb?.open && !this.loadingWindow(calebStrings.window.title)) {
       this.caleb.coverFromY = this.accountability?.bandTop ?? null;   // S369 / F07
       this.caleb.coverTopY = this.mediaPlayer?.open ? this.mediaPlayer.bottomY : null;   // S369: his song's player
       this.caleb.draw(ctx);
@@ -4624,7 +4757,6 @@ export class DesktopOS {
       case 'e4BallAfter': this.e4BallJump('after'); break;
       case 'closeUpdate': this.setPhase('desktop'); this.armUpdate('close'); break;
       case 'send-s1': this.setPhase('desktop'); this.offerSend('s1'); break;
-      case 'send-s2': this.setPhase('desktop'); this.offerSend('s2'); break;
       case 'send-s3': this.setPhase('desktop'); this.offerSend('s3'); break;
       case 'send-s4': this.setPhase('desktop'); this.offerSend('s4'); break;
     }
@@ -4703,6 +4835,7 @@ export class DesktopOS {
     //   the browser windows repaint only when what is under the pointer changes
     if (this.phase === 'desktop' && this.web?.open) { if (this.web.handleMove(x, y)) this.dirty = true; return; }
     if (this.phase === 'desktop' && this.testimony?.open) { this.testimony.handleMove(x, y); if (this.testimony.dirty) this.dirty = true; return; }
+    if (this.phase === 'desktop' && this.womensTrack?.open) { this.womensTrack.handleMove(x, y); if (this.womensTrack.dirty) { this.womensTrack.dirty = false; this.dirty = true; } return; }   // S408
     if (this.phase === 'desktop' && this.forum?.open) { if (this.forum.handleMove(x, y)) this.dirty = true; return; }
     if (this.phase === 'desktop' && this.lambyRigFile?.open) { this.lambyRigFile.handleMove(x, y); return; }
     if (this.phase === 'desktop' && this.folder1997?.open) { this.folder1997.handleMove(x, y); if (this.folder1997.dirty) { this.folder1997.dirty = false; this.dirty = true; } return; }
@@ -4926,6 +5059,7 @@ export class DesktopOS {
     //   BEFORE Restorify and the desktop's own icons, which sit under their left columns
     if (this.phase === 'desktop' && this.web?.open) { this.web.handleClick(x, y); this.dirty = true; return; }
     if (this.phase === 'desktop' && this.testimony?.open) { this.testimony.handleClick(x, y); this.dirty = true; return; }
+    if (this.phase === 'desktop' && this.womensTrack?.open) { this.womensTrack.handleClick(x, y); this.dirty = true; return; }   // S408 / 03-11
     if (this.phase === 'desktop' && this.forum?.open) { this.forum.storyReady = ledger.records.includes('testimony-cut'); this.forum.handleClick(x, y); this.dirty = true; if (!this.forum.open) this.wayBack('e2'); return; }   // S207: closed → the way back
     // ⚑ S339 — Restorify takes the presses on its own window; one beside it reaches the desktop's icons
     if (this.phase === 'desktop' && this.restorify?.open && (this.restorify.contains(x, y) || !hit?.id.startsWith('icon-'))) { this.restorify.handleClick(x, y); return; }
@@ -5059,6 +5193,7 @@ export class DesktopOS {
     this.updateApp = null; this.pauseOpen = null; this.wotdOpen = null; this.shutRefused = false; this.saver = null;
     this.toast = null; this.programSplash = null; this.desktopReturnAt = -1; this.residueDark = false;
     this.messagePending = false; this.messageNoticeOpen = false; this.pureMailAt = Infinity;
+    this.messageOfferDue = false; this.remindOfferDue = null; this.remindOfferAct = undefined; this.deferHeldT = 0; this.womensTrack = null;   // S408
     this.startPanels.e1.close(); this.startPanels.e2.close();
     this.retireEra1Windows(); this.dirty = true;
   }

@@ -25,6 +25,12 @@ system's (OPERABLE register: system media may charm; the satire is theirs):
       story is 13.3 s (7 blocks × 1.9 s), so the climax is the fourth bar (9–12 s), the resolution lands at 12 s
       and rings out under the end of the picture and the page after it.
 
+⚑ S408 (UiB job 32 Part C, his headset run of 20 Nov): the bed is 32 s now, the picture having grown to 28 s (03-9; its
+section below says how), and two more: restorify_media_calm_2003, the calm loop that plays where the theme did (03-7; the
+theme's file is kept, unused, for a place he will choose), and restorify_teaser_bed_2003, Caleb's teaser's quiet piano in
+place of the infomercial song and the hall's tone (03-10). `python3 tools/make_restorify_media_songs.py bed teaser calm`
+renders only those.
+
 ⚑ tools/make_tones.sh's law holds: no found sound, no sample, no imitation of any real piece — every partial is
 written out here. Deterministic (seeded): the same bytes every run. Voices are imported from the era change's own
 (make_era_change_audio.py), as make_close_song.py does.
@@ -307,27 +313,36 @@ def theme():
 
 
 # ════════════════════════════════════════ 2 · THE TESTIMONY BED ════════════════════════════════════════
+# ⚑ S408 / 03-9 (his headset, 20 Nov 21:50: "the music is shorter than the actual video") — the bed was shaped to a
+#   13.3 s cut (7 blocks × 1.9 s). S369's reading rule gave each block its reading time, so the story now runs 28.0 s
+#   (BEFORE 2.4 · the first sentence 6.0 · THE PROGRAM 2.8 · the second 5.6 · AFTER 2.4 · the third 6.0 · CALL NOW 2.8)
+#   and the music stopped 11 s before the picture, under AFTER. The bed is now the progression twice and its resolution:
+#   C · Am · F · G, the piano alone, quiet, under BEFORE and the first sentence; C · Am · F · G again with the strings
+#   and the voice climbing, the swell peaking under "I'm not who I was"; the resolution landing as CALL NOW comes up
+#   (24 s), ringing out under it and the page after. 32 s in all. Same voices, same key, same tempo, same intent.
 
 BPM2 = 80.0
 BEAT2 = 60.0 / BPM2
 BAR2 = 4 * BEAT2          # 3.0 s
-SONG2 = 17.0              # the whole bed, tail included
+SONG2 = 32.0              # the whole bed, tail included
+PICTURE2 = 28.0           # the story's length (testimony.ts versionDur(2)); the resolution lands before it ends
 
-# C · Am · F · G · C — (cello root, the strings' voicing, the piano's tones)
-CH2 = [
+C2, AM2, F2, G2 = (
     (36, [55, 60, 64, 67, 72], [60, 64, 67, 72, 67, 64, 67, 64]),     # C
     (33, [57, 60, 64, 69, 72], [57, 60, 64, 69, 64, 60, 64, 60]),     # Am
     (29, [57, 60, 65, 69, 72], [57, 60, 65, 69, 65, 60, 65, 60]),     # F
     (31, [55, 59, 62, 67, 74], [55, 59, 62, 67, 62, 59, 62, 59]),     # G
-    (36, [55, 60, 64, 67, 76], [60, 64, 67, 72, 76, 72, 67, 64]),     # C (resolved, higher)
-]
-# the voice's tune: (bar, beat, MIDI, beats) — it climbs to the top and rests on the C
+)
+CRES2 = (36, [55, 60, 64, 67, 76], [60, 64, 67, 72, 76, 72, 67, 64])  # C (resolved, higher)
+CH2 = [C2, AM2, F2, G2, C2, AM2, F2, G2, CRES2]
+LAST2 = len(CH2) - 1      # the resolution's bar (24 s)
+# the voice's tune, second time through: (bar, beat, MIDI, beats) — it climbs to the top and rests on the C
 TUNE2 = [
-    (0, 2, 76, 2),
-    (1, 0, 76, 2), (1, 2, 74, 1), (1, 3, 72, 1),
-    (2, 0, 77, 2), (2, 2, 81, 2),
-    (3, 0, 83, 2), (3, 2, 81, 1), (3, 3, 79, 1),
-    (4, 0, 84, 5),
+    (4, 2, 76, 2),
+    (5, 0, 76, 2), (5, 2, 74, 1), (5, 3, 72, 1),
+    (6, 0, 77, 2), (6, 2, 81, 2),
+    (7, 0, 83, 2), (7, 2, 81, 1), (7, 3, 79, 1),
+    (8, 0, 84, 5),
 ]
 
 
@@ -346,35 +361,39 @@ def testimony():
     n = int(SONG2 * SR)
     bus = np.zeros((2, n))
     tt_all = np.arange(n) / SR
+    peak = LAST2 * BAR2   # 24 s: the resolution
 
-    # the swell: a quiet floor, then the strings rise bar by bar to the fourth bar, hold at the resolution, ease off
-    swell = 0.12 + 0.88 * smooth((tt_all - 2.5) / 9.5) * (1 - smooth((tt_all - 14.0) / 3.0))
+    # the swell: a quiet floor through the first statement, rising bar by bar through the second, holding at the
+    #   resolution, easing off as the picture ends
+    swell = 0.12 + 0.88 * smooth((tt_all - 11.0) / (peak - 11.0)) * (1 - smooth((tt_all - (PICTURE2 - 1.0)) / 4.0))
     swell = swell * smooth(tt_all / 1.0)
 
-    # ── the piano: an 8th-note arpeggio, each bar its chord; a little firmer as the swell climbs ──
+    # ── the piano: an 8th-note arpeggio, each bar its chord; softer the first time through, firmer as the swell climbs ──
     for b, (_, _, tones) in enumerate(CH2):
         for e, note in enumerate(tones):
-            vel = (0.060 + 0.030 * min(1, b / 3)) * (0.9 if e % 2 else 1.0)
+            vel = (0.048 + 0.042 * min(1, max(0, b - 3) / 4)) * (0.9 if e % 2 else 1.0)
             place(bus, piano(hz(note), vel), b * BAR2 + e * BEAT2 / 2, -0.15 + 0.3 * (e / 8))
-    place(bus, piano(hz(48), 0.07, 4.5), 4 * BAR2, 0.0)       # the resolution: the low C once more, long
+    place(bus, piano(hz(48), 0.07, 4.5), LAST2 * BAR2, 0.0)       # the resolution: the low C once more, long
 
-    # ── the strings: detuned saws through a low-pass that opens with the swell ──
+    # ── the strings: detuned saws through a low-pass that opens with the swell; in from the third bar ──
     pad = np.zeros(n)
     for b, (_, voicing, _) in enumerate(CH2):
+        if b < 2:
+            continue
         a0, a1 = b * BAR2 - 0.9, min(SONG2, (b + 1) * BAR2 + 1.4)
-        if b == 4:
+        if b == LAST2:
             a1 = SONG2
         i0, i1 = max(0, int(a0 * SR)), int(a1 * SR)
         m = i1 - i0
         tt = np.arange(m) / SR
-        rel = 3.2 if b == 4 else 1.6
+        rel = 3.2 if b == LAST2 else 1.6
         env = smooth(tt / 1.3) * (1 - smooth((tt - (m / SR - rel)) / rel))
         for note in voicing:
             for det in (-0.07, 0.0, 0.07):
                 f = np.full(m, hz(note) * 2 ** (det / 12))
                 pad[i0:i1] += env * saw(f, m, rng) * 0.015
     pad = pad * swell
-    open_k = smooth((tt_all - 7.0) / 4.0)
+    open_k = smooth((tt_all - 17.0) / 6.0)
     strings = lp(pad, 1500) * (1 - open_k) + lp(pad, 3300) * open_k
     bus[0] += strings * 0.95
     bus[1] += strings
@@ -385,12 +404,12 @@ def testimony():
         if b < 1:
             continue
         a0, a1 = b * BAR2 - 0.25, min(SONG2, (b + 1) * BAR2 + 0.6)
-        if b == 4:
+        if b == LAST2:
             a1 = SONG2
         i0, i1 = int(a0 * SR), int(a1 * SR)
         m = i1 - i0
         tt = np.arange(m) / SR
-        rel = 2.6 if b == 4 else 0.8
+        rel = 2.6 if b == LAST2 else 0.8
         env = smooth(tt / 0.6) * (1 - smooth((tt - (m / SR - rel)) / rel))
         f = np.full(m, hz(root + 12) * (1 + 0.0035 * np.sin(TAU * 4.8 * tt)))
         cello[i0:i1] += env * (np.sin(TAU * np.cumsum(f) / SR) + 0.3 * saw(f, m, rng)) * 0.05
@@ -398,9 +417,9 @@ def testimony():
     bus[0] += cello
     bus[1] += cello
 
-    # ── the voice: a warm flute-like line (sine + a little breath), entering in the first bar's second half ──
-    t0 = 2 * BEAT2
-    t1 = 4 * BAR2 + 5 * BEAT2
+    # ── the voice: a warm flute-like line (sine + a little breath), entering in the second statement ──
+    t0 = TUNE2[0][0] * BAR2 + TUNE2[0][1] * BEAT2
+    t1 = LAST2 * BAR2 + 5 * BEAT2
     i0, i1 = int(t0 * SR), int(t1 * SR)
     m = i1 - i0
     tt = np.arange(m) / SR
@@ -420,14 +439,14 @@ def testimony():
     ph = TAU * np.cumsum(f) / SR
     breath = lp(rng.standard_normal(m), 3500) * 0.05
     voice = (np.sin(ph) + 0.22 * np.sin(2 * ph) + 0.06 * np.sin(3 * ph) + breath) * gs
-    voice *= 0.075 * (0.55 + 0.45 * np.minimum(1, (tt + t0) / 11.0))
+    voice *= 0.075 * (0.55 + 0.45 * np.minimum(1, tt / 11.0))
     vox = np.zeros(n)
     vox[i0:i1] = voice
     bus[0] += vox * 0.9
     bus[1] += np.roll(vox, int(0.009 * SR))
 
     # ── a last sparkle on the resolution: one soft bell at the top ──
-    place(bus, bell(hz(96), 0.020, 3.0), 4 * BAR2 + 0.25, 0.25)
+    place(bus, bell(hz(96), 0.020, 3.0), LAST2 * BAR2 + 0.25, 0.25)
 
     bus = hall(bus, 3.6, 0.38, seed=1998)
     # a gentle fade-out over the last 2.5 s: a one-shot that has finished, never a clip cut off
@@ -435,6 +454,125 @@ def testimony():
     return bus
 
 
+# ════════════════════════════════════════ 3 · CALEB'S TEASER ════════════════════════════════════════
+# ⚑ S408 / 03-10 (his headset, 20 Nov 21:51: "do not use the New You… and also the noise of a wind… it was just
+#   distracting with unable to read the text… redo that audio from Caleb's testimony") — the teaser had the infomercial's
+#   song under it and the hall's tone (the 'wind'). Now: the DVD's own quiet bed, a felt piano alone in F, 72 BPM,
+#   F · Dm · B♭ · C, a little reverb, nothing under it. It sits beneath the two subtitles and asks for no attention;
+#   testimony.ts stops it dead on the cut (on "Daniel—"), so the cut is still heard. 13 s, one shot.
+
+BPM3 = 72.0
+BEAT3 = 60.0 / BPM3
+BAR3 = 4 * BEAT3          # 3.33 s
+SONG3 = 13.0
+CH3 = [
+    [53, 57, 60, 65, 69, 65, 60, 57],     # F
+    [50, 53, 57, 62, 65, 62, 57, 53],     # Dm
+    [46, 50, 53, 58, 62, 58, 53, 50],     # B♭
+    [48, 52, 55, 60, 64, 60, 55, 52],     # C
+]
+
+
+def teaser():
+    n = int(SONG3 * SR)
+    bus = np.zeros((2, n))
+    tt_all = np.arange(n) / SR
+    for b, tones in enumerate(CH3):
+        for e, note in enumerate(tones):
+            vel = 0.05 * (0.85 if e % 2 else 1.0) * (1.0 if e else 1.15)
+            place(bus, piano(hz(note), vel, 2.6), b * BAR3 + e * BEAT3 / 2, -0.2 + 0.4 * (e / 8))
+        place(bus, piano(hz(tones[0] - 12), 0.04, 3.2), b * BAR3, 0.0)   # the bass note of the bar, held
+    bus = hall(bus, 2.4, 0.24, seed=2003)
+    bus *= smooth(tt_all / 0.3) * (1 - smooth((tt_all - (SONG3 - 2.0)) / 2.0))
+    return bus
+
+
+# ════════════════════════════════════════ 4 · RESTORIFY MEDIA, CALM ════════════════════════════════════════
+# ⚑ S408 / 03-7 (his headset, 20 Nov 21:49: "it's a bit too disco to be from this style… the song is really good, maybe
+#   not for here because it's a little bit too hyped up"; his 21 Nov "Yes" to a quieter track, the theme's file kept for a
+#   place he will choose) — what plays while he works in Restorify Media's window (the story's topics, the release, the
+#   tapes, the editor, the saved file). The brand's music on hold: a soft electric piano comping on the off-beats, a warm
+#   pad, a round bass, a brushed shaker, and the brand's bell motif once, quieter, every eight bars — G major, 88 BPM,
+#   G · Em · C · D · G · Em · Am · D, 8 bars (21.8 s), a seamless loop. No kick, no clap, no sidechain, no supersaw.
+
+BPM4 = 88.0
+BEAT4 = 60.0 / BPM4
+BAR4 = 4 * BEAT4          # 2.727 s
+BARS4 = 8
+L4 = BARS4 * BAR4
+CH4 = {
+    'G':  (43, [59, 62, 66, 71]),
+    'Em': (40, [59, 62, 67, 71]),
+    'C':  (36, [59, 64, 67, 71]),
+    'D':  (38, [57, 62, 66, 69]),
+    'Am': (45, [57, 60, 64, 67]),
+}
+PROG4 = ['G', 'Em', 'C', 'D', 'G', 'Em', 'Am', 'D']
+
+
+def epiano(freq, vel, dur=1.6):
+    """a soft electric piano: a sine with a bell-ish second partial that dies fast, and a slow tremolo"""
+    n = int(dur * SR)
+    t = np.arange(n) / SR
+    env = np.minimum(1, t / 0.004) * np.exp(-t / 0.7)
+    trem = 1 + 0.08 * np.sin(TAU * 4.6 * t)
+    tone = np.sin(TAU * freq * t) + 0.22 * np.sin(TAU * 4.0 * freq * t) * np.exp(-t / 0.09) + 0.1 * np.sin(TAU * 2 * freq * t)
+    return vel * env * tone * trem
+
+
+def calm():
+    rng = np.random.default_rng(2008)
+    total = OFF + L4 + TAIL
+    n = int(total * SR)
+    bus = np.zeros((2, n))
+    for b, name in enumerate(PROG4):
+        root, voicing = CH4[name]
+        t0 = OFF + b * BAR4
+        # the piano's comping: the chord on beat 1, again on the "and" of 2, a soft echo on 4
+        for at, v in ((0.0, 0.034), (1.5, 0.026), (3.0, 0.018)):
+            for k, note in enumerate(voicing):
+                place(bus, epiano(hz(note), v * (1.0 if k else 0.9)), t0 + at * BEAT4 + k * 0.006, -0.25 + 0.5 * k / 3)
+        # the bass: the root on 1, the fifth on 3
+        for at, note in ((0.0, root), (2.0, root + 7)):
+            m = int(1.3 * SR)
+            tt = np.arange(m) / SR
+            place(bus, 0.07 * np.sin(TAU * hz(note) * tt) * np.minimum(1, tt / 0.01) * np.exp(-tt / 0.55), t0 + at * BEAT4, 0.0)
+        # the pad: the voicing, two sines a hair apart, swelling in and out over the bar
+        m = int((BAR4 + 0.6) * SR)
+        tt = np.arange(m) / SR
+        env = smooth(tt / 0.8) * (1 - smooth((tt - (BAR4 - 0.4)) / 1.0))
+        padseg = np.zeros(m)
+        for note in voicing:
+            for det in (-0.04, 0.04):
+                padseg += np.sin(TAU * hz(note) * 2 ** (det / 12) * tt)
+        place(bus, lp(padseg * env * 0.006, 1800), t0, 0.0)
+        # the shaker: 8ths, very soft, the off-beats a little louder
+        for e in range(8):
+            m = int(0.09 * SR)
+            tt = np.arange(m) / SR
+            place(bus, hp(rng.standard_normal(m), 6000) * np.exp(-tt / 0.025) * (0.010 if e % 2 else 0.006),
+                  t0 + e * BEAT4 / 2, 0.2)
+    # the brand's ding, once, at the top of the loop — softer than the theme's
+    for bar, beat, note in ((0, 0, 86), (0, 1.5, 90)):
+        place(bus, bell(hz(note), 0.012, 2.0), OFF + bar * BAR4 + beat * BEAT4, 0.25)
+    bus = hall(bus, 2.0, 0.22, seed=2008)
+    # the seam (as the theme's): the tail and the pre-roll folded so the loop never clicks
+    o, nl = int(OFF * SR), int(L4 * SR)
+    out = bus[:, o:o + nl].copy()
+    tail = bus[:, o + nl:]
+    out[:, :tail.shape[1]] += tail
+    out[:, nl - o:] += bus[:, :o]
+    return out
+
+
 if __name__ == '__main__':
-    write('restorify_media_theme_2003', theme(), 0.8)
-    write('restorify_testimony_bed_2003', testimony(), 0.8)
+    # ⚑ S408 — name what to render (`theme bed teaser calm`); with no names, all four. Deterministic either way.
+    only = set(sys.argv[1:])
+    if not only or 'theme' in only:
+        write('restorify_media_theme_2003', theme(), 0.8)
+    if not only or 'bed' in only:
+        write('restorify_testimony_bed_2003', testimony(), 0.8)
+    if not only or 'teaser' in only:
+        write('restorify_teaser_bed_2003', teaser(), 0.8)
+    if not only or 'calm' in only:
+        write('restorify_media_calm_2003', calm(), 0.8)

@@ -90,6 +90,10 @@ const REGISTRY: Record<string, string> = {
   // ⚑ S362 / H37 — Restorify Media's two songs (tools/make_restorify_media_songs.py): the brand's opening theme, and the bed under Daniel's story
   'restorify_media_theme_2003.mp3': `${AUDIO_BASE}restorify_media_theme_2003.mp3`,
   'restorify_testimony_bed_2003.mp3': `${AUDIO_BASE}restorify_testimony_bed_2003.mp3`,
+  // ⚑ S408 (UiB job 32 C) — 03-7 Restorify Media's calm loop (the theme is kept for a place he will choose) and 03-10 Caleb's
+  //   teaser bed (no infomercial song, no hall tone); both tools/make_restorify_media_songs.py
+  'restorify_media_calm_2003.mp3': `${AUDIO_BASE}restorify_media_calm_2003.mp3`,
+  'restorify_teaser_bed_2003.mp3': `${AUDIO_BASE}restorify_teaser_bed_2003.mp3`,
   'startup_1997.mp3': `${AUDIO_BASE}startup_1997.mp3`,   // S156 · the 1997 OS's own chime (ours)
   // Tape B — SWAPPABLE CANDIDATE (Sérgio is producing alternate versions of
   // the broadcast jingle). Swap by generating a new degraded/wrapped file

@@ -18,6 +18,7 @@
  "osBootFooter": "Your file was kept while you were away.",
  "osBootTrack": "chase_the_clouds.mp3",
  "installingLine": "Restorify — finishing installation…",
+ "_docS408crawl": "⚑ S408 / 97-20 (his 21 Nov answer, two installer moments → one: \"Yes\") — `osBootLines`, `osBootFooter` and `installingLine` are no longer shown in the visit: 2003 starts at 'Welcome back, Daniel', the return press, the machine's beep, then the film. The crawl's news (the version it replaces, the three contact requests declined on his behalf, 'RESTORIFY IS NOW PART OF THIS COMPUTER.') is in the 1997 → 2003 installer he reads as he rises (updates.json u2 changelog; src/room/risingInstaller.ts). Kept as the record; `e2Crawl` reviews them.",
  "cartoon": {
   "_doc": "S166 / his 2026-09-21 call — the SOFTWARE's boot: Lamby asleep, a thought-cloud of static (never a picture), a monitor switching on and its light waking him, the screen writing what is right: the mark and a streak. The jingle (`osBootTrack`) plays over it and on under his introduction; the machine's own boot is silent now. Register: operable — the programme's cartoon of itself; the satire is its own and collapses on its own terms (the light that shows him what is right is a number on a screen).",
   "mark": "RESTORIFY",
@@ -25,8 +26,9 @@
   "streakDays": "412 days"
  },
  "introTitle": "Restorify",
- "introLine1": "Hello, Daniel. I'm Lamby.",
- "introLine2": "I came with the update. I'll be with you from now on.",
+ "introLine1": "Hello again, Daniel. It's me, Lamby.",
+ "introLine2": "Now I'm even more your friend. You won't need anyone else.",
+ "_docS408": "⚑ S408 / 03-3 (his headset, 20 Nov 21:45: \"not as I also come with the update, it is more like now I am even more of your friend, to really try and push back even more on the possessive aspect of it\" — the transcript reads 'psychotic') — Lamby's first line in 2003 is possessive, warm and a little too close: he is the guide Daniel already met in 1997 ('again'), now part of the machine, and he would like to be the only one. It sits on the boot crawl's 'CONTACT REQUESTS 3 · DECLINED ON YOUR BEHALF' and before Caleb's flagged requests (03-15): the system's friend asks for what the system has already taken. Operable (the programme's guide), never a joke at Daniel. Was: introLine1 \"Hello, Daniel. I'm Lamby.\" / introLine2 \"I came with the update. I'll be with you from now on.\"",
  "introAccept": "Hello",
  "introDismiss": "Not now",
  "programTitle": "Restorify",

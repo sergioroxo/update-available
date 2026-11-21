@@ -45,51 +45,6 @@
       }
     },
     {
-      "id": "s2",
-      "era": "e2",
-      "label": "s2 · Daniel → severer classification ('03)",
-      "target": {
-        "kind": "facet",
-        "facet": "transfem"
-      },
-      "extraTags": [
-        "send:continuum"
-      ],
-      "carryBack": {
-        "_doc": "the referral slip on Daniel's desk (greybox paper; placement provisional → moodboard)",
-        "pos": [
-          -0.52,
-          0.752,
-          -0.22
-        ],
-        "size": [
-          0.12,
-          0.012,
-          0.18
-        ],
-        "color": "#D8CDB4"
-      },
-      "witness": {
-        "_doc": "PLACEHOLDER — Sérgio voice pass pending",
-        "offered": "pattern match: severer classification — referral drafted",
-        "visited": "classification reviewed by subject — slip issued",
-        "declined": "referral declined — noted"
-      },
-      "offer": {
-        "_doc": "PLACEHOLDER — Sérgio voice pass pending; the guide-voiced summons (§4: names a reason rooted in the shared infrastructure)",
-        "icon": "Referral",
-        "lines": [
-          "Your pattern matches a severer",
-          "classification.",
-          "",
-          "The counselling diagram is available",
-          "for review in the adjoining room."
-        ],
-        "go": "Go there",
-        "decline": "Not now"
-      }
-    },
-    {
       "id": "s3",
       "era": "e3",
       "label": "s3 · Vera → the recycled phrasing ('16)",

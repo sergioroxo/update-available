@@ -56,6 +56,7 @@ import captionsData from '../../data/strings/captions.json';
 import aimStrings from '../../data/strings/aim.json';
 import { mountDebugPanel } from '../debug/panel';
 import { makeScreenTexture, makeScreenEntity, screenUploads } from './screenTexture';
+import { mountRisingInstaller } from '../room/risingInstaller';
 import { buildEra3Devices, type Era3Devices } from '../room/era3Devices';
 import clusterData from '../../data/room/cluster.json';
 import strings from '../../data/strings/slice.json';
@@ -1595,6 +1596,11 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     deskGlassK = () => deskGlass.k;
   }
   const monitorQuad = mountXrMonitorQuad(app, front, os.canvas, () => os.era, xrComfort.physicalPoint);
+  // ⚑ S408 / 97-17 + 97-20 — while the 1997 → 2003 installer types during the rise, the monitor's own picture comes up with
+  //   the visitor (src/room/risingInstaller.ts): readable from the flight, gone with the restart's black
+  const risingInstaller = options.reinterp === true ? mountRisingInstaller(app, frontTex, os.canvas.width / os.canvas.height) : null;
+  app.on('update', () => { risingInstaller?.update(!!relocPlan && !!os.updateApp?.installShowing, camera, !!xr?.active); });
+  if (runtimeQuery().get('debug') === '1') (window as unknown as { __risingInstaller: unknown }).__risingInstaller = risingInstaller;
   if (runtimeQuery().get('debug') === '1') (window as unknown as { __monitorQuad: unknown }).__monitorQuad = monitorQuad;
   // ⚑ P8 F1 (headset B, 1 Nov: "I can still see the screen from Daniel. They're just in the air") — Daniel's monitor
   //   leaves the room at r4 and its screen stayed lit where the glass had been. In 2026 the screen goes with it; it
@@ -4007,6 +4013,10 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   if (debugOn) (window as unknown as { __heldDevices: unknown }).__heldDevices = devices;
   devices?.tick(0, 'e1', () => false, 0); // initialise its glass before entrance captures the image
   os.onFitIn = () => { if (os.era === 'e1') devices?.take('e1', xr?.active ? logicalHead() : camera); };
+  // ⚑ S408 / 03-19 — Lamby's "Play CLEAR" after the 2003 update is put off hands him the phone, as a press on it does; and
+  //   the deferral's clock reads whether something is in the hand
+  os.onClearTake = () => { if (os.era === 'e2') devices?.take('e2', xr?.active ? logicalHead() : camera); };
+  os.heldExternal = () => anythingHeld();
   tapePlayerBus.play = (id) => { os.onStopTape?.(); tapes?.insert(id); syncTapeProps(); syncTapeAudio(); };
   tapePlayerBus.stop = () => { if (tapes?.isPlaying) tapes.togglePlay(); syncTapeProps(); syncTapeAudio(); };
   tapePlayerBus.probe = () => tapes?.snapshot() ?? { inserted: null, playing: false, caption: null };
@@ -4060,7 +4070,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
    */
   function aimNameUnderRay(ray: Ray): string | null {
     const A = aimStrings as unknown as Record<string, string>;
-    aimAt = null; aimPick = false;
+    aimAt = null; aimPick = false; aimHeldGlass = false;
     // ⚑ S358 / H19 (his headset, 10 Nov, in the Close: "there's still no way to point to stuff"; "he cannot see where he
     //   is pressing") — the panels took a press but published nothing a ray could land on: the ray stayed a stub and
     //   nothing named what it was on. The same tests as the press (resolveTapRay), in its order: a panel names itself,
@@ -4089,6 +4099,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       aimAt = devices?.aimedAt(cluster!.era) ?? null;
       const [game, what] = dev.split(':');
       aimPick = what === 'pick';   // S359 / H51: on a device that can be picked up (never while it is held)
+      aimHeldGlass = what === 'screen' && devices!.held(cluster!.era);   // S408 / 03-20
       const name = A[`dev_${game}`] ?? '';
       return (A[`devAim_${what}`] ?? A.devAim_screen).replace('{name}', name);
     };
@@ -4133,6 +4144,9 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   let aimAt: { x: number; y: number; z: number } | null = null;
   /** ⚑ S359 / H51 — the last aim was a holdable device that is not held: the grip icon goes beside it */
   let aimPick = false;
+  /** ⚑ S408 / 03-20 (his headset, 22:01: "your phone, the screen… this should disappear", 220154) — the ray is on the glass of
+   *  the device in his hand: the game is what he is looking at, so the ray's tag says nothing over it */
+  let aimHeldGlass = false;
   function hitAt(ray: Ray, p: { x: number; y: number; z: number }, radius: number): boolean {
     if (!rayHitsPointR(ray, p, radius)) return false;
     aimAt = p; return true;
@@ -4638,7 +4652,9 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     //   on the helper's plate; the plate keeps the helper's own lines, and stays down while a device is in the hand
     const aimShown = xr?.active && !gameMenuBus.isOpen && !siteViewerXr?.isOpen && xrComfort.calibrated ? aimName : null;
     xrInput?.setAimTarget(aimShown && aimAt ? xrComfort.physicalPoint(new pc.Vec3(aimAt.x, aimAt.y, aimAt.z)) : null);
-    xrFrame?.setAim(aimShown, aimShown ? xrInput?.end() ?? null : null, xrInput?.ray()?.p0 ?? null);
+    // ⚑ S408 / 03-20 — the ray still ends on the held glass; only its tag is not drawn over the game
+    const aimTag = aimHeldGlass ? null : aimShown;
+    xrFrame?.setAim(aimTag, aimTag ? xrInput?.end() ?? null : null, xrInput?.ray()?.p0 ?? null);
     // ⚑ S359 / H51 — the grip icon: only while the controller's ray is on a device that can be picked up
     xrFrame?.setGrip(aimShown && aimPick && aimAt ? xrComfort.physicalPoint(new pc.Vec3(aimAt.x, aimAt.y, aimAt.z)) : null);
     if (xrFrame && xr?.active && !gameMenuBus.isOpen) xrFrame.setHint(siteViewerXr?.isOpen || closeStage === 'message' ? null : !xrComfort.calibrated ? menuStrings.xrSeat : deviceInHand ? null : aimName ? null : xrHelperText(helper?.text() ?? null, dt));

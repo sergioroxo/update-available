@@ -423,6 +423,22 @@
       }
     }
   },
+  "message": {
+    "_docS408": "⚑ S408 / 03-13 (his headset, 20 Nov 21:53: a toast 'A message came in — press here…' AND a Lamby balloon both pointed at Caleb's message: \"maybe too much helper guides\"; the job: keep Lamby's, drop the toast) — said once when the message lands (os.ts maybeAnnounceMessage); `yes` opens the Messenger. Lamby's own voice (operable), never inside the Messenger. The corner toast stays only as the fallback when the era's balloons are spent.",
+    "text": "A message came in for you. Shall I open your Messenger?",
+    "yes": "Open it"
+  },
+  "remind": {
+    "_docS408": "⚑ S408 / 03-19 (his headset, 20 Nov 22:00: \"after remind me later… it should tell me other stuff that I can do… it didn't give me much time to play\") — said once when the 2003 update is put off (os.ts): `lead` and the things not yet opened, from `items` (each only while it is not done). While CLEAR is unplayed `yes` hands him the phone. The deferral's clock stands still while he plays or reads (os.ts deferBusy).",
+    "lead": "The update can wait. I'll keep it for you. While it does:",
+    "items": {
+      "clear": "CLEAR, on your phone",
+      "forum": "Harbor, the thread I picked for you",
+      "yourfile": "your file, on the desk"
+    },
+    "none": "The update can wait. I'll keep it for you. Take your time.",
+    "yes": "Play CLEAR"
+  },
   "harbor": {
   "text": "Your story is online! Share it on Harbor, so others who struggle can find it too.",
   "yes": "Share it",
