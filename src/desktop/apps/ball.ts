@@ -790,6 +790,15 @@ export class E4Ball {
     this.version++;
   }
 
+  /** ⚑ S414 (UiB job 33 Part C) — Act III hands over straight to the night: her friends got her out (Junie's "i know. come
+   *  in."), so the host's studio, its try-on, Junie's link, the raid, the naming and backstage are not played (s4_ball.json
+   *  `_retiredS414`). The stream as built until Part D brings it onto the monitor. */
+  streamFromActs(): void {
+    if (this.phase !== 'idle') return;
+    this.hits = [];
+    this.startNight();
+  }
+
   /** ⚑ the night: today's stream, unchanged and respite — "maya joined", the welcomes, her one act */
   private startNight(): void {
     this.freeStage();

@@ -2802,11 +2802,12 @@
   "add": [
    {
     "id": "e_keyboard",
+    "_docS414": "⚑ S414 — 0.2 m to the left (z 0.7 → 0.5), still in front of the monitor: the headset lies on the desk in front of the seat now, right of centre under the screen (e_headset `_docS414`), and the two would have met.",
     "_doc": "⚑ S358 / H17 (his headset, 10 Nov: 'no keyboard… supposed to be on top of the table') — a keyboard in front of the monitor again (the 2026-09-01 clearing took the old CRT's peripherals; this one belongs to the monitor she types on). Kenney's board (computerKeyboard, CC0), as Room 2's w_keyboard. Non-interactive by law: no hit rect, ever (no free-text input in this piece).",
     "pos": [
      5.12,
      0.75,
-     0.7
+     0.5
     ],
     "size": [
      0.42,
@@ -2819,11 +2820,12 @@
    },
    {
     "id": "e_headset",
+    "_docS414": "⚑ S414 (UiB job 33 Part C; draft 3 beat 9, job 33: \"Put the headset on the desk in front of the seat, so nobody has to turn to find it\"; his 26-21 \"I don't want you to go back … not what is in my back\") — FROM 41.6° ASIDE TO THE DESK IN FRONT OF HER, UNDER THE SCREEN, RIGHT OF CENTRE. It was (5.2, 0.9, 0.1) on its stand: 41.6° off the seat bearing, outside every flat frame, so the computer turned the camera to it (S413) and the walker turned too. Now it lies on a flat charging pad on the desk in front of the monitor's foot, base at (5.2, 0.76, 0.9) (its pos is its base: measured AABB x 5.083–5.317, y 0.76–0.895, z 0.755–1.045). From the seat eye (4.6, 1.16, 0.70) its top is ~18° right and 20.3°–28.7° down: inside the computer's frame (its bottom is 29° down) and the headset's at rest, and ALL of it below the monitor's glass as the seat sees it (the glass's bottom edge is 19.7° down), so it never covers the screen. Beside the monitor there is no room for it: the frame leaves ~10° between the glass's edge and its own, and a headset is 0.29 m across. Its light is on its top (the visor plane lies flat there, era3Devices PLACEMENT.visor), where the seat can see it. Nobody is turned to it.",
     "_doc": "⚑ S118 — THE HEADSET COMES TO THE PLAYER (Sérgio, 2026-09-04: \"You can put the VR headset closer to the user, ive asked for that already before, it needs a better placing, and maybe it can help with 'The Walk'?\"). He is right on all three counts, and the third one is the sharpest. MEASURED from the r3 seat (4.4, 1.16, 0.7) at pitch −3, against a 29.7° horizontal and 21° vertical half-FOV: the old pose (5.53, 0.75, 0.25) put this 24.1° off the seat bearing and 15.8° below the view centre — **81% and 75% of the way to the frame's own edges.** That is not 'a bit left', it is the corner, and the corner is where the frame keeps its chrome: S117 is the whole story of a chrome button landing on top of it and taking the era's one touch with it. A control at the corner of the frame is a control one small change away from being unreachable. ⚑ AND IT COULD NOT COME CLOSER WHILE IT SAT ON THE DESK: eye 1.16, desk 0.75, so anything on that surface drops 0.41 m, and closing the distance only steepens the angle — at 0.80 m it would sit 23° down, 96% of the half-FOV, effectively off the bottom. So it goes UP, onto a stand, which is what every comment in era3Devices.ts has called it for months (\"what you are pressing is a headset on a stand, not a button\") while no stand existed. New pose: 9.9° off the bearing, 10.7° below centre — 33% and 51% — and 0.83 m from the eye instead of 1.15 m.",
     "pos": [
      5.2,
-     0.9,
-     0.1
+     0.76,
+     0.9
     ],
     "size": [
      0.29,
@@ -2854,14 +2856,15 @@
    {
     "id": "e_headsetStand",
     "_doc": "S118: the stand the code has been describing for months. Desk top 0.75 to 0.90, and the headset's own base sits on it. A charging stand is what a 2026 headset lives on when it is not on your face — and it is the only reason 'closer to the player' and 'inside the frame' can both be true at once.",
+    "_docS414": "⚑ S414 — a flat charging pad now (0.01 m), under the headset on the desk in front of the seat (see e_headset `_docS414`): a 0.15 m stand there would lift the headset over the monitor's glass as the seat sees it.",
     "pos": [
      5.2,
-     0.825,
-     0.1
+     0.755,
+     0.9
     ],
     "size": [
      0.22,
-     0.15,
+     0.01,
      0.18
     ],
     "color": "#2C2C34",

@@ -153,6 +153,17 @@ const REGISTRY: Record<string, string> = {
   'l_b7_made.mp3': `${AUDIO_BASE}l_b7_made.mp3`,
   'l_b8_hear.mp3': `${AUDIO_BASE}l_b8_hear.mp3`,
   'l_b8_found.mp3': `${AUDIO_BASE}l_b8_found.mp3`,
+  // ⚑ S414 (UiB job 33 Part C) — Act III: Second Thoughts' "ready" (0.82); Shepherd in L's voice with no switch (0.88); L's
+  //   stutter once Second Thoughts is removed (0.95)
+  'l_b9_ready.mp3': `${AUDIO_BASE}l_b9_ready.mp3`,
+  'l_b9_hello.mp3': `${AUDIO_BASE}l_b9_hello.mp3`,
+  'l_b9_explore.mp3': `${AUDIO_BASE}l_b9_explore.mp3`,
+  'l_b9_courage.mp3': `${AUDIO_BASE}l_b9_courage.mp3`,
+  'l_b9_mum.mp3': `${AUDIO_BASE}l_b9_mum.mp3`,
+  'l_b9_show.mp3': `${AUDIO_BASE}l_b9_show.mp3`,
+  'l_b10_stay.mp3': `${AUDIO_BASE}l_b10_stay.mp3`,
+  'l_b10_wait.mp3': `${AUDIO_BASE}l_b10_wait.mp3`,
+  'l_b10_unavailable.mp3': `${AUDIO_BASE}l_b10_unavailable.mp3`,
   'l_u1a.mp3': `${AUDIO_BASE}l_u1a.mp3`,
   'l_u1b.mp3': `${AUDIO_BASE}l_u1b.mp3`,
   'l_u1r_ok.mp3': `${AUDIO_BASE}l_u1r_ok.mp3`,

@@ -4719,6 +4719,32 @@ export class DesktopOS {
         this.debugJump('e4Browser');
         this.e4?.browser.debugActTwo(8);
         break;
+      // ⚑ S414 (UiB job 33 Part C) — Act III, Shepherd Live™ (Acts I and II laid into the chat): the doors; the session in each
+      //   door (the VR door puts the device on first); the photo; the friends (in each door)
+      case 'e4Act3':
+        this.debugJump('e4Browser');
+        this.e4?.debugActThree('doors', 'here');
+        break;
+      case 'e4Act3VR':
+        this.debugJump('e4Browser');
+        this.e4?.debugActThree('session', 'vr');
+        break;
+      case 'e4Act3Here':
+        this.debugJump('e4Browser');
+        this.e4?.debugActThree('session', 'here');
+        break;
+      case 'e4Act3Photo':
+        this.debugJump('e4Browser');
+        this.e4?.debugActThree('photo', 'here');
+        break;
+      case 'e4Act3Friends':
+        this.debugJump('e4Browser');
+        this.e4?.debugActThree('friends', 'here');
+        break;
+      case 'e4Act3FriendsVR':
+        this.debugJump('e4Browser');
+        this.e4?.debugActThree('friends', 'vr');
+        break;
       case 'e4Standby':
         this.setPhase('desktop');
         this.setDesktopEra('e4');

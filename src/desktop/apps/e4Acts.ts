@@ -11,12 +11,17 @@
  *   · Act II · Second Thoughts (beats 5–8): src/desktop/apps/e4ActTwo.ts (S413). Act I's last press (✚ Add to L · Not now)
  *     leads straight into it (browser.ts `beginActs`); Act II's last line ("Booked ✓ · today.") hands over to the visit as it
  *     was after the screens (the headset and Shepherd Live™'s studio) until Part C's Act III exists.
- *   · Act III · Shepherd Live™ (beats 9–10), the stream and the end (11–13): Parts C–D (S414–S415).
+ *   · Act III · Shepherd Live™ (beats 9–10): src/desktop/apps/e4ActThree.ts (S414). Act II's last line leads straight into it;
+ *     its last line (Junie's "i know. come in.") hands over to the stream (browser.ts `beginActs` → space.ts). ⚑ ONE SHEPHERD
+ *     SURFACE (`shepherd`, shepherd.ts), held here, drawn wherever her door put it: the monitor (the screen's `full`) or the
+ *     headset's glass (space.ts).
+ *   · The stream and the end (11–13): Part D (S415).
  *
  * The director never touches the room: the room reads the contract (src/narrative/e4Beats.ts), and the Lamby set is reached
  * through the two hooks app.ts gives it (`bringTv`, `tv`).
  */
 import { LScreen, type Chip } from './lScreen';
+import { ShepherdSession } from './shepherd';
 import { readHold } from '../readHold';
 import { ledger } from '../../state/ledger';
 import { playOnce } from '../../audio/tapeAudio';
@@ -32,6 +37,12 @@ export interface TvNow { holding: boolean; watching: boolean }
 
 export class E4Acts {
   readonly screen = new LScreen();
+  /** ⚑ S414 — Shepherd Live™'s one surface (Act III): on the monitor in the Join-here door, on the headset's glass in Join in VR */
+  readonly shepherd = new ShepherdSession();
+  private shSeen = -1;
+  private shOnSeen = false;
+  /** ⚑ S414 — the Join-in-VR door waits for the headset to be put on (the device glows; the guide's step is the headset's) */
+  headsetWait = false;
   /** the visitor's last press the script has not taken yet */
   private pressed: string | null = null;
   private gen: Beat | null = null;
@@ -79,6 +90,15 @@ export class E4Acts {
     this.t += dt;
     this.idle += dt;
     this.screen.update(dt);
+    // ⚑ S414 — the session moves on its own steps; the monitor follows it only when it is the monitor's (Join here), or when it
+    //   comes or goes (in the headset the monitor carries one still card): dirty only
+    const sh = this.shepherd;
+    sh.update(dt);
+    if (sh.version !== this.shSeen) {
+      this.shSeen = sh.version;
+      if ((sh.on && sh.door === 'here') || sh.on !== this.shOnSeen) this.screen.touch();
+      this.shOnSeen = sh.on;
+    }
     if (!this.gen) return;
     if (this.waitFor) { if (!this.waitFor()) return; this.waitFor = null; }
     else if (this.waitLeft > 0) { this.waitLeft -= dt; if (this.waitLeft > 0) return; }

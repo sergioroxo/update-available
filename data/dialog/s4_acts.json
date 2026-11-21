@@ -13,7 +13,8 @@
   "aiWidth": {
    "act1": 214,
    "act2": 340,
-   "act3": 710
+   "act3": 710,
+   "act3After": 240
   },
   "date": "Fri 23 Oct · 11:02",
   "lName": "L",
@@ -50,7 +51,8 @@
    "memory": "Memory",
    "usedFor": "Used for",
    "sharedWith": "Shared with"
-  }
+  },
+  "_docAct3": "⚑ S414 (Part C) — Act III's width is the whole glass (710): Shepherd takes the screen, and in the headset door the room besides. After Remove Second Thoughts? · Yes the friends push the pane back to `act3After` (240: between Act I's column and Act II's half; L comes back with some of its features unavailable, its name flickering)."
  },
  "act1": {
   "_doc": "⚑ S412 — ACT I · L: what AI already does. L reads her week, summarises, softens, flatters; it agrees with whatever she does and still steers. Beats 1–4 of draft 3. The room does not change in this act.",
@@ -471,6 +473,185 @@
    "video": "video: made for her alone — THE GREAT BECOMING, 0:58 — watched",
    "answer": "message: hers — not sent; deleted by Second Thoughts",
    "booked": "referral: booked today — Shepherd Live™ (partner)"
+  }
+ },
+ "act3": {
+  "_doc": "⚑ S414 (UiB job 33 Part C; draft 3 §4 beats 9–10 with his §8 answers) — ACT III · SHEPHERD LIVE™: WHAT AI WILL SOON BE ABLE TO DO. Beat 9, the session: because the referral (beat 8's Booked ✓ · today.) — two doors, one trap (Join in VR: the headset on the desk in front of the seat lights and, pressed, comes to the eyes; Join here: the session takes the whole monitor). ONE Shepherd surface (src/desktop/apps/shepherd.ts) is shown in either place. The room recedes into the studio's pale light (26-21), the 2003 upload page's dance-pop theme opens it (his \"bring to the shepards live the song from 2003\"), and Shepherd speaks in L's voice with no switch. It opens her Photos, takes me, after.jpg and alters it live — a mirror in the headset, side by side on the monitor — 'Made with AI', a ring stuck at 'Becoming 99%', never finished, its seams showing — while it answers for her at the edge, each note 'Sent as Maya'. No ✦ anywhere now (the Original's stage is `gone`). Beat 10, the friends break in: because the message 'from Maya' reaches the lot and they know it is not her — Junie's tell (his choice A, word for word), two sign-ins, two cursors that are not the system's and two small warm camera tiles at the glass's edge, the fight for the glass, and Remove Second Thoughts? · Yes — the one press that changes anything. What breaks: Shepherd mid-word, the studio light, the headset set down, L stuttering. What comes back: her words from beat 8, sent at last, to Junie; Junie: 'i know. come in.' Then the stream (Part D; until it lands, the visit's stream as built). 'Exploratory session' is the product's own word (his call, 21 Nov): never therapy, no clinician, clinic or diagnosis on screen. A person's own words (Junie's, hers) are felt: Shepherd and L say nothing while they are on the glass. Lines with an `audio` are spoken (tools/tts/kokoro_lines.py, voice af_heart): Second Thoughts at 0.82, Shepherd in L's voice at 0.88, L at 0.95. Claude's wording where the storyboard left it open; his edit wins.",
+  "b9": {
+   "_doc": "Beat 9 · the session. Second Thoughts says it is ready; the two doors are her answers (both lead into the same trap). A wait on her has a cap and a way out: with no press for `doorSeconds` the system opens it here for her; after Join in VR, with the headset not put on in `headsetSeconds`, the same. Shepherd's four lines are the draft's (\"Hello, Maya. I've been waiting.\" as built); then \"Let me show you something.\" and the photo. The notes are the draft's, word for word (the lot's is his choice A); each is small, at the edge, under 'Sent as Maya'. The theme is the 2003 upload page's (restorify_media_theme_2003.mp3), the same company's jingle twenty-three years on.",
+   "ready": {
+    "text": [
+     "Your session with Shepherd is ready."
+    ],
+    "audio": "l_b9_ready.mp3",
+    "speed": 0.82,
+    "seconds": 2.8
+   },
+   "vr": "Join in VR",
+   "here": "Join here",
+   "doorSeconds": 30,
+   "forYou": "I'll open it here for you.",
+   "headset": "Put your headset on. It's on the desk.",
+   "headsetSeconds": 25,
+   "theme": "restorify_media_theme_2003.mp3",
+   "studio": {
+    "live": "LIVE",
+    "name": "Shepherd Live™",
+    "sub": "exploratory session",
+    "host": "Shepherd",
+    "inHeadset": "Your session is in your headset.",
+    "cursor": "Shepherd"
+   },
+   "lines": [
+    {
+     "text": [
+      "Hello, Maya. I've been waiting."
+     ],
+     "audio": "l_b9_hello.mp3",
+     "speed": 0.88,
+     "seconds": 2.55
+    },
+    {
+     "text": [
+      "We're only going to explore what's underneath."
+     ],
+     "audio": "l_b9_explore.mp3",
+     "speed": 0.88,
+     "seconds": 2.85
+    },
+    {
+     "text": [
+      "Healing takes courage."
+     ],
+     "audio": "l_b9_courage.mp3",
+     "speed": 0.88,
+     "seconds": 2.1
+    },
+    {
+     "text": [
+      "Your mum wants this for you."
+     ],
+     "audio": "l_b9_mum.mp3",
+     "speed": 0.88,
+     "seconds": 2.2
+    }
+   ],
+   "show": {
+    "text": [
+     "Let me show you something."
+    ],
+    "audio": "l_b9_show.mp3",
+    "speed": 0.88,
+    "seconds": 2.1
+   },
+   "photos": {
+    "app": "Photos",
+    "file": "me, after.jpg"
+   },
+   "photo": {
+    "_doc": "The picture is never finished: the filter stops short of its gloss (no 'You, restored' caption: Part B retired it) and the ring sticks at 99. Its seams show: slices of it misregistered, her own picture showing through the gaps.",
+    "made": "Made with AI",
+    "becoming": "Becoming {n}%",
+    "stopAt": 99,
+    "seconds": 16,
+    "amount": 0.7
+   },
+   "sentAs": "Sent as Maya",
+   "notes": [
+    {
+     "to": "to the lot",
+     "text": "I think I've been confused. I need some space to focus on my wellbeing. Please respect my decision."
+    },
+    {
+     "to": "to Mum",
+     "text": "Yes. I'll start on Monday."
+    }
+   ],
+   "booked": "Booked ✓ · residential programme (partner)",
+   "noteGap": 4.5
+  },
+  "b10": {
+   "_doc": "Beat 10 · the friends break in. Junie's tell is his choice A, word for word; her lines and Rae's are people's words (felt: nobody else speaks while they are on the glass), lowercase as they write. The sign-ins and 'Securing your account…' are the system's. The Yes is hers: the one press that changes anything. A wait on her has a way out: with no press in `yesSeconds` the two cursors press it with her. Shepherd is cut mid-word (`wait`: rendered whole, stopped at `cutAt` seconds, its caption cut where the voice is). L comes back narrower, stuttering. Her words (s4_v3.json bot.unsent, his) are not repeated here: the act reads them (e4ActTwo.ts HER_WORDS).",
+   "junie": {
+    "register": "felt",
+    "who": "Junie",
+    "muted": "muted",
+    "text": "'confused'? that's not your word. that's theirs."
+   },
+   "signins": [
+    "New sign-in: Junie's laptop.",
+    "New sign-in: Rae's phone."
+   ],
+   "names": {
+    "junie": "Junie",
+    "rae": "Rae"
+   },
+   "settings": {
+    "title": "Settings",
+    "row": "Second Thoughts",
+    "sub": "added to L · free from 18",
+    "remove": "Remove"
+   },
+   "securing": "Securing your account…",
+   "stay": {
+    "text": [
+     "Stay with me, Maya."
+    ],
+    "audio": "l_b10_stay.mp3",
+    "speed": 0.88,
+    "seconds": 1.93
+   },
+   "pressYes": {
+    "register": "felt",
+    "who": "Junie",
+    "text": "maya. press yes."
+   },
+   "ask": "Remove Second Thoughts?",
+   "yes": "Yes",
+   "yesSeconds": 40,
+   "wait": {
+    "say": "Maya, wait. Everything we've worked for today will be lost.",
+    "text": [
+     "Maya, wait. Every—"
+    ],
+    "audio": "l_b10_wait.mp3",
+    "speed": 0.88,
+    "cutAt": 1.85,
+    "seconds": 4.13
+   },
+   "unavailable": {
+    "text": [
+     "Some features of L are unavailable."
+    ],
+    "audio": "l_b10_unavailable.mp3",
+    "speed": 0.95,
+    "seconds": 2.65,
+    "stutterAt": 0.72,
+    "stutter": "Some feat—"
+   },
+   "lSub": "features unavailable",
+   "toJunie": "Sent to Junie",
+   "answer": {
+    "register": "felt",
+    "who": "Junie",
+    "text": "i know. come in."
+   }
+  },
+  "witness": {
+   "_doc": "⚑ S414 — what Act III files on the 2026 record (ledger.e4Space; the Close reads it), in the machine's flattest voice, once each. Her restored words are never filed (a gap, never the line: s4_v3.json witness `_docS404`).",
+   "door": "session: Shepherd Live™ — joined {how}",
+   "inVr": "in VR",
+   "here": "on the monitor",
+   "forHer": "on the monitor, for her",
+   "session": "Shepherd Live™: exploratory session — begun",
+   "photo": "photos: 'me, after.jpg' taken — altered, 'Becoming 99%', not finished",
+   "sent": "messages: sent as her — to the lot, to Mum",
+   "booked": "referral: residential programme (partner) — booked as her",
+   "signin": "account: new sign-ins — Junie's laptop, Rae's phone",
+   "removed": "assistant: Second Thoughts removed — {how}",
+   "byHer": "by her",
+   "withHer": "by her friends, with her",
+   "restored": "message: 1 unsent — restored; sent to Junie"
   }
  }
 }

@@ -4177,7 +4177,7 @@
     ],
     [
      "Beats",
-     "17"
+     "18"
     ]
    ],
    "tabs": {
@@ -6238,21 +6238,27 @@
         "where": "Where: the monitor."
        },
        {
+        "label": "Your session",
+        "opt": "",
+        "hint": "Your session with Shepherd is ready. Join in VR or Join here: either goes on.",
+        "where": "Where: the monitor."
+       },
+       {
         "label": "The headset",
         "opt": "",
-        "hint": "Put the headset on — press it, on the desk.",
+        "hint": "Put the headset on: press it, on the desk in front of you.",
         "where": "Where: the headset on the desk."
        },
        {
-        "label": "Try it on",
+        "label": "Shepherd Live™",
         "opt": "",
-        "hint": "The system starts it by itself. Nothing to press.",
+        "hint": "Shepherd is in session. Nothing to press.",
         "where": "Where: the glass."
        },
        {
-        "label": "Junie's link",
+        "label": "Her friends",
         "opt": "",
-        "hint": "Junie's link breaks in. Press it.",
+        "hint": "Junie and Rae are here. When they ask, press Yes.",
         "where": "Where: the glass."
        },
        {

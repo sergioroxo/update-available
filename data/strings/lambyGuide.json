@@ -388,10 +388,20 @@
           "a2-answer"
         ]
       },
+      "door": {
+        "tip": "Your session is ready. Join in VR or Join here: either one goes on.",
+        "here": "The two answers are under its words.",
+        "again": "Either one goes on.",
+        "target": [
+          "a3-vr",
+          "a3-here"
+        ]
+      },
       "headset": {
-        "tip": "Time for the headset. It's on the desk — shall I take you there?",
-        "here": "It's on the desk.",
-        "again": "Shall I take you to the headset?",
+        "_docS414": "⚑ S414 — Act III's Join in VR: the headset lies lit on the desk in front of her (no turn); the offer puts it on for her (the door is already hers: navigation, not an answer).",
+        "tip": "The headset is lit on the desk in front of you. Shall I put it on for you?",
+        "here": "It's on the desk, under the screen.",
+        "again": "Shall I put the headset on for you?",
         "target": [],
         "act": "move:headset"
       },

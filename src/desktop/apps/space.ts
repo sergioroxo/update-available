@@ -287,6 +287,51 @@ export class E4Shell {
     //   device stops, and the laptop holds the Close. "She wasn't supposed to
     //   see it."
     this.ball.onOver = () => { this.stageNow = 'worn'; this.version++; this.handOff(); };
+    // ⚑ S414 (UiB job 33 Part C) — ACT III's two doors meet the device here. Join in VR lights the headset (`deviceReady`) and
+    //   its one touch puts it on (`wear`); the session (Shepherd Live™'s one surface) is then drawn on this glass and takes its
+    //   presses (`draw`, `handleClick`). When her friends remove Second Thoughts it dies in it: dark, and set back on the desk
+    //   (`setDownFromActs`, no fade). The acts' last line hands over to the stream (`joinStreamFromActs`).
+    this.browser.headsetWorn = () => this.stageNow === 'worn';
+    this.browser.onHeadsetDown = () => this.setDownFromActs();
+    this.browser.onActsDone = () => this.joinStreamFromActs();
+  }
+  /** ⚑ S414 — Act III's session is on this glass (Join in VR) */
+  private get sessionOnGlass(): boolean { return this.worn && this.browser.acts.shepherd.onGlass; }
+  /** ⚑ S414 — the acts own the device until their last line (no old studio starts under them) */
+  private get actsRunning(): boolean { return this.browser.storyStep === 'acts' && !this.browser.acts.done; }
+  /** ⚑ S414 — the session's controls on the glass (the Yes), in the glass's own coordinates (512 × 384), for the walker and
+   *  the map: named so the harness reads them as this surface's (`e4`) and aims them at the visor */
+  visorHits: { x: number; y: number; w: number; h: number; id: string }[] = [];
+  private shSeen = -1;
+  /** ⚑ S414 — the session died in it: the glass is dark until the device is on its desk again */
+  private darkGlass = false;
+  /** ⚑ S414 — the session dies in the headset: it goes dark and is set back on the desk (era3Devices eases the glass from the
+   *  eyes to its rest: the held-device grammar, no fade) */
+  setDownFromActs(): void {
+    if (this.stageNow !== 'worn') return;
+    this.stageNow = 'closed';
+    this.darkGlass = true;
+    this.visorHits = [];
+    playOnce('set_down_e4.mp3');
+    this.version++;
+  }
+  /**
+   * ⚑ S414 — THE HAND-OVER TO THE STREAM. Junie's "i know. come in." is the acts' last line; the visit goes on into the stream as
+   * built (the hall, transjesus.str, dance · stay, the intrusion, SESSION TERMINATED, the failure) until Part D brings it onto the
+   * monitor. What the old flow did on Junie's link, then after the raid, the naming and backstage (all retired: s4_ball.json
+   * `_retiredS414`): the record files the joining, the contract marks the stream, the monitor keeps the link, the night begins.
+   */
+  joinStreamFromActs(): void {
+    if (this.handedOff || this.ball.phaseId !== 'idle') return;
+    ledger.e4Space.push({ id: 'commons', outcome: 'joined', witness: ballScript.commons.witness });
+    markE4('stream');
+    this.browser.openStream();
+    this.ball.streamFromActs();
+  }
+  /** ⚑ S414 (review only) — Act III from one of its points, in a door; in the VR door the device goes on first, quietly */
+  debugActThree(from: 'doors' | 'session' | 'photo' | 'friends', door: 'vr' | 'here'): void {
+    this.browser.debugActThree(from, door);
+    if (door === 'vr' && from !== 'doors' && this.stageNow === 'closed') { this.stageNow = 'worn'; this.version++; }
   }
 
   get stage(): Stage { return this.stageNow; }
@@ -330,7 +375,9 @@ export class E4Shell {
     if (this.browser.messenger.updateEvening(dt)) { this.laptopV++; this.browser.version++; }   // ⚑ S328: Kettle is on the monitor
     this.t += dt;
     const step = Math.floor(((this.t % PULSE_SECONDS) / PULSE_SECONDS) * PULSE_STEPS);
-    if (step !== this.pulseStep) { this.pulseStep = step; this.version++; }
+    // ⚑ S414 (26-18) — the breath is drawn only while the device waits lit on the desk: at any other time a step re-sent the
+    //   whole 1536 × 1152 glass for nothing, a little more than once a second, through all of 2026 (and under the session)
+    if (step !== this.pulseStep) { this.pulseStep = step; if (this.deviceReady && !this.worn) this.version++; }
     // ⚑ THE GLITCH RUNS ALONE. Nothing else on this surface updates while the
     // picture is failing — L has finished, the offers have finished, and the
     // ball is long over — so the clock below is the only thing moving, and when
@@ -364,7 +411,10 @@ export class E4Shell {
     // ⚑ 2026-09-12 — THE SESSION THAT NEVER BEGINS. The device is on, the
     //   agent's environment is on the glass, its bar is filling — and at
     //   `session.seconds` what arrives is not the session but Junie's card.
-    if (this.stageNow === 'worn' && this.ball.phaseId === 'idle') {
+    // ⚑ S414 — the session on this glass moves on its own steps: the glass follows its version (dirty only)
+    const sh = this.browser.acts.shepherd;
+    if (this.sessionOnGlass && sh.version !== this.shSeen) { this.shSeen = sh.version; this.version++; }
+    if (this.stageNow === 'worn' && this.ball.phaseId === 'idle' && !this.actsRunning) {
       // ⚑ S354 (UiB job 11 Part A) — THE HOST'S STUDIO first: the device goes on and Shepherd Live™'s studio is there
       //   (ball.ts `startHost`): its conversation, the recap of her week, then "Let me show you who you could be." and
       //   the try-on (S321's mirror, its lines now the host's); Junie's link breaks into it, as before. The plan, Begin
@@ -427,11 +477,19 @@ export class E4Shell {
     // ⚑ 2026-09-12 — and not until the program's steps are done. Pure rails,
     //   his ruling: the headset is step five, and step five is not offered
     //   before steps one to four. `deviceReady` is the same test, for the glow.
-    if (this.stageNow === 'closed' && !this.browser.programDone) return;
+    // ⚑ S414 — or, in Act III, once Join in VR has lit it (`headsetOffered`); and never once the era has handed off to the Close
+    if (this.handedOff) return;
+    if (this.stageNow === 'closed' && !this.browser.programDone && !this.browser.headsetOffered) return;
+    if (this.stageNow === 'closed' && this.actsRunning && !this.browser.headsetOffered) return;
+    this.darkGlass = false;
     this.putOn();
   }
-  /** the device is asking to be picked up: on the stand, and the program done */
-  get deviceReady(): boolean { return this.stageNow === 'closed' && this.browser.programDone; }
+  /** the device is asking to be picked up: on the stand, and the program done (⚑ S414: or Join in VR has lit it) */
+  get deviceReady(): boolean {
+    // in the acts' flow the headset is Act III's door only (after the acts the stream follows, not the headset); the legacy
+    //   screens' review routes keep their old rule (the program done)
+    return this.stageNow === 'closed' && (this.browser.headsetOffered || (this.browser.programDone && this.browser.storyStep !== 'acts'));
+  }
   private readyHeard = false;
 
   /** where the restart sits on the laptop's canvas; one place, so the draw and
@@ -895,6 +953,16 @@ export class E4Shell {
     // the era has not begun until L has finished on the laptop: the device is
     // dark, not inviting, and `wear()` refuses anyway
     if (this.stageNow === 'laptop') { visorField(ctx, W, H); return; }
+    // ⚑ S414 — Act III's session on the glass (Join in VR): Shepherd Live™'s one surface, the whole glass; its one control (the
+    //   Yes) published for the walker and the map. And once it has died there, the glass is dark on its way back to the desk.
+    if (this.sessionOnGlass) {
+      this.visorHits = [];
+      ctx.clearRect(0, 0, W, H);
+      this.browser.acts.shepherd.draw(ctx, { x: 0, y: 0, w: W, h: H }, (h) => this.visorHits.push(h));
+      return;
+    }
+    this.visorHits = [];
+    if (!this.worn && this.darkGlass) { ctx.clearRect(0, 0, W, H); px(ctx, 0, 0, W, H, ERA4.field); return; }
     if (!this.worn) {
       /**
        * ⚑ READY = A GLOW, NOT A SCREEN. Sérgio asked to "make the VR headset
@@ -985,6 +1053,13 @@ export class E4Shell {
     // stray click cannot cut the piece's only respite short — and nothing
     // announces the difference, because nothing in this era ever does.
     if (this.stageNow === 'ball') return this.ball.handleClick(x, y);
+    // ⚑ S414 — Act III's session on the glass takes the press: its Yes, or nothing (consumed: the glass is on her face)
+    if (this.sessionOnGlass) {
+      const id = this.browser.acts.shepherd.pressAt(x, y);
+      if (id) this.browser.acts.press(id);
+      return true;
+    }
+    if (this.worn && this.actsRunning) return true;
     if (this.worn) {
       // ⚑ S133: while the invitation is up it owns the press — one chip, or
       //   nothing, consumed either way, exactly as L's chips were.

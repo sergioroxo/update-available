@@ -202,6 +202,12 @@ const OS_BEATS: BeatRow[] = [
   { label: '↳ 6 the risk review, then the takeover', id: 'e4Act2Review' },
   { label: '↳ 7 made for her alone — the video', id: 'e4Act2Video' },
   { label: '↳ 8 her answer, deleted — Booked ✓ · today', id: 'e4Act2Answer' },
+  { label: '⚑ 2026 Act III · 9 the session — Join in VR · Join here', id: 'e4Act3' },
+  { label: '↳ 9 Shepherd Live™ in the headset (VR door)', id: 'e4Act3VR' },
+  { label: '↳ 9 Shepherd Live™ on the monitor (here door)', id: 'e4Act3Here' },
+  { label: '↳ 9 the photo — me, after.jpg, Becoming 99%', id: 'e4Act3Photo' },
+  { label: '↳ 10 the friends break in — Remove · Yes (monitor)', id: 'e4Act3Friends' },
+  { label: '↳ 10 the friends break in — Remove · Yes (headset)', id: 'e4Act3FriendsVR' },
   { label: 'E4 · ⚑ THE PLACE (worn — then turn, and see what happens)', id: 'e4Place' },
 
   { heading: 'E4 · L — the voice, and the room rewrites (S77)' },

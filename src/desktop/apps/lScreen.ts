@@ -145,6 +145,9 @@ export class LScreen {
   aiOverlay: ((ctx: CanvasRenderingContext2D, r: Rect) => void) | null = null;
   /** drawn over both panes and under the AI's cursor (beat 1's cards flying from her world into the AI) */
   overlayTop: ((ctx: CanvasRenderingContext2D, W: number, H: number) => void) | null = null;
+  /** ⚑ S414 (Act III) — something that takes the AI's pane over whole (Shepherd Live™'s session, at the pane's full width): drawn
+   *  in the pane's place, publishing its own controls; it returns false when it has nothing to draw (the pane draws itself) */
+  full: ((ctx: CanvasRenderingContext2D, r: Rect, push: (h: Hit) => void) => boolean) | null = null;
   /** a press the screen does not handle itself (chips, page controls, the original's tag) */
   onPress: ((id: string) => void) | null = null;
   /** the taskbar's date */
@@ -320,8 +323,9 @@ export class LScreen {
       if (page && draw) draw(ctx, pr, page, { screen: this, control: (h) => { if (this.pagePressable) push(h); }, pressable: pressable && this.pagePressable });
       ctx.restore();
     }
-    // ── the AI ──
-    this.drawAi(ctx, this.aiRect(H), push);
+    // ── the AI (⚑ S414: or what has taken its pane over) ──
+    const ar = this.aiRect(H);
+    if (!(this.full && this.full(ctx, ar, push))) this.drawAi(ctx, ar, push);
     px(ctx, this.aiW, 0, 2, body, AI.edge);
     // ── the taskbar (the guide's tray is E4Browser's, drawn after) ──
     const ty = H - TASKBAR;

@@ -34,6 +34,7 @@ import { preloadModels } from '../room/assets';
 import { buildFluidNiche, type FacetState, type FluidNiche } from '../room/fluidNiche';
 import { buildCeilingWitness, type CeilingWitness } from '../room/ceilingWitness';
 import { onCommonsRoom, setCommonsWorld, setE4Dusk } from '../room/cluster';
+import { studioLightWant, STUDIO_LIGHT_COLOR } from '../room/studioLight';
 import { e4Has, type E4Beat } from '../narrative/e4Beats';
 import { WORLD as COMMONS_WORLD, onTurnTo } from '../room/commonsWorld';
 const WORLD_SKY = COMMONS_WORLD.sky;
@@ -114,6 +115,9 @@ const SCREEN = { w: 0.4, h: 0.3, x: 0, y: 1.08, z: 0 };
 const WITNESS = { w: 1.6, h: 1.2, x: 0, y: 1.5, z: 3.4 };
 /** seated eye position at the desk */
 const EYE = { x: 0, y: 1.16, z: 0.7 };
+/** ⚑ S414 (26-21) — the studio's pale light, as a fog: where it starts and ends from the eye (m) at its full, its colour (the
+ *  studio's own pale, shepherd.ts STUDIO.sky), where it is parked when off, and how fast it comes in and drains */
+const STUDIO_FOG = { park: 10000, start0: 6, end0: 9, start1: 0.78, end1: 1.22, color: STUDIO_LIGHT_COLOR, inSeconds: 3.5, outSeconds: 2.5 } as const;
 /** the rooms' own sky — what the Close lerps away from, and what leaving it restores */
 const ROOM_SKY = new pc.Color(0.05, 0.04, 0.03);
 /** the power button on the CRT (S1.0 power-on beat — the SHIPPED build's own
@@ -876,6 +880,10 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   // reinterp E1 style pass (§2-E1): warm the ambient a touch so the floor/shell
   // read cozy under the lamp's dominance — baseline ambient is untouched.
   if (options.reinterp === true) app.scene.ambientLight = new pc.Color(0.17, 0.14, 0.11);
+  // ⚑ S414 (job 33 Part C; 26-21) — the studio's pale light (src/room/studioLight.ts) is a linear fog. Switching a scene's fog on
+  //   recompiles every lit material on the next frame (614 ms measured headless), so it is compiled in here, at load, and parked
+  //   10 km away: nothing shows it until Shepherd's session asks for it, and no beat ever pays for the switch.
+  if (options.reinterp === true) { app.scene.fog.type = pc.FOG_LINEAR; app.scene.fog.start = STUDIO_FOG.park; app.scene.fog.end = STUDIO_FOG.park + 1; }
 
   if (runtimeQuery().get('debug') === '1') {
     (window as { __app?: pc.Application }).__app = app;
@@ -917,6 +925,8 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   let e4Room: ReturnType<typeof buildE4Room> | null = null;
   /** S398 (A6): how far 2026's lamp has faded (0 lit … 1 only the screen), and the beats that move it */
   let e4Dusk = 0;
+  /** ⚑ S414 — how far the studio's pale light has come in (0 her room … 1 the studio) */
+  let studioK = 0;
   // ⚑ S412 (job 33 A5) — the room does not change in Act I: the fade no longer begins at her search (Act I's last beat), only once
   //   Second Thoughts has arrived ('bot', the seam); Parts B–C own what the room does after that
   const E4_DUSK_STEPS: readonly [E4Beat, number][] = [['bot', 0.4], ['map', 0.6], ['junie', 0.75], ['original', 0.9], ['tryon', 1]];
@@ -1625,6 +1635,8 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   //   leaves the room at r4 and its screen stayed lit where the glass had been. In 2026 the screen goes with it; it
   //   comes back only if this switched it off (the Close and the Restart keep their own say over it).
   let frontHeldOff = false;
+  /** ⚑ S414 — the OS canvas changed while Daniel's screen was out of the room (2026): send it when he is back */
+  let frontStale = false;
   app.on('update', () => {
     if (os.era === 'e4' && front.enabled) { front.enabled = false; frontHeldOff = true; }
     else if (frontHeldOff && os.era !== 'e4') { front.enabled = true; frontHeldOff = false; }
@@ -5151,9 +5163,37 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       if (cluster?.era !== 'e4') e4Dusk = 0;
       setE4Dusk(e4Dusk);
     }
+    /**
+     * ⚑ S414 (job 33 Part C; 26-21) — the studio's pale light: Shepherd's session asks (studioLight.ts), the room recedes into it
+     * — the fog comes in from the walls to just past the desk, the screens in front of her stay sharp — and when her friends
+     * remove Second Thoughts it drains and her room comes back. A uniform change only (the fog is compiled in at load): no
+     * recompile, no upload, no draw call. Anywhere but 2026 it is parked.
+     */
+    {
+      const want = cluster?.era === 'e4' && options.reinterp === true ? studioLightWant() : 0;
+      if (want !== studioK) {
+        studioK = want > studioK ? Math.min(want, studioK + dt / STUDIO_FOG.inSeconds) : Math.max(want, studioK - dt / STUDIO_FOG.outSeconds);
+        const f = app.scene.fog;
+        if (studioK <= 0) { f.start = STUDIO_FOG.park; f.end = STUDIO_FOG.park + 1; }
+        else {
+          const e = studioK * studioK * (3 - 2 * studioK);
+          f.start = STUDIO_FOG.start0 + (STUDIO_FOG.start1 - STUDIO_FOG.start0) * e;
+          f.end = STUDIO_FOG.end0 + (STUDIO_FOG.end1 - STUDIO_FOG.end0) * e;
+          f.color.fromString(STUDIO_FOG.color);
+        }
+      }
+    }
     helper?.tick(dt);
     syncRacketDemo(dt); // the room follows the pressed step, moving between poses (see its doc)
-    if (os.dirty) { os.drawIfChanged(); frontTex.upload(); monitorQuad.changed(); os.dirty = false; }   // S406 / H4: painted only when changed
+    // ⚑ S414 (26-18) — and in 2026 Daniel's screen is not in the room (P8 F1 switches it off): the OS canvas is the headset's glass
+    //   there, and the glass uploads its own texture (era3Devices). Sending Daniel's copy too doubled every 1536 × 1152 upload
+    //   while Shepherd's session ran on the glass; it is sent once he is back (`frontStale`)
+    if (os.dirty) {
+      os.drawIfChanged();
+      if (os.era !== 'e4' || front.enabled) frontTex.upload(); else frontStale = true;
+      monitorQuad.changed(); os.dirty = false;
+    }   // S406 / H4: painted only when changed
+    if (frontStale && (os.era !== 'e4' || front.enabled)) { frontTex.upload(); frontStale = false; }
     /**
      * ⚑ S106 — the record READS the era rather than being told it. Two
      * independent paths set the room's decade (the played `driveMorphSpace`

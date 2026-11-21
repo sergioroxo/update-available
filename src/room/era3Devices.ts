@@ -359,9 +359,20 @@ const PLACEMENT = {
      * the euler) is preserved exactly, and `e_headset`, `e_headsetStand` and
      * `e_glasses` move with it.
      */
-    pos: { x: 5.075, y: 0.968, z: 0.10 },
+    /**
+     * ⚑ S414 (UiB job 33 Part C) — TO THE DESK IN FRONT OF THE SEAT, translated with its prop again (`e_headset` (5.2, 0.9,
+     * 0.1) → (5.28, 0.84, 1.0), Δ (+0.08, −0.06, +0.90)): Act III's Join in VR lights it and it must be found without a turn
+     * (job 33: "so nobody has to turn to find it"; his 26-21). From the seat its face is ~23° right and ~24° down — inside the
+     * computer's frame at rest and the headset's — and the headset lies on a flat pad so its top stays under the monitor's
+     * bottom edge. The 36.9° above was the periphery he asked for on 7 Sept, for a device that was waiting; this one is
+     * called, and what is called is brought before the eye or put where the eye already is.
+     * ⚑ The headset lies on the desk under the screen (`e_headset` base (5.2, 0.76, 0.9), top 0.895), so its light lies FLAT
+     * ON ITS TOP (euler 0/270/0: facing up, its 0.15 m along the headset's width): the seat sees it 22°–25° down, ~18° right,
+     * under the monitor's glass and inside the computer's frame. Its old face-on pose would sit 34° down, under the frame.
+     */
+    pos: { x: 5.2, y: 0.9, z: 0.9 },
     size: { w: 0.15, h: 0.075 },
-    euler: { x: 90, y: 270, z: 0 }
+    euler: { x: 0, y: 270, z: 0 }
   },
   /**
    * ⚑ THE LAPTOP (2026-09-01) — Era 4's opening surface, and the one that sends
@@ -1573,8 +1584,10 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
          */
         if (s.name === 'visor' && eraNow === 'e4') {
           const sh = e4Bridge()?.shell();
+          // ⚑ S414 — and while it is being set back on the desk (Act III's session dies in it): it goes dark and comes down,
+          //   no fade — the glass eases from the eyes to its rest (visorK → 0) and only then is it the model alone
           s.entity.enabled = !!sh && !sh.handedOffToClose
-            && (sh.pinned || sh.deviceReady || sh.deviceReturnable);
+            && (sh.pinned || sh.deviceReady || sh.deviceReturnable || visorK > 0);
         }
         if (s.name === 'backstage') {
           // ⚑ S356 — only while she faces it (one draw call, never while the crowd is up in front of her)
@@ -1620,8 +1633,10 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
          */
         if (s.name === 'visor' && eraNow === 'e4') {
           const sh = e4Bridge()?.shell();
+          // ⚑ S414 — and while it is being set back on the desk (Act III's session dies in it): it goes dark and comes down,
+          //   no fade — the glass eases from the eyes to its rest (visorK → 0) and only then is it the model alone
           s.entity.enabled = !!sh && !sh.handedOffToClose
-            && (sh.pinned || sh.deviceReady || sh.deviceReturnable);
+            && (sh.pinned || sh.deviceReady || sh.deviceReturnable || visorK > 0);
         }
         if (s.name === 'backstage') {
           // ⚑ S356 — only while she faces it (one draw call, never while the crowd is up in front of her)

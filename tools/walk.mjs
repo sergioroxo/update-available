@@ -161,6 +161,12 @@ const ENTRANCE = HOME_DOOR ? '' : 'restore';
 if (flag('cut', '') === 'full') { console.log('walk: the full route (?cut=full) is frozen at the tag research/full-cut-2026-11-17 (S401, his "Yes, freeze it", 17 Nov): there is one visit.'); process.exit(2); }
 const CUT = 'speedrun';
 const GUIDED_WALK = CUT === 'speedrun' && !process.argv.includes('--explore');
+/** ⚑ S414 (UiB job 33 Part C) — `--door vr|here`: which of Act III's two doors the walk takes (2026 beat 9, "Your session with
+ *  Shepherd is ready"). `vr` (the default, the first answer): Join in VR, then the lit headset on the desk in front of the seat
+ *  (its plane, at its centre, as a visitor presses it — or the frame's call), then the session on the glass and its Yes there.
+ *  `here`: Join here, the session over the whole monitor and its Yes there. The other door is refused, never both. The door
+ *  not walked is proved by tools/s414-act3-probe.mjs. */
+const DOOR = flag('door', 'vr') === 'here' ? 'here' : 'vr';
 const MAX_STEPS = Number(flag('max', 320));
 /** ⚑ S332 — `--refuse`: in 2016 the walker refuses every job (Skip, Leave it off, Don't send a script, Not this week,
  *  the kit left unapproved) and never presses a comply control, to prove the system carries the day without her. */
@@ -953,7 +959,11 @@ async function main() {
     //   …and no bare press on the monitor's centre while the acts run: the screen publishes every control it has, so a
     //   last-resort press there only lands on whatever is under the centre (Mum's link, a story) — a choice, not the way on
     //   ⚑ S413 — while they run: once the acts have handed over (bstate.done) the headset's plane is the way on again
-    if (st?.era === 'e4' && st?.bstate?.step === 'acts' && !st?.bstate?.done && t.surface === 'plane') return false;
+    //   ⚑ S414 — except the headset's own plane while Act III's Join in VR has lit it (`bstate.headset`): that is the way on
+    if (st?.era === 'e4' && st?.bstate?.step === 'acts' && !st?.bstate?.done && t.surface === 'plane'
+      && !(t.id === '(press) era4-visor' && st?.bstate?.headset)) return false;
+    // ⚑ S414 (UiB job 33 Part C) — Act III's two doors: the walk takes the one `--door` names and refuses the other
+    if (st?.era === 'e4' && /^a3-(?:vr|here)$/.test(id) && id !== 'a3-' + DOOR) return false;
     // ⚑ S413 (UiB job 33 Part B) — Act II's optional doors and reader's choices, proved by tools/s413-act2-probe.mjs: Undo
     //   (it works once), the console's Open it (it comes to the eye), a Memory note opened in place, the conversation's
     //   Newest pill, Memory on the taskbar. The walk follows Second Thoughts: Review each or Do it for me, the video's play,
@@ -1935,6 +1945,7 @@ async function main() {
     isReachabilityProof: !SETUP && !JUMP && FROM_ERA <= 1 && !formOfferProbe,
     reviewBoot: formOfferProbe ? 1 : null,
     walkPolicy: GUIDED_WALK ? 'guided' : 'explore',
+    door: DOOR,   // ⚑ S414 — Act III's door this walk took (--door vr|here)
     steps: log.length, presses: presses.length, turns,
     reachedEra: final.era, spine: final.spine,
     ledger: final.ledger, console: noise, log

@@ -65,6 +65,8 @@ import { voiceHeld, voiceWanted } from '../../state/voiceHold';
 import { E4Acts, type TvNow } from './e4Acts';
 import { actOne, wireActOne, layIn as layInActOne, type ActOneFrom } from './e4ActOne';
 import { actTwo, wireActTwo, type ActTwoFrom } from './e4ActTwo';
+import { actThree, wireActThree, layInActTwo, stopActThreeSound, type ActThreeFrom, type ActThreeHooks } from './e4ActThree';
+import type { Door } from './shepherd';
 import { TASKBAR as ACTS_TASKBAR } from './lScreen';
 
 export interface Hit { x: number; y: number; w: number; h: number; id: string }
@@ -225,6 +227,13 @@ export class E4Browser {
   /** ⚑ S413 (beat 6) — app.ts: Open it brings the console off the bed to her (heldDevice's grammar); and whether it is held */
   onConsole: (() => boolean) | null = null;
   consoleHeld: (() => boolean) | null = null;
+  /** ⚑ S414 (Act III) — the shell (space.ts): is the headset on her face; the session dies in it (dark, set back on the desk);
+   *  and the acts are over (Junie's "i know. come in."): the stream begins */
+  headsetWorn: (() => boolean) | null = null;
+  onHeadsetDown: (() => void) | null = null;
+  onActsDone: (() => void) | null = null;
+  /** ⚑ S414 — the Join-in-VR door has lit the headset on the desk: it is pressable (space.ts `deviceReady`; the walker's bstate) */
+  headsetOffered = false;
   /** app.ts: bring the Lamby set off its shelf to the side of the monitor (Mum's link); and how the set is now */
   onHedge: (() => boolean) | null = null;
   tvNow: (() => TvNow & { arriving: boolean }) | null = null;
@@ -793,30 +802,45 @@ export class E4Browser {
     this.version++;
   }
   /** ⚑ S412 — Act I begins (from its first beat in play; a review jump may begin later) · ⚑ S413 — then Act II, on the same
-   *  screen, from the seam's press (a review jump may begin inside Act II: `two`) */
-  private beginActs(from: ActOneFrom, two?: ActTwoFrom): void {
+   *  screen, from the seam's press (a review jump may begin inside Act II: `two`) · ⚑ S414 — then Act III (Shepherd Live™,
+   *  beats 9–10; a review jump may begin inside it: `three`), and its last line hands over to the stream */
+  private beginActs(from: ActOneFrom, two?: ActTwoFrom, three?: { from: ActThreeFrom; door: Door }): void {
     const a = this.acts;
     wireActOne(a);
     wireActTwo(a);
+    wireActThree(a);
+    stopActThreeSound();
     a.bringTv = () => this.onHedge?.() ?? false;
     this.go('acts');
     this.actsHanded = false;
     const self = this;
+    const hooks: ActThreeHooks = {
+      offerHeadset: (on) => { self.headsetOffered = on; self.version++; },
+      headsetOn: () => self.headsetWorn?.() ?? false,
+      setDownHeadset: () => self.onHeadsetDown?.()
+    };
     a.start((function* () {
       let choice: 'add' | 'notnow' = 'add';
-      if (!two) choice = yield* actOne(a, { tvBusy: () => { const t = self.tvNow?.(); return !!t && (t.watching || t.arriving); } }, from);
-      else layInActOne(a, 5);
+      if (three) { layInActOne(a, 5); layInActTwo(a); }
+      else {
+        if (!two) choice = yield* actOne(a, { tvBusy: () => { const t = self.tvNow?.(); return !!t && (t.watching || t.arriving); } }, from);
+        else layInActOne(a, 5);
+        self.actsDone = true;
+        yield* actTwo(a, { bringConsole: () => self.onConsole?.() ?? false, consoleHeld: () => self.consoleHeld?.() ?? false }, choice, two ?? 5);
+      }
       self.actsDone = true;
-      yield* actTwo(a, { bringConsole: () => self.onConsole?.() ?? false, consoleHeld: () => self.consoleHeld?.() ?? false }, choice, two ?? 5);
+      // ⚑ S414 — Act III: "Booked ✓ · today." leads straight into "Your session with Shepherd is ready."
+      yield* actThree(a, hooks, three?.from ?? 'doors', three?.door ?? 'here');
       a.done = true;
       self.handOver();
+      self.onActsDone?.();
     })());
   }
   /**
    * ⚑ S413 — THE HAND-OVER (S412's `fromActs`, retired: the old Second Thoughts conversation never opens now — its beats are
-   * Act II's, rebuilt). Act II has ended on "Booked ✓ · today.": the screens are done, and the visit goes on as it was after
-   * them — the headset on the desk, Shepherd Live™'s studio, Junie's link, the stream, the failure — until Part C's Act III
-   * replaces it. The old screens that still draw at the failure (the browser's window, Kettle's) are given the day the acts
+   * Act II's, rebuilt). ⚑ S414 — it comes after Act III now: Junie's "i know. come in." has been read, and the visit goes on
+   * into the stream (space.ts `joinStreamFromActs`: the stream as built, until Part D brings it onto the monitor). The headset,
+   * the studio, Junie's link, the raid, the naming and backstage are Act III's or retired (s4_ball.json `_retiredS414`). The old screens that still draw at the failure (the browser's window, Kettle's) are given the day the acts
    * have shown, as `fromActs` gave them the morning, so nothing in them asks to be done again or reads empty; what Second
    * Thoughts did is theirs too (Junie and the lot muted).
    */
@@ -918,12 +942,9 @@ export class E4Browser {
         const s4 = this.stallT; this.stallT += dt;
         if (s4 < STALL_SECONDS && this.stallT >= STALL_SECONDS) this.version++;
       } else this.stallT = 0;
-      // ⚑ S413 — the screens are done: as the old flow did at its end, the piece turns her to the headset (no beat waits on a
-      //   look); the device glows and the guide's step is the headset's
-      if (this.actsHanded) {
-        this.handedT += dt;
-        if (!this.headsetFaced && this.handedT > 2.5) { this.headsetFaced = true; this.face('headset'); }
-      }
+      // ⚑ S414 — retired: S413's turn to the headset once the screens were done. The headset is Act III's now (Join in VR), and it
+      //   sits on the desk in front of the seat: nobody is turned to it, and after the acts the stream follows, not the headset
+      if (this.actsHanded) this.handedT += dt;
       return;
     }
     // ⚑ S363 — notifications fade after a while; the news sites' furniture keeps its own clock; the composer's pointer
@@ -3280,6 +3301,16 @@ export class E4Browser {
     this.t = 0;
     this.filedSession = true;
     this.beginActs(4, from);
+    this.version++;
+  }
+  /** ⚑ S414 (review only) — Act III from one of its points (the doors, the session, the photo, the friends), in a door;
+   *  Acts I and II laid in. In the VR door the shell has put the headset on first (space.ts `debugActThree`). */
+  debugActThree(from: ActThreeFrom, door: Door): void {
+    this.settleT = 0;
+    this.phase = 'open';
+    this.t = 0;
+    this.filedSession = true;
+    this.beginActs(4, undefined, { from, door });
     this.version++;
   }
   debugJumpTo(where: string): void {
