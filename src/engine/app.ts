@@ -5649,15 +5649,16 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     closeMsgEl.replaceChildren();
     const p = document.createElement('div'); p.textContent = c.text; closeMsgEl.appendChild(p);
     if (c.by) { const b = document.createElement('div'); b.textContent = c.by; b.style.color = FRAME.dim; b.style.marginTop = '0.4em'; b.style.fontSize = '0.8em'; closeMsgEl.appendChild(b); }
-    const last = i === closeMessage.cards.length - 1;
+    // ⚑ S409 (his rewrite of 21 Nov, T99) — every card ends "press to continue", the last too: the sources note after
+    //   the cards was cut (its text kept in close_message.json's _docS409); the sources stay in the menu, under Credits
     const f = document.createElement('div');
-    f.textContent = last ? closeMessage.sourcesNote : closeMessage.continue;
+    f.textContent = closeMessage.continue;
     Object.assign(f.style, { color: FRAME.faint, marginTop: '0.8em', fontSize: 'max(14px, 0.62em)' });
     closeMsgEl.appendChild(f);
     closeMsgEl.style.opacity = xr?.active ? '0' : '1';   // the headset has its own card (below); the page's is for the computer
     // ⚑ S361 / H50 — the headset reads it on its own card in front of the eyes (the helper's plate held two lines and
     //   the helper redrew it every frame: in his headset the cards never showed — "where are the message parts?")
-    xrFrame?.setCard({ text: c.text, by: c.by, foot: last ? closeMessage.sourcesNote : closeMessage.continue });
+    xrFrame?.setCard({ text: c.text, by: c.by, foot: closeMessage.continue });
     // the audit's handle (?debug=1 tools only): a card is up and a press anywhere turns it (tools/walk.mjs)
     (window as { __closeCard?: { on: boolean; i: number } }).__closeCard = { on: true, i };
   }
