@@ -2385,7 +2385,9 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   cluster?.setNeverBatch(['tennisRacketModel', 'mouse', 'companionKeychain']);   // S275: the keychain carries the pet's LCD // the demonstration moves it; S270h / VR-01: the hand moves the mouse
   // ⚑ S401 (UiB job 29 D1) — the institution's corner (S181–S183, src/room/institution.ts) is gone with the back wall;
   //   the devices still move, so they still never batch
-  if (options.reinterp === true) cluster?.setNeverBatch([...DEVICE_PROP_IDS]);
+  // ⚑ S414b (UiB job 33) — and 2026's headset: its model is hidden while its glass is off the desk (era3Devices `driveVisor`),
+  //   and a batched entity's enable/disable re-bakes the room's whole batch on the next frame
+  if (options.reinterp === true) cluster?.setNeverBatch([...DEVICE_PROP_IDS, 'e_headset']);
   // ⚑ S402 (UiB job 30 A) — no entrance holds the room (a review route): compile the era change's palette shaders now.
   //   With the entrance, it is done when the story begins (beginStory, and the two ways of cancelling the entrance).
   if (!options.restoreEntrance) cluster?.warmPalette();

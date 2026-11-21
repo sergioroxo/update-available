@@ -1324,6 +1324,15 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
    * makes the beat legible rather than merely absolute: Maya's room slides past
    * the borders of a rectangle that does not move.
    */
+  /** ⚑ S414b — the headset's model on the desk (reinterp_deltas `e_headset`), found once */
+  let headsetEntity: pc.Entity | null | undefined;
+  function headsetModel(): pc.Entity | null {
+    if (headsetEntity === undefined || (headsetEntity && !headsetEntity.parent)) {
+      const e = app.root.findByName('e_headset');
+      headsetEntity = e instanceof pc.Entity ? e : null;
+    }
+    return headsetEntity;
+  }
   function driveVisor(dt: number): void {
     const shell = e4Bridge()?.shell();
     if (!visor || !shell) return;
@@ -1346,6 +1355,16 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
     if (visorK !== target) {
       const step = dt / WEAR_SECONDS;
       visorK = target > visorK ? Math.min(1, visorK + step) : Math.max(0, visorK - step);
+    }
+    // ⚑ S414b (UiB job 33; the coordinator's review of S414's stills B09d-host_vr_xr, B10f-break_vr_xr) — THE HEADSET GOES WITH
+    //   ITS GLASS. The glass is the device's picture; the model is the device. While the glass is off the desk (lifting to her eyes,
+    //   on them, or coming back down — or carried in a hand), the model is not lying on the desk under the screen as well: it is
+    //   hidden, and it is there again the frame the glass is back at rest. No fade (the held-device grammar). Its pad stays. The
+    //   model is kept out of the room's batch for this (app.ts `setNeverBatch`), so the toggle costs no rebatch.
+    {
+      const model = headsetModel();
+      const onDesk = visorK === 0 && !visorCarry;
+      if (model && model.enabled !== onDesk) model.enabled = onDesk;
     }
     if (visorK === 0 && visorCarry && cam) {
       // in the hand: held at the carry point, its glass turned to the eyes
