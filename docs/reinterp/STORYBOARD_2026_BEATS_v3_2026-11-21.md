@@ -358,3 +358,77 @@ Each is [VERIFY SOURCE] until checked.
    religious language. Keep both readings of the clinical debate.
 10. **Platforms shutting down trans spaces:** streams, content and accounts removed under "safety" reasons. To source
     before the Close says anything about it.
+11. **Three kinds of AI, one for each act** (his 21 Nov: "like ChatGPT before, … fine tuned conversational chatbots like
+    Detrans.Ai and the future starting from what MUSE and Dots are as independent agents that work for you directly").
+    Found 21 Nov, not yet read in full; every line here is [VERIFY SOURCE]:
+    - **Act I, L ≈ the general assistant** (ChatGPT and its kind). In Nov 2023 ChatGPT refused an anti-trans group's
+      request to write copy against gender-affirming care, and the group complained in public
+      ([PinkNews, 16 Nov 2023](https://www.thepinknews.com/2023/11/16/gays-against-groomers-fuming-chatgpt-refused-to-write-anti-trans-statements);
+      [The Advocate](https://www.advocate.com/news/gays-against-groomers-chatgpt)). The general assistant does not say
+      it outright, and that refusal is why the next kind exists.
+    - **Act II, Second Thoughts ≈ the chatbot tuned to one view.** **Detrans.AI** presents itself as "the collective
+      consciousness of detransitioners": it gathers posts from r/detrans and YouTube, runs on a Chinese model (Kimi K2),
+      reportedly chosen to avoid what its developer calls the bias of Western models like ChatGPT, and promotes
+      non-medical approaches to gender distress. Every source found is a supporter
+      ([Stella O'Malley's Substack](https://stellaomalley.substack.com/p/detransai-the-collective-consciousness);
+      [Genspect](https://genspect.substack.com/p/helpful-or-harmful);
+      [a podcast episode](https://sometherapist.transistor.fm/192)); no independent review of how it selects and frames
+      posts was found. Earlier relatives: **Text With Jesus** (2023), built on ChatGPT, with biblical figures and later
+      "spiritual counselor" personas ([RNS, 7 Aug 2023](https://religionnews.com/2023/08/07/new-ai-app-lets-users-text-with-jesus-and-other-biblical-figures));
+      **Gab AI** (2024), close to a hundred chatbots in far-right personas ([ReadWrite](https://readwrite.com/gabs-91-chatbots-spout-extremist-rhetoric/)).
+      This is point 2 in real life: a person looks for an answer, and the tuned bot exists because the general one
+      would not give it.
+    - **Act III, Shepherd Live ≈ the agent that acts in your name.** **Muse** (Meta, Sept 2026): a personal agent that
+      shops, sends emails and plans trips for you, on its own cloud computer, also inside WhatsApp
+      ([Meta](https://about.fb.com/newsroom/2026/09/introducing-muse-personal-ai-agent/);
+      [Engadget](https://engadget.com/2253133/meta-reveals-its-ai-agent-that-can-shop-send-emails-and-plan-trips-on-your-behalf/)).
+      **Dots** (OpenAI, DevDay, late Sept 2026): always-on agents that work on your goals around the clock and contact
+      businesses for you ([TechCrunch, 29 Sept 2026](https://techcrunch.com/2026/09/29/openai-launches-dots-its-bubbly-agentic-avatar/);
+      [Al Jazeera, 30 Sept 2026](https://www.aljazeera.com/economy/2026/9/30/openai-launches-dots-personal-ai-assistant-built-to-handle-everything)).
+      What beat 9 imagines is the step after these: such an agent, tuned to one view, writing to her friends as her.
+      ("Machine imagined, script real": the products are invented and the step is speculative, as the Close says.)
+    - Not on any screen: no real product, company or person is named in the piece (the invented-marks law). These are
+      for the article, and for the Close only if he chooses.
+12. **Chosen family as the counter-force** (his: "love that is Junie and Rae, support of chosen families"): the
+    friends who break in are the people the system muted first. In every era, the queer side wins only through other
+    people, never through the interface.
+13. **The era that started the project has changed the most** (his 21 Nov). 2026 (first called Era 4) has been rebuilt
+    more times than any other era. For the article, ARTICLE_MATERIALS §5e lists its versions.
+
+---
+
+## 8. His answers (21 Nov), and what they change
+
+His words first, then what changes. Nothing above is rewritten: the beats stand as written, with these changes on top.
+
+| | His words | What changes |
+|---|---|---|
+| Beat 10, the tell | "Yes i prefer the confused!" · "A i prefer A." | **A.** The message "from Maya" says *"I think I've been confused."*; Junie: *"'confused'? that's not your word. that's theirs."* |
+| Beat 10, the friends | "love that is Junie and Rae, support of chosen families" | Kept as written. Research point 12. |
+| Beat 13, Junie's line | "Junies maybe can say "We'll still exist"" | Junie's line in the dark is **"we'll still exist."** (her lowercase), instead of "still here.". It is said after "SESSION TERMINATED · reason: social contagion", so it answers it. Then L's line. |
+| Beat 13, L's line | "Yes i still like the message from L coming soon, It is creepy, but I feel it is really important." | Kept: **"L will be waiting for the next update — coming soon."** |
+| Question 3, the song | "good idea to bring to the shepards live the song from 2003. bring back to language of the time." | **Yes.** Shepherd Live opens on the dance-pop theme that came off 2003's upload page (registered, unused since S408). The same company's jingle, twenty-three years on. |
+| Research | ChatGPT → Detrans.AI → Muse and Dots | Research point 11. |
+| Era 4's many versions | "It is interesting how the Era-4 has already have had so many interations" | Research point 13; ARTICLE_MATERIALS. |
+
+### His two questions, answered
+
+**"Beat 11 is on the desktop even if the person chooses VR?"** Yes, as drafted, and I would keep it that way. If she
+joined in VR, the headset is Shepherd's device. When her friends remove Second Thoughts in beat 10, the session dies in
+it: it goes dark and is set back down on the desk, the way the piece brings held things down (no fade). The stream then
+opens on her own screen, in her room, with its light filling the room. The system takes her out of her room, and her
+friends bring her back into it. One stream also serves both doors, so the browser visitor and the headset visitor see the
+same respite. The other way would be the stream inside the headset, with her friends taking over the system's own
+device. That is a strong image too, but it would put the respite inside the trap's machine, and the law says respite is
+never a trap.
+
+**"Do you think it is wrong to call it exploratory session?"** No. I think it works, and your reason is the right one:
+it is called a *session* because it is not therapy. The product borrows the word, and that is the tactic the Close
+names in card 5 ("When a practice is banned by name, it simply takes on a new one"). Three things keep it right:
+1. It stays the product's own word, *"exploratory session"*: never "exploratory therapy", and no clinician, clinic or
+   diagnosis on screen. Shepherd mixes wellness and church language, so nobody can take it for a clinic.
+2. The borrowing needs a source before the Close or the Lexicon says anything about it (research point 9, [VERIFY
+   SOURCE]).
+3. The clinical debate keeps both readings, unresolved, at the Close.
+
+The call is yours.

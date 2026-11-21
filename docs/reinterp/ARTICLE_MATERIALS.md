@@ -239,6 +239,24 @@ Each state is kept, never overwritten. Read top to bottom: what was made, what h
 
 What the chain shows, for the article: the first tape illustrated the **procedure** and so repeated the advert; reading the archive (not just listing it) moved the tape to the programme's **theory**; his note then asked the piece to **answer** the theory inside the tape, in the record's own voice; and his question about pausing turned the tapes from a video into a **room object** with a required minimum and an optional rest. His note on v3 then moved the answer **out of the tape**: the TV is the system's labelling screen, so it plays the programme straight; the piece speaks beside it (the margin) and after it (the break), and the archive's own computer model of the person became the 1997 tape's centre. The lesson about method is in memory as "catalogued is not read".
 
+## 5e. 2026 (first "Era 4"): the era in versions (his remark, 21 Nov: "It is interesting how the Era-4 has already have had so many interations, being the one the one that kinda kickstarted the project")
+
+The era the project started from has been rebuilt more times than any other. This is a list of where each version is
+written down, taken from file names and the session notes. It has **not** been re-read as a history yet; read the
+documents before the article says anything about them. The earlier versions are research states and are kept.
+
+| when | where it is written | the version |
+|---|---|---|
+| Jun–Jul 2026 | BUILD_LOG (Round 11b; R24) | the first notes; then one of three rooms that age, with Era 4 joined into Room 3 |
+| 6 Sep | `ERA4_STORYTELLING_2026-09-06.md`, `ERA4_FRESH_LOGIC_2026-09-06.md` | the first surgery, and his four reversing rulings |
+| 10–11 Sep | `ERA4_STATE_2026-09-10.md`, `ERA4_REACHABLE_2026-09-11.md` | a browser you arrive at late; L's ten units retired; the tabs that could not be pressed |
+| 12–13 Sep | `ERA4_OVERHAUL_2026-09-12.md`, `ERA4_DRAFTS_2026-09-12.md`, `ERA4_STATE_2026-09-12.md`, `ERA4_TOUR_2026-09-13.md` | the overhaul: the programme on rails, the Restoration tool, the Commons as a world, the second act |
+| 16 Sep | `QUEST_E4_2026-09-16.md` | the era on the headset |
+| 1–3 Nov | `RESEARCH_2026_V2_WEAPONISED_CARE_2026-11-01.md`, `ERA4_V2_BUILT_2026-11-02.md`, `E3_E4_OPENERS_2026-11-03.md` | 2026 v2: weaponised care, TransJesus |
+| 7–8 Nov | `DESIGN_2026_V3_PRESSURE_2026-11-07.md`, `RESEARCH_2026_V3_THREADS_2026-11-07.md`, `E4_V3_SCREENS_BUILT_2026-11-07.md`, `E4_ONE_SCREEN_2026-11-08.md` | v3: pressure, not clinical; one screen |
+| 11–14 Nov | BUILD_LOG (jobs 13 and 24) | built around the AI conversation; the parents' course |
+| 20–21 Nov | `HEADSET_RUN_*` (T97 26-1…26-22); `STORYBOARD_2026_BEATS_2026-11-21.md` → `_v2_` → `_v3_` | his headset run ("fundamental errors"), then the era redone from its logic in three drafts, on paper before any build |
+
 ## 6. Sources and archives outside the repo
 
 | where | what |
