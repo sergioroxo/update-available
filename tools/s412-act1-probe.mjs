@@ -172,7 +172,8 @@ for (const mode of MODES) {
   await press('page-back'); await wait(600);
   if (SEAM) {
     await press('st-add'); await mark('seam');
-    await page.waitForFunction(() => window.__os.e4.browser.storyStep === 'bot', { timeout: 20000 }).catch(() => {});
+    // ⚑ S413 — the seam leads into Act II on the same screen (Second Thoughts adds itself: its page on the right)
+    await page.waitForFunction(() => window.__os.e4.browser.acts.screen.page?.kind === 'added', { timeout: 20000 }).catch(() => {});
     await wait(5000); await shot('B05seam');
   }
   rep.heard = await page.evaluate(() => window.__heard.filter((h) => /^l_/.test(h.src)).map((h) => ({ src: h.src, dur: h.dur, ended: h.ended, ms: h.endAt ? Math.round(h.endAt - h.at) : null })));

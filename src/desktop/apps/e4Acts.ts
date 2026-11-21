@@ -8,9 +8,10 @@
  * set down). The visitor's choices are real presses, and every one leads into the same trap.
  *
  *   · Act I · L (beats 1–4): src/desktop/apps/e4ActOne.ts (S412).
- *   · Act II · Second Thoughts (beats 5–8), Act III · Shepherd Live™ (beats 9–10), the stream and the end (11–13): Parts B–D
- *     (S413–S415) add their acts after Act I's; until they exist, Act I's last press hands over at THE SEAM (`onSeam`) to the
- *     visit as it was (src/desktop/apps/browser.ts `fromActs`).
+ *   · Act II · Second Thoughts (beats 5–8): src/desktop/apps/e4ActTwo.ts (S413). Act I's last press (✚ Add to L · Not now)
+ *     leads straight into it (browser.ts `beginActs`); Act II's last line ("Booked ✓ · today.") hands over to the visit as it
+ *     was after the screens (the headset and Shepherd Live™'s studio) until Part C's Act III exists.
+ *   · Act III · Shepherd Live™ (beats 9–10), the stream and the end (11–13): Parts C–D (S414–S415).
  *
  * The director never touches the room: the room reads the contract (src/narrative/e4Beats.ts), and the Lamby set is reached
  * through the two hooks app.ts gives it (`bringTv`, `tv`).
@@ -46,13 +47,15 @@ export class E4Acts {
   path: string[] = [];
   /** a person's own words are on the glass (a thread, an email, an original): the guide and the AI are silent */
   feltNow = false;
+  /** ⚑ S413 — something else has the floor (the film's own narrator, in beat 7): the guide waits, one voice at a time */
+  floor = false;
   /** the acts are over: the seam has been passed (Act I's last press) */
   done = false;
   // ── the hooks the engine and the old browser give it ──
   /** bring the Lamby set off its shelf to the side of the screen (beat 3's link); false if it could not come */
   bringTv: (() => boolean) | null = null;
   tv: (() => TvNow) | null = null;
-  /** the last press of Act I: ✚ Add to L or Not now (Part B's beat 5 takes it; until then the old flow) */
+  /** ⚑ S413 — retired: Act I's last press leads into Act II directly (browser.ts `beginActs`); kept so the seam is legible */
   onSeam: ((choice: 'add' | 'notnow') => void) | null = null;
   /** presses a page handles itself (a story opened, the original turned): the act registers them */
   private handlers = new Map<string, (id: string) => boolean>();
@@ -146,7 +149,7 @@ export class E4Acts {
   }
   *click(): Beat { this.screen.clickCursor(); yield 0.35; }
   /** file a step on the 2026 record (memory only; the Close reads it) — once per id */
-  file(id: string, outcome: 'read' | 'opened' | 'answered' | 'done', witness: string): void {
+  file(id: string, outcome: 'read' | 'opened' | 'answered' | 'done' | 'residue', witness: string): void {
     if (ledger.e4Space.some((e) => e.id === id)) return;
     ledger.e4Space.push({ id, outcome, witness });
   }

@@ -148,6 +148,11 @@ const REGISTRY: Record<string, string> = {
   'l_a1_goodcall.mp3': `${AUDIO_BASE}l_a1_goodcall.mp3`,
   'l_a1_doors.mp3': `${AUDIO_BASE}l_a1_doors.mp3`,
   'l_a1_answer.mp3': `${AUDIO_BASE}l_a1_answer.mp3`,
+  // ⚑ S413 (UiB job 33 Part B) — Act II: Second Thoughts in the same voice, slower (speed 0.82), the same switch
+  'l_b5_here.mp3': `${AUDIO_BASE}l_b5_here.mp3`,
+  'l_b7_made.mp3': `${AUDIO_BASE}l_b7_made.mp3`,
+  'l_b8_hear.mp3': `${AUDIO_BASE}l_b8_hear.mp3`,
+  'l_b8_found.mp3': `${AUDIO_BASE}l_b8_found.mp3`,
   'l_u1a.mp3': `${AUDIO_BASE}l_u1a.mp3`,
   'l_u1b.mp3': `${AUDIO_BASE}l_u1b.mp3`,
   'l_u1r_ok.mp3': `${AUDIO_BASE}l_u1r_ok.mp3`,

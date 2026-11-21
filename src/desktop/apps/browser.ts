@@ -63,7 +63,8 @@ import closeMessage from '../../../data/strings/close_message.json';
 import tvWords from '../../../data/strings/teaching_tv.json';
 import { voiceHeld, voiceWanted } from '../../state/voiceHold';
 import { E4Acts, type TvNow } from './e4Acts';
-import { actOne, wireActOne, type ActOneFrom } from './e4ActOne';
+import { actOne, wireActOne, layIn as layInActOne, type ActOneFrom } from './e4ActOne';
+import { actTwo, wireActTwo, type ActTwoFrom } from './e4ActTwo';
 import { TASKBAR as ACTS_TASKBAR } from './lScreen';
 
 export interface Hit { x: number; y: number; w: number; h: number; id: string }
@@ -209,13 +210,21 @@ export class E4Browser {
   /**
    * ⚑ S412 (UiB job 33 Part A; T98) — 2026 REBUILT FROM ITS LOGIC: the one screen with two panes and the director of the
    * acts (src/desktop/apps/e4Acts.ts, lScreen.ts, e4ActOne.ts). From "Press to wake the screen" the monitor is THAT screen;
-   * Act I (L, beats 1–4) plays on it. ⚑ THE SEAM: Act I's last press (✚ Add to L · Not now) leads into Part B's beat 5; until
-   * Part B exists `fromActs` hands over to the visit as it was, at the Second Thoughts conversation's first words.
+   * Act I (L, beats 1–4) plays on it. ⚑ THE SEAM: Act I's last press (✚ Add to L · Not now) leads into Act II.
+   * ⚑ S413 (Part B) — ACT II (Second Thoughts, beats 5–8: e4ActTwo.ts) follows on the same screen; `fromActs` is retired (the
+   * old conversation never opens). Act II's last line ("Booked ✓ · today.") hands over to the visit as it was after the
+   * screens (`handOver`: the headset, Shepherd Live™'s studio) until Part C's Act III exists.
    */
   readonly acts = new E4Acts();
   private actsSeen = -1;
   /** Act I has handed over (the old screens carry the rest of the visit until Parts B–D replace them) */
   private actsDone = false;
+  /** ⚑ S413 — Act II has ended ("Booked ✓ · today."): the screens are done and the headset is the way on (`programDone`) */
+  private actsHanded = false;
+  private handedT = 0;
+  /** ⚑ S413 (beat 6) — app.ts: Open it brings the console off the bed to her (heldDevice's grammar); and whether it is held */
+  onConsole: (() => boolean) | null = null;
+  consoleHeld: (() => boolean) | null = null;
   /** app.ts: bring the Lamby set off its shelf to the side of the monitor (Mum's link); and how the set is now */
   onHedge: (() => boolean) | null = null;
   tvNow: (() => TvNow & { arriving: boolean }) | null = null;
@@ -300,7 +309,8 @@ export class E4Browser {
   private botT = 0;
   private botSaid: Said[] = [];
   /** ⚑ S356 — the chips she pressed in the bot, in order (memory only): the host's operator view quotes them back */
-  get herWords(): string[] { return this.botSaid.filter((s) => s.who === 'her').map((s) => s.text); }
+  // ⚑ S413 — and the presses she made in the acts (her bubbles on the one screen; her deleted words are not among them)
+  get herWords(): string[] { return [...this.acts.screen.rows.filter((r) => r.who === 'her').map((r) => r.text), ...this.botSaid.filter((s) => s.who === 'her').map((s) => s.text)]; }
   private botDone = new Set<string>();
   private botNextIn = -1;
   /** ⚑ S404 (UiB job 30 C2) — Maya's own line in her message box, never sent (s4_v3.json bot.unsent): seconds since she began
@@ -370,7 +380,7 @@ export class E4Browser {
   get junieReplied(): boolean { return this.messenger.junieReplied; }
   get reversed(): boolean { return this.reversal === 'matched'; }
   /** the conversation is over: the original confirmed, the agent satisfied, the headset is what is left */
-  get programDone(): boolean { return this.step === 'ready' && this.reversal === 'matched' && this.botBeatReady; }
+  get programDone(): boolean { return (this.step === 'ready' && this.reversal === 'matched' && this.botBeatReady) || (this.step === 'acts' && this.actsHanded); }
   /** for the walker's bstate: a choice is on the page and unanswered */
   turnPending(): boolean { const b = this.bot; return !!b && !!b.chips && this.botBeatReady && !this.botDone.has(b.id); }
   get feltUp(): boolean { return this.messenger.felt; }
@@ -383,7 +393,7 @@ export class E4Browser {
   //   guide's 50 s tip, which would otherwise pop over the end slate
   get guideVoice(): boolean {
     return !!this.nowLine || this.waitNow || this.clipTakeover
-      || (this.step === 'acts' && (this.acts.screen.speaking || this.acts.screen.typing));   // S412: L is talking
+      || (this.step === 'acts' && (this.acts.screen.speaking || this.acts.screen.typing || this.acts.floor));   // S412: L is talking · S413: the film has the floor
   }
   sayLine(line: string): void { this.nowLine = line; this.version++; }
   /** the laptop's line while the messenger is not up (the restore, the session worn) */
@@ -782,31 +792,39 @@ export class E4Browser {
     this.beginActs(1);
     this.version++;
   }
-  /** ⚑ S412 — Act I begins (from its first beat in play; a review jump may begin later) */
-  private beginActs(from: ActOneFrom): void {
+  /** ⚑ S412 — Act I begins (from its first beat in play; a review jump may begin later) · ⚑ S413 — then Act II, on the same
+   *  screen, from the seam's press (a review jump may begin inside Act II: `two`) */
+  private beginActs(from: ActOneFrom, two?: ActTwoFrom): void {
     const a = this.acts;
     wireActOne(a);
+    wireActTwo(a);
     a.bringTv = () => this.onHedge?.() ?? false;
-    a.onSeam = (choice) => this.fromActs(choice);
     this.go('acts');
+    this.actsHanded = false;
     const self = this;
     a.start((function* () {
-      const choice = yield* actOne(a, { tvBusy: () => { const t = self.tvNow?.(); return !!t && (t.watching || t.arriving); } }, from);
+      let choice: 'add' | 'notnow' = 'add';
+      if (!two) choice = yield* actOne(a, { tvBusy: () => { const t = self.tvNow?.(); return !!t && (t.watching || t.arriving); } }, from);
+      else layInActOne(a, 5);
+      self.actsDone = true;
+      yield* actTwo(a, { bringConsole: () => self.onConsole?.() ?? false, consoleHeld: () => self.consoleHeld?.() ?? false }, choice, two ?? 5);
       a.done = true;
-      a.onSeam?.(choice);
+      self.handOver();
     })());
   }
   /**
-   * ⚑ S412 — THE SEAM. Act I's sponsored card was pressed (✚ Add to L, or Not now and then the next press). Part B's beat 5
-   * (Second Thoughts adds itself to L) does not exist yet, so the visit goes on as it was, from the Second Thoughts
-   * conversation's first words (`openBot`: "Everyone else made you wait. I'm here now."). The old screens are given the
-   * morning Act I has already shown — Kettle read, the clinic's number, Meridian's no, Mum's email and her links — so
-   * nothing in them asks to be done again; the conversation skips its `reasons` beat, whose "Every door closed at once"
-   * Act I has said once already ("Three doors closed this week").
+   * ⚑ S413 — THE HAND-OVER (S412's `fromActs`, retired: the old Second Thoughts conversation never opens now — its beats are
+   * Act II's, rebuilt). Act II has ended on "Booked ✓ · today.": the screens are done, and the visit goes on as it was after
+   * them — the headset on the desk, Shepherd Live™'s studio, Junie's link, the stream, the failure — until Part C's Act III
+   * replaces it. The old screens that still draw at the failure (the browser's window, Kettle's) are given the day the acts
+   * have shown, as `fromActs` gave them the morning, so nothing in them asks to be done again or reads empty; what Second
+   * Thoughts did is theirs too (Junie and the lot muted).
    */
-  private fromActs(_choice: 'add' | 'notnow'): void {
-    if (this.actsDone) return;
-    this.actsDone = true;
+  private handOver(): void {
+    if (this.actsHanded) return;
+    this.actsHanded = true;
+    this.handedT = 0;
+    this.headsetFaced = false;
     this.acts.screen.stopVoice();
     this.clinicNumber = CL.start + 3; this.clinicMoved = true;
     this.enquiry = 'closed';
@@ -819,8 +837,9 @@ export class E4Browser {
     m.houseShown = 3; m.houseOpenedBirthday = true;
     m.mumToday = 1; m.mumAtToday = true; m.mumOpened = true;
     m.dadIn = true; m.dadRead = true; m.linkOpened = true;
+    m.junieMuted = true; m.houseMuted = true; this.mapMuted = true;
     m.want = null; m.view = 'list';
-    this.openBot();
+    this.version++;
   }
   /** the monitor sleeps again only once the screens are done and the headset waits (S208's orb) */
   private updateIdleOrb(dt: number): void {
@@ -899,6 +918,12 @@ export class E4Browser {
         const s4 = this.stallT; this.stallT += dt;
         if (s4 < STALL_SECONDS && this.stallT >= STALL_SECONDS) this.version++;
       } else this.stallT = 0;
+      // ⚑ S413 — the screens are done: as the old flow did at its end, the piece turns her to the headset (no beat waits on a
+      //   look); the device glows and the guide's step is the headset's
+      if (this.actsHanded) {
+        this.handedT += dt;
+        if (!this.headsetFaced && this.handedT > 2.5) { this.headsetFaced = true; this.face('headset'); }
+      }
       return;
     }
     // ⚑ S363 — notifications fade after a while; the news sites' furniture keeps its own clock; the composer's pointer
@@ -1422,6 +1447,15 @@ export class E4Browser {
       if (asked || stalled) { const path = this.pathIds(); for (const h of this.hits) if (path.has(h.id)) this.ringAround(ctx, h); }
     }
     const ty = H - ACTS_TASKBAR;
+    // ⚑ S413 (rule 3) — MEMORY belongs to Second Thoughts: its item on the taskbar from its first note (beat 6), never in
+    //   Act I; open, its card lies over her world (the record of the day, read only); never over a person's words
+    const memory = this.acts.screen.rows.some((r) => r.who === 'memory');
+    this.memOpen = this.memOpen && memory && !silent;
+    if (memory && !this.acts.feltNow && !this.acts.screen.originalShown) this.drawMemoryItem(ctx, ty, pressable, this.acts.screen.date);
+    if (this.memOpen) {
+      const pr = this.acts.screen.pageRect(W, H);
+      this.drawMemoryCard(ctx, { b: { x: pr.x, w: pr.w, cx: pr.x, cy: pr.y, cw: pr.w, ch: pr.h, s: 1, lw: pr.w, lh: pr.h }, k: { x: 0, w: 0, cx: 0, cy: 0, cw: 0, ch: 0, s: 1, lw: 0, lh: 0 } }, pressable);
+    }
     if (pressable && this.lambyGuide?.canRequest && !silent) {
       setFont(ctx, 10); ctx.fillStyle = V3.ink2;
       const ask = V.oneScreen.askL, aw = Math.ceil(ctx.measureText(ask).width);
@@ -1435,11 +1469,11 @@ export class E4Browser {
     }
   }
   /** ⚑ S401 (job 29 D2) — the taskbar's Memory item: a small mark, the word, the count; inverted while lit */
-  private drawMemoryItem(ctx: CanvasRenderingContext2D, ty: number, pressable: boolean): void {
+  private drawMemoryItem(ctx: CanvasRenderingContext2D, ty: number, pressable: boolean, date = V.oneScreen.taskbarDate): void {
     // ⚑ S410 (his 21 Nov "yes": the file items of 2003–2026 stop lighting too, as 97-6 did for 1997's tray) — it counts, quietly; it never lights
     const M = FILE_ITEM.e4, lit = false, n = String(this.fileWatch.count);
     ctx.font = monoFor(10);
-    const dw = Math.ceil(ctx.measureText(V.oneScreen.taskbarDate).width);
+    const dw = Math.ceil(ctx.measureText(date).width);
     setFont(ctx, 10);
     const lw = Math.ceil(ctx.measureText(M.label ?? '').width), nw = Math.ceil(ctx.measureText(n).width) + 10;
     const x = 8 + dw + 16, w = 8 + 10 + 6 + lw + 6 + nw + 6, y = ty + 2, h = WIN.taskbar - 4;
@@ -1649,7 +1683,8 @@ export class E4Browser {
   pressGuideTarget(id: string): 'monitor' | null {
     if (this.guideSilent || this.guideVoice) return null;
     const allowed = ['ny-continue', 'clinic-open', 'clinic-support', 'mail-support', 'mail-read', 'tab-mail', 'tab-news', 'news-next', 'sponsor-chat', 'search-go', 'ad-chat', 'tab-photos', 'start-menu', 'row-mum', 'chat-mum', 'row-dad', 'chat-dad', 'row-house', 'chat-house', 'row-junie', 'chat-junie',
-      'mem-open'];   // S401: the file
+      'mem-open',   // S401: the file
+      'video-play'];   // S413 (beat 7): the guide offers once to play the film it made (navigation, not an answer)
     if (!allowed.includes(id)) return null;
     const r = this.hits.find(h => h.id === id);
     if (r) { this.handleClick(r.x + r.w / 2, r.y + r.h / 2); return 'monitor'; }
@@ -3025,6 +3060,11 @@ export class E4Browser {
     if (this.phase === 'handed') return false;
     // ⚑ S412 — the one screen: its own controls (the act's answers, the pages, the voice switch, the back arrow)
     if (this.step === 'acts' && this.phase === 'open') {
+      // ⚑ S413 — Memory (Second Thoughts', from beat 6) on the taskbar: its card over her world; any press closes it
+      if (this.memOpen) { this.memOpen = false; this.version++; return true; }
+      if (this.hits.some(h => h.id === 'mem-open' && mx >= h.x && mx <= h.x + h.w && my >= h.y && my <= h.y + h.h)) {
+        this.memOpen = true; playOnce('ui_press.mp3'); this.version++; return true;
+      }
       const id = this.acts.screen.press(mx, my);
       if (id) { this.stallT = 0; this.version++; return true; }
       return false;
@@ -3231,6 +3271,15 @@ export class E4Browser {
     this.t = 0;
     this.filedSession = true;
     this.beginActs(from);
+    this.version++;
+  }
+  /** ⚑ S413 (review only) — Act II from one of its beats (5 the arrival, 6 the review, 7 the video, 8 her answer); Act I laid in */
+  debugActTwo(from: ActTwoFrom): void {
+    this.settleT = 0;
+    this.phase = 'open';
+    this.t = 0;
+    this.filedSession = true;
+    this.beginActs(4, from);
     this.version++;
   }
   debugJumpTo(where: string): void {

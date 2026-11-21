@@ -502,33 +502,40 @@
      "where": "the monitor"
     },
     {
+     "id": "review",
+     "label": "The risk review",
+     "done": "e4:a2:review",
+     "hint": "Second Thoughts has scored your week. Review each, or Do it for me: either goes on.",
+     "where": "the monitor"
+    },
+    {
+     "id": "takeover",
+     "label": "It uses your computer",
+     "done": "e4:a2:takeover",
+     "quiet": true,
+     "hint": "Second Thoughts is using your computer, one thing at a time. You can scroll its words back while it works.",
+     "where": "the monitor"
+    },
+    {
      "id": "matchmade",
      "label": "The console",
      "done": "matchmadePlayed",
      "optional": true,
-     "hint": "The console on the bed. Pick it up.",
+     "hint": "The console on the bed is lit. Open it, or leave it.",
      "where": "the bed"
     },
     {
-     "id": "map",
-     "label": "The map",
-     "done": "e4:v3:mute",
-     "hint": "Answer it. Either answer goes on.",
+     "id": "video",
+     "label": "Made for her",
+     "done": "e4:a2:video",
+     "hint": "It made you a video. Press play: it runs for a minute.",
      "where": "the monitor"
     },
     {
-     "id": "junie",
-     "label": "Junie",
-     "done": "beat:junie",
-     "quiet": true,
-     "hint": "Junie wrote this morning. Open her chat.",
-     "where": "the laptop"
-    },
-    {
-     "id": "original",
-     "label": "The original",
-     "done": "beat:original",
-     "hint": "Photos: press Use original.",
+     "id": "answer",
+     "label": "Her answer",
+     "done": "e4:a2:booked",
+     "hint": "There is one answer under its words: hers. Press it.",
      "where": "the monitor"
     },
     {
@@ -641,6 +648,31 @@
      "quiet": true,
      "hint": "The piece turns you to the room. Nothing to press.",
      "where": "the room"
+    }
+   ],
+   "_docRetiredS413": "⚑ S413 (UiB job 33 Part B) — 2026's Act II is rebuilt (draft 3, beats 5–8): the old conversation's map (the mute), Junie's unmute and the Photos original give way to Second Thoughts' four: it adds itself (the yellow card's row, `bot`), the risk review, the takeover (quiet: it presses, she watches; the console's Open it is optional), the video made for her, and her answer, deleted. Kept here as they were:",
+   "_retiredS413": [
+    {
+     "id": "map",
+     "label": "The map",
+     "done": "e4:v3:mute",
+     "hint": "Answer it. Either answer goes on.",
+     "where": "the monitor"
+    },
+    {
+     "id": "junie",
+     "label": "Junie",
+     "done": "beat:junie",
+     "quiet": true,
+     "hint": "Junie wrote this morning. Open her chat.",
+     "where": "the laptop"
+    },
+    {
+     "id": "original",
+     "label": "The original",
+     "done": "beat:original",
+     "hint": "Photos: press Use original.",
+     "where": "the monitor"
     }
    ]
   }

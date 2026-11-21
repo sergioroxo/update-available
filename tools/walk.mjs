@@ -952,7 +952,13 @@ async function main() {
     if (st?.era === 'e4' && /^l-voice$|^story-\d$|^page-back$|^hedge-link$/.test(id)) return false;
     //   …and no bare press on the monitor's centre while the acts run: the screen publishes every control it has, so a
     //   last-resort press there only lands on whatever is under the centre (Mum's link, a story) — a choice, not the way on
-    if (st?.era === 'e4' && st?.bstate?.step === 'acts' && t.surface === 'plane') return false;
+    //   ⚑ S413 — while they run: once the acts have handed over (bstate.done) the headset's plane is the way on again
+    if (st?.era === 'e4' && st?.bstate?.step === 'acts' && !st?.bstate?.done && t.surface === 'plane') return false;
+    // ⚑ S413 (UiB job 33 Part B) — Act II's optional doors and reader's choices, proved by tools/s413-act2-probe.mjs: Undo
+    //   (it works once), the console's Open it (it comes to the eye), a Memory note opened in place, the conversation's
+    //   Newest pill, Memory on the taskbar. The walk follows Second Thoughts: Review each or Do it for me, the video's play,
+    //   her one answer.
+    if (st?.era === 'e4' && /^a2-undo$|^a2-open$|^mem-note:|^chat-newest$|^mem-(?:open|close)$/.test(id)) return false;
     if (has('channel-joined') && /^web-/.test(id) && id !== 'web-close') return false;
     if (id === 'cancel' && t.surface === 'kit' && !has('went-online')) return false;
     if (/^dm-(?:up|down)$/.test(id) && (seen?.get(id) || 0) >= 1) return false;

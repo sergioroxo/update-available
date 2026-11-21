@@ -1241,10 +1241,17 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
         //   front of it); the director waits while it comes and while it plays (one voice at a time)
         b.onHedge = () => teachingTvs?.bringBeside(app.root.findByName('era3-device-monitor') as pc.Entity | null) ?? false;
         b.tvNow = () => ({ holding: !!teachingTvs?.holding, watching: !!teachingTvs?.watching, arriving: !!teachingTvs?.arriving });
+        // ⚑ S413 (job 33 Part B, beat 6) — "I put something calming on your console": Open it brings the console off the bed to
+        //   her, before the eye (heldDevice's grammar: the same take as 1997's FIT IN); the director waits while it is in her hands
+        b.onConsole = () => { if (!devices || os.era !== 'e4') return false; devices.take('e4', xr?.active ? logicalHead() : camera); return devices.held('e4'); };
+        b.consoleHeld = () => !!devices && devices.held('e4');
         // ⚑ S321 — 2026 v3: the screens turn her to the screen the story has moved to (no beat waits on a look)
         b.onFace = (s) => {
           if (scriptedBusy() || os.e4?.stage !== 'closed') return false;
           if (s === 'headset') {
+            // ⚑ S413 (job 33; memory headset-no-fades-bring-it-close) — no conducted turn in the headset: the device glows on the
+            //   desk in front of the seat and the guide offers to put it on (its `headset` step); on a screen the camera still turns
+            if (xr?.active) return true;
             const v = app.root.findByName('era4-visor') as pc.Entity | null;
             if (!v) return true;
             const p = v.getPosition(), dx = p.x - camPos.x, dy = p.y - camPos.y, dz = p.z - camPos.z;

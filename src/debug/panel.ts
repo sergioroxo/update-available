@@ -197,6 +197,11 @@ const OS_BEATS: BeatRow[] = [
   { label: '↳ 2 the softened father — Kettle, the ✦', id: 'e4Act1Messages' },
   { label: '↳ 3 three doors — Larkpost, Mum\'s course', id: 'e4Act1Mail' },
   { label: '↳ 4 her search — the stories, the yellow card (the seam)', id: 'e4Act1Search' },
+  // ⚑ S413 (UiB job 33 Part B) — Act II (Second Thoughts) from each of its beats (Act I laid into the chat)
+  { label: '⚑ 2026 Act II · 5 it adds itself — L · Second Thoughts', id: 'e4Act2' },
+  { label: '↳ 6 the risk review, then the takeover', id: 'e4Act2Review' },
+  { label: '↳ 7 made for her alone — the video', id: 'e4Act2Video' },
+  { label: '↳ 8 her answer, deleted — Booked ✓ · today', id: 'e4Act2Answer' },
   { label: 'E4 · ⚑ THE PLACE (worn — then turn, and see what happens)', id: 'e4Place' },
 
   { heading: 'E4 · L — the voice, and the room rewrites (S77)' },

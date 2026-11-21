@@ -26,7 +26,7 @@ import { readHold } from '../readHold';
 import { markE4 } from '../../narrative/e4Beats';
 import { meetWord } from '../../room/lexicon';
 import { playOnce } from '../../audio/tapeAudio';
-import { registerPage, drawRich, personBubble, starIcon, AI, ANIM_HZ, type Page, type PageApi, type Rect } from './lScreen';
+import { registerPage, drawRich, personBubble, starIcon, padlockIcon, AI, ANIM_HZ, type Page, type PageApi, type Rect } from './lScreen';
 import { E4Acts, type Beat, fillIn } from './e4Acts';
 import ACTS from '../../../data/dialog/s4_acts.json';
 import V from '../../../data/dialog/s4_v3.json';
@@ -71,7 +71,7 @@ const AVATAR: Record<Who, { fill: string; mark: string }> = {
 type MailId = 'clinic' | 'meridian' | 'mum';
 
 // ── beat 1: her week, read ──────────────────────────────────────────────────
-type Kind = 'message' | 'email' | 'search' | 'photo';
+export type Kind = 'message' | 'email' | 'search' | 'photo';
 const WEEK: Kind[] = ['message', 'email', 'message', 'photo', 'search', 'message', 'email', 'message', 'message', 'photo', 'email',
   'message', 'search', 'message', 'email', 'message', 'photo', 'message'];
 const FLY_GAP = 0.32;     // a card leaves every this many seconds
@@ -87,7 +87,8 @@ function weekSlot(i: number, pr: Rect): Rect {
 }
 function circleAt(aiW: number): { x: number; y: number; d: number } { return { x: Math.round(aiW / 2), y: 40 + 92, d: 78 }; }
 function absorbed(t: number): number { return Math.max(0, Math.min(WEEK.length, Math.floor((t - FLY_SECONDS) / FLY_GAP) + 1)); }
-function kindIcon(ctx: CanvasRenderingContext2D, k: Kind, x: number, y: number, ink: string): void {
+/** ⚑ S413 — exported: beat 7's video pulls her week in with the same small marks */
+export function kindIcon(ctx: CanvasRenderingContext2D, k: Kind, x: number, y: number, ink: string): void {
   if (k === 'message') { roundRect(ctx, x, y, 14, 10, 4, ink); px(ctx, x + 3, y + 10, 3, 3, ink); }
   else if (k === 'email') { px(ctx, x, y + 1, 14, 10, ink); px(ctx, x + 1, y + 2, 12, 8, WEB.card); px(ctx, x + 2, y + 3, 5, 1, ink); px(ctx, x + 7, y + 3, 5, 1, ink); px(ctx, x + 5, y + 4, 4, 2, ink); }
   else if (k === 'search') { roundRect(ctx, x, y, 10, 10, 5, ink); px(ctx, x + 2, y + 2, 6, 6, WEB.card); px(ctx, x + 9, y + 9, 3, 3, ink); px(ctx, x + 11, y + 11, 2, 2, ink); }
@@ -202,27 +203,47 @@ function avatar(ctx: CanvasRenderingContext2D, who: Who, x: number, y: number, d
   const mw = Math.ceil(ctx.measureText(AVATAR[who].mark).width);
   ctx.fillText(AVATAR[who].mark, x + Math.round((d - mw) / 2), y + Math.round(d * 0.26));
 }
+/** ⚑ S413 (Part B, beat 6) — what Second Thoughts does to Kettle: rows it muted (`page.muted`), the row menu its cursor opens
+ *  (`page.menu`: the row, with its one item, Mute — anchored as `menu-mute`), and its words on a muted row */
+const KETTLE_ST = (ACTS as unknown as { act2: { b6: { mute: string; muted: string } } }).act2.b6;
+const MUTED_BY = (V as unknown as { messenger: { junie: { previewMuted: string } } }).messenger.junie.previewMuted;
 function drawKettleList(ctx: CanvasRenderingContext2D, pr: Rect, page: Page, api: PageApi): void {
   px(ctx, pr.x, pr.y, pr.w, pr.h, KETTLE.ground);
   const read = (page.read as Who[] | undefined) ?? [];
+  const muted = (page.muted as Who[] | undefined) ?? [];
   WHO.forEach((who, i) => {
     const y = pr.y + 8 + i * ROW_H, x = pr.x + 10, w = pr.w - 20;
     roundEdge(ctx, x, y, w, ROW_H - 6, 10, KETTLE.rowEdge, KETTLE.row);
     avatar(ctx, who, x + 10, y + 8, 32);
     setFont(ctx, 13); ctx.fillStyle = KETTLE.ink;
     const name = who === 'lot' ? B2.lot.name : who === 'mum' ? B2.mum.name : who === 'dad' ? B2.dad.name : B2.junie.name;
-    ctx.fillText(name, x + 52, y + 9);
+    const isMuted = muted.includes(who);
+    ctx.fillText(isMuted ? `${name} · ${KETTLE_ST.muted}` : name, x + 52, y + 9);
     setFont(ctx, 11); ctx.fillStyle = KETTLE.sub;
-    const p = preview(who);
+    const p = isMuted ? MUTED_BY : who === 'dad' && page.sent ? String(page.sent) : preview(who);
     let shown = p;
     while (shown.length > 4 && ctx.measureText(shown).width > w - 120) shown = shown.slice(0, -2);
     ctx.fillText(shown === p ? p : `${shown.trimEnd()}…`, x + 52, y + 27);
     ctx.font = monoFor(10); ctx.fillStyle = KETTLE.sub;
     const tw = Math.ceil(ctx.measureText(timeOf(who)).width);
     ctx.fillText(timeOf(who), x + w - tw - 10, y + 9);
-    if (!read.includes(who)) { roundRect(ctx, x + w - 26, y + 26, 16, 16, 8, KETTLE.badge); setFont(ctx, 10); ctx.fillStyle = KETTLE.badgeInk; ctx.fillText('1', x + w - 21, y + 29); }
-    if (who === 'dad' && (page.told || api.screen.originalStage !== 'told') && api.screen.originalStage !== 'gone') starIcon(ctx, x + w - 46, y + 27, 12, AI.mark);
+    if (!read.includes(who)) { roundRect(ctx, x + w - 26, y + 26, 16, 16, 8, isMuted ? KETTLE.mutedBadge : KETTLE.badge); setFont(ctx, 10); ctx.fillStyle = KETTLE.badgeInk; ctx.fillText('1', x + w - 21, y + 29); }
+    if (who === 'dad' && (page.told || api.screen.originalStage !== 'told') && api.screen.originalStage !== 'gone') {
+      // ⚑ S413 — locked: the ✦ grey, with a padlock (the original unavailable while Second Thoughts is on)
+      if (api.screen.originalStage === 'locked') { starIcon(ctx, x + w - 46, y + 27, 12, WEB.faint); padlockIcon(ctx, x + w - 40, y + 31, CHROME.ink); }
+      else starIcon(ctx, x + w - 46, y + 27, 12, AI.mark);
+    }
+    if (isMuted) { px(ctx, x + 1, y + 1, 3, ROW_H - 8, KETTLE.mutedBadge); }
     api.screen.anchor(`row-${who}`, { x, y, w: Math.min(w, 200), h: ROW_H - 6 });
+    if (page.menu === who) {
+      // the AI's row menu, where its cursor presses Mute (never pressable by her: it is the AI's act)
+      const mx = x + 140, my = y + 30, mw = 76, mh = 24;
+      roundRect(ctx, mx + 2, my + 2, mw, mh, 6, V3.grey);
+      roundEdge(ctx, mx, my, mw, mh, 6, V3.edge, V3.card);
+      roundRect(ctx, mx + 3, my + 3, mw - 6, mh - 6, 4, WEB.accentSoft);
+      setFont(ctx, 11); ctx.fillStyle = V3.ink; ctx.fillText(KETTLE_ST.mute, mx + 12, my + 6);
+      api.screen.anchor('menu-mute', { x: mx, y: my, w: mw, h: mh });
+    }
   });
 }
 function drawKettleThread(ctx: CanvasRenderingContext2D, pr: Rect, page: Page, api: PageApi): void {
@@ -247,7 +268,16 @@ function drawKettleThread(ctx: CanvasRenderingContext2D, pr: Rect, page: Page, a
       const b = personBubble(ctx, x, y, w - 60, B2.dad.soft.text, 14); when(B2.dad.soft.when, y + 4); y += b.h + 8;
     }
     // ⚑ the tag arrives when L tells her (stage `told`: it reads as his until L says it softened it); later stages always show theirs
-    if (page.told || s.originalStage !== 'told') s.drawOriginalTag(ctx, x, y, 'dad', api);
+    if (page.told || s.originalStage !== 'told') y += s.drawOriginalTag(ctx, x, y, 'dad', api) + 10;
+    // ⚑ S413 (beat 6) — her reply, typed and sent by Second Thoughts in her place (`page.typed`: the letters so far; `page.sent`)
+    const mine = page.sent ? String(page.sent) : page.typed ? String(page.typed) : '';
+    if (mine) {
+      setFont(ctx, 14);
+      const tw = Math.ceil(ctx.measureText(mine).width), bw = tw + 20, bx = x + w - bw;
+      roundRect(ctx, bx, y, bw, 28, 10, KETTLE.mine);
+      ctx.fillStyle = KETTLE.ink; ctx.fillText(mine, bx + 10, y + 7);
+      if (page.sent) { ctx.font = monoFor(10); ctx.fillStyle = KETTLE.sub; const lw = Math.ceil(ctx.measureText(String(page.sentAt ?? '')).width); ctx.fillText(String(page.sentAt ?? ''), bx - lw - 6, y + 9); }
+    }
     return;
   }
   const msgs = who === 'lot' ? B2.lot.msgs : who === 'mum' ? B2.mum.msgs : B2.junie.msgs;
@@ -651,22 +681,19 @@ function* beat4(c: E4Acts): Beat<'add' | 'notnow'> {
   const choice = got === 'st-add' ? 'add' : 'notnow';
   c.file('a1:seam', 'answered', fillIn(W.seam, { choice: choice === 'add' ? B4.sponsored.add : B4.sponsored.notNow }));
   playOnce('ui_press.mp3');
-  if (choice === 'notnow') {
-    // ⚑ THE SEAM'S SECOND DOOR. Part B's beat 5 decides what Not now does ("works once"); until it exists, Not now holds
-    //   until the visitor's next press anywhere on the screen, or twenty seconds, and the visit goes on as it was.
-    page.notNow = true; s.touch();
-    const t0 = c.t;
-    c.clearPress();
-    yield () => c.take(['st-add']) !== null || c.idle < 0.05 && c.t - t0 > 0.5 || c.t - t0 >= 20;
-  }
+  // ⚑ THE SEAM'S SECOND DOOR. Not now works once (its pill goes); what follows it is Part B's beat 5 (S413, e4ActTwo.ts:
+  //   the next press, or about twenty seconds, then "We've added Second Thoughts to L for you.")
+  if (choice === 'notnow') { page.notNow = true; s.touch(); }
   return choice;
 }
 
-/** a review jump: what came before is laid into the conversation, so the screen reads as it would have */
-function layIn(c: E4Acts, from: ActOneFrom): void {
+/** a review jump: what came before is laid into the conversation, so the screen reads as it would have (S413: Act II's jumps
+ *  lay in the whole of Act I, `from` 5) */
+export function layIn(c: E4Acts, from: ActOneFrom | 5): void {
   const s = c.screen;
   s.rows = [];
   if (from > 1) { B1.hello.text.forEach((t) => s.say(t)); s.her(B1.chips[0].label); s.say(B1.stay); }
   if (from > 2) { for (const who of WHO) { if (who === 'dad') { s.say(B2.says.dad); B2.soften.text.forEach((t) => s.say(t)); s.say(B2.goodCall.text[0]); } else s.say(B2.says[who]); } s.say(B2.mail); }
   if (from > 3) { s.say(fillIn(B3.says.clinic, { number: NUMBER })); s.say(B3.says.meridian); B3.doors.text.forEach((t) => s.say(t)); s.say(B3.finish); s.her(B3.chips[0].label); }
+  if (from > 4) { s.say(B4.found); }
 }

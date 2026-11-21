@@ -4702,6 +4702,23 @@ export class DesktopOS {
         this.debugJump('e4Browser');
         this.e4?.browser.debugActs(4);
         break;
+      // ⚑ S413 (UiB job 33 Part B) — Act II on the one screen, from each of its beats (Act I laid into the chat)
+      case 'e4Act2':
+        this.debugJump('e4Browser');
+        this.e4?.browser.debugActTwo(5);
+        break;
+      case 'e4Act2Review':
+        this.debugJump('e4Browser');
+        this.e4?.browser.debugActTwo(6);
+        break;
+      case 'e4Act2Video':
+        this.debugJump('e4Browser');
+        this.e4?.browser.debugActTwo(7);
+        break;
+      case 'e4Act2Answer':
+        this.debugJump('e4Browser');
+        this.e4?.browser.debugActTwo(8);
+        break;
       case 'e4Standby':
         this.setPhase('desktop');
         this.setDesktopEra('e4');

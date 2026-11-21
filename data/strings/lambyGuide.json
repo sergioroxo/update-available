@@ -362,26 +362,31 @@
           "st-notnow"
         ]
       },
-      "map": {
-        "tip": "It wants an answer. Either answer goes on.",
-        "here": "The answers are at the bottom.",
-        "again": "Pick either answer.",
+      "review": {
+        "tip": "Second Thoughts scored your week. Press Review each or Do it for me: either one goes on.",
+        "here": "The two presses are under the review.",
+        "again": "Either one goes on.",
         "target": [
-          "conv-chip-0",
-          "conv-chip-1",
-          "conv-act"
+          "rv-each",
+          "rv-all"
         ]
       },
-      "original": {
-        "tip": "Your original is in Photos. Use original is at the bottom.",
-        "here": "Photos is a tab at the top.",
-        "again": "Shall I open Photos?",
+      "video": {
+        "tip": "It made you a video. Shall I play it?",
+        "here": "Play is in the middle of the picture.",
+        "again": "Shall I play it for you?",
         "target": [
-          "conv-act",
-          "tab-photos",
-          "photo-original"
+          "video-play"
         ],
-        "act": "press:tab-photos"
+        "act": "press:video-play"
+      },
+      "answer": {
+        "tip": "There is one answer at the foot of the conversation. Press it.",
+        "here": "It is at the foot, under its words.",
+        "again": "Press the answer at the foot.",
+        "target": [
+          "a2-answer"
+        ]
       },
       "headset": {
         "tip": "Time for the headset. It's on the desk — shall I take you there?",
@@ -450,6 +455,30 @@
             "result-agent"
           ],
           "act": "press:ad-chat"
+        }
+      },
+      "_docRetiredS413": "⚑ S413 (UiB job 33 Part B) — Act II rebuilt (draft 3, beats 5–8): the old conversation's answers (`map`) and the Photos original (`original`) give way to Second Thoughts' presses: the review's two (either goes on), the video's play (the one step whose `act` the guide may take for her: playing the film is navigation, his job brief: \"if she stalls, the stall guide (L) offers once to play it\"), and her answer (pointed at, never pressed for her). The takeover is quiet: the AI presses, nothing waits on her. Kept as they were:",
+      "_retiredS413": {
+        "map": {
+          "tip": "It wants an answer. Either answer goes on.",
+          "here": "The answers are at the bottom.",
+          "again": "Pick either answer.",
+          "target": [
+            "conv-chip-0",
+            "conv-chip-1",
+            "conv-act"
+          ]
+        },
+        "original": {
+          "tip": "Your original is in Photos. Use original is at the bottom.",
+          "here": "Photos is a tab at the top.",
+          "again": "Shall I open Photos?",
+          "target": [
+            "conv-act",
+            "tab-photos",
+            "photo-original"
+          ],
+          "act": "press:tab-photos"
         }
       }
     }

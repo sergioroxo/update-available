@@ -4177,7 +4177,7 @@
     ],
     [
      "Beats",
-     "16"
+     "17"
     ]
    ],
    "tabs": {
@@ -6208,27 +6208,33 @@
         "where": "Where: the monitor."
        },
        {
-        "label": "The console",
-        "opt": "optional",
-        "hint": "The console on the bed. Pick it up.",
-        "where": "Where: the bed."
-       },
-       {
-        "label": "The map",
+        "label": "The risk review",
         "opt": "",
-        "hint": "Answer it. Either answer goes on.",
+        "hint": "Second Thoughts has scored your week. Review each, or Do it for me: either goes on.",
         "where": "Where: the monitor."
        },
        {
-        "label": "Junie",
+        "label": "It uses your computer",
         "opt": "",
-        "hint": "Junie wrote this morning. Open her chat.",
-        "where": "Where: the laptop."
+        "hint": "Second Thoughts is using your computer, one thing at a time. You can scroll its words back while it works.",
+        "where": "Where: the monitor."
        },
        {
-        "label": "The original",
+        "label": "The console",
+        "opt": "optional",
+        "hint": "The console on the bed is lit. Open it, or leave it.",
+        "where": "Where: the bed."
+       },
+       {
+        "label": "Made for her",
         "opt": "",
-        "hint": "Photos: press Use original.",
+        "hint": "It made you a video. Press play: it runs for a minute.",
+        "where": "Where: the monitor."
+       },
+       {
+        "label": "Her answer",
+        "opt": "",
+        "hint": "There is one answer under its words: hers. Press it.",
         "where": "Where: the monitor."
        },
        {

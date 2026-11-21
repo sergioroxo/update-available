@@ -24,6 +24,13 @@
  * ⚑ DIRTY ONLY (S406): every change bumps `version`; anything that moves (the AI's cursor, a pane widening, a flying card) moves
  * in steps of `ANIM_HZ` a second, so the monitor is re-uploaded at most that often while something moves and never at rest.
  *
+ * ⚑ S413 (Part B, Act II) — what Second Thoughts adds to the frame: MEMORY rows (one small line each, opened in place into
+ * Memory · Used for · Shared with — rule 3, 26-12), her UNSENT row (her words deleted, the system's line in their place,
+ * a row that scrolls up with the rest — 26-15), a BOOKED pill, the COMPOSER at the pane's foot (beat 8: her words typed in
+ * with no keyboard), the BANNER over her world while the AI uses her computer (its "Take back control" greyed), a name tag
+ * on the AI's cursor, every ✦ in the conversation grey with a padlock once the stage is `locked`, and a conversation that
+ * stays where the visitor scrolled it while new lines arrive (26-14: "let him scroll the chat"; a Newest pill returns).
+ *
  * ⚑ THE CONTROLS ARE PUBLISHED AS `controls` (monitor coordinates). E4Browser copies them into its `hits`, which the walker,
  * the tour, XR and the room's pointer read; the name here is deliberately not one the walker's collector matches, so nothing
  * is counted twice.
@@ -37,8 +44,11 @@ import ACTS from '../../../data/dialog/s4_acts.json';
 export interface Hit { x: number; y: number; w: number; h: number; id: string }
 export interface Rect { x: number; y: number; w: number; h: number }
 export type OriginalStage = 'told' | 'locked' | 'gone' | 'restored';
-/** a row of the conversation: the AI's words, her own (a chip she pressed), or a small note of what the AI did */
-export interface ChatRow { who: 'ai' | 'her' | 'note'; text: string }
+/** a row of the conversation: the AI's words, her own (a chip she pressed), or a small note of what the AI did.
+ *  ⚑ S413 — and Second Thoughts' own: a Memory note (opened in place), her unsent words' row, the booked pill */
+export interface ChatRow { who: 'ai' | 'her' | 'note' | 'memory' | 'unsent' | 'booked'; text: string; mem?: MemoryNote; open?: boolean; id?: string }
+/** ⚑ S413 (rule 3) — what Second Thoughts files about her: the note, what it is used for, who it is shared with */
+export interface MemoryNote { memory: string; usedFor: string; sharedWith: string }
 export interface Chip { id: string; label: string; kind?: 'primary' | 'quiet' }
 /** a page on the right: its kind names the renderer an act registered; anything else is the page's own state */
 export interface Page { kind: string; title?: string; [k: string]: unknown }
@@ -52,7 +62,8 @@ export interface PageApi {
 export type PageRenderer = (ctx: CanvasRenderingContext2D, r: Rect, page: Page, api: PageApi) => void;
 
 const S = (ACTS as unknown as { screen: { aiWidth: Record<string, number>; date: string; lName: string; lSub: string; voiceOn: string;
-  voiceOff: string; voiceLabel: string; back: string; her: string; apps: Record<string, string>;
+  voiceOff: string; voiceLabel: string; back: string; her: string; apps: Record<string, string>; newest: string;
+  memory: { updated: string; memory: string; usedFor: string; sharedWith: string };
   original: { told: string; turnBack: string; originalLabel: string; locked: string; restored: string } } }).screen;
 
 /** the monitor's taskbar (the date, the guide), as E4Browser's one screen had it */
@@ -67,6 +78,8 @@ const PAD = 10;
 const LINE = 17;          // the AI's 13 px lines
 const HER_LINE = 15;      // her 12 px bubble lines
 
+/** ⚑ S413 — the ✦ drawn inside the conversation follows the screen's stage (locked: grey, with a padlock) */
+let iconLocked = false;
 const PAGES = new Map<string, PageRenderer>();
 /** an act registers how one kind of page on the right is drawn (Act I: week, card, kettle, mail, search, story) */
 export function registerPage(kind: string, draw: PageRenderer): void { PAGES.set(kind, draw); }
@@ -98,6 +111,17 @@ export class LScreen {
   /** pixels the conversation is scrolled back from its newest line (the visitor's wheel or drag) */
   private chatBack = 0;
   private chatMax = 0;
+  /** ⚑ S413 — the conversation's whole height at the last draw: a line arriving while she reads back keeps her place */
+  private chatTotal = 0;
+  /** ⚑ S413 — beat 8's message box at the pane's foot (null: none); its words, and whether its caret shows */
+  composer: string | null = null;
+  composerText = '';
+  composerCaret = false;
+  /** ⚑ S413 — over her world while the AI uses her computer (its own words, and her greyed way back) */
+  banner: { text: string; control: string } | null = null;
+  /** ⚑ S413 — the name on the AI's cursor (Second Thoughts', while it uses her computer) */
+  cursorLabel: string | null = null;
+  private memoryCount = 0;
   // ── her world ──
   private stack: Page[] = [];
   /** the visitor may press the back arrow (Act I: on a story); while the AI is navigating, the arrow is the AI's */
@@ -153,9 +177,29 @@ export class LScreen {
   back(): boolean { if (this.stack.length <= 1) return false; this.stack.pop(); this.version++; return true; }
 
   // ── the conversation ───────────────────────────────────────────────────────
-  say(text: string): void { this.rows.push({ who: 'ai', text }); this.typing = false; this.chatBack = 0; this.version++; }
+  // ⚑ S413 (26-14) — a new line no longer pulls the conversation down while the visitor is reading back (chatBack > 0): it
+  //   arrives below, the place she is reading stays put (draw keeps it), and the Newest pill says there is more
+  say(text: string): void { this.rows.push({ who: 'ai', text }); this.typing = false; this.version++; }
   her(text: string): void { this.rows.push({ who: 'her', text }); this.chatBack = 0; this.version++; }
-  note(text: string): void { this.rows.push({ who: 'note', text }); this.chatBack = 0; this.version++; }
+  note(text: string): void { this.rows.push({ who: 'note', text }); this.version++; }
+  /** ⚑ S413 (rule 3) — a Memory note: one small line; a press opens it in place. Returns its id. */
+  memory(m: MemoryNote): string {
+    const id = `mem-note:${this.memoryCount++}`;
+    this.rows.push({ who: 'memory', text: S.memory.updated, mem: m, open: false, id }); this.version++;
+    return id;
+  }
+  toggleMemory(id: string): boolean {
+    const r = this.rows.find((x) => x.id === id); if (!r) return false;
+    r.open = !r.open; this.version++; return true;
+  }
+  /** ⚑ S413 (beat 8) — her row's words replaced (the deletion, letter by letter); '' keeps an empty bubble's place */
+  setRowText(row: ChatRow, text: string): void { if (row.text !== text) { row.text = text; this.version++; } }
+  /** ⚑ S413 (beat 8) — her row becomes the system's small line in its place: it scrolls up with the rest (26-15) */
+  unsend(row: ChatRow, line: string): void { row.who = 'unsent'; row.text = line; this.version++; }
+  booked(text: string): void { this.rows.push({ who: 'booked', text }); this.version++; }
+  /** the conversation is at its newest line (nothing scrolled back) */
+  get atNewest(): boolean { return this.chatBack === 0; }
+  newest(): void { if (this.chatBack) { this.chatBack = 0; this.version++; } }
   setChips(chips: Chip[], help: string | null = null): void { this.chips = chips; this.help = help; this.version++; }
   clearChips(): void { if (this.chips.length || this.help) { this.chips = []; this.help = null; this.version++; } }
   setTyping(on: boolean): void { if (this.typing !== on) { this.typing = on; this.version++; } }
@@ -255,6 +299,16 @@ export class LScreen {
         tx = pr.x + 14 + bw;
       }
       if (page?.title) { setFont(ctx, 12); ctx.fillStyle = V3.ink; ctx.fillText(page.title, tx, 7); }
+      // ⚑ S413 (beat 6) — the AI is using her computer: its banner over her world's bar, her way back there and greyed
+      if (this.banner) {
+        px(ctx, pr.x, 0, pr.w, PAGE_BAR, V3.primary);
+        assistantMark(ctx, pr.x + 8, 5, 16, V3.primaryInk, V3.primary);
+        setFont(ctx, 10);
+        const cw = Math.ceil(ctx.measureText(this.banner.control).width) + 16;
+        pill(ctx, pr.x + pr.w - cw - 6, 5, cw, 16, V3.grey);
+        ctx.fillStyle = V3.ink2; ctx.fillText(this.banner.control, pr.x + pr.w - cw + 2, 7);
+        setFont(ctx, 11); ctx.fillStyle = V3.primaryInk; ctx.fillText(fitTo(ctx, this.banner.text, pr.w - cw - 46), pr.x + 30, 7);
+      }
       ctx.save(); ctx.beginPath(); ctx.rect(pr.x, pr.y, pr.w, pr.h); ctx.clip();
       px(ctx, pr.x, pr.y, pr.w, pr.h, V3.page);
       const draw = page ? PAGES.get(page.kind) : undefined;
@@ -270,11 +324,12 @@ export class LScreen {
     ctx.font = monoFor(10); ctx.fillStyle = V3.ink2; ctx.textBaseline = 'top'; ctx.fillText(this.date, 8, ty + 5);
     if (this.overlayTop) this.overlayTop(ctx, W, H);
     // ── the AI's cursor, over everything ──
-    if (this.cur.on) drawCursor(ctx, this.cur.x, this.cur.y, this.cur.flash > 0);
+    if (this.cur.on) drawCursor(ctx, this.cur.x, this.cur.y, this.cur.flash > 0, this.cursorLabel, W);
     return this.controls;
   }
 
   private drawAi(ctx: CanvasRenderingContext2D, r: Rect, push: (h: Hit) => void): void {
+    iconLocked = this.originalStage === 'locked';
     px(ctx, r.x, r.y, r.w, r.h, AI.ground);
     // the head: the mark, the name, the line under it; the voice switch at its right
     assistantMark(ctx, r.x + PAD, 9, 24, AI.mark, WEB.card);
@@ -297,6 +352,10 @@ export class LScreen {
     const helpLines = this.help ? wrapRich(ctx, this.help, cw, 10) : [];
     foot -= helpLines.length * 13;
     const helpY = foot;
+    // ⚑ S413 (beat 8) — the message box, at the very foot: her words typed into it (no keyboard), a caret while they come
+    const COMPOSER_H = 28;
+    let composerY = -1;
+    if (this.composer !== null) { foot -= COMPOSER_H + 2; composerY = foot; foot -= 6; }
     const chipH = 28, gap = 6;
     const chipRects: Hit[] = [];
     for (let i = this.chips.length - 1; i >= 0; i--) {
@@ -311,22 +370,57 @@ export class LScreen {
     else {
       const laid: { row: ChatRow; lines: Line[]; h: number }[] = [];
       for (const row of this.rows) {
+        if (row.who === 'memory') { laid.push({ row, lines: [], h: row.open ? 14 + 3 * 13 + 4 : 13 }); continue; }
+        if (row.who === 'booked') { laid.push({ row, lines: [], h: 22 }); continue; }
         const size = row.who === 'ai' ? 13 : row.who === 'her' ? 12 : 10;
-        const lines = wrapRich(ctx, row.text, row.who === 'her' ? cw - 34 : cw, size);
-        const h = row.who === 'her' ? lines.length * HER_LINE + 10 : row.who === 'note' ? lines.length * 13 + 2 : lines.length * LINE;
+        const lines = wrapRich(ctx, row.text, row.who === 'her' ? cw - 34 : row.who === 'unsent' ? cw - 20 : cw, size);
+        const h = row.who === 'her' ? Math.max(1, lines.length) * HER_LINE + 10 : row.who === 'note' || row.who === 'unsent' ? lines.length * 13 + 2 : lines.length * LINE;
         laid.push({ row, lines, h });
       }
       const typingH = this.typing ? 20 : 0;
       const total = laid.reduce((a, l) => a + l.h + 8, 0) + typingH;
+      // ⚑ S413 (26-14) — reading back: what arrived below since the last draw does not move the lines she is reading
+      if (this.chatBack > 0 && total > this.chatTotal && this.chatTotal > 0) this.chatBack += total - this.chatTotal;
+      this.chatTotal = total;
       this.chatMax = Math.max(0, total - (chatBottom - HEAD - 8));
       this.chatBack = Math.min(this.chatBack, this.chatMax);
       let y = chatBottom - 4 - total + this.chatBack;
       for (const { row, lines, h } of laid) {
         if (y + h > HEAD - 40 && y < chatBottom + 20) {
           if (row.who === 'her') {
-            const bw = Math.min(cw - 30, Math.max(...lines.map((l) => l.w)) + 20), bx = r.x + r.w - PAD - bw;
+            const bw = Math.min(cw - 30, Math.max(0, ...lines.map((l) => l.w)) + 20), bx = r.x + r.w - PAD - bw;
             roundRect(ctx, bx, y, bw, h, 9, KETTLE.mine);
             lines.forEach((l, i) => drawLine(ctx, l, bx + 10, y + 5 + i * HER_LINE, 12, WEB.ink));
+          } else if (row.who === 'memory') {
+            // ⚑ S413 (rule 3) — Memory: one small line, its own mark; open, the three lines of what it keeps and for whom
+            const M = S.memory, m = row.mem!;
+            assistantMark(ctx, r.x + PAD, y + 1, 10, AI.mark, WEB.card);
+            setFont(ctx, 10); ctx.fillStyle = AI.ink;
+            const lab = row.open ? M.updated : `${M.updated} ›`, lw = Math.ceil(ctx.measureText(lab).width);
+            ctx.fillText(lab, r.x + PAD + 14, y);
+            if (row.id) push({ x: r.x + PAD - 2, y: y - 4, w: lw + 22, h: row.open ? h + 4 : 20, id: row.id });
+            if (row.open) {
+              const kx = r.x + PAD + 14, kw = cw - 14;
+              roundEdge(ctx, kx - 6, y + 14, kw + 6, 3 * 13 + 4, 6, AI.chipEdge, WEB.card);
+              const line3 = (k: string, v: string, yy: number): void => {
+                setFont(ctx, 10); ctx.fillStyle = AI.note; const kw2 = Math.ceil(ctx.measureText(`${k} · `).width);
+                ctx.fillText(`${k} · `, kx, yy);
+                ctx.fillStyle = AI.ink; ctx.fillText(fitTo(ctx, v, kw - kw2 - 6), kx + kw2, yy);
+              };
+              line3(M.memory, m.memory, y + 17); line3(M.usedFor, m.usedFor, y + 30); line3(M.sharedWith, m.sharedWith, y + 43);
+            }
+          } else if (row.who === 'unsent') {
+            // ⚑ S413 (beat 8; 26-15) — where her words were: the system's line, small, on her side, a red ring; it scrolls up
+            //   with the conversation (it is never left in the box)
+            const lw = Math.max(0, ...lines.map((l) => l.w)), lx = r.x + r.w - PAD - lw;
+            roundRect(ctx, lx - 16, y + 1, 11, 11, 5, V3.danger);
+            px(ctx, lx - 11, y + 3, 1, 4, WEB.card); px(ctx, lx - 11, y + 8, 1, 2, WEB.card);
+            lines.forEach((l, i) => drawLine(ctx, l, lx + (lw - l.w), y + 1 + i * 13, 10, V3.danger));
+          } else if (row.who === 'booked') {
+            setFont(ctx, 12);
+            const bw = Math.ceil(ctx.measureText(row.text).width) + 20;
+            pill(ctx, r.x + PAD, y, bw, 22, AI.primary);
+            ctx.fillStyle = AI.primaryInk; ctx.fillText(row.text, r.x + PAD + 10, y + 5);
           } else if (row.who === 'note') {
             lines.forEach((l, i) => drawLine(ctx, l, r.x + PAD, y + 1 + i * 13, 10, AI.note));
           } else {
@@ -340,6 +434,24 @@ export class LScreen {
       if (this.chatMax > this.chatBack) { px(ctx, r.x, HEAD, r.w, 3, AI.ground); }
     }
     ctx.restore();
+    // ⚑ S413 (26-14) — she has scrolled back: a small pill at the conversation's foot returns her to the newest line
+    if (!this.aiOverlay && this.chatBack > 0) {
+      setFont(ctx, 10);
+      const lab = `${S.newest} ↓`, nw = Math.ceil(ctx.measureText(lab).width) + 16, nx = r.x + r.w - PAD - nw, ny = chatBottom - 22;
+      pill(ctx, nx, ny, nw, 18, AI.primary); ctx.fillStyle = AI.primaryInk; ctx.fillText(lab, nx + 8, ny + 4);
+      push({ x: nx - 2, y: ny - 3, w: nw + 4, h: 24, id: 'chat-newest' });
+    }
+    // ⚑ S413 (beat 8) — the message box: its placeholder, or her words as they are typed in (no keyboard: the chip types them)
+    if (composerY >= 0) {
+      roundEdge(ctx, r.x + PAD, composerY, cw, COMPOSER_H, 14, AI.chipEdge, WEB.card);
+      setFont(ctx, 12);
+      const t = this.composerText;
+      if (t) {
+        const shown = fitTo(ctx, t, cw - 26, true);
+        ctx.fillStyle = WEB.ink; ctx.fillText(shown, r.x + PAD + 12, composerY + 7);
+        if (this.composerCaret) px(ctx, r.x + PAD + 13 + Math.ceil(ctx.measureText(shown).width), composerY + 6, 1, 15, WEB.ink);
+      } else { ctx.fillStyle = AI.note; ctx.fillText(this.composer ?? '', r.x + PAD + 12, composerY + 7); }
+    }
     // the answers
     this.chips.forEach((c, i) => {
       const h = chipRects[i];
@@ -382,11 +494,21 @@ export class LScreen {
     if (!h) return null;
     if (h.id === 'l-voice') { this.toggleVoice(); return h.id; }
     if (h.id === 'page-back') { if (this.visitorBack && this.back()) playOnce('ui_press.mp3'); return h.id; }
+    // ⚑ S413 — a Memory note opens (or folds) in place; Newest returns the conversation to its last line
+    if (h.id.startsWith('mem-note:')) { if (this.toggleMemory(h.id)) playOnce('ui_press.mp3'); return h.id; }
+    if (h.id === 'chat-newest') { this.newest(); playOnce('ui_press.mp3'); return h.id; }
     this.onPress?.(h.id);
     return h.id;
   }
   /** the conversation scrolls under this point */
   chatAt(x: number, y: number, H: number): boolean { return x >= 0 && x < this.aiW && y >= HEAD && y < H - TASKBAR; }
+}
+
+/** a line that does not fit ends in an ellipsis (or, `tail`, shows its end: a box being typed into keeps the caret in view) */
+function fitTo(ctx: CanvasRenderingContext2D, text: string, w: number, tail = false): string {
+  if (ctx.measureText(text).width <= w) return text;
+  if (tail) { let k = 0; while (k < text.length && ctx.measureText(`…${text.slice(k)}`).width > w) k++; return `…${text.slice(k)}`; }
+  let n = text.length; while (n > 0 && ctx.measureText(`${text.slice(0, n).trimEnd()}…`).width > w) n--; return `${text.slice(0, n).trimEnd()}…`;
 }
 
 // ── type with icons in it (✦ and 🔈 are drawn, not left to a font) ───────────
@@ -423,7 +545,11 @@ export function drawLine(ctx: CanvasRenderingContext2D, l: Line, x: number, y: n
   setFont(ctx, size);
   let cx = x;
   for (const p of l.pieces) {
-    if (p.icon === 'star') starIcon(ctx, cx + 1, y + Math.round(size * 0.05), Math.max(9, size - 2), AI.mark);
+    if (p.icon === 'star') {
+      // ⚑ S413 — once Second Thoughts is on, every ✦ is grey, with a padlock (the original is unavailable)
+      if (iconLocked) { starIcon(ctx, cx + 1, y + Math.round(size * 0.05), Math.max(9, size - 2), WEB.faint); padlockIcon(ctx, cx + 7, y + Math.round(size * 0.35), CHROME.ink); }
+      else starIcon(ctx, cx + 1, y + Math.round(size * 0.05), Math.max(9, size - 2), AI.mark);
+    }
     else if (p.icon === 'speaker') speakerIcon(ctx, cx + 1, y + Math.round(size * 0.1), ink, true);
     else { ctx.fillStyle = ink; ctx.fillText(p.text, cx, y); }
     cx += pieceW(ctx, p);
@@ -459,7 +585,15 @@ export function padlockIcon(ctx: CanvasRenderingContext2D, x: number, y: number,
   px(ctx, x + 1, y, 1, 4, ink); px(ctx, x + 6, y, 1, 4, ink); px(ctx, x + 2, y, 4, 1, ink);
 }
 /** the AI's cursor: an arrow in L's mint with a dark edge, and a ring when it presses */
-function drawCursor(ctx: CanvasRenderingContext2D, x: number, y: number, pressing: boolean): void {
+function drawCursor(ctx: CanvasRenderingContext2D, x: number, y: number, pressing: boolean, label: string | null = null, W = 9999): void {
+  // ⚑ S413 — its name on it while it uses her computer (the as-built agent idiom: a pointer that says whose it is)
+  if (label) {
+    setFont(ctx, 9);
+    const lw = Math.ceil(ctx.measureText(label).width) + 22, lx = x + 14 + lw > W - 2 ? x - lw - 4 : x + 14;
+    pill(ctx, lx, y + 16, lw, 14, AI.primary);
+    assistantMark(ctx, lx + 2, y + 17, 12, AI.primaryInk, AI.primary);
+    ctx.fillStyle = AI.primaryInk; ctx.fillText(label, lx + 17, y + 18);
+  }
   if (pressing) { ctx.strokeStyle = AI.mark; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(x, y, 9, 0, Math.PI * 2); ctx.stroke(); }
   const path = (): void => { ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x, y + 17); ctx.lineTo(x + 4, y + 13); ctx.lineTo(x + 7, y + 19); ctx.lineTo(x + 10, y + 18); ctx.lineTo(x + 7, y + 12); ctx.lineTo(x + 12, y + 12); ctx.closePath(); };
   path(); ctx.fillStyle = AI.ink; ctx.fill();
