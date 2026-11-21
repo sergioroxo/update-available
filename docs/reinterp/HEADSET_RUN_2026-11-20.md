@@ -318,8 +318,8 @@ flow of this?". He gave a direction for the whole era (26-1); the items after it
   "so unnecessary now" (22:45:11–20).
 - **C-2 CHANGE · The stars come down** from the ceiling and float around you, so you can read them (22:45:20–22:46:02).
 - **C-3 CHANGE ↺ · Much less text, said directly.** *These are the Close's eight cards he approved on 12 Nov ("Yes keep
-  them!"), drafted in the style of his Meridian card; card 2 ("Meridian is invented, but the movement behind it is
-  not…") is in his own words, and "a recommendation for 2027" is card 5. How far to cut is HIS CALL.* His words: "Today the pressure to change falls twice as hard on trans people.
+  them!"), drafted in the style of his Meridian card; card 3 ("Meridian is invented, but the movement behind it is
+  not…") is in his own words, and "a recommendation for 2027" is card 6 (numbered as on the review page). How far to cut is HIS CALL.* His words: "Today the pressure to change falls twice as hard on trans people.
   This is why the piece ends with Maya. This is overly explaining. We just need to tell it directly" (22:46:24). "this
   is such a crazy amount of text" (22:47:30). "I thought we work this out" (22:47:35). He also flags "the part of 2027".
 - **C-4 BROKEN · Meridian:** "we didn't even interact with Meridian because it's completely broken" (22:46:36).
@@ -370,3 +370,32 @@ many windows and toasts being drawn at once).
 - Say "mark" at moments that matter.
 - Capture only the cast window, not the whole screen (the Teams call ended up in the frames).
 - For choppiness and flashing, the Quest's own screen recording would show what 4-second frames cannot.
+
+---
+
+## 14. His answers to the HIS CALL items (21 Nov)
+
+1. **H6, a voice for the system in 2026:** "Yes", for Second Thoughts and L only; never a person. With the 2026 redo (T98).
+2. **H8, the bare space behind you:** "Yes", leave it bare; look again after job 32.
+3. **E5, the table height:** "Yes", no change; try job 32's "Match my table" in the setup first.
+4. **97-4 and 03-23, the paper and the boxes:** "Yes", the builder identifies them; leftovers go; Daniel's packed things
+   become moving boxes. (Job 32 addendum.)
+5. **97-10, music for the IRC:** "Yes", no music.
+6. **97-11, the chat log and Your File:** "YEs", the chat's log goes into the file. (Addendum.)
+7. **97-12, Root Cause Digger:** "YEs", clear instructions now; a rework after he plays it again.
+8. **97-20, two installer moments:** "Yes", one installer, read while rising; 2003 starts at "Welcome back, Daniel".
+   (Addendum.)
+9. **03-7, the upload song:** "Yes", a quieter track there; the song kept for a place he chooses.
+10. **03-11, the women's group:** "Yes, or even a manuel, brochure something". A short women's-track brochure, "SSA for
+    women", as the bridge to 2016. (Addendum.)
+11. **03-12, "the adjoining room":** "Cut it". (Addendum.)
+12. **16-3:** "The 'Wick' the card keeps on moving": the Wick card in 2016's places moves by itself. Now BROKEN, for the
+    2016 job.
+13. **16-6:** the label "As Renata sent it" becomes "Original".
+14. **26-19, where the stream goes:** "There are fundamental errors here, so much. Proably needs a full redone of the
+    logic. I would say it was too much confusion and lack of logic. We need storyboards". So 2026 is redone from its
+    logic, storyboard first (T98).
+15. **C-3, the Close's cards:** "I am sure I didnt approve that text on the cards, it is too much". The record had filed
+    his 12 Nov "Yes keep them!" as approval; it was not one (T99).
+16. **The "2027" card:** "I need to review all the text here". Every line is on one page for him to mark:
+    `docs/reinterp/CLOSE_TEXT_FOR_REVIEW_2026-11-21.md` (T99).

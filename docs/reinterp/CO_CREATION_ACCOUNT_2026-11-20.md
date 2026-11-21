@@ -409,6 +409,12 @@ argument, which is ordinary in any collaboration. The direction he takes from th
   concepts in it are his; the sentence is that model's;
 - a model phrase, "conversion as conversation", under a heading marked "(his, 11 Nov)" in ARTICLE_COMPANION §7n.
 
+**Approval drifts too.** On 12 Nov his reply "1. so these 8 are all the new cards? 2. good 3. okay Yes keep them!" was
+filed as his approval of the Close's eight cards (S357aq; the cards' "accepted" fields). His question was not answered
+first, and the message he answered ended "the old version of each card is kept in the file, so any card can go back".
+On 21 Nov, after hearing the cards in the headset: "I am sure I didnt approve that text on the cards, it is too much".
+An ambiguous yes, read generously by the model that wrote the record, became an approval he does not recognise.
+
 Most were corrected when someone checked. The direction is always the same: toward him, never away. A likely reason
 is in §11.
 
