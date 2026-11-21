@@ -34,7 +34,7 @@ export interface ViewMorph {
 /** the headset's capture: a square this wide, on a plane this far in front of the eyes */
 const XR_FOV = 130, XR_DIST = 1.2;
 /** never rendered by the capture: the morph itself, the frame's own panels, debug plates */
-const NOT_CAPTURED = /^(View morph|XR Frame|XR debug|Home XR|UI)$/;
+const NOT_CAPTURED = /^(View morph|XR Frame|XR Pointer|XR debug|Home XR|UI)$/;   // S406: the pointer's own layer too
 
 export function mountViewMorph(app: pc.AppBase, camera: pc.Entity): ViewMorph {
   // ── the mask: a fixed, seeded particle field (a hash, never a formula in x and y — S281 his: no rings) ──

@@ -175,7 +175,27 @@ export class KitApp {
     if (p.state === 'ended') { this.prayerHeard = true; markExtraPassed('prayer'); }
     if (p.state === 'stopped') this.prayerStopped = true;
     if (p.state === 'singing' || p.state === 'intro') this.prayerStopped = false;
-    this.dirty = true;
+    // ⚑ S406 / H4 (his headset run, 20 Nov: 1997 ran at 65–90 fps, the monitor re-sent ~72 times a second) — this line was
+    //   `this.dirty = true` every frame, so from the moment the kit came in the post the whole 1997 monitor was uploaded
+    //   EVERY frame (2048 × 1536 in a headset, 12.6 MB, and its mip chain rebuilt), open or not, idle or not: the law is
+    //   "render-texture uploads on dirty only". It is dirty now when something it draws has changed: its page and steps, the
+    //   autorun's and the dial's lines, the modem's light (6 a second), the prayer's word. (Presses set it as before.)
+    const key = this.drawKey(p);
+    if (key !== this.lastKey) { this.lastKey = key; this.dirty = true; }
+  }
+  private lastKey = '';
+  /** ⚑ S406 / H4 — everything in the kit's picture that time or the world can change, quantised as it is drawn */
+  private drawKey(p: { state: string; songT: number }): string {
+    const timed = this.phase === 'autorun' ? `a${Math.floor(this.t / AUTORUN_LINE_EVERY)}`
+      : this.phase === 'setup' && this.setupPage === 'connecting' ? `d${Math.floor(this.t / DIAL_LINE_EVERY)}:${Math.floor(this.t * 6) % 3}` : '';
+    let sung = '';
+    if (this.open && this.panel === 'pray' && (p.state === 'singing' || p.state === 'ended')) {
+      let n = 0;
+      for (const l of prayer.lines as { s: number; e: number }[][]) for (const w of l) { if (w.s <= p.songT) n++; if (w.e <= p.songT) n++; }
+      sung = `${n}:${p.songT >= 0}:${p.songT >= AMEN_FROM}:${p.songT >= PRAYER_LEN}`;
+    }
+    const steps = this.stepIds().map((id) => `${+this.stepDone(id)}${+this.stepAvailable(id)}`).join('');
+    return `${this.open}|${this.phase}|${this.panel}|${this.setupPage}|${this.readPage}|${this.connected}|${this.prayerStopped}|${this.prayerHeard}|${p.state}|${timed}|${sung}|${steps}`;
   }
 
   /** where the prayer is, in the recording's own seconds */

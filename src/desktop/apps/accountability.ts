@@ -246,7 +246,11 @@ export class AccountabilityApp {
     this.mailT = 0;
     this.step = 'closed';
     this.dirty = true;
+    this.netHeard = 0;
   }
+  /** ⚑ S406 / H5 — how many of the network list's events (each call placed, each call failed) have sounded */
+  private netHeard = 0;
+  private netKey = '';
   /** how far the failing list has got: each line tries, then fails */
   private failingRows(): { text: string; failed: boolean; shown: boolean }[] {
     const per = NET.trySeconds + NET.failSeconds;
@@ -277,7 +281,21 @@ export class AccountabilityApp {
     this.t += dt;
     if (this.mail === 'failing') {
       this.mailT += dt;
-      this.dirty = true;
+      // ⚑ S406 / H5 (his headset run, 20 Nov, 21:58:39, "Contacting your accountability network…": "This needs sound,
+      //   something just to make it more understanding what is happening") — each contact the programme tries RINGS as its
+      //   line appears (net_try_2003, a ringback through the PC), and each one that fails answers with the era's alert turned
+      //   down (net_fail_2003). The system's own sounds, quiet; the list still runs to its own end.
+      const rows = this.failingRows();
+      const events = rows.reduce((n, r) => n + (r.shown ? 1 : 0) + (r.failed ? 1 : 0), 0);
+      while (this.netHeard < events) {   // events alternate: line i placed (2i), line i failed (2i + 1)
+        const failing = this.netHeard % 2 === 1;
+        this.netHeard++;
+        if (this.netHeard === events) { const a = playOnce(failing ? 'net_fail_2003.mp3' : 'net_try_2003.mp3'); if (a) a.volume = failing ? 0.55 : 0.5; }
+      }
+      // ⚑ S406 / H4 — and the glass is re-sent only when the list changes (a line, a failure, the result, the '…' blinking
+      //   three times a second): it was every frame of its fourteen seconds
+      const key = `${events}|${Math.floor(this.mailT * 3) % 2}|${rows.every((r) => r.failed)}`;
+      if (key !== this.netKey) { this.netKey = key; this.dirty = true; }
       if (this.failingDone) { this.mail = 'error'; this.mailT = 0; playOnce('err_cascade_1997.mp3'); }
       return;
     }

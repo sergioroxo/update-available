@@ -1347,7 +1347,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       onMenuSelect: (ray) => { if (document.getElementById('lambyos-home')) return; if (siteViewerXr?.pressRay(ray)) return; noteHumanInput(); if (xrFrame && !xrFrame.press(ray)) gameMenuBus.close(); },
       onSqueeze: () => { if (document.getElementById('lambyos-home')) return; noteHumanInput(); if (siteViewerXr?.isOpen) { siteViewerXr.close(); return; } gameMenuBus.toggle(); },
       menuOpen: () => gameMenuBus.isOpen,
-      layers: [xrFrame.layerId],
+      layers: [xrFrame.pointerLayerId],   // S406 / H1: drawn after the frame's planes (the site window, the menu)
       toSceneRay: ray => xrComfort.logicalRay(ray),
       fromScenePoint: point => xrComfort.physicalPoint(point),
       onGrab: (source, physical) => {
@@ -2257,6 +2257,9 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   let appliedEmphasis: string | null = null;
   /** id → the exact prior emissive of EVERY material that prop renders with */
   const emphasisRestore = new Map<string, pc.Color[]>();
+  /** S406 / H4 — the breath's last applied step, and each lifted material's own colour (read once) */
+  let emphasisLevel = -1;
+  const emphasisDiffuse = new Map<string, pc.Color[]>();
   function setPropEmphasis(key: string | null): void {
     if (key === appliedEmphasis) return;
     if (appliedEmphasis) {
@@ -2275,6 +2278,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     cluster?.setEmphasisBatch(key ? EMPHASIS_PROPS[key] ?? [] : []);
     appliedEmphasis = key;
     emphasisPhase = 0;
+    emphasisLevel = -1; emphasisDiffuse.clear();
     if (key) {
       for (const id of EMPHASIS_PROPS[key] ?? []) {
         const h = room.props.get(id);
@@ -2283,21 +2287,33 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
         // nothing renders, which is exactly why this lift used to be invisible
         // on the boombox (src/room/era1room.ts's PropHandle doc).
         emphasisRestore.set(id, h.materials.map(m => m.emissive.clone()));
+        emphasisDiffuse.set(id, h.materials.map(m => m.diffuse.clone()));   // S406: read once (see breatheEmphasis)
       }
       breatheEmphasis(0);
     }
   }
-  /** the lifted props, re-lit each frame on the breath (see EMPHASIS_BREATH_SECONDS) */
+  /**
+   * the lifted props, re-lit on the breath (see EMPHASIS_BREATH_SECONDS).
+   * ⚑ S406 / H4 (his headset run, 20 Nov: 1997 at 65–90 fps) — a StandardMaterial's colour, read or set, makes the engine
+   * rebuild that material's shader variants on its next update (PlayCanvas 2.19's colour getter marks the shader dirty),
+   * so re-lighting three materials on EVERY frame meant three variant rebuilds a frame for as long as a prop breathed
+   * (measured in the emulated headset: 3 a frame). The breath is now applied in steps of 1/50 of its swing (about 20 a
+   * second at its steepest, never seen as steps on a 2.6 s breath), and each material's own colour is read once.
+   */
   function breatheEmphasis(dt: number): void {
     if (!appliedEmphasis) return;
     if (!reducedMotion()) emphasisPhase += dt;
     const k = 0.5 + 0.5 * Math.sin((emphasisPhase / EMPHASIS_BREATH_SECONDS) * Math.PI * 2);
-    const frac = 0.35 + (1.0 - 0.35) * k;
+    const level = Math.round((0.35 + (1.0 - 0.35) * k) * 50);
+    if (level === emphasisLevel) return;
+    emphasisLevel = level;
+    const frac = level / 50;
     for (const id of EMPHASIS_PROPS[appliedEmphasis] ?? []) {
       const h = room.props.get(id);
       if (!h || h.emissive || !emphasisRestore.has(id)) continue;
-      for (const m of h.materials) {
-        const d = m.diffuse;
+      const diffuse = emphasisDiffuse.get(id);
+      for (const [i, m] of h.materials.entries()) {
+        const d = diffuse?.[i] ?? m.diffuse;
         m.emissive = new pc.Color(
           Math.min(1, d.r * frac + EMPHASIS_FLOOR),
           Math.min(1, d.g * frac + EMPHASIS_FLOOR),
@@ -4040,10 +4056,13 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     if (cloud?.visible && closeStage !== 'message') {
       // ⚑ S378 — the far glass is no longer asked (it takes no press); the computer's panel names itself
       const ph = cloud.panelHit(ray.p0, ray.p1);
+      // ⚑ S406 / H1 — and in the headset the panel (or its button) the ray is on is framed: its hover
+      const onButton = !!ph && cloud.panelSourcesAt(ray.p0, ray.p1) !== null;
+      cloud.setFocus(ph && xr?.active ? ph.i : null, onButton);
       if (ph) {
         aimAt = ph.at;
         if (ph.i === cloud.machinePanel) return A.closeMachine;
-        return cloud.panelSourcesAt(ray.p0, ray.p1) !== null ? A.closeSources : A.closePanel;
+        return onButton ? A.closeSources : A.closePanel;
       }
       const lb = cloud.labelAt(ray.p0, ray.p1);
       if (lb) return lb.text === lexStrings.star ? A.closeLexicon : A.closeLabel.replace('{label}', lb.text);
@@ -4937,6 +4956,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
           // S152 — the sentence line: whatever the look rests on, named; the
           //   S89 tape preview folds into it (a press-preview on touch still works)
           const r = aimRay();
+          if (!r || closeStage === 'message') cloud?.setFocus(null);   // S406 / H1: no aim, no panel framed
           aimName = r ? aimNameUnderRay(r) : null;
           const hoverText = aimName ?? (!cap && !tapes.inserted && hoveredTapeId
             ? `◈ ${tapes.def(hoveredTapeId).shelfLabel}` : null);
@@ -5079,7 +5099,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     }
     helper?.tick(dt);
     syncRacketDemo(dt); // the room follows the pressed step, moving between poses (see its doc)
-    if (os.dirty) { frontTex.upload(); monitorQuad.changed(); os.dirty = false; }
+    if (os.dirty) { os.drawIfChanged(); frontTex.upload(); monitorQuad.changed(); os.dirty = false; }   // S406 / H4: painted only when changed
     /**
      * ⚑ S106 — the record READS the era rather than being told it. Two
      * independent paths set the room's decade (the played `driveMorphSpace`

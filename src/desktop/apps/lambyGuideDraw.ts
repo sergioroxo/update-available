@@ -108,5 +108,9 @@ export function drawLambyGuide(ctx: CanvasRenderingContext2D, skin: GuideEra, st
     } else ui.button(ctx, bx, by, bw, 21, label);
     hits.push({ id, x: bx, y: by, w: bw, h: 21 }); bx += bw + 7;
   });
+  // ⚑ S406 / H2 (his headset run, 20 Nov: the board's cards "can be pressed" behind Lambient's balloon) — the balloon's body is a
+  //   COVER, laid after its buttons: a press on it is the balloon's (it takes it and does nothing), never the card under it.
+  //   Every surface tests its `lg-` rects first, so this one rule holds the balloon whole in every era (frame/xrTargets.ts).
+  hits.push({ id: 'lg-cover', x, y, w, h: h + 6 });
   return out;
 }

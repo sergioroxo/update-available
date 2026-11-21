@@ -226,7 +226,15 @@ export class DesktopOS {
   readonly canvas: HTMLCanvasElement;
   private readonly ctx: CanvasRenderingContext2D;
   private readonly reinterp: boolean;
-  dirty = true;
+  /** the glass has changed since its last upload (app.ts uploads and clears it) — ⚑ S406 / H4: and setting it marks the
+   *  canvas to be drawn again (`needsDraw`): the canvas is painted only when it has changed, never every frame */
+  get dirty(): boolean { return this._dirty; }
+  set dirty(v: boolean) { this._dirty = v; if (v) this.needsDraw = true; }
+  private _dirty = true;
+  private needsDraw = true;
+  /** ⚑ S406 / H4 — paint now if something changed since the last paint (app.ts asks this before an upload, so a change
+   *  made after this frame's update is never sent as the picture from before it) */
+  drawIfChanged(): void { if (this.needsDraw) this.draw(); }
   /** The pre-story setup owns this same canvas, never a second UI surface. */
   setup: LambySetup | null = null;
 
@@ -2430,7 +2438,7 @@ export class DesktopOS {
       // pauses audio, it does not keep playing silently" (tapeAudio's own
       // doctrine, applied to the one element os.ts owns).
       if (this.readAloudPlaying) this.pureMailVoice?.pause();
-      this.draw();
+      if (this.needsDraw) this.draw();   // S406 / H4: the pause card is drawn once, not every frame it stands
       return;
     }
     if (this.pureMailVoice?.paused && !this.pureMailVoice.ended) {
@@ -2732,11 +2740,25 @@ export class DesktopOS {
     // and the genuinely continuous handful
     if (this.phase === 'splash') this.dirty = true;                       // the loading bands travel
     if (this.desktopReturnAt >= 0) this.dirty = true;                     // the fade back up out of black
-    if (this.phase === 'desktop' && this.lambyOnScreen) this.dirty = true; // his sway is a sine, not a step
-    if (this.phase === 'desktop' && this.lambyRigFile?.open) this.dirty = true; // panel on a bare clock
+    // ⚑ S406 / H4 — …drawn at a cartoon's rate, not the headset's: Lamby's sway at 15 drawings a second (30 while he pops
+    //   in), and the rig file's panel at 15. Each was a full upload of the monitor (×4 in a headset) on every frame he stood
+    //   on the glass; a pixel-art character drawn 15 times a second is the period's own animation, not a lesser one.
+    const step = (hz: number): boolean => Math.floor(this.t * hz) !== Math.floor((this.t - dt) * hz);
+    if (this.phase === 'desktop' && this.lambyOnScreen && step(this.lambyPoseT < 3.2 ? 30 : 15)) this.dirty = true; // his sway is a sine, not a step
+    if (this.phase === 'desktop' && this.lambyRigFile?.open && step(15)) this.dirty = true; // panel on a bare clock
 
     this.updateLambyGuide(dt);
-    this.draw();
+    /**
+     * ⚑ S406 / H4 (his headset run, 20 Nov: 2003 at 55–69 fps for the whole era, 1997 at 65–90, with FEWER draw calls in
+     * 2003) — THE CANVAS IS DRAWN ONLY WHEN IT HAS CHANGED. S105 made the UPLOAD wait for `dirty`, but the whole desktop was
+     * still repainted here on every frame: in a headset that is a 2048 × 1536 canvas (×4) cleared, wallpapered, every window
+     * and every line of text laid out again, ~50–70 text calls a frame, sixty to ninety times a second, for a picture that
+     * was then thrown away unless something had changed. 2003's desktop is the dearest to paint (its wallpaper, its gradients
+     * and rounded windows), which is why the era with fewer draws ran slower. What is on the glass is exactly what was drawn
+     * at the last change, as before; the hit rects are the ones drawn with it (they always matched the glass, never a
+     * repaint nobody saw).
+     */
+    if (this.needsDraw) this.draw();
   }
 
   private caretOn(): boolean {
@@ -2813,6 +2835,7 @@ export class DesktopOS {
     return rect ? { x: rect.x + rect.w / 2, y: rect.y + rect.h / 2 } : { x, y };
   }
   private draw(): void {
+    this.needsDraw = false;   // S406 / H4 (set again below if the draw itself changes the canvas's size)
     const immersive = !!pc.Application.getApplication()?.xr?.active;
     if (immersive !== this.xrScale) {
       this.xrScale = immersive;
@@ -2828,7 +2851,7 @@ export class DesktopOS {
     this.iconsDrawn = [];
     ui.setFrameSkin(this.phase === 'desktop' && this.desktopEra === 'e2' ? 'xp' : 'classic');   // S295: 2003's windows
     this.glowPath = this.reinterp && this.phase === 'desktop' && this.desktopEra !== 'e4' ? pathTargets(this, this.desktopEra) : new Set();
-    if (this.setup?.open) { this.setup.draw(this.ctx); if (this.xrScale) xrOutline(this.ctx, this.xrHover); return; }
+    if (this.setup?.open) { this.setup.draw(this.ctx); if (this.xrScale && this.xrHover) xrOutline(this.ctx, this.xrHover, this.setup.hits); return; }
 
     switch (this.phase) {
       case 'warning': this.drawWarning(W, H); break;
@@ -2864,7 +2887,7 @@ export class DesktopOS {
       const st = this.hits.find((h) => h.id === 'start-menu');
       if (st) drawGlow(this.ctx, st, 'path', ERA1.tooltip, ERA1.silver);
     }
-    if (this.xrScale) xrOutline(this.ctx, this.xrHover);
+    if (this.xrScale && this.xrHover) xrOutline(this.ctx, this.xrHover, this.hits);   // S406 / H2: never across Lamby's balloon
   }
 
   /** the line being sung (index) and how many of its words are lit — '' when none is up */
@@ -4625,8 +4648,24 @@ export class DesktopOS {
     if (id !== this.hover) { this.hover = id; this.dirty = true; }
   }
 
+  /**
+   * ⚑ S406 / H5 (his headset run, 20 Nov, 21:28:51: "I think we're missing a sound for when pressing on the stuff … either
+   * you need to decide on that") — 1997'S ONE PRESS SOUND. Every press on the 1997 glass clicks, quietly, and it is Daniel's
+   * mouse (tools/make_s406_sounds.py `press_1997`: a microswitch over the hollow of a plastic shell), not the system's voice:
+   * the room's sound, as a real mouse is. Nothing else on that desktop sounds a press (the update notice's tick yields to
+   * it). A press the programme makes for him (the guide's "take me there") follows within a moment and is not a second click.
+   */
+  private lastPressSound = -1;
+  private pressSound(): void {
+    if (!this.reinterp || this.desktopEra !== 'e1' || this.phase === 'off' || this.phase === 'r_dark' || gameMenuBus.isOpen) return;
+    const now = performance.now();
+    if (now - this.lastPressSound < 150) return;
+    this.lastPressSound = now;
+    const a = playOnce('press_1997.mp3'); if (a) a.volume = 0.5;
+  }
   handleClick(x: number, y: number): void {
     if (this.setup?.open) { if (!this.paused) this.setup.handleClick(x, y); return; }
+    this.pressSound();
     if (this.reinterp && !this.paused && !gameMenuBus.isOpen && this.phase === 'desktop' && this.desktopEra !== 'e4' && x >= 3 && x <= 53 && y >= ERA1_CANVAS.height - 19) {
       this.lambyGuide.press('lg-x'); this.pauseOpen = null; this.wotdOpen = null;
       const opening = !this.startOpen; this.startMap.close(); this.startOpen = opening; this.dirty = true; return;

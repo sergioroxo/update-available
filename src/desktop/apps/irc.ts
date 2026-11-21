@@ -48,8 +48,11 @@ class TypeStream {
   update(dt: number): boolean {
     let changed = false;
     if (this.cur) {
+      // ⚑ S406 / H4 — a change is a new LETTER, not a new frame: at 22–30 letters a second the channel was re-sent to the
+      //   glass every frame while a line typed (the whole 1997 monitor, ×4 in a headset), two or three times per letter
+      const before = Math.floor(this.shown);
       this.shown += this.cps * dt;
-      changed = true;
+      changed = Math.floor(this.shown) !== before;
       if (this.shown >= this.cur.text.length) {
         this.done.push(this.cur);
         this.cur = null;
@@ -82,7 +85,21 @@ export class IrcApp {
   private tick: (() => void) | null = null;
   set onLine(fn: () => void) {
     this.tick = fn;
-    this.dm.onStart = () => { this.dmScroll = 0; };   // R3-28: a new line shows the end
+    this.dm.onStart = () => { this.dmScroll = 0; this.pop(); };   // R3-28: a new line shows the end
+    this.channel.onStart = () => this.pop();
+  }
+  /**
+   * ⚑ S406 / H5 (his headset run, 20 Nov, 21:37:12: "we need some sound of this space … the texts popping in") — a line
+   * from someone else appearing, in the channel or from Rob: a soft round blip (tools/make_s406_sounds.py `irc_pop_1997`),
+   * lower and duller than his own lines' tick, never more than one in 0.7 s. (R3-25 kept the TICK to his own lines: "not on
+   * every message". This is not the tick; it is the room, quietly, and it is his later ask.)
+   */
+  private lastPop = -1e9;
+  private pop(): void {
+    const now = performance.now();
+    if (now - this.lastPop < 700) return;
+    this.lastPop = now;
+    const a = playOnce('irc_pop_1997.mp3'); if (a) a.volume = 0.45;
   }
   private t = 0;
   private joinSounded = false;   // S339: the join blip has played

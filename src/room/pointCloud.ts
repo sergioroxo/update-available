@@ -49,7 +49,7 @@ import { drawDossier } from '../witness/dossier';
 import { ERA1 } from '../desktop/theme/era1';
 import { ERA3 } from '../desktop/theme/era3';
 import { ERA4 } from '../desktop/theme/era4';
-import { px, setFont } from '../desktop/theme/chrome';
+import { px, setFont, FRAME } from '../desktop/theme/chrome';
 import { setFaceEra, faceEra, type FaceEra, FACES, fontsReady } from '../desktop/theme/fonts';
 import { buildCloseCrt, type CloseCrt } from './closeCrt';
 
@@ -158,6 +158,9 @@ export interface PointCloud {
    *  ("the constellation should travel only when I am not moving… hard to
    *  read"): the caller says each frame whether the eye line is on one. */
   gazeOnPanel(on: boolean): void;
+  /** ⚑ S406 / H1 — the headset's hover: ring panel `i` (or, `button` true, its Sources / Open button) while the ray is on
+   *  it; null clears it */
+  setFocus(i: number | null, button?: boolean): void;
   /** …and holds still for `seconds` after any press */
   holdDrift(seconds: number): void;
   /** ⚑ S167 — THE CLEAR CORRIDOR (his 2026-09-21: "occlusion errors on the Close").
@@ -1553,7 +1556,49 @@ export function buildPointCloud(app: pc.Application, viewCamera?: () => pc.Entit
     ceilingMat.update();
   }
 
+  /**
+   * ⚑ S406 / H1 (his headset run, 20 Nov, the Close: "you can't see what you are pointing at") — THE PANELS' HOVER. A press
+   * on a panel turns it (or its button opens the year's website), and the ray named it, but nothing on the panel itself
+   * said "this one". While the headset's ray is on a panel, a thin light frame stands just in front of it — round the whole
+   * card, or round its Sources (the machine's Open) button when the ray is on that. One small mesh, rebuilt only when what
+   * is aimed at changes; one draw call while it shows; the frame's own light grey, unlit.
+   */
+  const focusMesh = new pc.Mesh(app.graphicsDevice);
+  const focusMat = new pc.StandardMaterial();
+  focusMat.useLighting = false; focusMat.diffuse = new pc.Color(0, 0, 0); focusMat.emissive = new pc.Color().fromString(FRAME.bright);
+  focusMat.cull = pc.CULLFACE_NONE; focusMat.update();
+  const focusEntity = new pc.Entity('close-panel-focus');
+  focusEntity.addComponent('render', { meshInstances: [new pc.MeshInstance(focusMesh, focusMat)] });
+  focusEntity.enabled = false;
+  root.addChild(focusEntity);
+  let focusKey = '';
+  const setFocusImpl = (i: number | null, button = false): void => {
+    const f = i === null ? undefined : panelFrames[i];
+    const key = f && i !== null && panelK[i] <= 0.5 ? `${i}|${button}` : '';
+    if (key === focusKey) return;
+    focusKey = key;
+    if (!key || !f || i === null) { focusEntity.enabled = false; return; }
+    const B = button ? btnLocal(i, f) : { x: 0, y: 0, hw: f.hw, hh: f.hh };
+    const t = button ? 0.008 : 0.014, out = 0.012;   // the line's width (m) and how far outside the edge it stands
+    const c = f.c.clone().add(f.r.clone().mulScalar(B.x)).add(f.u.clone().mulScalar(B.y)).add(f.n.clone().mulScalar(0.015));
+    const hw = B.hw + out, hh = B.hh + out;
+    const v: number[] = [], idx: number[] = [];
+    const quad = (cx: number, cy: number, qw: number, qh: number): void => {
+      const b = v.length / 3;
+      for (const [sx, sy] of [[-1, -1], [1, -1], [1, 1], [-1, 1]]) {
+        const p = c.clone().add(f.r.clone().mulScalar(cx + sx * qw)).add(f.u.clone().mulScalar(cy + sy * qh));
+        v.push(p.x, p.y, p.z);
+      }
+      idx.push(b, b + 1, b + 2, b, b + 2, b + 3);
+    };
+    quad(0, hh - t / 2, hw, t / 2); quad(0, -hh + t / 2, hw, t / 2);
+    quad(-hw + t / 2, 0, t / 2, hh - t); quad(hw - t / 2, 0, t / 2, hh - t);
+    focusMesh.setPositions(v); focusMesh.setIndices(idx); focusMesh.update(pc.PRIMITIVE_TRIANGLES);
+    focusEntity.enabled = true;
+  };
+
   return {
+    setFocus(i: number | null, button = false): void { setFocusImpl(visible ? i : null, button); },
     show(): void {
       visible = true;
       root.enabled = true;

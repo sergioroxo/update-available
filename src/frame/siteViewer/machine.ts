@@ -306,6 +306,7 @@ export class LexiconPage {
     ctx.beginPath(); ctx.rect(x, y, w, h); ctx.clip();
     ctx.translate(x, y); ctx.scale(s, s);
     ctx.imageSmoothingEnabled = false;
+    this.lex.hover = e.hover.startsWith('lx:') ? e.hover.slice(3) : '';   // S406 / H1: the pointer's control lights
     this.lex.draw(ctx, LW, LH_, this.hits);
     ctx.restore();
     // a fine frame round the disc's page, in the period's chrome

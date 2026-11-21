@@ -183,6 +183,8 @@ export class LambyGuide {
     // Requested help waits for the current operable voice; it never queues across a quiet scene.
     if (id === 'lg-tray' && this.input.voice && !this.input.silent && !this.input.map.quiet) { this.requested = true; return true; }
     if (this.view.hidden) return false;
+    // ⚑ S406 / H2 — the balloon's body (lambyGuideDraw's `lg-cover`): it took the press, and nothing happens
+    if (id === 'lg-cover') return true;
     const s = this.spec, m = this.mem();
     if (id === 'lg-tray') {
       this.idle = 0;

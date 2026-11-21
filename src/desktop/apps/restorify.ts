@@ -69,7 +69,9 @@ export class RestorifyApp {
     this.panel.handleClick(`mood:${ledger.guidePersonalisation.moods[this.selectedDay]}`, this.t);
     this.dirty = true;
   }
-  update(dt: number): void { this.t += dt; if (this.settings || this.lastChip) this.dirty = true; }
+  // ⚑ S406 / H4 — Lamby in the reply (and the mood panel) is drawn 15 times a second, not on every frame: each draw was the
+  //   whole 2003 monitor sent again (×4 in a headset, its mip chain rebuilt) for as long as the reply stood open
+  update(dt: number): void { const before = this.t; this.t += dt; if ((this.settings || this.lastChip) && Math.floor(this.t * 15) !== Math.floor(before * 15)) this.dirty = true; }
   private drawPersonalise(ctx: CanvasRenderingContext2D): void {
     this.rect = { x: 24, y: 10, w: 464, h: 344 };
     const c = ui.windowFrame(ctx, 24, 10, 464, 344, rigCopy.personalise.title, true, 'restorify');
