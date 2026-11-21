@@ -8,8 +8,15 @@ const js = ts.transpileModule(fs.readFileSync('src/narrative/lambyGuide.ts','utf
 const { LambyGuide } = await import('data:text/javascript;base64,'+Buffer.from(js).toString('base64'));
 let logs=[],acts=[];
 const make=()=>new LambyGuide({log:(...x)=>logs.push(x),act:x=>acts.push(x)});
+// ⚑ S410 — the data's cap is the law's 8 (his 21 Nov: "wasnt 8 enough?"); 2003 has fewer beats than that, so the cap's
+//   MECHANISM is tested on a copy capped at 5 (the beats below spend it), and the data is pinned to the law
+assert(copy.timing.capPerEra <= 8, 'CLAUDE.md: at most 8 unasked balloons per era');
+const jsCap5 = js.replace(JSON.stringify(copy), JSON.stringify({ ...copy, timing: { ...copy.timing, capPerEra: 5 } }));
+assert.notEqual(jsCap5, js, 'the capped copy is injected');
+const { LambyGuide: LambyGuideCap5 } = await import('data:text/javascript;base64,'+Buffer.from(jsCap5).toString('base64'));
+const makeCap5=()=>new LambyGuideCap5({log:(...x)=>logs.push(x),act:x=>acts.push(x)});
 const input=(beat='checkin',extra={})=>({era:'e2',map:{current:{era:'e2',beat:{id:beat}},quiet:false},silent:false,voice:false,idleScale:1,startTarget:'start-menu',...extra});
-const g=make();g.tick(25,input());assert.equal(g.view.rung,'cue');g.activity();assert.equal(g.view.rung,'silent');g.tick(49,input());assert.equal(g.view.text,null);g.tick(1,input());assert.equal(g.view.rung,'tip');g.press('lg-later');assert.equal(logs.at(-1)[2],true);g.tick(89,input());assert.equal(g.view.text,null);g.tick(1,input());assert.equal(g.view.rung,'again');g.press('lg-later');g.tick(90,input());assert.equal(g.view.rung,'start');g.press('lg-x');g.tick(1000,input());assert.equal(g.view.text,null);
+const g=makeCap5();g.tick(25,input());assert.equal(g.view.rung,'cue');g.activity();assert.equal(g.view.rung,'silent');g.tick(49,input());assert.equal(g.view.text,null);g.tick(1,input());assert.equal(g.view.rung,'tip');g.press('lg-later');assert.equal(logs.at(-1)[2],true);g.tick(89,input());assert.equal(g.view.text,null);g.tick(1,input());assert.equal(g.view.rung,'again');g.press('lg-later');g.tick(90,input());assert.equal(g.view.rung,'start');g.press('lg-x');g.tick(1000,input());assert.equal(g.view.text,null);
 // Explicit help is still available after the last rung and the per-era cap.
 for(const beat of ['story','release','tapes','online']){g.tick(50,input(beat));g.press('lg-x');}
 g.tick(500,input('send'));assert.equal(g.view.text,null);assert(g.press('lg-tray'));assert.equal(g.view.rung,'tip');assert(g.press('lg-show'));assert.equal(g.view.targets[0],'icon-send');g.press('lg-take');assert.equal(acts.at(-1),'press:icon-send');
@@ -51,7 +58,7 @@ pg.tick(0,{...pi,silent:true});assert(!pg.active);assert(!pg.press('lg-take'));
 pg.tick(0,pi);pg.press('lg-later');assert.equal(logs.at(-1)[0],'dismissed');assert.equal(logs.at(-1)[1],'personalise');
 pg.tick(1000,pi);assert(!pg.active);
 const pc=make();pc.tick(0,pi);pc.press('lg-take');assert.equal(acts.at(-1),'open:personalise');
-const capped=make();for(const beat of ['checkin','story','release','tapes','online']){capped.tick(50,input(beat));capped.press('lg-ok');}
+const capped=makeCap5();for(const beat of ['checkin','story','release','tapes','online']){capped.tick(50,input(beat));capped.press('lg-ok');}
 capped.tick(0,pi);assert(!capped.active);
 console.log('Restorify personalisation: one balloon; silence and voice gates; dismissal logged; navigation only; era cap respected.');
 
@@ -64,7 +71,7 @@ const tv=make();tv.tick(74,tvIn());assert.notEqual(tv.view.rung,'tv');tv.tick(1,
 tv.tick(80,tvIn());tv.tick(0.1,tvIn());assert.equal(tv.view.rung,'tv');assert.equal(tv.view.text,tvLine);tv.press('lg-later');assert.equal(logs.at(-1)[0],'dismissed');assert.equal(logs.at(-1)[1],'tv');
 tv.tick(1000,tvIn());assert.notEqual(tv.view.rung,'tv');
 const tvYes=make();tvYes.tick(80,tvIn());tvYes.tick(0.1,tvIn());tvYes.press('lg-take');assert.equal(acts.at(-1),'open:tv');tvYes.tick(1000,tvIn());assert(!tvYes.active);
-const tvCap=make();for(const beat of ['kit','read','pray','pledge','connect','web','channel']){tvCap.tick(50,input(beat,{era:'e1',map:{current:{era:'e1',beat:{id:beat}},quiet:false}}));tvCap.press('lg-ok');}
+const tvCap=makeCap5();for(const beat of ['kit','read','pray','pledge','connect','web','channel']){tvCap.tick(50,input(beat,{era:'e1',map:{current:{era:'e1',beat:{id:beat}},quiet:false}}));tvCap.press('lg-ok');}
 tvCap.tick(500,tvIn());tvCap.tick(0.1,tvIn());assert.notEqual(tvCap.view.rung,'tv');
 console.log('Teaching TV offer: once per era, after a stall, never over a voice; navigation only; dismissal logged; era cap respected.');
 
@@ -79,7 +86,7 @@ fo.tick(80,fileIn());fo.tick(0.1,fileIn());assert.equal(fo.view.rung,'file');ass
 fo.press('lg-x');assert.equal(logs.at(-1)[0],'dismissed');assert.equal(logs.at(-1)[1],'file');
 fo.tick(1000,fileIn());assert.notEqual(fo.view.rung,'file');
 const foYes=make();foYes.tick(80,fileIn());foYes.tick(0.1,fileIn());foYes.press('lg-take');assert.equal(acts.at(-1),'press:file-tray');foYes.tick(1000,fileIn());assert(!foYes.active);
-const foCap=make();for(const beat of ['kit','read','pray','pledge','connect','web','channel']){foCap.tick(50,input(beat,{era:'e1',map:{current:{era:'e1',beat:{id:beat}},quiet:false}}));foCap.press('lg-ok');}
+const foCap=makeCap5();for(const beat of ['kit','read','pray','pledge','connect','web','channel']){foCap.tick(50,input(beat,{era:'e1',map:{current:{era:'e1',beat:{id:beat}},quiet:false}}));foCap.press('lg-ok');}
 foCap.tick(500,fileIn());foCap.tick(0.1,fileIn());assert.notEqual(foCap.view.rung,'file');
 console.log('The file: Lamby points once per era, after a stall, never over a voice or a quiet scene; Take me there presses the item; × logged; era cap respected.');
 

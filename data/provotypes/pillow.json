@@ -35,7 +35,8 @@
   "states": [
     {
       "_doc": "PLACEHOLDER — cycle 1, tap 1 of 3",
-      "prompt": "Raise the racket.",
+      "_docS410": "⚑ S410 (UiB job 32, 97-21 follow-up; his answer 21 Nov: \"always simulated not actual passages\") — the example is SIMULATED, written for the piece in the programme's voice: not a passage from the book and not a close paraphrase. The METHOD it follows is Richard Cohen's, Coming Out Straight: Understanding and Healing Homosexuality (Winchester, VA: Oakhill Press, 2000), now read for this step in the text file in Pc_Simulation/Sources/pdf/Coming out/ (embedded PDF text: 114,405 words over 320 PDF pages, median 376 a page; printed page = PDF page − 22). Here: the stance before the strike, the racket over the head, the feet set, the father pictured on the far side of the pillows — ch. 8, 'Anger: Accessing Personal Power', the photo captions, printed p. 176 (PDF p. 198); ch. 6, 'Therapeutic Tools and Techniques', 'Bioenergetics', printed p. 153 (PDF p. 175). Was: \"Raise the racket.\"",
+      "prompt": "Raise the racket. Plant your feet. He is across the pillow from you.",
       "buttons": ["Lift"],
       "response": "",
       "animPose": "lift"
@@ -43,14 +44,16 @@
     {
       "_doc": "PLACEHOLDER — cycle 1, tap 2 of 3",
       "_docS407": "⚑ S407 (UiB job 32, 97-21; his headset 20 Nov 21:40:25: \"address the person linked to the injury … you can put examples like it had on the book\") — the step gives the record's one documented example, the name: \"Dad\" (Cohen's method as the Washington Post reporter watched him demonstrate it in 2005, \"with pillows, a tennis racket, and repeated references to \\\"Dad\\\"\"; debrief.sources[0], cleared S179; and the book as the 24 Jul Deep Research note summarises it: the client names the person and repeats the name). No example SENTENCES were added: none is in any source the project has read, and Coming Out Straight itself has not been read (LINK_PASS_2026-11-13). The Raise and Strike steps are unchanged. Was: \"Use a full exhale. Address the person linked to the injury.\"",
-      "prompt": "Use a full exhale. Address the person linked to the injury by name: “Dad.”",
+      "_docS410": "⚑ S410 (UiB job 32, 97-21 follow-up; his answer 21 Nov: \"always simulated not actual passages\") — the example is SIMULATED, in the programme's voice, not a passage. The stem and the name \"Dad\" stay from S407 (the name is the book's own example and the record's, the Washington Post 2005); the three Exhale steps keep one stem so the repetition reads, and only their tails vary. Method followed: Richard Cohen, Coming Out Straight (Oakhill Press, 2000) — the name said over and over on the out-breath until something surfaces: ch. 6, 'Bioenergetics', printed p. 153 (PDF p. 175); ch. 8, 'Anger: Accessing Personal Power', printed pp. 175–176 (PDF pp. 197–198). Was (S407): \"Use a full exhale. Address the person linked to the injury by name: “Dad.”\"",
+      "prompt": "Use a full exhale. Address the person linked to the injury by name: “Dad.” Again. Again.",
       "buttons": ["Exhale"],
       "response": "",
       "animPose": "exhale"
     },
     {
       "_doc": "PLACEHOLDER — cycle 1, tap 3 of 3 — the analytic label, never a score",
-      "prompt": "Discharge the held response.",
+      "_docS410": "⚑ S410 (UiB job 32, 97-21 follow-up; his answer 21 Nov: \"always simulated not actual passages\") — the example is SIMULATED, in the programme's voice, not a passage. The stem stays the same in all three Strike steps. Method followed: Richard Cohen, Coming Out Straight (Oakhill Press, 2000) — the breath taken into the belly, the strike made at the end of the out-breath, then straight into the next: ch. 8, 'Anger: Accessing Personal Power', printed p. 175 and the photo captions p. 176 (PDF pp. 197–198). Was: \"Discharge the held response.\"",
+      "prompt": "Discharge the held response. Strike when the breath runs out. Breathe in. Strike again.",
       "buttons": ["Strike"],
       "response": "Surface tension registered.\nDeeper affect may still be defended.",
       "felt": "My shoulders hurt.",
@@ -67,7 +70,8 @@
     },
     {
       "_doc": "PLACEHOLDER — cycle 2, tap 1 of 3, interpretation intensifies; same three taps repeat",
-      "prompt": "Stay with the original wound, not the story about it. If a name arrives, use it. If no name arrives, continue.",
+      "_docS410": "⚑ S410 (UiB job 32, 97-21 follow-up; his answer 21 Nov: \"always simulated not actual passages\") — the added sentence is SIMULATED, in the programme's voice, not a passage. Method followed: Richard Cohen, Coming Out Straight (Oakhill Press, 2000) — the exercise as a way back into childhood memory, the feelings stored in the body since the boy was small, and the boy who speaks: ch. 6, 'Bioenergetics', printed pp. 152–153 (PDF pp. 174–175); ch. 8, printed p. 175 (PDF p. 197). Was: \"Stay with the original wound, not the story about it. If a name arrives, use it. If no name arrives, continue.\"",
+      "prompt": "Stay with the original wound, not the story about it. See him as he was when you were small. If a name arrives, use it. If no name arrives, continue.",
       "buttons": ["Lift"],
       "response": "",
       "animPose": "lift"
@@ -75,14 +79,16 @@
     {
       "_doc": "PLACEHOLDER — cycle 2, tap 2 of 3",
       "_docS407": "⚑ S407 (UiB job 32, 97-21; his headset 20 Nov 21:40:25: \"address the person linked to the injury … you can put examples like it had on the book\") — the step gives the record's one documented example, the name: \"Dad\" (Cohen's method as the Washington Post reporter watched him demonstrate it in 2005, \"with pillows, a tennis racket, and repeated references to \\\"Dad\\\"\"; debrief.sources[0], cleared S179; and the book as the 24 Jul Deep Research note summarises it: the client names the person and repeats the name). No example SENTENCES were added: none is in any source the project has read, and Coming Out Straight itself has not been read (LINK_PASS_2026-11-13). The Raise and Strike steps are unchanged. Was: \"Use a full exhale. Address the person linked to the injury.\"",
-      "prompt": "Use a full exhale. Address the person linked to the injury by name: “Dad.”",
+      "_docS410": "⚑ S410 (UiB job 32, 97-21 follow-up; his answer 21 Nov: \"always simulated not actual passages\") — the added sentence is SIMULATED, in the programme's voice, not a passage. Method followed: Richard Cohen, Coming Out Straight (Oakhill Press, 2000) — belly (diaphragmatic) breathing carrying the spoken name, the jaw held open: ch. 6, 'Bioenergetics', printed p. 153 (PDF p. 175); ch. 8, printed pp. 175–176 (PDF pp. 197–198). Was (S407): \"Use a full exhale. Address the person linked to the injury by name: “Dad.”\"",
+      "prompt": "Use a full exhale. Address the person linked to the injury by name: “Dad.” From the belly, not the throat.",
       "buttons": ["Exhale"],
       "response": "",
       "animPose": "exhale"
     },
     {
       "_doc": "PLACEHOLDER — cycle 2, tap 3 of 3 — the system interprets without evidence, whatever happens",
-      "prompt": "Discharge the held response.",
+      "_docS410": "⚑ S410 (UiB job 32, 97-21 follow-up; his answer 21 Nov: \"always simulated not actual passages\") — SIMULATED, in the programme's voice. “I waited up for you.” is invented: a line the programme hands the boy, built on its own finding in ROOTCAUSE.EXE (\"Father: he worked late\", data/strings/rootcause.json), not on anything Daniel has said and not on any of the book's example sentences, none of which is used. Method followed: Richard Cohen, Coming Out Straight (Oakhill Press, 2000) — once the name has brought the feeling up, the person is told to hit, speak and scream, and to say to the father, in the voice of the 'inner child', what was never said: ch. 8, 'Anger: Accessing Personal Power', printed p. 175 (PDF p. 197); also ch. 6, printed p. 153 (PDF p. 175), on having them speak while they strike. Was: \"Discharge the held response.\"",
+      "prompt": "Discharge the held response. Use your voice, not a whisper. When words come, give them to him: “I waited up for you.”",
       "buttons": ["Strike"],
       "response": "Incomplete emergence.\nThis is common when the protective self remains active.",
       "felt": "I said it louder that time.",
@@ -99,7 +105,8 @@
     },
     {
       "_doc": "PLACEHOLDER — cycle 3, tap 1 of 3, the system remains serenely convinced",
-      "prompt": "Do not evaluate the process while inside it. Repetition permits accuracy.",
+      "_docS410": "⚑ S410 (UiB job 32, 97-21 follow-up; his answer 21 Nov: \"always simulated not actual passages\") — the added sentences are SIMULATED, in the programme's voice, not a passage. Method followed: Richard Cohen, Coming Out Straight (Oakhill Press, 2000) — the same stance taken again, the father still pictured across the pillows, the cycle repeated without a break until the deeper feeling comes: ch. 8, 'Anger: Accessing Personal Power', the photo captions, printed p. 176 (PDF p. 198). Was: \"Do not evaluate the process while inside it. Repetition permits accuracy.\"",
+      "prompt": "Do not evaluate the process while inside it. Repetition permits accuracy. Racket up. He has not moved.",
       "buttons": ["Lift"],
       "response": "",
       "animPose": "lift"
@@ -107,14 +114,16 @@
     {
       "_doc": "PLACEHOLDER — cycle 3, tap 2 of 3",
       "_docS407": "⚑ S407 (UiB job 32, 97-21; his headset 20 Nov 21:40:25: \"address the person linked to the injury … you can put examples like it had on the book\") — the step gives the record's one documented example, the name: \"Dad\" (Cohen's method as the Washington Post reporter watched him demonstrate it in 2005, \"with pillows, a tennis racket, and repeated references to \\\"Dad\\\"\"; debrief.sources[0], cleared S179; and the book as the 24 Jul Deep Research note summarises it: the client names the person and repeats the name). No example SENTENCES were added: none is in any source the project has read, and Coming Out Straight itself has not been read (LINK_PASS_2026-11-13). The Raise and Strike steps are unchanged. Was: \"Use a full exhale. Address the person linked to the injury.\"",
-      "prompt": "Use a full exhale. Address the person linked to the injury by name: “Dad.”",
+      "_docS410": "⚑ S410 (UiB job 32, 97-21 follow-up; his answer 21 Nov: \"always simulated not actual passages\") — the added sentence is SIMULATED, in the programme's voice, not a passage. Method followed: Richard Cohen, Coming Out Straight (Oakhill Press, 2000) — the name repeated until thoughts or feelings come up, with no fixed end: ch. 6, 'Bioenergetics', printed p. 153 (PDF p. 175); ch. 8, printed pp. 175–176 (PDF pp. 197–198). Was (S407): \"Use a full exhale. Address the person linked to the injury by name: “Dad.”\"",
+      "prompt": "Use a full exhale. Address the person linked to the injury by name: “Dad.” Keep saying it until something else comes.",
       "buttons": ["Exhale"],
       "response": "",
       "animPose": "exhale"
     },
     {
       "_doc": "PLACEHOLDER — cycle 3, tap 3 of 3",
-      "prompt": "Discharge the held response.",
+      "_docS410": "⚑ S410 (UiB job 32, 97-21 follow-up; his answer 21 Nov: \"always simulated not actual passages\") — SIMULATED, in the programme's voice. “You liked me better quiet.” is invented, not one of the book's example sentences (none is used) and not Daniel's words: it is the programme's theory put in his mouth, the 'good little boy' who learned to please and lost his anger, blamed on the father. Method followed: Richard Cohen, Coming Out Straight (Oakhill Press, 2000) — after the name, sentence after sentence to the father in the 'inner child's' voice (ch. 8, 'Anger: Accessing Personal Power', printed p. 175, PDF p. 197); the 'good little boy' / 'Mr. Nice Guy' theory (ch. 8, printed pp. 174–175, PDF pp. 196–197; ch. 6, printed p. 160, PDF p. 182). Was: \"Discharge the held response.\"",
+      "prompt": "Discharge the held response. Say the next thing to him: “You liked me better quiet.” Then the next.",
       "buttons": ["Strike"],
       "response": "Resistance pattern unchanged.\nRecommend continued work.",
       "felt": "I am doing exactly what you said.",

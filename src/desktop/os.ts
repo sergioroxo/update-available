@@ -3423,7 +3423,8 @@ export class DesktopOS {
         this.drawIcon(E2_COL2, 188, institutionStrings.yourFile.icon, true, 'icon-your-file');
         // ⚑ S401 (UiB job 29 D2) — and it is the file that keeps growing: its count on the icon, lit for a moment when
         //   something is filed (silently; the stamp went with the wall)
-        this.drawFileCount(this.ctx, E2_COL2 + 26, 184, this.fileWatch.count, this.fileWatch.on);
+        //   ⚑ S410 (his 21 Nov "yes": the file items of 2003–2026 stop lighting too, as 97-6 did for 1997's tray) — it counts, quietly; it never lights
+        this.drawFileCount(this.ctx, E2_COL2 + 26, 184, this.fileWatch.count, false);
         // ⚑ S274 — Daniel's own folder of the years between (felt; nothing points to it but the song's pip)
         this.drawIcon(E2_COL2, 140, folderStrings.icon, true, 'icon-folder1997', this.folder1997Unread);
         // ⚑ S191 — the forum, once a thread has been recommended; unread until he opens it

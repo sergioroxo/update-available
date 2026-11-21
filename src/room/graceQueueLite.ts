@@ -1060,7 +1060,8 @@ export class GraceQueueLite {
    * GracePlatform's button, Lambient's tray and the clock fill the platform's width beside the Handset Window.
    */
   private drawAccountChip(ctx: CanvasRenderingContext2D, title: string, minX: number): void {
-    const full = mirrorCopy.account, short = full.split(' · ')[0], n = String(this.fileWatch.count), lit = this.fileWatch.on;
+    // ⚑ S410 (his 21 Nov "yes": the file items of 2003–2026 stop lighting too, as 97-6 did for 1997's tray) — it counts, quietly; it never lights
+    const full = mirrorCopy.account, short = full.split(' · ')[0], n = String(this.fileWatch.count), lit = false;
     setFont(ctx, 12);
     const titleEnd = 9 + Math.ceil(ctx.measureText(title).width) + 14;
     setFont(ctx, 10);

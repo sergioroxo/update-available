@@ -86,11 +86,13 @@ export class IrcApp {
   set onLine(fn: () => void) {
     this.tick = fn;
     this.dm.onStart = () => { this.dmScroll = 0; this.pop(); };   // R3-28: a new line shows the end
-    this.channel.onStart = () => this.pop();
+    // ⚑ S410 (his 21 Nov answer on S406's blip: "it shoulnd be every line, since it would be too much beeping") — the room's
+    //   lines are silent again; only Rob's private lines to Daniel sound, as mIRC sounded on a query, not on the channel
+    this.channel.onStart = undefined;
   }
   /**
    * ⚑ S406 / H5 (his headset run, 20 Nov, 21:37:12: "we need some sound of this space … the texts popping in") — a line
-   * from someone else appearing, in the channel or from Rob: a soft round blip (tools/make_s406_sounds.py `irc_pop_1997`),
+   * from someone else appearing (S410: only Rob's private lines to Daniel, never the channel): a soft round blip (tools/make_s406_sounds.py `irc_pop_1997`),
    * lower and duller than his own lines' tick, never more than one in 0.7 s. (R3-25 kept the TICK to his own lines: "not on
    * every message". This is not the tick; it is the room, quietly, and it is his later ask.)
    */
