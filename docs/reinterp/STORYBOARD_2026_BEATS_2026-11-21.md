@@ -1,4 +1,6 @@
-STATUS: draft
+STATUS: superseded-by docs/reinterp/STORYBOARD_2026_BEATS_v2_2026-11-21.md
+
+> Superseded by draft 2 after his notes of 21 Nov ("Overall not hapy yet"); kept as a research state.
 
 # 2026, from its logic: the beats, and a GPT prompt for each scene (draft 1, 21 Nov 2026) — T98
 
