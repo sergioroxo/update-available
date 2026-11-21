@@ -56,6 +56,7 @@ import captionsData from '../../data/strings/captions.json';
 import aimStrings from '../../data/strings/aim.json';
 import { mountDebugPanel } from '../debug/panel';
 import { makeScreenTexture, makeScreenEntity, screenUploads } from './screenTexture';
+import { mountRisingInstaller } from '../room/risingInstaller';
 import { buildEra3Devices, type Era3Devices } from '../room/era3Devices';
 import clusterData from '../../data/room/cluster.json';
 import strings from '../../data/strings/slice.json';
@@ -86,6 +87,7 @@ import { mountXrLayer, type XrLayer } from '../frame/xrLayer';
 import { e4Bridge } from '../desktop/apps/space';
 import { mountXrInput, type XrInput } from '../frame/xrInput';
 import { buildRestoreEntrance, type RestoreEntrance } from '../room/restoreEntrance';
+import { mountHeldLayer } from '../room/heldLayer';
 import { FRAME } from '../desktop/theme/chrome';
 import { TeachingTv, TeachingTvs, TV_MOMENT } from '../room/teachingTv';
 import { mountHeldClearance, type HeldClearance, type ScreenRect } from '../frame/heldClearance';
@@ -93,7 +95,7 @@ import { mountSeatCull } from '../room/seatCull';
 import { setVertexColourMerge, vertexColourMergeOn } from '../room/batching';
 import { TAPES } from '../narrative/teachingTapes';
 import { viewerFilm, viewerAudio } from '../frame/siteViewer/audio';
-import { voiceHeld, voiceWanted, setFilmAudible } from '../state/voiceHold';
+import { voiceHeld, voiceWanted, setFilmAudible, setGameAudible } from '../state/voiceHold';
 
 /** ⚑ S381 (UiB job 21 Part B; his headset: "To close the website…" with the Lexicon open) — the headset's note for the
  *  window that is open: the Lexicon, the machine's page (or its Receipt), or a website (gameMenu.json xr*Close / xr*Minimised) */
@@ -578,7 +580,9 @@ const BELONGINGS_HIT: Record<string, { p: { x: number; y: number; z: number }; r
   plantModel: { p: { x: -1.75, y: 0.15, z: -0.35 }, r: 0.18 },
   book1: { p: { x: 1.98, y: 1.21, z: 0.55 }, r: 0.12 },
   book2: { p: { x: 1.98, y: 1.2, z: 0.65 }, r: 0.12 },
-  poster1: { p: { x: 0.95, y: 1.62, z: -0.695 }, r: 0.22 },
+  // ⚑ S407 (97-2) — the poster's r1 place (reinterp_deltas.json r1 props poster1): it was still era1.json's 0.95 / 1.62 (S398 moved
+  //   the poster to 0.77 / 1.44 and not this), now 1.32 / 1.44 with the poster
+  poster1: { p: { x: 1.32, y: 1.44, z: -0.695 }, r: 0.22 },
   // D33 (Session 34): two small new shelf props, added to the eligible set —
   // positions match their era1.json prop entries exactly.
   // ⚑ S86: both of these were stale against reinterp_deltas.json's r1 — teddyBox
@@ -779,6 +783,8 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   const xr = app.xr;
   // ⚑ S346 / T08 — the view morph: every cut arrives as the destination's own picture, never black (viewMorph.ts)
   const viewMorph = mountViewMorph(app, camera);
+  // ⚑ S407 (UiB job 32, 97-7 / 97-9) — the held layer, mounted before the frame's (src/room/heldLayer.ts)
+  mountHeldLayer(app, camera);
   /** ⚑ S359 / H20 (his D1, 10 Nov: "The fade is horrible", "please don't move around") — in 2026 every re-form of the
    *  room in a headset, and every blink on the computer, is a PLAIN INSTANT CUT: no particles, no fade. Set each frame
    *  from the era (the frame loop, beside the cloud's update). */
@@ -1017,7 +1023,10 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       era: () => (closeStage ? 'close' : os.era),
       due: (tape) => {
         if (tvArmed.has(tape)) return os.era === (tape === '1997' ? 'e1' : tape === '2016' ? 'e3' : 'e4');
-        if (tape === '1997') return os.era === 'e1' && tvClock.kitReadAt >= 0 && tvClock.now - tvClock.kitReadAt >= 2;
+        // ⚑ S407 (UiB job 32, 97-7 / 97-8) — 1997's set has no moment of its own any more: it moved before he pressed, came
+        //   before the fellowship path and went behind the CRT. 1997's "Did you know" names it and brings it (os.onPauseTv →
+        //   TeachingTvs.bring); `arm` (?debug=1) still runs the old moment for the probes.
+        if (tape === '1997') return false;
         if (tape === '2016') return os.era === 'e3' && ledger.records.includes('e3-job:testimony');
         return os.era === 'e4' && tvClock.dadReadAt >= 0 && tvClock.now - tvClock.dadReadAt >= TV_AFTER_DAD;
       },
@@ -1206,6 +1215,10 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     // ⚑ S390 — Lamby's one offer per era to take a stalled visitor back to the teaching TV (src/narrative/lambyGuide.ts 'tv')
     os.tvOffer = () => (teachingTvs?.offerDue(os.era) ? teachingTvs.lambyLine(os.era) : undefined);
     os.onGuideTv = () => teachingTvs?.takeTo();
+    // ⚑ S407 (97-8) — 1997's "Did you know" names the set (it is lit at rest from then) and its button brings it
+    os.onPauseTv = () => teachingTvs?.bring() ?? false;
+    os.pauseTvShown = () => teachingTvs?.introduce();
+    os.tvLit = () => !!teachingTvs?.lit;
     os.tvCall = () => tvCallText;   // S392: Lamby's call while the moment takes the visitor to the TV
     os.guideExternal = () => {
       if (queueGuide) {
@@ -1347,7 +1360,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       onMenuSelect: (ray) => { if (document.getElementById('lambyos-home')) return; if (siteViewerXr?.pressRay(ray)) return; noteHumanInput(); if (xrFrame && !xrFrame.press(ray)) gameMenuBus.close(); },
       onSqueeze: () => { if (document.getElementById('lambyos-home')) return; noteHumanInput(); if (siteViewerXr?.isOpen) { siteViewerXr.close(); return; } gameMenuBus.toggle(); },
       menuOpen: () => gameMenuBus.isOpen,
-      layers: [xrFrame.layerId],
+      layers: [xrFrame.pointerLayerId],   // S406 / H1: drawn after the frame's planes (the site window, the menu)
       toSceneRay: ray => xrComfort.logicalRay(ray),
       fromScenePoint: point => xrComfort.physicalPoint(point),
       onGrab: (source, physical) => {
@@ -1583,6 +1596,11 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     deskGlassK = () => deskGlass.k;
   }
   const monitorQuad = mountXrMonitorQuad(app, front, os.canvas, () => os.era, xrComfort.physicalPoint);
+  // ⚑ S408 / 97-17 + 97-20 — while the 1997 → 2003 installer types during the rise, the monitor's own picture comes up with
+  //   the visitor (src/room/risingInstaller.ts): readable from the flight, gone with the restart's black
+  const risingInstaller = options.reinterp === true ? mountRisingInstaller(app, frontTex, os.canvas.width / os.canvas.height) : null;
+  app.on('update', () => { risingInstaller?.update(!!relocPlan && !!os.updateApp?.installShowing, camera, !!xr?.active); });
+  if (runtimeQuery().get('debug') === '1') (window as unknown as { __risingInstaller: unknown }).__risingInstaller = risingInstaller;
   if (runtimeQuery().get('debug') === '1') (window as unknown as { __monitorQuad: unknown }).__monitorQuad = monitorQuad;
   // ⚑ P8 F1 (headset B, 1 Nov: "I can still see the screen from Daniel. They're just in the air") — Daniel's monitor
   //   leaves the room at r4 and its screen stayed lit where the glass had been. In 2026 the screen goes with it; it
@@ -2257,6 +2275,9 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   let appliedEmphasis: string | null = null;
   /** id → the exact prior emissive of EVERY material that prop renders with */
   const emphasisRestore = new Map<string, pc.Color[]>();
+  /** S406 / H4 — the breath's last applied step, and each lifted material's own colour (read once) */
+  let emphasisLevel = -1;
+  const emphasisDiffuse = new Map<string, pc.Color[]>();
   function setPropEmphasis(key: string | null): void {
     if (key === appliedEmphasis) return;
     if (appliedEmphasis) {
@@ -2275,6 +2296,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     cluster?.setEmphasisBatch(key ? EMPHASIS_PROPS[key] ?? [] : []);
     appliedEmphasis = key;
     emphasisPhase = 0;
+    emphasisLevel = -1; emphasisDiffuse.clear();
     if (key) {
       for (const id of EMPHASIS_PROPS[key] ?? []) {
         const h = room.props.get(id);
@@ -2283,21 +2305,33 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
         // nothing renders, which is exactly why this lift used to be invisible
         // on the boombox (src/room/era1room.ts's PropHandle doc).
         emphasisRestore.set(id, h.materials.map(m => m.emissive.clone()));
+        emphasisDiffuse.set(id, h.materials.map(m => m.diffuse.clone()));   // S406: read once (see breatheEmphasis)
       }
       breatheEmphasis(0);
     }
   }
-  /** the lifted props, re-lit each frame on the breath (see EMPHASIS_BREATH_SECONDS) */
+  /**
+   * the lifted props, re-lit on the breath (see EMPHASIS_BREATH_SECONDS).
+   * ⚑ S406 / H4 (his headset run, 20 Nov: 1997 at 65–90 fps) — a StandardMaterial's colour, read or set, makes the engine
+   * rebuild that material's shader variants on its next update (PlayCanvas 2.19's colour getter marks the shader dirty),
+   * so re-lighting three materials on EVERY frame meant three variant rebuilds a frame for as long as a prop breathed
+   * (measured in the emulated headset: 3 a frame). The breath is now applied in steps of 1/50 of its swing (about 20 a
+   * second at its steepest, never seen as steps on a 2.6 s breath), and each material's own colour is read once.
+   */
   function breatheEmphasis(dt: number): void {
     if (!appliedEmphasis) return;
     if (!reducedMotion()) emphasisPhase += dt;
     const k = 0.5 + 0.5 * Math.sin((emphasisPhase / EMPHASIS_BREATH_SECONDS) * Math.PI * 2);
-    const frac = 0.35 + (1.0 - 0.35) * k;
+    const level = Math.round((0.35 + (1.0 - 0.35) * k) * 50);
+    if (level === emphasisLevel) return;
+    emphasisLevel = level;
+    const frac = level / 50;
     for (const id of EMPHASIS_PROPS[appliedEmphasis] ?? []) {
       const h = room.props.get(id);
       if (!h || h.emissive || !emphasisRestore.has(id)) continue;
-      for (const m of h.materials) {
-        const d = m.diffuse;
+      const diffuse = emphasisDiffuse.get(id);
+      for (const [i, m] of h.materials.entries()) {
+        const d = diffuse?.[i] ?? m.diffuse;
         m.emissive = new pc.Color(
           Math.min(1, d.r * frac + EMPHASIS_FLOOR),
           Math.min(1, d.g * frac + EMPHASIS_FLOOR),
@@ -3950,7 +3984,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       // click meant for a movement marker on the floor.
       if (era3Devices && era3Devices.handleWorkstationPointer(ray)) return;
       // ⚑ S394 — a lit Lamby set at rest comes close at a press (src/room/teachingTv.ts), before the markers
-      if (teachingTvs?.pressRest(ray)) return;
+      if ((os.era !== 'e2' || os.e2Arrived) && teachingTvs?.pressRest(ray)) return;   // S407: in 2003, once the arrival is over
       // R28-1: click-to-move, NEVER gaze-to-move — this pointerdown ray/hit
       // test is the ONLY thing that can arm a marker; looking at one (however
       // long) never does. Only test markers actually being offered right now
@@ -3979,6 +4013,10 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   if (debugOn) (window as unknown as { __heldDevices: unknown }).__heldDevices = devices;
   devices?.tick(0, 'e1', () => false, 0); // initialise its glass before entrance captures the image
   os.onFitIn = () => { if (os.era === 'e1') devices?.take('e1', xr?.active ? logicalHead() : camera); };
+  // ⚑ S408 / 03-19 — Lamby's "Play CLEAR" after the 2003 update is put off hands him the phone, as a press on it does; and
+  //   the deferral's clock reads whether something is in the hand
+  os.onClearTake = () => { if (os.era === 'e2') devices?.take('e2', xr?.active ? logicalHead() : camera); };
+  os.heldExternal = () => anythingHeld();
   tapePlayerBus.play = (id) => { os.onStopTape?.(); tapes?.insert(id); syncTapeProps(); syncTapeAudio(); };
   tapePlayerBus.stop = () => { if (tapes?.isPlaying) tapes.togglePlay(); syncTapeProps(); syncTapeAudio(); };
   tapePlayerBus.probe = () => tapes?.snapshot() ?? { inserted: null, playing: false, caption: null };
@@ -4032,7 +4070,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
    */
   function aimNameUnderRay(ray: Ray): string | null {
     const A = aimStrings as unknown as Record<string, string>;
-    aimAt = null; aimPick = false;
+    aimAt = null; aimPick = false; aimHeldGlass = false;
     // ⚑ S358 / H19 (his headset, 10 Nov, in the Close: "there's still no way to point to stuff"; "he cannot see where he
     //   is pressing") — the panels took a press but published nothing a ray could land on: the ray stayed a stub and
     //   nothing named what it was on. The same tests as the press (resolveTapRay), in its order: a panel names itself,
@@ -4040,17 +4078,20 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     if (cloud?.visible && closeStage !== 'message') {
       // ⚑ S378 — the far glass is no longer asked (it takes no press); the computer's panel names itself
       const ph = cloud.panelHit(ray.p0, ray.p1);
+      // ⚑ S406 / H1 — and in the headset the panel (or its button) the ray is on is framed: its hover
+      const onButton = !!ph && cloud.panelSourcesAt(ray.p0, ray.p1) !== null;
+      cloud.setFocus(ph && xr?.active ? ph.i : null, onButton);
       if (ph) {
         aimAt = ph.at;
         if (ph.i === cloud.machinePanel) return A.closeMachine;
-        return cloud.panelSourcesAt(ray.p0, ray.p1) !== null ? A.closeSources : A.closePanel;
+        return onButton ? A.closeSources : A.closePanel;
       }
       const lb = cloud.labelAt(ray.p0, ray.p1);
       if (lb) return lb.text === lexStrings.star ? A.closeLexicon : A.closeLabel.replace('{label}', lb.text);
     }
     if (os.isOff) return hitAt(ray, POWER_BTN, 0.08) ? A.power : null;
     // ⚑ S394 — the Lamby set names itself and what a press on it does (the press resolver asks it the same way)
-    { const tv = teachingTvs?.aimPoint(ray); if (tv) { aimAt = tv.at; return (A[`tv_${tv.what}`] ?? '').replace('{tape}', TAPES[tv.tape]?.title ?? '') || null; } }
+    { const tv = os.era !== 'e2' || os.e2Arrived || teachingTvs?.holding ? teachingTvs?.aimPoint(ray) : null; if (tv) { aimAt = tv.at; return (A[`tv_${tv.what}`] ?? '').replace('{tape}', TAPES[tv.tape]?.title ?? '') || null; } }
     if (!os.inDesktop) return null;
     const devName = (): string | null => {
       const dev = devices && cluster ? devices.aim(ray, cluster.era) : null;
@@ -4058,6 +4099,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       aimAt = devices?.aimedAt(cluster!.era) ?? null;
       const [game, what] = dev.split(':');
       aimPick = what === 'pick';   // S359 / H51: on a device that can be picked up (never while it is held)
+      aimHeldGlass = what === 'screen' && devices!.held(cluster!.era);   // S408 / 03-20
       const name = A[`dev_${game}`] ?? '';
       return (A[`devAim_${what}`] ?? A.devAim_screen).replace('{name}', name);
     };
@@ -4102,6 +4144,9 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   let aimAt: { x: number; y: number; z: number } | null = null;
   /** ⚑ S359 / H51 — the last aim was a holdable device that is not held: the grip icon goes beside it */
   let aimPick = false;
+  /** ⚑ S408 / 03-20 (his headset, 22:01: "your phone, the screen… this should disappear", 220154) — the ray is on the glass of
+   *  the device in his hand: the game is what he is looking at, so the ray's tag says nothing over it */
+  let aimHeldGlass = false;
   function hitAt(ray: Ray, p: { x: number; y: number; z: number }, radius: number): boolean {
     if (!rayHitsPointR(ray, p, radius)) return false;
     aimAt = p; return true;
@@ -4607,7 +4652,9 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     //   on the helper's plate; the plate keeps the helper's own lines, and stays down while a device is in the hand
     const aimShown = xr?.active && !gameMenuBus.isOpen && !siteViewerXr?.isOpen && xrComfort.calibrated ? aimName : null;
     xrInput?.setAimTarget(aimShown && aimAt ? xrComfort.physicalPoint(new pc.Vec3(aimAt.x, aimAt.y, aimAt.z)) : null);
-    xrFrame?.setAim(aimShown, aimShown ? xrInput?.end() ?? null : null, xrInput?.ray()?.p0 ?? null);
+    // ⚑ S408 / 03-20 — the ray still ends on the held glass; only its tag is not drawn over the game
+    const aimTag = aimHeldGlass ? null : aimShown;
+    xrFrame?.setAim(aimTag, aimTag ? xrInput?.end() ?? null : null, xrInput?.ray()?.p0 ?? null);
     // ⚑ S359 / H51 — the grip icon: only while the controller's ray is on a device that can be picked up
     xrFrame?.setGrip(aimShown && aimPick && aimAt ? xrComfort.physicalPoint(new pc.Vec3(aimAt.x, aimAt.y, aimAt.z)) : null);
     if (xrFrame && xr?.active && !gameMenuBus.isOpen) xrFrame.setHint(siteViewerXr?.isOpen || closeStage === 'message' ? null : !xrComfort.calibrated ? menuStrings.xrSeat : deviceInHand ? null : aimName ? null : xrHelperText(helper?.text() ?? null, dt));
@@ -4623,6 +4670,8 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       os.setup.requestDeviceLook = motionState === 'asking' || motionState === 'live' ? null : requestMotion;
       os.setup.deviceLookAvailable = !xr?.active && motionState !== 'unsupported' && motionState !== 'live';
       if (motionBtn) motionBtn.style.display = 'none';
+      os.setup.tableMatchAvailable = !!xr?.active;   // S407 (E2): Match my table, before the room
+      os.setup.requestTableMatch = () => xrLayer?.matchTable();
     }
     const entranceRay = xrInput?.ray();
     if (entranceRay) restoreEntrance?.hover(entranceRay);
@@ -4937,6 +4986,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
           // S152 — the sentence line: whatever the look rests on, named; the
           //   S89 tape preview folds into it (a press-preview on touch still works)
           const r = aimRay();
+          if (!r || closeStage === 'message') cloud?.setFocus(null);   // S406 / H1: no aim, no panel framed
           aimName = r ? aimNameUnderRay(r) : null;
           const hoverText = aimName ?? (!cap && !tapes.inserted && hoveredTapeId
             ? `◈ ${tapes.def(hoveredTapeId).shelfLabel}` : null);
@@ -5058,6 +5108,8 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       os.setup.requestDeviceLook = motionState === 'asking' || motionState === 'live' ? null : requestMotion;
       os.setup.deviceLookAvailable = !xr?.active && motionState !== 'unsupported' && motionState !== 'live';
       if (motionBtn) motionBtn.style.display = 'none';
+      os.setup.tableMatchAvailable = !!xr?.active;   // S407 (E2): Match my table, before the room
+      os.setup.requestTableMatch = () => xrLayer?.matchTable();
     }
     os.update(dt);
     if (os.e4) e4Room?.setScreenData({ number: os.e4.browser.currentClinicNumber,
@@ -5079,7 +5131,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     }
     helper?.tick(dt);
     syncRacketDemo(dt); // the room follows the pressed step, moving between poses (see its doc)
-    if (os.dirty) { frontTex.upload(); monitorQuad.changed(); os.dirty = false; }
+    if (os.dirty) { os.drawIfChanged(); frontTex.upload(); monitorQuad.changed(); os.dirty = false; }   // S406 / H4: painted only when changed
     /**
      * ⚑ S106 — the record READS the era rather than being told it. Two
      * independent paths set the room's decade (the played `driveMorphSpace`
@@ -5129,6 +5181,10 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
         side: os.era === 'e1' ? os.guide?.activeText ?? '' : '',
         felt1997: on(os.era === 'e1' && (!!os.packet?.open || !!os.diary?.open)),
         chat1997: on(os.era === 'e1' && !!os.irc?.open),
+        // ⚑ S407 (97-19) — 1997's set stays in 2003: 2003's own voices pause it and send it back (the arrival, Caleb, NetVision,
+        //   the media player, his testimony's playback, the accountability modal)
+        story2003: on(os.era === 'e2' && (!os.e2Arrived || !!os.caleb?.open || !!os.netvision?.open || !!os.mediaPlayer?.open
+          || !!os.testimony?.playbackActive || !!os.accountability?.modal)),
         lambient: on(!!q3?.guideVoice), personal2016: on(!!q3?.personalQuiet),
         voice2026: on(!!b4?.guideVoice), toast2026: b4?.toastKey ?? '', felt2026: on(!!b4?.messenger.felt),
         // the site viewer (the menu's Lexicon and websites) starting a track or a film: one thing heard at a time
@@ -5139,6 +5195,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       teachingTvs.guide(os.lambyGuide.view, os.lambyGuide.active);
       setFilmAudible(teachingTvs.audible);
     }
+    setGameAudible(!!(devices && cluster && devices.held(cluster.era)));   // ⚑ S407 (97-9): a game in the hand is heard alone
 
     if (os.inDesktop) flipBtn.style.display = 'block';
   });
@@ -5592,15 +5649,16 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     closeMsgEl.replaceChildren();
     const p = document.createElement('div'); p.textContent = c.text; closeMsgEl.appendChild(p);
     if (c.by) { const b = document.createElement('div'); b.textContent = c.by; b.style.color = FRAME.dim; b.style.marginTop = '0.4em'; b.style.fontSize = '0.8em'; closeMsgEl.appendChild(b); }
-    const last = i === closeMessage.cards.length - 1;
+    // ⚑ S409 (his rewrite of 21 Nov, T99) — every card ends "press to continue", the last too: the sources note after
+    //   the cards was cut (its text kept in close_message.json's _docS409); the sources stay in the menu, under Credits
     const f = document.createElement('div');
-    f.textContent = last ? closeMessage.sourcesNote : closeMessage.continue;
+    f.textContent = closeMessage.continue;
     Object.assign(f.style, { color: FRAME.faint, marginTop: '0.8em', fontSize: 'max(14px, 0.62em)' });
     closeMsgEl.appendChild(f);
     closeMsgEl.style.opacity = xr?.active ? '0' : '1';   // the headset has its own card (below); the page's is for the computer
     // ⚑ S361 / H50 — the headset reads it on its own card in front of the eyes (the helper's plate held two lines and
     //   the helper redrew it every frame: in his headset the cards never showed — "where are the message parts?")
-    xrFrame?.setCard({ text: c.text, by: c.by, foot: last ? closeMessage.sourcesNote : closeMessage.continue });
+    xrFrame?.setCard({ text: c.text, by: c.by, foot: closeMessage.continue });
     // the audit's handle (?debug=1 tools only): a card is up and a press anywhere turns it (tools/walk.mjs)
     (window as { __closeCard?: { on: boolean; i: number } }).__closeCard = { on: true, i };
   }
@@ -6017,6 +6075,9 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
           }
         },
         flyToSeat: () => {
+          // ⚑ S407 (UiB job 32, E3) — in a headset the seat is taken again here, from the head as it is when the room is
+          //   restored: the one taken at Enter VR, in the stars, put him 0.19 m nearer the CRT (xrComfort `reseat`)
+          if (xr?.active) xrComfort.reseat();
           if (!drivenMoves || reducedMotion() || xr?.active || startInVr) {
             clearLookOffset(); camPos.set(EYE.x, EYE.y, EYE.z); camPitch = 0; camYaw = 0;
             authoredRig.setLocalPosition(camPos); authoredRig.setLocalEulerAngles(0, 0, 0);

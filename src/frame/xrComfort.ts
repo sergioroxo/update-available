@@ -64,10 +64,17 @@ export function mountXrComfort(app: pc.Application, rig: pc.Entity, head: pc.Ent
   let lift = 0;
   /** the authored desk sits this far below the authored eye in every room (Room 1: eye 1.16, desk top 0.74) */
   const DESK_BELOW_EYE = 0.42;
+  // ⚑ S407 (UiB job 32, E2) — the table is kept where it IS (its physical height), not as a lift relative to the seat: Match
+  //   my table can now be done in the setup, in the stars, before the seat is taken again at the arrival (E3, `reseat`), and a
+  //   lift kept relative to the old seat would have carried the head's change of height between the two onto the desk. A
+  //   Meta recentre (or a new session) re-origins the space: the table is carried over by its distance below the head then.
+  let tableY: number | null = null;
+  let tableBelowHead: number | null = null, lastHeadY = 0;
   const updateMapping = () => {
     const facing = level(rot);
     view.setTRS(pos.clone().add(facing.transformVector(new pc.Vec3(0, 0, -LEAN))), facing, pc.Vec3.ONE); inverse.copy(view).invert();
     physicalMap.mul2(fixed, inverse);
+    if (tableY !== null) lift = Math.max(-0.3, Math.min(0.3, tableY - (fixed.getTranslation().y - DESK_BELOW_EYE)));
     physicalMap.data[13] += lift;
     logicalMap.copy(physicalMap).invert();
   };
@@ -98,9 +105,11 @@ export function mountXrComfort(app: pc.Application, rig: pc.Entity, head: pc.Ent
   let seatIn = -1, offFor = 0;
   const seatFromHead = (): void => {
     fixed.setTRS(head.getPosition().clone(), new pc.Quat().setFromEulerAngles(0, yawOf(head.getRotation()), 0), pc.Vec3.ONE);
+    if (tableBelowHead !== null) { tableY = head.getPosition().y - tableBelowHead; tableBelowHead = null; }   // S407: re-origined
     calibrated = true; calibrationPending = false; updateMapping();
   };
   const onSpaceReset = (): void => {
+    if (tableY !== null) tableBelowHead = lastHeadY - tableY;   // S407: the table, by its distance below the head before
     rig.setLocalPosition(authored.getLocalPosition()); rig.setLocalRotation(level(authored.getLocalRotation()));
     fixed.setTRS(rig.getPosition().clone(), rig.getRotation().clone(), pc.Vec3.ONE);
     calibrationPending = false; updateMapping(); seatIn = 0.15;
@@ -109,7 +118,10 @@ export function mountXrComfort(app: pc.Application, rig: pc.Entity, head: pc.Ent
     const space = (app.xr as unknown as { _referenceSpace?: typeof resetSpace })._referenceSpace ?? null;
     resetSpace?.removeEventListener('reset', onSpaceReset); resetSpace = space; space?.addEventListener('reset', onSpaceReset);
   });
-  app.xr?.on('end', () => { resetSpace?.removeEventListener('reset', onSpaceReset); resetSpace = null; });
+  app.xr?.on('end', () => {
+    resetSpace?.removeEventListener('reset', onSpaceReset); resetSpace = null;
+    if (tableY !== null) { tableBelowHead = lastHeadY - tableY; tableY = null; }   // S407: a new session has a new space
+  });
   function tick(dt: number) {
     identity();
     if (!app.xr?.active) {
@@ -133,6 +145,7 @@ export function mountXrComfort(app: pc.Application, rig: pc.Entity, head: pc.Ent
     const off = calibrated && !gameMenuBus.isOpen && elapsed < 0 && Math.abs(head.getPosition().y - fixed.getTranslation().y) > 0.45;
     offFor = off ? offFor + dt : 0;
     if (offFor > 1.5) { offFor = 0; seatFromHead(); }
+    lastHeadY = head.getPosition().y;   // S407: the table's distance below the head, should the space be re-origined
     // The menu remains above an unobscured, paused world; the dissolve resumes with the story.
     if (gameMenuBus.isOpen) { if (elapsed >= 0) morph.hide(); return; }
     // ⚑ S348 / UiB job 7 (his 9 Nov final word: the headset flies over the house like the computer) — while an era
@@ -235,13 +248,28 @@ export function mountXrComfort(app: pc.Application, rig: pc.Entity, head: pc.Ent
   const physicalPoint = (p: pc.Vec3): pc.Vec3 => physicalMap.transformPoint(p);
   const logicalPoint = (p: pc.Vec3): pc.Vec3 => app.xr?.active ? logicalMap.transformPoint(p) : p.clone();
   /** VR-04: put the desk top at this physical height (a fingertip on a real table). Returns the shift applied. */
-  const matchDesk = (tableY: number): number => {
-    const desk = physicalMap.transformPoint(new pc.Vec3(pos.x, pos.y - DESK_BELOW_EYE, pos.z)).y;
-    lift = Math.max(-0.3, Math.min(0.3, lift + tableY - desk)); updateMapping();
+  const matchDesk = (y: number): number => {
+    tableY = y; tableBelowHead = null; updateMapping();   // S407: the table's own height, kept through every re-seat
     return lift;
   };
+  /**
+   * ⚑ S407 (UiB job 32, E3; his headset 20 Nov, 21:25:39, frame 212619: "Oh wow, this is too close" — the CRT filled the view
+   * until he recentred). WHY THE FIRST POSE DIFFERED FROM THE RECENTRED ONE: the seat (`fixed`) is taken from the head 0.5 s
+   * after the session starts — in the stars, at Enter VR — and the arrival in the room kept it. His HUD read the seat equal to
+   * the rig to 5 mm (room shift 1.25 1.02 2.14 · 30° = DESCENT_FROM, the head's tracked offset ≈ 0 when it was taken) and the
+   * head 0.19 m forward of it at the arrival (head … −0.19, frame 212614): he had leant in to press the setup's panels. Mapped
+   * through the old seat, the eye came 0.19 m nearer the CRT than LEAN's 0.15 (the bezel at ~0.34 m). His recentre (the
+   * Meta long press: room shift 0.01 −0.00 0.15) took the head where it then was. So the arrival now does what his recentre
+   * did: the seat is taken from the head as it is when the room is restored (restoreEntrance flyToSeat, app.ts), before the
+   * room's re-form picks it up. No dissolve of its own: the arrival's own re-form covers it.
+   */
+  const reseat = (): void => {
+    if (!app.xr?.active || !active) return;
+    menuHead.held = false;
+    seatFromHead();
+  };
   const stageYaw = (): number => yawOf(new pc.Quat().setFromMat4(physicalMap));
-  return { authored, calibrate, logicalRay, physicalPoint, logicalPoint, matchDesk, stageYaw,
+  return { authored, calibrate, reseat, logicalRay, physicalPoint, logicalPoint, matchDesk, stageYaw,
     get deskLift() { return lift; },
     setWorldReady(ready: boolean) { worldReady = ready; },
     /** Available to the existing debug-only global; deterministic transition review, not a runtime input. */

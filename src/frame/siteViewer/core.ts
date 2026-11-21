@@ -221,7 +221,13 @@ export class ViewerCore {
     ctx.fillStyle = skin.contentBg; ctx.fillRect(vp0.x, vp0.y, textW, vp0.h);
     ctx.translate(vp0.x, vp0.y - this.scroll);
     const hovered = this.hover.startsWith('d') ? doc.hits.find((h) => h.id === this.hover) : undefined;
-    if (hovered) { ctx.fillStyle = skin.link; ctx.globalAlpha = 0.14; ctx.fillRect(hovered.x, hovered.y, hovered.w, hovered.h); ctx.globalAlpha = 1; }
+    // ⚑ S406 / H1 (his headset run, 20 Nov, the Close's websites: "I cannot see where the arrow is pointing to") — a link, a
+    //   door or a play button under the pointer was a 14 % tint of the link colour, which a white page in a headset swallowed:
+    //   now a stronger tint and a 2 px line round it, in the site's own link colour
+    if (hovered) {
+      ctx.fillStyle = skin.link; ctx.globalAlpha = 0.2; ctx.fillRect(hovered.x, hovered.y, hovered.w, hovered.h); ctx.globalAlpha = 1;
+      ctx.strokeStyle = skin.link; ctx.lineWidth = 2; ctx.strokeRect(hovered.x - 1, hovered.y - 1, hovered.w + 2, hovered.h + 2);
+    }
     const top = this.scroll - 80, bottom = this.scroll + vp0.h + 80;
     this.filmAt = null;
     for (const op of doc.ops) {

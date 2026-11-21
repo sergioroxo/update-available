@@ -673,6 +673,34 @@ export class GraceQueueLite {
   private doneT = -1;
   private decisions = new Map<number, Outcome>();
   private rects: Rect[] = [];
+  /**
+   * ⚑ S406 / H2 (his headset run, 20 Nov: the board's cards "can be pressed" behind "This week", and their outlines were
+   * drawn through it) — THE PANELS' BODIES. A panel over the board takes a press anywhere on it; only its own buttons answer
+   * it. Each cover remembers the rects that were already drawn when it was laid (`under`): those are beneath it. A rect drawn
+   * later (a pop-in, an alert's OK) is above it. Read by `xrResolve` (the press and the headset's aim ask the same question)
+   * and lent to the headset's outline (frame/xrTargets.ts), so nothing under a panel is outlined through it.
+   */
+  private covers: (Rect & { under: Set<Rect> })[] = [];
+  private cover(name: string, x: number, y: number, w: number, h: number): void {
+    this.covers.push({ x, y, w, h, id: `cover:${name}`, under: new Set(this.rects) });
+  }
+  /** ⚑ S406 / H2 — what a press at (x, y) acts on, as handleClick decides it: the alerts' OK and the Handset Window, then Lamby's
+   *  balloon (its buttons, then its body), then the panel lying over the point (its own buttons and anything drawn over it
+   *  win; what it covers does not), then the first rect there. A cover's id means the panel takes the press. */
+  xrResolve(x: number, y: number): string | null {
+    const mh = this.rects.find(r => hit(r, x, y));
+    if (mh && (mh.id === 'malta-alert-ok' || mh.id === 'takeover-alert-ok' || mh.id.startsWith('mirror'))) return mh.id;
+    const lg = this.rects.find(h => h.id.startsWith('lg-') && hit(h, x, y));
+    if (lg) return lg.id;
+    if (this.pauseOpen) { const pc = this.rects.find(r => r.id === 'pause-close' && hit(r, x, y)); if (pc) return pc.id; }
+    for (let i = this.covers.length - 1; i >= 0; i--) {
+      const c = this.covers[i];
+      if (!hit(c, x, y)) continue;
+      const above = this.rects.find(r => hit(r, x, y) && !c.under.has(r));
+      return above ? above.id : c.id;
+    }
+    return mh?.id ?? null;
+  }
   /** ⚑ S208 — GracePlatform's lock screen, after SAVER_SECONDS of quiet on the board with nothing open or playing */
   private saver: Screensaver | null = null;
   /** S208 / A2·A7 — the work count when the phone lit; one more finished job after that, link unopened, is "ignored" */
@@ -1105,6 +1133,7 @@ export class GraceQueueLite {
     studioFont(ctx, 12); const sub = wrapText(ctx, R.alertSub, w - 20).slice(0, 2);
     const h = 26 + 40 + sub.length * 16 + 40, y = Math.max(34, Math.floor((H - 28 - h) / 2) - 20);
     const flash = Math.floor(this.maltaAlertT * 2.2) % 2 === 0;
+    this.cover('malta-alert', x - 2, y - 2, w + 6, h + 7);   // S406 / H2: its body takes a press too, not only what it covers' centres
     px(ctx, x + 4, y + 5, w, h, ERA3.greyDk); px(ctx, x, y, w, h, ERA3.white);
     px(ctx, x - 2, y - 2, w + 4, 2, ERA3.alarm); px(ctx, x - 2, y + h, w + 4, 2, ERA3.alarm); px(ctx, x - 2, y - 2, 2, h + 4, ERA3.alarm); px(ctx, x + w, y - 2, 2, h + 4, ERA3.alarm);
     px(ctx, x, y, w, 26, flash ? ERA3.alarm : ERA3.amber);
@@ -1972,14 +2001,15 @@ export class GraceQueueLite {
       if (this.storyOffer) ids.add('update-accept');
       if (this.kitPopin) ids.add('kit-popin-open');
       if (this.veraPage === 'kit') ids.add(this.kitApproved ? 'vera-kit-close' : 'vera-kit-approve');   // S283: a finished job's one way on
-      if (ids.size) for (const r of this.rects) if (ids.has(r.id)) drawGlow(ctx, r, 'path', aero.ERA3.amber, aero.ERA3.glassEdge);
+      // ⚑ S406 / H2 — and never through a panel: a ring on something a panel lies over is not drawn
+      if (ids.size) for (const r of this.rects) if (ids.has(r.id) && !this.xrResolve(r.x + r.w / 2, r.y + r.h / 2)?.startsWith('cover:')) drawGlow(ctx, r, 'path', aero.ERA3.amber, aero.ERA3.glassEdge);
     }
     if (!['dark', 'boot', 'install'].includes(this.mode) && !this.saver) {
       const S = startCopy.desktop.startMenu;
       aero.button(ctx, 3, H - 25, 51, 22, S.button, { size: 10 });
       this.rects.unshift({ x: 3, y: H - 25, w: 51, h: 22, id: 'start-menu' });
       const nav = this.startMap.draw(ctx, platformW, H, 'e3', buildStartModel(undefined, 'e3'), this.startMapSilent || this.pauseOpen);
-      if (nav.length) this.rects = [...nav, ...this.rects.filter(r => r.id === 'start-menu' || r.id === 'whattodo')];
+      if (nav.length) { this.rects = [...nav, ...this.rects.filter(r => r.id === 'start-menu' || r.id === 'whattodo')]; this.covers = []; }
     }
 
     this.lambyGuide?.resolveFocusTargets(new Set(this.rects.map(r => r.id)));
@@ -2063,7 +2093,7 @@ export class GraceQueueLite {
     this.rects.unshift(...hits);
   }
   private drawSurfaceContent(ctx: CanvasRenderingContext2D, W: number, H: number): void {
-    this.rects = [];
+    this.rects = []; this.covers = [];
     // S61 — the arrival owns the WHOLE panel: no wallpaper, no taskbar, no
     // window chrome. A machine that is off or booting has no desktop yet, and
     // drawing one behind the boot text is the exact "already running" lie this
@@ -2248,6 +2278,7 @@ export class GraceQueueLite {
   private drawStoryOffer(ctx: CanvasRenderingContext2D, c: aero.AeroContent): void {
     const O = vera.offer;
     const w = Math.min(380, c.w - 32), h = 138, x = c.x + Math.floor((c.w - w) / 2), y = c.y + 58;
+    this.cover('kindredraft', x, y, w + 3, h + 4);   // S406 / H2: its whole card is its press (below); nothing under it is offered
     px(ctx, x + 3, y + 4, w, h, ERA3.glassEdge); px(ctx, x, y, w, h, ERA3.white);
     px(ctx, x, y, w, 26, ERA3.lambBand); px(ctx, x, y + 25, w, 1, ERA3.glassEdge);
     studioFont(ctx, 13, true); ctx.fillStyle = ERA3.titleText; ctx.fillText(O.title, x + 10, y + 6);
@@ -2277,6 +2308,7 @@ export class GraceQueueLite {
     const k = vera.kit;
     const w = Math.min(380, c.w - 32), h = 156, x = c.x + Math.floor((c.w - w) / 2), y = c.y + 50;
     const flash = Math.floor(this.kitPopinT * 2) % 2 === 0;
+    this.cover('urgent', x - 2, y - 2, w + 6, h + 7);   // S406 / H2: the URGENT card's whole face is its press (below)
     px(ctx, x + 4, y + 5, w, h, ERA3.greyDk); px(ctx, x, y, w, h, ERA3.white);
     px(ctx, x - 2, y - 2, w + 4, 2, ERA3.alarm); px(ctx, x - 2, y + h, w + 4, 2, ERA3.alarm); px(ctx, x - 2, y - 2, 2, h + 4, ERA3.alarm); px(ctx, x + w, y - 2, 2, h + 4, ERA3.alarm);
     px(ctx, x, y, w, 30, flash ? ERA3.alarm : ERA3.amber);
@@ -2379,6 +2411,7 @@ export class GraceQueueLite {
     if (this.phone.takeoverAlert) {
       if (!this.alertChimed) { this.alertChimed = true; playOnce('lambient_chime.mp3'); }
       const flash = Math.floor(performance.now() / 450) % 2 === 0;
+      this.cover('takeover-alert', c.x + 6, ay, c.w - 12, ah + 4);   // S406 / H2
       px(ctx, c.x + 6, ay + 4, c.w - 12, ah, ERA3.greyDk);
       px(ctx, c.x + 6, ay, c.w - 12, ah, ERA3.white);
       px(ctx, c.x + 6, ay, c.w - 12, 24, flash ? ERA3.alarm : ERA3.amber);
@@ -2511,6 +2544,9 @@ export class GraceQueueLite {
     const rows = this.pauseLines.map((l) => wrapText(ctx, l, cw - 64));
     const ch = 120 + rows.reduce((n, r) => n + r.length, 0) * 18 + rows.length * 6;
     const cx = c.x + Math.round((c.w - cw) / 2), cy = c.y + Math.round((c.h - ch) / 2);
+    // ⚑ S406 / H2 (his 22:08:24: the cards "can be pressed" behind "This week") — the card takes a press anywhere on it; its
+    //   Close is the one thing on it that answers (the board below stays as it was, and is pressable again once it closes)
+    this.cover('this-week', cx - 2, cy - 2, cw + 4, ch + 4);
     px(ctx, cx - 2, cy - 2, cw + 4, ch + 4, ERA3.glassEdge);
     px(ctx, cx, cy, cw, ch, ERA3.white);
     px(ctx, cx, cy, cw, 4, ERA3.accent);
@@ -3544,6 +3580,8 @@ export class GraceQueueLite {
 
   // ── input ────────────────────────────────────────────────────────────────
   handleClick(x: number, y: number): void {
+    // ⚑ S406 / H2 — a press on a panel's body is the panel's: it takes it, and nothing under it is pressed
+    if (this.xrResolve(x, y)?.startsWith('cover:')) { this.lambyGuide?.activity(); return; }
     const mh = this.rects.find(r => hit(r, x, y));
     if (mh?.id === 'malta-alert-ok') { this.closeMaltaAlert(); return; }
     if (mh?.id === 'takeover-alert-ok') { this.phone.endTakeoverAlert(); this.bump(); return; }

@@ -110,9 +110,12 @@ export function mountSetupWindow(app: pc.Application, camera: pc.Entity, frame: 
       const at = offset(-0.54 * (1 - arrive));
       plane.setPosition(at); star.setPosition(at);
       plane.setLocalScale(0.025 + (width - 0.025) * open, 1, 0.025 + (height - 0.025) * open);
-      material.opacity = open; material.depthWrite = open >= 1; material.update();
+      // ⚑ S406 / H4 — a material is updated only when its opacity moves (an update rebuilds its shader variants in
+      //   PlayCanvas 2.19: it ran every frame the window stood open)
+      if (material.opacity !== open || material.depthWrite !== (open >= 1)) { material.opacity = open; material.depthWrite = open >= 1; material.update(); }
       star.setLocalScale(0.08 + width * 0.12 * open, 1, 0.08 + width * 0.12 * open);
-      starMat.opacity = 1 - open; starMat.update(); star.enabled = open < 1;
+      if (starMat.opacity !== 1 - open) { starMat.opacity = 1 - open; starMat.update(); }
+      star.enabled = open < 1;
       unfolded = k >= 1; publish();
     },
     fold(k, reduced, _target) {

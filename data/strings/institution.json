@@ -57,6 +57,7 @@
   "fileItem": {
     "e1": {
       "label": "Your file",
+      "_docS407": "⚑ S407 (UiB job 32, 97-5 and 97-6; his headset 20 Nov: \"Your File\" as the symbol only, so it is not confused with Lamby; the count \"shouldn't light up … it's kind of forcing me to look at it\") — `label` is no longer written on 1997's taskbar: the tray is the folder and its number, and these words are its 1997 tooltip while the pointer rests on it. The well no longer lights when something is filed; the number still goes up.",
       "_docS404": "⚑ S404 (UiB job 30 C4; his 18 Nov on B8: \"Okay, we can try that, as long as it doesnt steal too much attention\") — `label`: the words beside the tray's folder and number on 1997's taskbar, at the clock's size and ink; they never light (only the well does, when something is filed). Before S404 the tray showed the folder and the number only.",
       "title": "Your file (read only)",
       "sub": "Daniel  ·  since you signed in  ·  entries: {n}",

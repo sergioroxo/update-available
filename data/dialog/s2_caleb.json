@@ -6,6 +6,8 @@
   "chat": {
    "_doc": "S2R.3A — the conversation. `typingCharsPerSecond` is Caleb TYPING, not a reveal effect: he is a person at a keyboard in 2003, so it should read as a hand, not a printer.",
    "typingCharsPerSecond": 13,
+   "typingMaxSeconds": 4.5,
+   "_docS408": "⚑ S408 / 03-16 — after Daniel answers (a chip, or Go on), Caleb's next line waits for him to type it: its length at typingCharsPerSecond, never under replyGapSeconds and never over typingMaxSeconds.",
    "openDelaySeconds": 2.2,
    "lineGapSeconds": 2.0,
    "chipsArriveSeconds": 1.2,
@@ -22,7 +24,8 @@
    "wantingSeconds": 7.5,
    "streakSeconds": 4.5,
    "systemSeconds": 8.5,
-   "sadHoldSeconds": 5.5,
+   "sadHoldSeconds": 2.4,
+   "_docS408sad": "⚑ S408 / 03-17 (his headset, 20 Nov 21:57: \"there was like a loaded time there that didn't make much sense before I caught it in time\") — since S345 the sad step had no words and no Next and held for silentNextSeconds (6 s): it read as loading. It holds sadHoldSeconds now (5.5 → 2.4, and it is read: it was unused since S345), with alert.sadLine in Lamby's place, so the silence is visibly his.",
    "streakFallSeconds": 2.2,
    "autoNextSeconds": 20,
    "silentNextSeconds": 6,
@@ -78,6 +81,8 @@
   },
   "to": "To:",
   "says": "{name} says:",
+  "typing": "{name} is typing a message…",
+  "_docS408typing": "⚑ S408 / 03-16 (his: \"when you press go on it should be a message… and then we wait for him to reply a bit\") — the period messenger's own line while he types his answer: after any reply of Daniel's, Caleb takes a pause sized to what he is writing (pacing.chat.typingMaxSeconds), and this line says so.",
   "_docS339": "⚑ S339 (his 8 Nov: 'closer to MSN… bubbles… scroll… bigger') — `to` heads the strip; `says` heads each run of bubbles ('caleb says:'). The contact list's offline names are retired with the list; the two display pictures replace it (no faces)."
  },
  "thread": [
@@ -123,7 +128,31 @@
   {
    "id": "c03",
    "from": "them",
-   "text": "every time i get close they change something. my name, your settings. i made this account at the library so it would get through."
+   "text": "and every time i found you, my account got shut down. i made this one at the library so it would get through.",
+   "_docS408": "⚑ S408 / 03-16 (his headset, 20 Nov 21:55: \"how does he know that it changes your settings? He should be talking by his own point of view, Caleb\") — Caleb can only know what happened on HIS side: his requests came back refused (c02) and his own accounts were closed. Was: \"every time i get close they change something. my name, your settings. i made this account at the library so it would get through.\""
+  },
+  {
+   "_docS408": "⚑ S408 / 03-16 (his: \"maybe we need a little more of interaction after he says this about the account\") — one beat each, each from his own side: Daniel never saw the requests (the boot said they were 'declined on your behalf'), or read six years of silence as Caleb giving up; Caleb's answer fits both. Register, never branch: the chips file differently and Caleb says the same thing. Claude's lines (2026-08-17 norm), felt; his edit wins.",
+   "id": "r01b",
+   "chips": [
+    {
+     "id": "never-saw",
+     "label": "I never saw them.",
+     "say": "I never saw them.",
+     "ledgerTag": "contact: subject reported the requests were never received"
+    },
+    {
+     "id": "thought-stopped",
+     "label": "I thought you'd stopped.",
+     "say": "I thought you'd stopped.",
+     "ledgerTag": "contact: subject reported he believed the contact had ceased"
+    }
+   ]
+  },
+  {
+   "id": "c03b",
+   "from": "them",
+   "text": "i figured. i never stopped."
   },
   {
    "id": "c04",
@@ -206,6 +235,15 @@
    ]
   }
  ],
+ "earlier": {
+  "_doc": "⚑ S408 / 03-15 (his headset, 20 Nov 21:54, and 8 Nov 12:33: \"since we got the message from Caleb, when we open it… it should already be there\"; 20 Nov: \"we just see the latest one, the latest attempt… the ones before can have like a note being flagged, so it showcases that the system tried to interrupt that possibility\") — when the Messenger opens, Caleb's three earlier attempts are already in it, greyed, each with the system's flag: the three requests the 2003 boot reported as 'DECLINED ON YOUR BEHALF' (s2_lamby.json osBootLines). Under them his latest attempt (c01–c02b, from the library account) is already there too, arrived: no cascade. FELT: his words, short; the flag is the apparatus's mark on them, nothing more. Claude's lines (2026-08-17 norm); his edit wins.",
+  "note": "{when} · flagged · declined on your behalf",
+  "attempts": [
+   { "when": "June 1998", "text": "daniel, it's caleb. are you ok?" },
+   { "when": "March 2000", "text": "it's me again. if this reaches you, just say hi." },
+   { "when": "May 2002", "text": "still here, d." }
+  ]
+ },
  "alert": {
   "_doc": "OPERABLE. The alert fires ON the press (never on the meeting, never on a message received) — the thesis is exact: the desire is the offense, the meeting merely its evidence. `lines` are Lamby's, in beats of ≤2 (conduction law); `systemLines` and `caughtLine` are Sérgio's own ⟨S⟩ wording, verbatim. `systemLines` render in the SYSTEM's voice (the flag block), not as Lamby speech — the same place the shipped build put them (data/dialog/s2.json `noOne`/`streakFor`) — which is also what keeps Lamby inside the ≤5-lines-per-stage budget.",
   "windowTitle": "Restorify — Accountability",
@@ -225,6 +263,8 @@
     "Don't be hard on yourself. Slips are part of getting well — we'll get the days back together."
    ]
   },
+  "sadLine": "…",
+  "_docS408": "⚑ S408 / 03-17 — Lamby's silence before the ⟨S⟩ line, shown as his: the ellipsis in his speech place while he deflates (accountability.ts draws it as three dots, big enough to read as his). Not a line of words; the ⟨S⟩ lines are untouched.",
   "caughtLine": "I caught it in time.",
   "_s_caughtLine": "⟨S⟩ Sérgio's own wording — VERBATIM, never paraphrase. It arrives AFTER the sad hold: the apparatus does not scold, it looks hurt, and the player is invited to feel they did that to it. The shame IS the coercion.",
   "systemLines": [
@@ -380,6 +420,8 @@
   "open": "open"
  },
  "songHold": {
+  "say": "Go on.",
+  "_docS408": "⚑ S408 / 03-16 — Go on is said: Daniel's bubble, then Caleb types his next line (the 'is typing' line, a pause sized to it).",
   "_doc": "⚑ S339 — THE SONG'S TWO-STEP (his answer 13: 'the Wait / two-step button belongs to the looping audio Caleb sends'; 12:35: 'needs a button so people can take their time… but if a lot of time passes, then it continues'). When the file arrives the conversation holds. `wait` keeps it holding while Daniel listens (then only `go` is left); `go` lets Caleb carry on; untouched, it carries on by itself after `autoSeconds`. FELT: nothing here files.",
   "wait": "Wait, I’m listening",
   "go": "Go on",

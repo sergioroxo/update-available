@@ -532,7 +532,13 @@ export class NetVisionPlayerApp {
    *  pixel discipline). Two slow sines beat against each other so it never
    *  reads as a loop; the break widens it as the transport fails. */
   private frameBob(): number {
-    const amp = 1 + this.breakProgress() * 1.6;
+    // ⚑ S408 / 03-18 (his headset, 20 Nov 21:58: "why is the frame from the video jumping… like scan lines… it goes up, up,
+    //   down, down", 215842) — this was it: the whole picture hopped a whole pixel up and down (round of two sines, so
+    //   −1/0/+1, a step every second or so) under scanlines that stay pinned, and on the headset's glass a one-pixel hop
+    //   of the picture against its own lines reads as the frame jumping. The film's drawing, not the frame rate. The tape
+    //   now sits still until the transport fails: the wobble is only the break's, where it widens as before.
+    const amp = this.breakProgress() * 2.6;
+    if (amp <= 0) return 0;
     return Math.round((Math.sin(this.elapsed * 0.9) * 0.6 + Math.sin(this.elapsed * 2.3) * 0.5) * amp);
   }
 

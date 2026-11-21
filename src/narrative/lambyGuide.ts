@@ -4,7 +4,7 @@ import copy from '../../data/strings/lambyGuide.json';
 import decisions from '../../data/strings/cx3b.json';
 import type { MapState } from '../witness/map';
 export type GuideEra = 'e1' | 'e2' | 'e3' | 'e4';
-export type GuideRung = 'silent' | 'cue' | 'tip' | 'show' | 'again' | 'start' | 'form' | 'personalise' | 'root' | 'harbor' | 'choice' | 'tv' | 'tvcall' | 'file';
+export type GuideRung = 'silent' | 'cue' | 'tip' | 'show' | 'again' | 'start' | 'form' | 'personalise' | 'root' | 'harbor' | 'choice' | 'tv' | 'tvcall' | 'file' | 'message' | 'remind';
 export interface GuideStep { tip: string; here?: string; again?: string; target: string[]; act?: string; noAgain?: boolean; once?: boolean }
 export interface GuideView {
   era: GuideEra; beat: string; rung: GuideRung; hidden: boolean; text: string | null;
@@ -14,7 +14,7 @@ export interface GuideView {
   frame: number; time: number;
 }
 export interface GuideInput { era: GuideEra; map: Pick<MapState, 'current' | 'quiet'>; silent: boolean; voice: boolean;
-  personaliseOffer?: string; deferredUpdate?: boolean; formAvailable?: boolean; formOpened?: boolean; formForced?: boolean; formFiled?: boolean; rootOpened?: boolean; racketDone?: boolean; robDone?: boolean; harborDue?: boolean; tvOffer?: string; tvCall?: string; fileOffer?: string; fileTarget?: string; fillText?: (text: string) => string; idleScale?: number; startTarget?: string; reducedMotion?: boolean }
+  personaliseOffer?: string; deferredUpdate?: boolean; formAvailable?: boolean; formOpened?: boolean; formForced?: boolean; formFiled?: boolean; rootOpened?: boolean; racketDone?: boolean; robDone?: boolean; harborDue?: boolean; tvOffer?: string; tvCall?: string; fileOffer?: string; fileTarget?: string; messageDue?: string; remindDue?: string; remindAct?: string; fillText?: (text: string) => string; idleScale?: number; startTarget?: string; reducedMotion?: boolean }
 interface StepMemory { dismissed: number; finished: boolean; offered: boolean }
 export class LambyGuide {
   readonly view: GuideView = { era: 'e1', beat: '', rung: 'silent', hidden: true, text: null, targets: [], frame: 0, time: 0 };
@@ -29,6 +29,9 @@ export class LambyGuide {
   private rootOffered = false;
   /** ⚑ S345 — 2003: Lamby has said to share the story on Harbor */
   private harborOffered = false;
+  /** ⚑ S408 / 03-13, 03-19 — 2003: Lamby has said a message came in; Lamby has said what else there is while the update waits */
+  private messageOffered = false;
+  private remindOffered = false;
   /** ⚑ S390 — the eras in which Lamby has offered to take the visitor back to the teaching TV (once each) */
   private readonly tvOffered = new Set<GuideEra>();
   /** ⚑ S392 — the eras in which Lamby has made the teaching TV's call (once each), and whether that call is up now */
@@ -58,7 +61,7 @@ export class LambyGuide {
     Object.assign(this.view, { rung, text, targets, act, alt }); this.version++;
   }
   /** the offers that are said once, ignorable, and logged by their own name (not by the era's beat) */
-  private get isOffer(): boolean { const r = this.view.rung; return r === 'form' || r === 'root' || r === 'harbor' || r === 'choice' || r === 'tv' || r === 'tvcall' || r === 'file'; }
+  private get isOffer(): boolean { const r = this.view.rung; return r === 'form' || r === 'root' || r === 'harbor' || r === 'choice' || r === 'tv' || r === 'tvcall' || r === 'file' || r === 'message' || r === 'remind'; }
   tick(dt: number, input: GuideInput): void {
     this.input = input;
     const alias: Record<string, string> = { l: 'browser', search: 'results' };   // ⚑ S293: 2026's other beats are their own ids
@@ -78,6 +81,8 @@ export class LambyGuide {
     if (input.tvCall && !this.tvCalled.has(input.era) && this.canOffer()) {
       this.tvCalled.add(input.era); this.counts[input.era]++; this.idle = 0; this.calling = true; this.set('tvcall', input.tvCall, [], 'open:tv');
     }
+    // ⚑ S408 — an offer whose moment has passed (the Messenger was opened from its icon; the update came back) is withdrawn
+    if ((this.view.rung === 'message' && !input.messageDue) || (this.view.rung === 'remind' && !input.remindDue)) this.set('silent');
     if (this.calling && (!input.tvCall || this.view.rung !== 'tvcall')) { if (this.view.rung === 'tvcall') this.set('silent'); this.calling = false; }
     const hidden = !this.calling && (input.silent || input.map.quiet || input.map.current?.era === 'close' || input.voice);
     if (hidden !== this.view.hidden) { this.view.hidden = hidden; this.version++; }
@@ -104,6 +109,18 @@ export class LambyGuide {
     //   next press is Post your story. Once, ignorable, inside the era's cap.
     if (input.era === 'e2' && input.harborDue && !this.harborOffered && !this.active && this.canOffer()) {
       this.harborOffered = true; this.counts.e2++; this.set('harbor', copy.harbor.text, [], 'open:harbor'); return;
+    }
+    // ⚑ S408 / 03-13 (his headset, 20 Nov: a toast and this balloon both pointed at Caleb's message, "maybe too much helper
+    //   guides") — ONE prompt per message, and it is Lamby's: said once when the message lands; Open it opens the Messenger,
+    //   No thanks and × are logged, and the Messenger's unread mark stays on the desk. Inside the era's cap (the OS falls back
+    //   to its one corner line only when the cap is spent).
+    if (input.era === 'e2' && input.messageDue && !this.messageOffered && !this.active && this.canOffer()) {
+      this.messageOffered = true; this.counts.e2++; this.set('message', input.messageDue, [], 'open:messenger'); return;
+    }
+    // ⚑ S408 / 03-19 (his: "after remind me later… it should pop in to be able to understand other stuff that I can do") —
+    //   once, when the update is put off: what is still on the desk, and (while CLEAR is unplayed) a way to it
+    if (input.era === 'e2' && input.remindDue && !this.remindOffered && !this.active && this.canOffer()) {
+      this.remindOffered = true; this.counts.e2++; this.set('remind', input.remindDue, [], input.remindAct); return;
     }
     // ⚑ S390 (UiB job 25 B2.5) — THE TEACHING TV: once per era, ignorable, inside the era's cap. Only when the visitor has
     //   stalled with nothing better to hear from Lamby (no beat tip due: one and a half tip-waits of quiet), and only while the
@@ -173,6 +190,8 @@ export class LambyGuide {
     } else if (this.idle >= copy.timing.cueSeconds * scale && this.view.rung === 'silent') this.set('cue');
   }
   private canOffer(): boolean { return this.counts[this.view.era] < copy.timing.capPerEra; }
+  /** ⚑ S408 — unasked balloons this era may still say (the cap less what it has said) */
+  offersLeft(era: GuideEra): number { return copy.timing.capPerEra - this.counts[era]; }
   private offer(rung: GuideRung, text: string, targets: string[] = [], act?: string): void {
     this.counts[this.view.era]++; this.idle = 0; this.set(rung, text, targets, act);
   }
@@ -183,6 +202,8 @@ export class LambyGuide {
     // Requested help waits for the current operable voice; it never queues across a quiet scene.
     if (id === 'lg-tray' && this.input.voice && !this.input.silent && !this.input.map.quiet) { this.requested = true; return true; }
     if (this.view.hidden) return false;
+    // ⚑ S406 / H2 — the balloon's body (lambyGuideDraw's `lg-cover`): it took the press, and nothing happens
+    if (id === 'lg-cover') return true;
     const s = this.spec, m = this.mem();
     if (id === 'lg-tray') {
       this.idle = 0;

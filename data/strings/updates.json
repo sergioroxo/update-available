@@ -2,6 +2,8 @@
  "_doc": "PLACEHOLDER — Sérgio voice pass pending on EVERY string. The era transitions as SOFTWARE UPDATES (SCRIPT_UPDATE v0.5 §1, CLAUDE.md): notification ('Remind me later' works ONCE) → EULA (read through, one live 'I Agree') → install (changelog-as-thesis + glitch) → restart. Updates are triggered by documented system failures, never by the player. The register is operable — the system's confident cheer — and the changelog is the thesis in four lines: same instrument, new casing. The FINAL restart (close) is deliberately different: no terms, no changelog, bare — the person's restart, not the system's.",
  "u2": {
   "toEra": "e2",
+  "remindedOnHost": true,
+  "_docS407": "⚑ S407 (UiB job 32, 97-15; his headset 20 Nov, frame 214342: the toast lay over the Family Form's Close and Hold) — `remindedOnHost`: 1997's deferral line (`remindedStatus`, below) is drawn in the taskbar's own status well by os.ts, clear of every window, instead of its own strip above the taskbar. The words are unchanged.",
   "_docCascade": "⚑ THE ERROR CASCADE — restored 2026-08-21. It was authored in data/dialog/s1_end.json's `ritual` block (error / errorRetry / errorCancel / loading) and NOTHING IN src/ EVER READ IT: that whole block is orphaned, so the beat existed only as text. Sérgio named this loss from memory in his 2026-08-21 walkthrough — 'the transition from Era 1 to Era 2 is missing the cascade of windows that we talked about previously and the glitching effects' — and he was right. The copy below is that authored copy, moved to the file the live code actually reads. Its own design note: 'Runs straight off the diary glitch, replicating the Error-999 stack.' ⚑ IT IS A STACK, NOT A DIALOG: the windows arrive one after another, each offset from the last, until the screen is a pile of the same refusal. Retry and Cancel BOTH lead onward — the era's own law is register-not-branch, and an error you can genuinely dismiss is not this system. Set `cascade: null` on any update that should not have one; only u2 does today.",
   "cascade": {
    "title": "LambyOS 4.0.7",
@@ -63,14 +65,18 @@
   },
   "changelog": [
    "RESTORIFY 2003 — WHAT'S NEW",
+   "LambyOS 2003 · build 5.1.2 — replaces 4.0.7 (1997)",
    "+ fresh look, brighter rooms",
    "+ accountability web (always on)",
    "= your history: retained",
    "= Daniel's file: carried over, scanned",
+   "= contact requests: 3 · declined on your behalf",
    "= your goal: unchanged",
    "- nothing is ever removed",
-   "Root Cause — migrated"
+   "Root Cause — migrated",
+   "RESTORIFY IS NOW PART OF THIS COMPUTER."
   ],
+  "_docChangelogS408": "⚑ S408 / 97-20 (his 21 Nov answer: one installer moment — \"Yes\": keep the one read while rising out of 1997, carry 'replaces 4.0.7 … Restorify is now part of this computer' there, and 2003 starts straight at 'Welcome back, Daniel') — the 2003 boot crawl and its 'finishing installation' line are gone from the visit (os.ts: the return press → the machine's beep → the cartoon), so what they said is said here, once: the version it replaces, the three contact requests declined on his behalf (Caleb's, 03-15), and the last line. The crawl's other lines already had their twins here (profile → history retained, journey file → Daniel's file, accountability services → the accountability web); 'companion process starting' is Lamby's own arrival, which follows. 11 lines at 1.5 s: the install holds 20.5 s, the restart ends 24.5 s into the 28.3 s flight (src/room/cluster.ts e1-e2). It rises with him (src/room/risingInstaller.ts, 97-17). Was: the 8 lines without the second, the seventh and the last.",
   "restarting": "Restarting…",
   "_sourceGrounding": {
    "_proposed": "S47 2026-07-25 — grounding added per SOURCE_VERIFICATION_RESULTS; awaiting Sérgio",
@@ -97,7 +103,8 @@
   "remindLater": "Remind me later",
   "remindedStatus": "Restorify is being removed. It will ask again.",
   "_docRemindedStatus": "S156 / R3-60 (Sérgio: 'Update Later → the story app says continue; should say it is being removed'): u3's own deferral line — the shared one under `remindedStatus` at the root serves u2.",
-  "remindSeconds": 22,
+  "remindSeconds": 40,
+  "_docRemindS408": "⚑ S408 / 03-19 (his headset, 20 Nov 22:00: \"it didn't give me much time to play other stuff\") — 22 → 40 s of quiet, and the clock stands still while he plays or reads (os.ts deferBusy: the phone in the hand, Harbor, his file, the 1997 folder, a player, Lamby's line; at most 240 s). The deferral no longer reopens the Messenger: Lamby says what is still on the desk (lambyGuide.json remind).",
   "_docRemindS339": "⚑ S339 (his 8 Nov: 'remind me later, it doesn't work because there's no place to come back to') — the deferral now returns to the Messenger, where Caleb answers Daniel once (s2_caleb.json residue.answer); 22 s is enough to read it and sit with it, then the notice returns with its Remind spent.",
   "eulaTitle": "GracePlatform — Community Guidelines",
   "eula": [

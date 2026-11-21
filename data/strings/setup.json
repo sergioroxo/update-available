@@ -77,7 +77,10 @@
     "permission": "Look with your device",
     "asking": "Asking the device…",
     "denied": "Motion access was declined — you can still drag to look.",
-    "unavailable": "Device look is unavailable — you can still drag to look."
+    "unavailable": "Device look is unavailable — you can still drag to look.",
+    "table": "Match my table",
+    "tableNote": "Sitting at a table? Press, then rest a hand flat on it: the desk in the room will meet it. It stays in the Menu too.",
+    "_docS407": "⚑ S407 (UiB job 32, E2; his headset 20 Nov, 21:26:00: \"Match my table\" before you enter, on the setup panel) — in a headset only, the How to look window offers Match my table (`table`, with `tableNote` under it) where a phone is offered device look: a fingertip held still on the real table sets the desk's height before the room is restored (src/frame/xrLayer.ts matchTable; the frame says ask / done / none, gameMenu.json xrDesk*). The room's own offer, the banner that ran into the CRT (212627, gameMenu.json xrDeskOffer), is gone. Claude's words; his edit wins."
   },
   "note": {
     "title": "CONTENT NOTE",

@@ -1,0 +1,17 @@
+{
+  "_doc": "⚑ S408 / 03-11 (his headset, 20 Nov 21:51–21:52: \"Next task: see how it is done there… it makes no sense because the next task doesn't have anything… I would enjoy having that information about women's groups… SSA for men, SSA for women\"; his 21 Nov answer: \"Yes, or even a manuel, brochure something\") — what 'Go there' on the women's-group task (data/sends.json s1) opens in 2003: one page of Restorify's women's-track brochure, on Daniel's monitor (src/desktop/apps/womensTrack.ts). OPERABLE: the programme's self-presentation, in its own soft voice; nothing in it speaks for a woman, and it tells no one's story. It is the bridge to 2016 through the SYSTEM'S tactic (memory each-story-its-own-words): it gives women's love the programme's word, 'emotional dependency', the word 2016's programme will use and Vera will refuse in her own words. Invented marks only (Restorify, the Friendship Inventory). No real names on the page. SOURCES for what the page claims (the KB, docs/reinterp/RESEARCH_LEXICON_2026-10-02.md §2 'mother wound' and §10 'emotional dependency', and data/strings/lexicon.json `causes.women`): the mother wound and the absent or non-affirming father (2001–2012, NOT SUPPORTED); emotional dependency, 'enmeshment' (Rentzel 1990; the 2001 Focus on the Family women's booklet, NMAH B006 F004: 'when a woman deposits her identity…'; Robinson and Spivey 2015 name it a euphemism; NOT SUPPORTED). [VERIFY SOURCE]: a friendship self-inventory as the programme's first step for women — the page's 'Friendship Inventory' is invented, and that ministries of the period used such checklists is not read in the KB. Claude's lines (2026-08-17 norm); his edit wins.",
+  "title": "Restorify — Women's Track",
+  "kicker": "RESTORIFY · FOR WOMEN",
+  "headline": "SSA for women: the same steps, her own journey.",
+  "lead": "For a woman, same-sex attraction (SSA) is rarely about attraction. It is about a need.",
+  "look": "Our counsellors help her look for:",
+  "points": [
+    "a mother wound: the bond with her mother that never formed",
+    "emotional dependency: a friendship that became her whole identity",
+    "a father who was not there to affirm her"
+  ],
+  "step": "Her first step: our Friendship Inventory. Which friend do you need too much?",
+  "foot": "Women's groups meet at the same conference, on the same steps. Ask your coach.",
+  "mark": "Restorify 2003 · women's track · page 1 of 1",
+  "close": "Close"
+}

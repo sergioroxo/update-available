@@ -11,7 +11,8 @@
     "Press the earth beside Lamby to dig."
   ],
   "start": "Start digging",
-  "hint": "GOAL: dig down to the root. Press the earth beside Lamby to dig; press a diagnosis beside you to inflate it.",
+  "hint": "GOAL: dig down to the bottom layer, then three cells along it: the root is there. You need not clear the rest. Diagnoses follow your tunnel: press one beside you till it bursts.",
+  "_docS407": "⚑ S407 (UiB job 32, 97-12; his headset 20 Nov, 21:39:40, frame 214039: \"do you have to play to delete what? You just go down? Or to eat all of the blocks around it?\" — he dug one shaft to the Body and stopped) — `hint`, the line under the earth, now says what ends a level (the bottom layer, then three cells along it: rootCause.ts `bodyQuizzed`), that the rest need not be cleared, and what to do about the diagnoses. Clearer instructions only; a rework of the game is his call after he plays it again (his 21 Nov answer). Was: \"GOAL: dig down to the root. Press the earth beside Lamby to dig; press a diagnosis beside you to inflate it.\"",
   "_docS343": "⚑ S343 / T35 (his 8 Nov: 'it needs to be more clear of the intentions… understand where your SSA comes from… connect to the educational aspects of the topic'). The title screen now states the programme's THEORY in its own voice (the 'root cause' / developmental-deficit claim the Lexicon's ROOT entry answers: no such root was ever found) and the one goal; the report's NOT FOUND is where the claim collapses. 'SSA' is the programme's own jargon.",
   "titleBig": "ROOT CAUSE DIGGER",
   "version": "v1.0 · fellowship shareware · 1997",

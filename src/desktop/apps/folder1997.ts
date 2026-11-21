@@ -10,7 +10,7 @@ import { ERA1 } from '../theme/era1';
 import * as ui from '../theme/chrome';
 import { ledger } from '../../state/ledger';
 import F from '../../../data/strings/folder1997.json';
-import { drawFootage } from './testimony';
+import { drawStoryStill } from './testimony';
 
 /** ⚑ S339 (T41, his 8 Nov: "this is really difficult to read") — the pictures are painted at three times their
  *  logical size, so the writing in them (the postcard, the certificate, the tape's card) is drawn as text at full
@@ -114,7 +114,7 @@ export class Folder1997App {
       ui.px(ctx, x - 3, y - 3, tw + 6, th + 6, on ? ERA1.titleBlue : ERA1.silver);
       const smooth = ctx.imageSmoothingEnabled; ctx.imageSmoothingEnabled = false;
       if (f.id === 'story') {
-        drawFootage(ctx, 'daniel', 9, x, y, tw, th, 0, true);
+        drawStoryStill(ctx, x, y, tw, th);   // ⚑ S408 / 03-8
         ui.px(ctx, x + tw / 2 - 10, y + th / 2 - 8, 20, 16, ERA1.black);
         for (let r = 0; r < 10; r++) ui.px(ctx, x + tw / 2 - 3, y + th / 2 - 5 + r, Math.round(8 * (1 - Math.abs(r - 5) / 5)) + 1, 1, ERA1.white);
         if (!this.uploadedDone) { ui.px(ctx, x + tw - 26, y + 2, 24, 11, ERA1.warn); ui.setFont(ctx, 8); ctx.fillStyle = ERA1.white; ctx.fillText(F.storyNew, x + tw - 24, y + 3); }
@@ -131,7 +131,7 @@ export class Folder1997App {
   private drawStory(ctx: CanvasRenderingContext2D, c: ui.ContentRect): void {
     const iw = 320, ih = 180, ix = c.x + Math.round((c.w - iw) / 2), iy = c.y + 8;
     ui.px(ctx, ix - 2, iy - 2, iw + 4, ih + 4, ERA1.grey);
-    drawFootage(ctx, 'daniel', 9, ix, iy, iw, ih, 0, true);
+    drawStoryStill(ctx, ix, iy, iw, ih);   // ⚑ S408 / 03-8 — the programme's still, not the shoot's raw frame
     ui.setFont(ctx, 11); ctx.fillStyle = ERA1.black;
     ctx.fillText(`${F.story.name}: ${F.story.caption}`, c.x + 10, iy + ih + 6);
     const by = c.y + c.h - 24;

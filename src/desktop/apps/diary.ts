@@ -15,7 +15,7 @@ import * as ui from '../theme/chrome';
 import { ledger } from '../../state/ledger';
 import end from '../../../data/dialog/s1_end.json';
 import pauseCopy from '../../../data/strings/pauses.json';
-import { playOnce } from '../../audio/tapeAudio';
+import { playOnce, stopClip } from '../../audio/tapeAudio';
 
 type DiaryPhase = 'prompt' | 'writing' | 'committed' | 'flagged' | 'deleting' | 'resist' | 'reassert' | 'breakout';
 
@@ -115,6 +115,25 @@ export class DiaryApp {
       this.dirty = true;
     }
     // 'resist' has no timer — it waits for the player's hand (press())
+  }
+
+  /**
+   * ⚑ S407 (UiB job 32, 97-14; his headset 20 Nov, 21:42:52: "the Lamby song should stop after the cascade, so it's not too
+   * much, like we don't need to hear the full on song") — the collapse's tape went on at full level to its end: the slow
+   * death above runs in `update`, and nothing calls `update` once the diary has shut (os.ts drops it on `onDone`), so the
+   * song was left wherever it stood at the press. os.ts now hands the song on and calls this each frame: the same slowing
+   * and fade carry on under the cascade; `hurry` (the pile is gone: the notice, Remind me later, I Agree) takes what is
+   * left out within 1.5 s. Returns false once the song has stopped.
+   */
+  fadeSong(dt: number, hurry: boolean): boolean {
+    const s = this.breakSong;
+    if (!s) return false;
+    this.breakT += dt;
+    s.playbackRate = Math.max(0.55, 1 - this.breakT * 0.12);
+    const slow = Math.max(0, Math.min(1, 1 - (this.breakT - 3) / 7));
+    s.volume = Math.min(slow, hurry ? Math.max(0, s.volume - dt / 1.5) : s.volume);
+    if (s.volume <= 0.001 || s.ended) { stopClip(s); this.breakSong = null; return false; }
+    return true;
   }
 
   /** press: phase 'prompt' commits the line; phase 'resist' HOLDS the truth against

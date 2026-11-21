@@ -1,4 +1,4 @@
-import { xrRects, xrTarget, xrOutline, type XrRect } from '../frame/xrTargets';
+import { xrRects, xrTarget, xrOutline, type XrRect, type XrResolve } from '../frame/xrTargets';
 /**
  * THE THREE-SCREEN ROOM (Session 37, E3-i foundation; Session 38, E3-ii wires
  * the workstation + tablet). docs/REINTERP_E3_ADAPTATION_SPEC_2026-07-12.md's
@@ -1427,6 +1427,11 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
     }
     return e4Bridge()?.shell();
   }
+  /** ⚑ S406 / H2 — the surface's own answer to "what would a press here act on?", when it has one (2016's board does) */
+  function xrAsk(name: string): XrResolve | undefined {
+    const root = xrRoot(name) as { xrResolve?: XrResolve } | undefined;
+    return root && typeof root.xrResolve === 'function' ? (x, y) => root.xrResolve!(x, y) : undefined;
+  }
   return {
     carryVisor(at) {
       const shell = e4Bridge()?.shell();
@@ -1518,9 +1523,10 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
         if (immersive && s.draw && s.entity.enabled && s.name !== 'sidecard' && s.name !== 'raidbanner') {   // S366/S370: nothing on the flying planes is pressed
           const place = PLACEMENT[s.name];
           const p = xrRay && hitPlane(s.entity, place.size.w, place.size.h, s.logical.w, s.logical.h, xrRay);
-          const hover = p ? xrTarget(xrRects(xrRoot(s.name)), p.x, p.y, s.logical.w * 0.04 / place.size.w) : null;
+          const rects = xrRects(xrRoot(s.name)), ask = xrAsk(s.name);
+          const hover = p ? xrTarget(rects, p.x, p.y, s.logical.w * 0.04 / place.size.w, ask) : null;
           if (JSON.stringify(hover) !== JSON.stringify(s.xrHover)) {
-            s.xrHover = hover; s.draw(s.ctx, s.logical.w, s.logical.h); xrOutline(s.ctx, hover); s.dirty = true;
+            s.xrHover = hover; s.draw(s.ctx, s.logical.w, s.logical.h); xrOutline(s.ctx, hover, rects, ask); s.dirty = true;
           }
         }
         if (s.name === 'phone' && phoneCarry) {
@@ -1656,7 +1662,7 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
           s.lastVersion = s.versionOf();
           s.ctx.clearRect(0, 0, s.logical.w, s.logical.h);
           // the callback this screen was registered with — see `draw` on Screen
-          if (s.draw) { s.draw(s.ctx, s.logical.w, s.logical.h); if (app.xr?.active) xrOutline(s.ctx, s.xrHover ?? null); }
+          if (s.draw) { s.draw(s.ctx, s.logical.w, s.logical.h); if (app.xr?.active && s.xrHover) xrOutline(s.ctx, s.xrHover, xrRects(xrRoot(s.name)), xrAsk(s.name)); }
           s.dirty = true;
           drawCounts[s.name] = (drawCounts[s.name] ?? 0) + 1;   // S149: a review probe (debugDraws)
         }
@@ -1772,7 +1778,7 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
         if (!s || !s.entity.enabled) return null;
         const place = PLACEMENT[name];
         const p = hitPlane(s.entity, place.size.w, place.size.h, s.logical.w, s.logical.h, ray);
-        const h = p && app.xr?.active ? xrTarget(xrRects(xrRoot(name)), p.x, p.y, s.logical.w * 0.04 / place.size.w) : null;
+        const h = p && app.xr?.active ? xrTarget(xrRects(xrRoot(name)), p.x, p.y, s.logical.w * 0.04 / place.size.w, xrAsk(name)) : null;
         return h ? { x: h.x + h.w / 2, y: h.y + h.h / 2 } : p;
       };
       // ⚑ S76 — THE ONE TOUCH, and it is checked first because in Era 4 there

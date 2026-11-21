@@ -298,7 +298,9 @@ function sprite(k: number, b: number, w: number): Run[] {
 }
 
 // ── sound: gentle, live, under the piece's one mute ─────────────────────────────────────────────────────────────
-const MASTER = 0.5;
+// ⚑ S408 / 03-20 (his headset, 20 Nov 22:01: "the music is quite low") — the game's sound up: 0.5 → 0.8 (+4 dB), and its music
+//   (the pad under play) twice as loud again
+const MASTER = 0.8;
 /** the phone's SOUND soft key: the game's own sounds only (memory only; wiped with the page) */
 let phoneQuiet = false;
 interface Tone { at?: number; v?: number; a?: number; type?: OscillatorType; to?: number }
@@ -357,7 +359,7 @@ const SND = (() => {
     sync();
     if (!pad) pad = [131, 196].map((f) => { const o = ac!.createOscillator(), g = ac!.createGain(); o.type = 'sine'; o.frequency.value = f; g.gain.value = 0; o.connect(g); g.connect(master!); o.start(); return g; });
     padOn = true;
-    pad[0].gain.setTargetAtTime(0.004 + 0.012 * share, ac.currentTime, 0.5); pad[1].gain.setTargetAtTime(0.003 + 0.009 * share, ac.currentTime, 0.5);
+    pad[0].gain.setTargetAtTime(0.008 + 0.024 * share, ac.currentTime, 0.5); pad[1].gain.setTargetAtTime(0.006 + 0.018 * share, ac.currentTime, 0.5);   // S408: ×2
     if (dog === null) dog = window.setInterval(() => { if (performance.now() - lastPad > 300) { padOff(); if (dog !== null) { window.clearInterval(dog); dog = null; } } }, 250);
   }
   /** a sound that carries meaning names itself for the caption strip — only when it is heard */
@@ -698,13 +700,16 @@ export class Clear implements DeviceGame {
   takeFiling(): string | null { const f = this.filing; this.filing = null; return f; }
 
   // ── input ─────────────────────────────────────────────────────────────────────────────────────────────────
-  /** ⚑ S362 / H39 — the explainer has been shown (once: the first press on the title opens it; the next one plays) */
-  private howSeen = false;
   private press(): void {
-    if (this.mode === 'title') { if (!this.howSeen) { this.howSeen = true; this.mode = 'how'; this.clock = 0; } else this.start(); }
+    // ⚑ S408 / 03-20 (his: "a lot of text in the beginning explaining what it is and then you have an autoplay… either one or
+    //   the other") — one card, the short how-to with its pictures, and a tap starts the game: the title's demo loop is gone
+    if (this.mode === 'title') this.start();
     else if (this.mode === 'how') this.start();
     else if (this.mode === 'end' && this.endT > 0.8) this.start();
   }
+  /** ⚑ S408 / 03-20 — picked up: the opening card stays (it IS the how-to now; the device used to press START on waking,
+   *  which turned the title straight into the how-to and would now skip it); anywhere else, START as before */
+  wake(): void { if (this.mode !== 'title') this.key('start'); }
   key(k: GameKey): void {
     SND.unlock();
     if (this.mode === 'title' || this.mode === 'how' || this.mode === 'end') { this.press(); return; }
@@ -733,7 +738,9 @@ export class Clear implements DeviceGame {
   /** what the screen shows now: while anything moves, the clock (30 a second); at rest, exactly what is visible */
   frameKey(): string {
     const m = SND.muted() ? 1 : 0;
-    const busy = this.mode === 'title' || this.mode === 'how' || this.mode === 'wave' || this.mode === 'finish' || (this.mode === 'play' && !this.paused)
+    // ⚑ S408 / 03-20 — the opening card no longer animates: it changes only when its TAP TO START blinks (2 a second, not 30)
+    if (this.mode === 'title' || this.mode === 'how') return `${this.mode}|${Math.floor(this.clock * 2) % 2}|${m}`;
+    const busy = this.mode === 'wave' || this.mode === 'finish' || (this.mode === 'play' && !this.paused)
       || this.flights.length > 0 || this.fallers.length > 0 || this.bits.length > 0 || this.rings.length > 0 || this.floats.length > 0
       || this.flashFx > 0 || this.msg.t < 0.4 || this.msg.ring > 0 || this.slots.some((s) => s.flash > 0);
     if (busy) return `${this.mode}|${Math.floor(this.clock * 30)}|${m}`;
@@ -745,7 +752,7 @@ export class Clear implements DeviceGame {
   draw(g: Painter): void {
     P(g, 0, 0, R.lcd, W, H);
     const blink = Math.floor(this.clock * 2) % 2 === 0;
-    if (this.mode === 'title') { this.drawTitle(g, blink); return; }
+    if (this.mode === 'title') { this.drawHow(g, blink, true); return; }   // S408 / 03-20: the one opening card (drawTitle kept, unused)
     if (this.mode === 'how') { this.drawHow(g, blink); return; }
     this.header(g); this.board(g); this.footer(g);
     if (this.paused) { P(g, BX, BY + 80, R.lcdDark, BW, 40); CT(g, D.paused, BY + 90, R.lcd, 3, BX, BW); }
@@ -965,8 +972,9 @@ export class Clear implements DeviceGame {
    * size of a thumb), each with the picture of what it means; a tap or a key then starts the game. Words: s2_clear.json
    * `how`. Press-only, no timer: it waits as long as he likes.
    */
-  private drawHow(g: Painter, blink: boolean): void {
+  private drawHow(g: Painter, blink: boolean, named = false): void {
     P(g, 0, 0, R.lcdDark, W, 22); lamb(g, 6, 6); T(g, D.title.brand, 30, 4, R.lcd, 2);
+    if (named) T(g, D.title.name, W - 6 - textW(D.title.name, 2), 4, R.lcd, 2);   // S408: the game's name, on the one card
     CT(g, D.how.title, 28, R.lcdDark, 3);
     const steps = D.how.steps as string[][];
     const rowH = 54, y0 = 56;
@@ -993,77 +1001,17 @@ export class Clear implements DeviceGame {
       lines.forEach((ln, j) => T(g, ln, 50, y + 9 + j * 18, R.lcdDark, 2));
     });
     const fy = y0 + steps.length * rowH + 2;
-    if (largeText()) {                                           // S374: the keys at 2×, in two lines, and the start under them
-      const keys = wrap57(D.how.keys, 2, W - 12);
-      keys.forEach((ln, i) => CT(g, ln, fy - 4 + i * 16, R.lcdDark, 2));
-      if (blink) CT(g, D.how.start, fy - 4 + keys.length * 16 + 2, R.lcdDark, 2);
+    if (largeText()) {
+      // ⚑ S408 / 03-20 (his headset, 220128: "KEYS: LEFT RIGHT AIM, SPACE FIRES…") — a headset has no keyboard: no keys line
+      //   there; the start, at 2×, where they were
+      if (blink) CT(g, D.how.start, fy + 4, R.lcdDark, 2);
       return;
     }
     CT(g, D.how.keys, fy, R.lcdDark, 1);
     if (blink) CT(g, D.how.start, fy + 16, R.lcdDark, 2);
   }
 
-  /** the title: one how-to line, and a loop that shows it — [B][R][O][K][E][N]: a green ball is put in beside the
-   *  two greens; three green balls go; the letters O and K are let go and fly up into the tray; the rest closes up */
-  private drawTitle(g: Painter, blink: boolean): void {
-    P(g, 0, 0, R.lcdDark, W, 22); lamb(g, 6, 6); T(g, D.title.brand, 30, 4, R.lcd, 2);
-    CT(g, D.title.name, 27, R.lcdDark, 4); CT(g, D.title.slogan, 60, R.green, 2);
-    const ph = this.clock % 8, pitch = 30, x0 = 27, wy = 104, wh = 40, my = wy + wh / 2, cellX = (i: number): number => x0 + i * pitch;
-    const tw = 6 * SLOT_P - (SLOT_P - SLOT_W), tx = Math.round((W - tw) / 2);
-    P(g, tx - 5, 78, R.lcdDark, tw + 10, 22); P(g, tx - 3, 80, R.frame, tw + 6, 18);
-    const flyT0 = 2.5, flyDur = 0.8;
-    for (let i = 0; i < 6; i++) { const sx = tx + i * SLOT_P; P(g, sx, 82, R.lcdDark, SLOT_W, SLOT_H); P(g, sx, 82 + SLOT_H - 2, R.lcdMid, SLOT_W, 2); }
-    P(g, 12, wy - 3, R.lcdDark, 216, wh + 6); P(g, 14, wy - 1, R.frame, 212, wh + 2); P(g, 15, wy, R.lcdMid, 210, wh);
-    const L = [...D.title.demoWord], KC = [0, 1, 3, 3, 0, 1];
-    const ease = (k: number): number => { k = Math.max(0, Math.min(1, k)); return k * k * (3 - 2 * k); };
-    const c = new Clip(g, 15, wy - 60, 15 + 210, wy - 60 + wh + 120);
-    const shiftIn = ease((ph - 1.5) / 0.35), closeUp = ease((ph - 3.3) / 0.6);
-    const bigBall = (k: number, x: number, y: number, sc: number): void => { const w = Math.round(28 * sc); if (w < 2) return; paintRuns(c, sprite(k, 1, w), Math.round(x - w / 2), Math.round(y - w / 2)); };
-    const shot = ph > 0.9 && ph < 1.75, gone = ph >= 2.4, popK = ease((ph - 2.4) / 0.25);
-    for (let i = 0; i < 6; i++) {
-      let x = cellX(i), sc = 1;
-      if (i >= 4) x += pitch * shiftIn;
-      if (i >= 4) x -= pitch * 3 * closeUp;
-      if (gone && (i === 2 || i === 3)) sc = 1 - popK;
-      if (sc <= 0.02) continue;
-      bigBall(KC[i], x, my, sc); if (sc > 0.85) glyph(c, L[i], x + 1, my + 1, R.lcdDark, 2);
-    }
-    // the player's ball: no letter
-    if (ph > 0.9 && ph < 2.65) {
-      const k = ease((ph - 0.9) / 0.7), sx = cellX(4), sy = shot ? my + 60 - 60 * k : my, sc = ph >= 2.4 ? 1 - popK : 1;
-      if (ph > 1.75) bigBall(3, sx, my, sc); else bigBall(3, sx, sy, 1);
-    }
-    if (ph > 1.9 && ph < 2.4 && Math.sin(ph * 40) > 0) {        // the three, outlined (the prototype's blinking stroke)
-      const rx = cellX(2) - 15, ry = wy + 3, rw = pitch * 3, rh = wh - 6;
-      P(c, rx - 1, ry - 1, R.halo, rw + 2, 2); P(c, rx - 1, ry + rh - 1, R.halo, rw + 2, 2); P(c, rx - 1, ry - 1, R.halo, 2, rh + 2); P(c, rx + rw - 1, ry - 1, R.halo, 2, rh + 2);
-    }
-    // the two letters let go
-    ([[L[2], 2, 2], [L[3], 3, 4]] as Array<[string, number, number]>).forEach(([ch, ci, slot]) => {
-      if (ph > flyT0 && ph < 5.6) {
-        const k = Math.min(1, (ph - flyT0) / flyDur), e = ease(k), fx = cellX(ci), fy = my, ex = tx + slot * SLOT_P + SLOT_W / 2, ey = 82 + SLOT_H / 2;
-        const x = fx + (ex - fx) * e, y = fy + (ey - fy) * e - Math.sin(k * Math.PI) * 14;
-        if (k < 1) { P(g, x - 7, y - 9, R.lcdDark, 15, 19); P(g, x - 6, y - 8, R.halo, 13, 17); glyph(g, ch, x + 0.5, y + 0.5, R.lcdDark, 2); }
-        else { const sx = tx + slot * SLOT_P; P(g, sx, 82, R.lcdMid, SLOT_W, SLOT_H); slotText(g, ch, sx, 82, R.halo); }
-      }
-    });
-    const big = largeText();
-    if (big) {                                                   // S374: at 2×, in its headset wording (s2_clear.json large.title)
-      const L2 = D.large.title;
-      CT(g, L2.howTo1, 152, R.lcdDark, 2); CT(g, L2.howTo2, 168, R.lcdDark, 2);
-      CT(g, L2.aim, 190, R.lcdMid, 2);
-      if (blink) CT(g, D.title.start, 210, R.lcdDark, 2);
-      CT(g, L2.keys, 230, R.lcdMid, 2);
-    } else {
-      CT(g, D.title.howTo1, 156, R.lcdDark); CT(g, D.title.howTo2, 166, R.lcdDark);
-      CT(g, D.title.aim, 192, R.lcdMid);
-      if (blink) CT(g, D.title.start, 208, R.lcdDark, 2);
-      CT(g, D.title.keys1, 232, R.lcdMid); CT(g, D.title.keys2, 242, R.lcdMid);
-    }
-    // what the groove has kept so far, as a strip
-    const sw = 6, sx = Math.round((W - sw * 30) / 2), sy = big ? 254 : 262;
-    P(g, sx - 2, sy - 2, R.lcdDark, sw * 30 + 4, sw + 4); P(g, sx, sy, R.lcd, sw * 30, sw);
-    for (let i = 0; i < 30; i++) { const s = this.stainS[Math.floor(i * this.stainS.length / 30)]; if (s) P(g, sx + i * sw, sy, mix(R.lcd, COL[s.k], Math.min(0.95, 0.2 + s.n * 0.08)), sw, sw); }
-    if (this.clearedAll) CT(g, D.title.brokenSoFar + this.clearedAll, big ? 270 : 282, R.lcdMid, S1());
-    CT(g, D.title.promo, big ? 300 : 306, R.lcdMid, S1());
-  }
+  // ⚑ S408 / 03-20 — drawTitle (the title card with its BROKEN demo loop, S362) is gone: the opening card is drawHow's; see git
+  //   history (42bd9eed) for the loop
+
 }

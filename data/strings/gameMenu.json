@@ -143,6 +143,7 @@
  "xrDeskDone": "Done. The desk now sits at your table.",
  "xrDeskNone": "No table found. The desk stays where it was.",
  "xrDeskOffer": "Sitting at a table? Open the Menu and choose Match my table.",
+ "_docS407xrDeskOffer": "⚑ S407 (UiB job 32, E2) — `xrDeskOffer` is no longer shown: its banner ran into the CRT and was cut off (his headset 20 Nov, frame 212627), and Match my table is offered in the setup's How to look window now (setup.json look `table`). Kept for the record.",
  "highlightsOn": "Navigation highlights: on",
  "highlightsOff": "Navigation highlights: off"
 }

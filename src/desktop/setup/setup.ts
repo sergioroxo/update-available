@@ -70,6 +70,9 @@ export class LambySetup {
   /** Engine wires the existing sensor request; called in the real tap stack. */
   requestDeviceLook: (() => void) | null = null;
   deviceLookAvailable = false;
+  /** ⚑ S407 (UiB job 32, E2) — in a headset, Match my table from the How to look window (the engine wires xrLayer.matchTable) */
+  requestTableMatch: (() => void) | null = null;
+  tableMatchAvailable = false;
 
   constructor() { this.result = new Promise((resolve) => { this.resolve = resolve; }); }
   get ready(): boolean { return this.noteOpened && this.noteClosedAt !== null && this.clock - this.noteClosedAt >= 4; }
@@ -202,6 +205,7 @@ export class LambySetup {
     if (id === 'setup-lexicon') { siteViewerBus.openAt('lexicon', 'first'); return; }   // S379: optional; the note stays where it is. S381: on its First Words
     if (id === 'setup-skip-film' && this.film && runtimeQuery().get('debug') === '1') { this.endFilm(); return; }
     if (id === 'setup-device') { this.requestDeviceLook?.(); return; }
+    if (id === 'setup-table') { this.requestTableMatch?.(); return; }   // S407 (E2): the frame says what to do next
     if (id === 'setup-reduce-motion') { setReducedMotion(!reducedMotion()); this.dirty = true; return; }
     if (id === 'setup-test') { this.testSound(); return; }
     if (id === 'setup-vol-down' || id === 'setup-vol-up') { this.stepVolume(id === 'setup-vol-up' ? 0.1 : -0.1); return; }
@@ -391,6 +395,10 @@ export class LambySetup {
       }
       this.text(ctx, copy.look.body, c.x + 20, c.y + 166, c.w - 40, 11);
       if (this.deviceLookAvailable) this.button(ctx, 'setup-device', copy.look.permission, c.x + 113, c.y + 204, 240);
+      else if (this.tableMatchAvailable) {
+        this.button(ctx, 'setup-table', copy.look.table, c.x + 113, c.y + 192, 240);
+        this.text(ctx, copy.look.tableNote, c.x + 20, c.y + 226, c.w - 140, 10);   // clear of Close, bottom right
+      }
       if (this.deviceStatus) this.text(ctx, this.deviceStatus, c.x + 20, c.y + 241, c.w - 40, 9);
     } else if (kind === 'note') {
       this.drawNote(ctx, c);

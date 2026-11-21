@@ -1,4 +1,6 @@
-STATUS: superseded by STORYBOARD_2026_BEATS_v3_2026-11-21.md (his full notes on draft 2, 21 Nov); kept as a research state
+STATUS: superseded-by docs/reinterp/STORYBOARD_2026_BEATS_v3_2026-11-21.md
+
+> Superseded by draft 3 after his full notes on draft 2 (21 Nov); kept as a research state.
 
 # 2026, from its logic: the beats, draft 2 (21 Nov 2026) — T98
 

@@ -69,6 +69,8 @@ const MAIL = calebPacing.mail;
 /** ⚑ S342 (his 9 Nov answer 1: "the accountability alert runs too fast… a Next button… if nobody presses, it moves on
  *  by itself after about 20 s. No visible countdown") — each step now waits for Next, or this many seconds */
 const AUTO_NEXT = (A as unknown as { autoNextSeconds: number }).autoNextSeconds;
+/** ⚑ S408 / 03-17 — the hurt silence before "I caught it in time": short, and shown as his (the ellipsis), not a load */
+const SAD_HOLD = A.sadHoldSeconds;
 /** ⚑ S345 (his 9 Nov answer 5) — the silent steps (the falling streak, the sad hold) move on by themselves */
 const SILENT_NEXT = (A as unknown as { silentNextSeconds: number }).silentNextSeconds;
 const STREAK_FALL = A.streakFallSeconds;   // s for the counter to run 412 → 0
@@ -246,7 +248,11 @@ export class AccountabilityApp {
     this.mailT = 0;
     this.step = 'closed';
     this.dirty = true;
+    this.netHeard = 0;
   }
+  /** ⚑ S406 / H5 — how many of the network list's events (each call placed, each call failed) have sounded */
+  private netHeard = 0;
+  private netKey = '';
   /** how far the failing list has got: each line tries, then fails */
   private failingRows(): { text: string; failed: boolean; shown: boolean }[] {
     const per = NET.trySeconds + NET.failSeconds;
@@ -277,7 +283,21 @@ export class AccountabilityApp {
     this.t += dt;
     if (this.mail === 'failing') {
       this.mailT += dt;
-      this.dirty = true;
+      // ⚑ S406 / H5 (his headset run, 20 Nov, 21:58:39, "Contacting your accountability network…": "This needs sound,
+      //   something just to make it more understanding what is happening") — each contact the programme tries RINGS as its
+      //   line appears (net_try_2003, a ringback through the PC), and each one that fails answers with the era's alert turned
+      //   down (net_fail_2003). The system's own sounds, quiet; the list still runs to its own end.
+      const rows = this.failingRows();
+      const events = rows.reduce((n, r) => n + (r.shown ? 1 : 0) + (r.failed ? 1 : 0), 0);
+      while (this.netHeard < events) {   // events alternate: line i placed (2i), line i failed (2i + 1)
+        const failing = this.netHeard % 2 === 1;
+        this.netHeard++;
+        if (this.netHeard === events) { const a = playOnce(failing ? 'net_fail_2003.mp3' : 'net_try_2003.mp3'); if (a) a.volume = failing ? 0.55 : 0.5; }
+      }
+      // ⚑ S406 / H4 — and the glass is re-sent only when the list changes (a line, a failure, the result, the '…' blinking
+      //   three times a second): it was every frame of its fourteen seconds
+      const key = `${events}|${Math.floor(this.mailT * 3) % 2}|${rows.every((r) => r.failed)}`;
+      if (key !== this.netKey) { this.netKey = key; this.dirty = true; }
       if (this.failingDone) { this.mail = 'error'; this.mailT = 0; playOnce('err_cascade_1997.mp3'); }
       return;
     }
@@ -312,7 +332,7 @@ export class AccountabilityApp {
     // ⚑ S342 — the player sets the pace: Next, or AUTO_NEXT of quiet (the authored HOLDs are the floor a press
     //   cannot undercut only for the falling streak, which finishes its fall before the step can go)
     //   ⚑ S345 — the silent steps have no Next: they go after SILENT_NEXT (the streak's fall fits inside it)
-    const hold = this.silentStep() ? Math.max(SILENT_NEXT, STREAK_FALL) : this.nextPressed ? 0 : AUTO_NEXT;
+    const hold = this.step === 'sad' ? SAD_HOLD : this.silentStep() ? Math.max(SILENT_NEXT, STREAK_FALL) : this.nextPressed ? 0 : AUTO_NEXT;
     if (this.stepT < hold) return;
     this.nextPressed = false;
     this.stepT = 0;
@@ -481,6 +501,13 @@ export class AccountabilityApp {
       // rendered unattributed and cold, exactly as the shipped build files it.
       lines = caleb.alert.systemLines as string[];
       color = ERA1.warnDark;
+    } else if (this.step === 'sad') {
+      // ⚑ S408 / 03-17 (his headset, 20 Nov 21:57: "there was like a loaded time there that didn't make much sense before
+      //   I caught it in time") — the hold was six seconds of nothing: no word, no button, read as the machine loading. It
+      //   is his silence now, and short: the ellipsis in his own place while he deflates, then the ⟨S⟩ line.
+      // his silence, as three dots big enough to be his and not a stray mark (the data's sadLine is the ellipsis it draws)
+      for (let i = 0; i < 3; i++) ui.px(ctx, x + 2 + i * 9, y + 8, 4, 4, ERA1.greyDark);
+      return;
     } else if (this.step === 'caught') {
       // ⟨S⟩ "I caught it in time." leads, in the assistant's own type; the
       // reassurance follows it, quieter — care as the thing that closes the trap.

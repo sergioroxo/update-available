@@ -10,7 +10,8 @@ import type { GuideEra, GuideView } from '../../narrative/lambyGuide';
 import copy from '../../../data/strings/lambyGuide.json';
 import decisions from '../../../data/strings/cx3b.json';
 export interface GuideHit { id: string; x: number; y: number; w: number; h: number; label?: string; tip?: string }
-export interface GuidePaint { rings: GuideHit[]; balloon: boolean }
+/** `box` (S407 / 97-13): the balloon's own rectangle while it is up — what lies under it cannot be aimed at or pressed */
+export interface GuidePaint { rings: GuideHit[]; balloon: boolean; box?: { x: number; y: number; w: number; h: number } }
 /** Extracted from Lamblippy's tooltip: 1px border and a stepped tail toward the lamb. */
 export function drawLambyTooltip(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number,
   ground: string = ERA1.tooltip, tailX = x + w - 36, tail = 6): void {
@@ -67,6 +68,7 @@ export function drawLambyGuide(ctx: CanvasRenderingContext2D, skin: GuideEra, st
   const h = Math.max(112, 58 + ui.wrapText(ctx, state.text, w - (skin === 'e4' ? 66 : 36)).length * 15);
   let y = W < 300 ? 2 : H - 22 - h - 70;
   if (pointing && selected.some(r => r.x < x + w && r.x + r.w > x && r.y < y + h && r.y + r.h > y)) y = 26;
+  out.box = { x, y, w, h };
   const cx = skin === 'e3' ? tx + 10 : W - 48, cy = H - 59;
   const left = selected.length > 0 && selected[0].x + selected[0].w / 2 < cx;
   if ((skin === 'e1' || skin === 'e2') && !guideBody.inRoom) drawLambyChar(ctx, cx, cy, { mood: 'cheerful', action: pointing ? 'point' : 'idle', scale: 0.48, t: state.frame / 3, moodStart: 0, pointLeft: left });
@@ -95,6 +97,8 @@ export function drawLambyGuide(ctx: CanvasRenderingContext2D, skin: GuideEra, st
   else if (state.rung === 'root') buttons = [['lg-take', copy.root.yes], ['lg-later', copy.form.no]];
   else if (state.rung === 'choice') buttons = [['lg-take', copy.choice.releaseYes], ['lg-alt', copy.choice.formYes], ['lg-later', copy.form.no]];   // ⚑ S362 / H33: two answers + No thanks
   else if (state.rung === 'harbor') buttons = [['lg-take', copy.harbor.yes], ['lg-later', copy.form.no]];   // S345
+  else if (state.rung === 'message') buttons = [['lg-take', copy.message.yes], ['lg-later', copy.form.no]];   // S408 / 03-13
+  else if (state.rung === 'remind') buttons = [...(state.act ? [['lg-take', copy.remind.yes] as [string, string]] : []), ['lg-ok', copy.ui.ok]];   // S408 / 03-19
   else if (pointing) buttons = [...(state.act && (!state.act.startsWith('press:') || hits.some(h => h.id === state.act?.slice(6)) || remoteActions.includes(state.act)) ? [['lg-take', copy.ui.take] as [string, string]] : []), ['lg-ok', copy.ui.ok]];
   else buttons = [...(state.targets.length || state.beat !== 'cut' ? [['lg-show', copy.ui.show] as [string, string]] : []), ['lg-later', copy.ui.later]];
   let bx = x + 12;
@@ -108,5 +112,9 @@ export function drawLambyGuide(ctx: CanvasRenderingContext2D, skin: GuideEra, st
     } else ui.button(ctx, bx, by, bw, 21, label);
     hits.push({ id, x: bx, y: by, w: bw, h: 21 }); bx += bw + 7;
   });
+  // ⚑ S406 / H2 (his headset run, 20 Nov: the board's cards "can be pressed" behind Lambient's balloon) — the balloon's body is a
+  //   COVER, laid after its buttons: a press on it is the balloon's (it takes it and does nothing), never the card under it.
+  //   Every surface tests its `lg-` rects first, so this one rule holds the balloon whole in every era (frame/xrTargets.ts).
+  hits.push({ id: 'lg-cover', x, y, w, h: h + 6 });
   return out;
 }

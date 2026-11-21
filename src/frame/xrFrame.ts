@@ -72,6 +72,8 @@ const TAG_CW = 1024, TAG_CH = 96, TAG_H = 0.03, TAG_GAP = 0.008;
 
 export interface XrFrame {
   readonly layerId: number;
+  /** ⚑ S406 / H1 — the pointer's own layer, drawn after the frame's planes: the ray and its mark are never under a page */
+  readonly pointerLayerId: number;
   /** once per frame; `ray` is the controller's, for the cursor */
   tick(ray: Ray | null, wrist?: { at: pc.Vec3; palm: pc.Vec3 | null } | null): void;
   /** the menu opened: hang the plane in front of the head */
@@ -167,7 +169,16 @@ export function mountXrFrame(app: pc.Application, head: pc.Entity, opts: {
 }): XrFrame {
   const layer = new pc.Layer({ name: 'XR Frame', clearDepthBuffer: true });
   app.scene.layers.pushOpaque(layer); app.scene.layers.pushTransparent(layer);
-  head.camera!.layers = [...head.camera!.layers, layer.id];
+  /**
+   * ⚑ S406 / H1 (his headset run, 20 Nov, the Close's websites and the Lexicon: "the website is on top of it … I cannot see
+   * where the arrow is pointing to") — the ray and its mark were drawn IN this layer, as opaque meshes, so they went before
+   * its transparent planes (the site window, the menu, the hint plate, all depth-test off) and every page was laid over the
+   * ray that pointed at it. The pointer has its own layer now, after this one: drawn last, never hidden by a page. (The
+   * room still cannot hide it: this layer has already cleared the depth the room wrote.)
+   */
+  const pointerLayer = new pc.Layer({ name: 'XR Pointer', clearDepthBuffer: false });
+  app.scene.layers.pushOpaque(pointerLayer); app.scene.layers.pushTransparent(pointerLayer);
+  head.camera!.layers = [...head.camera!.layers, layer.id, pointerLayer.id];
   // ── the menu plane ──
   const canvas = document.createElement('canvas');
   canvas.width = W; canvas.height = H;
@@ -529,6 +540,7 @@ export function mountXrFrame(app: pc.Application, head: pc.Entity, opts: {
 
   return {
     layerId: layer.id,
+    pointerLayerId: pointerLayer.id,
     get isOpen(): boolean { return open; },
     suspend(on: boolean): void { suspended = on; plane.enabled = open && !on; if (!on) dirty = true; },
     open(): void {

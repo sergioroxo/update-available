@@ -70,6 +70,19 @@ export function buildRestoreEntrance(app: pc.Application, room: RoomHandles, rig
   };
   const land = sampleRoomSurfaces(room, N);
   opts.points.forEach((point, i) => { land[i].point = point; }); // these opening stars remain as room specks
+  /**
+   * ⚑ S406 / H4 (his headset run, 20 Nov: "the dissolve into Daniel's room drops to 13 fps", and he saw "a double image") —
+   * each star's colour, read ONCE. The restore read `m.diffuse` for all 900 stars on every frame of its 9 s, and a
+   * StandardMaterial's colour GETTER marks that material's shader dirty (the engine cannot know the caller will not change
+   * the colour it hands back): every frame, ~50 room materials threw their shaders away and looked them up again (measured:
+   * 51 variant rebuilds a frame, the renderer's material preparation 51 % of the frame). The colours never change while it
+   * runs; they are taken here, before anything is drawn.
+   */
+  const sun = hex(PLACE.sun);
+  const landColour = land.map((l, i) => {
+    const m = l.material as pc.StandardMaterial;
+    return i < opts.points.length || m.diffuseMap || m.emissiveMap ? sun : m.diffuse.clone();
+  });
   const stars = Array.from({ length: N }, (_, i) => ({
     x: Math.sin(i * 12.9898) * 7, y: Math.cos(i * 4.1414) * 5, z: -0.2 - (i / N) * 18,
     p: new pc.Vec3(), from: new pc.Vec3(), delay: 0
@@ -162,17 +175,32 @@ export function buildRestoreEntrance(app: pc.Application, room: RoomHandles, rig
   }
   words(' ');
   function setPhase(next: Phase): void { phase = next; frame.dataset.phase = next; elapsed = 0; }
+  /** ⚑ S406 / H4 — the arrival each material was last given: one that has not moved this frame (before its turn, or fully
+   *  arrived) is not touched again (a material update re-sends its uniforms and re-keys its draws) */
+  const applied = new Map<pc.StandardMaterial, number>();
   function paint(k: number): void {
     paints.forEach(({ m, opacity }) => {
       // Fade the actual image, preserving every texture/tint and transform.
       const arrival = opts.crossFade() ? k : smooth(Math.max(0, Math.min(1, (elapsed - (delays.get(m) ?? 0) - 1.8) / 4.8)));
-      m.opacity = opacity * arrival; m.blendType = pc.BLEND_NORMAL; m.depthWrite = arrival > 0.95; m.update();
+      const prev = applied.get(m);
+      if (prev === arrival) return;
+      applied.set(m, arrival);
+      const depth = arrival > 0.95;
+      // ⚑ S406 / H4 — a material update rebuilds its shader variants (PlayCanvas 2.19: its own uniform pass reads the colour
+      //   getters, which mark the shader dirty), so the fade's in-between steps go straight to the opacity uniform; the
+      //   material is updated only when its state turns (its first step, the blend, depth on at 0.95, opacity leaving 0 or
+      //   reaching 1)
+      const turns = prev === undefined || m.blendType !== pc.BLEND_NORMAL || m.depthWrite !== depth || (prev === 0) !== (arrival === 0) || (prev === 1) !== (arrival === 1);
+      m.opacity = opacity * arrival;
+      if (turns) { m.blendType = pc.BLEND_NORMAL; m.depthWrite = depth; m.update(); }
+      else m.setParameter('material_opacity', opacity * arrival);
     });
     opts.lights(k); app.scene.ambientLight.copy(ambient).mulScalar(k);
     // S246: LambyOS Home's loop gives way to the room's own sound as the room arrives (not a cut at the end)
     if (music) music.volume = 0.28 * (1 - k);
   }
   function originalPaint(): void {
+    applied.clear();
     for (const { m, diffuse, emissive, opacity, blend, depth } of paints) { m.diffuse.copy(diffuse); m.emissive.copy(emissive); m.opacity = opacity; m.blendType = blend; m.depthWrite = depth; m.update(); }
     for (const { light, color, intensity } of lights) { light.color = color.clone(); light.intensity = intensity; }
     app.scene.ambientLight.copy(ambient); opts.lights(1);
@@ -304,8 +332,7 @@ export function buildRestoreEntrance(app: pc.Application, room: RoomHandles, rig
           if (opts.crossFade()) s.p.copy(s.from);
           const resolve = smooth(Math.max(0, Math.min(1, (elapsed - 4) / 5)));
           half = (opts.reduced() ? 0.006 : 0.012 + 0.075 * smooth(progress)) * (1 - resolve);
-          const m = land[i].material as pc.StandardMaterial;
-          const c = i < opts.points.length || m.diffuseMap || m.emissiveMap ? hex(PLACE.sun) : m.diffuse;
+          const c = landColour[i];   // S406 / H4: read once (a colour getter rebuilds the material's shaders)
           const mix = opts.reduced() ? 0 : smooth(progress);
           const base = i % 9 === 0 ? cool : warm;
           for (let v = 0; v < 4; v++) colors.set([base.r + (c.r - base.r) * mix, base.g + (c.g - base.g) * mix, base.b + (c.b - base.b) * mix, 1 - resolve], i * 16 + v * 4);

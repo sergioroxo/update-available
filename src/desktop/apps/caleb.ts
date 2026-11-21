@@ -47,7 +47,9 @@ interface ThreadStep { id: string; from?: string; text?: string; chips?: Chip[];
   /** S143: a file he sends. S157 / R3-52: it no longer plays by itself — it ARRIVES as an
    *  attachment under the line, and pressing it opens the media player (os.ts). */
   audio?: string; requiresAudio?: boolean; attachment?: boolean }
-interface Msg { from: 'them' | 'you'; text: string; attachment?: { name: string; audio: string; size: string } }
+interface Msg { from: 'them' | 'you'; text: string; attachment?: { name: string; audio: string; size: string };
+  /** ⚑ S408 / 03-15 — an earlier attempt the system held: when it was sent (drawn greyed, with the flag) */
+  flagged?: string }
 interface Hit { x: number; y: number; w: number; h: number; id: string }
 
 // ⚑ S143: a step that needs a file it does not have is not in the thread —
@@ -59,7 +61,12 @@ const THREAD = threadWithRoom.filter((s) => !s.requiresAudio || isAudioAvailable
 const P = caleb.pacing;
 const CHAT = P.chat;
 const RET = P.return;
-const HOLD = caleb.songHold as { wait: string; go: string; listening: string; autoSeconds: number };
+const HOLD = caleb.songHold as { wait: string; go: string; listening: string; autoSeconds: number; say: string };
+/** ⚑ S408 / 03-15 — his three earlier attempts, held by the system (s2_caleb.json `earlier`) */
+const EARLIER = (caleb as unknown as { earlier: { note: string; attempts: { when: string; text: string }[] } }).earlier;
+/** ⚑ S408 / 03-16 — how long he takes to type a line after Daniel has answered: its length at the typing speed, never under
+ *  the reply gap and never over the cap */
+const typingFor = (text: string): number => Math.max(CHAT.replyGapSeconds, Math.min(CHAT.typingMaxSeconds, text.length / CHAT.typingCharsPerSecond));
 const RESIDUE = caleb.residue as { line: string; answer: string };
 
 /** the messenger window (felt). The accountability stamp needs this rect. S339: MSN-sized — nearly the whole
@@ -138,6 +145,8 @@ class TypeStream {
   onLine?: (text: string) => void;
 
   push(text: string): void { this.queue.push(text); }
+  /** ⚑ S408 — a line is waiting to arrive (he is typing it) */
+  get pending(): boolean { return this.queue.length > 0; }
   reset(): void { this.queue = []; this.hold = 0; }
   /** an EXTRA beat before the next line — he takes a moment (after a reply) */
   pause(seconds: number): void { this.hold = Math.max(this.hold, seconds); }
@@ -204,8 +213,23 @@ export class CalebThreadApp {
   private stick = true;
   private maxScroll = 0;
   private sealPending = false;
+  /** ⚑ S408 / 03-16 — Daniel has just answered: the next line of Caleb's waits for him to type it */
+  private typingNext = false;
+  /** ⚑ S408 / 03-15 — the latest attempt's beep, once, when the window has loaded */
+  private arrivedBeep = false;
+
+  /** ⚑ S408 / 03-15 (his: "the messaging here should be already here… we just see the latest one… the ones before can
+   *  have like a note being flagged") — the window opens on what is already in it: his three earlier attempts, greyed and
+   *  flagged by the system, then his latest (every line before the first reply), arrived. No cascade. */
+  private prefill(): void {
+    for (const a of EARLIER.attempts) this.msgs.push({ from: 'them', text: a.text, flagged: a.when });
+    let i = 0;
+    while (i < THREAD.length && THREAD[i].text && !THREAD[i].chips) { this.msgs.push({ from: 'them', text: THREAD[i].text! }); i++; }
+    this.step = i - 1;
+  }
 
   constructor() {
+    this.prefill();
     this.stream.onLine = (text) => {
       this.msgs.push({ from: 'them', text });
       if (this.residueCommitted && text === RESIDUE.answer) this.answerLanded = true;
@@ -276,6 +300,7 @@ export class CalebThreadApp {
   // ── update ─────────────────────────────────────────────────────────────
   update(dt: number): void {
     this.t += dt;
+    if (!this.arrivedBeep) { this.arrivedBeep = true; playOnce('notify_2003.mp3'); }   // S408: his latest, just arrived
 
     if (this.redaction.update(dt)) this.dirty = true;
     if (this.phase === 'restoring' && !this.redaction.running && this.redaction.cleared) {
@@ -296,7 +321,7 @@ export class CalebThreadApp {
     if (this.stream.update(dt)) { this.stick = this.stick || this.phase !== 'chat'; this.dirty = true; }
 
     // the song's two-step: if nothing is pressed, the conversation carries on by itself
-    if (this.songHold === 'offered' && this.t >= this.songHoldUntil) { this.songHold = 'released'; this.dirty = true; }
+    if (this.songHold === 'offered' && this.t >= this.songHoldUntil) { this.songHold = 'released'; this.typingNext = true; this.dirty = true; }
 
     // the chips land a beat after the line they answer, never on the same frame
     if (this.pendingChips && this.t >= this.chipsAt) {
@@ -354,7 +379,11 @@ export class CalebThreadApp {
       this.dirty = true;
       return;
     }
-    if (s.text) this.stream.push(s.text);
+    if (s.text) {
+      this.stream.push(s.text);
+      // ⚑ S408 / 03-16 — after Daniel's answer he types this line: a pause sized to it, and the 'is typing' line
+      if (this.typingNext) { this.stream.pause(typingFor(s.text)); this.typingNext = false; }
+    }
   }
 
   private chooseChip(chip: Chip): void {
@@ -369,8 +398,9 @@ export class CalebThreadApp {
       this.commitAt = this.t + CHAT.commitLandsSeconds;
     } else {
       this.file(chip.id, chip.say ? 'replied' : 'held', chip.ledgerTag);
+      this.typingNext = true;   // S408: he reads it, then types back (a pause sized to his line)
       this.advance();
-      this.stream.pause(CHAT.replyGapSeconds); // he reads it before he types back
+      this.stream.pause(CHAT.replyGapSeconds); // he reads it before he types back (the floor of the typing pause)
     }
     this.dirty = true;
   }
@@ -476,15 +506,24 @@ export class CalebThreadApp {
     type Item = { i: number; m: Msg; top: number; bh: number; bw: number; lines: string[]; head: string | null };
     const items: Item[] = [];
     let cy = 6;
-    let prev: Msg['from'] | null = null;
+    let prev: string | null = null;
     this.msgs.forEach((m, i) => {
-      const head = m.from !== prev ? caleb.window.says.replace('{name}', m.from === 'them' ? caleb.window.contact : this.youNick()) : null;
-      prev = m.from;
+      // ⚑ S408 / 03-15 — the held attempts are their own group: greyed, each with its flag, and no "says:" over them (he
+      //   said them; nobody received them). The live group under them opens with his name as ever.
+      const group = m.flagged ? 'flagged' : m.from;
+      const head = group !== prev && !m.flagged ? caleb.window.says.replace('{name}', m.from === 'them' ? caleb.window.contact : this.youNick()) : null;
+      prev = group;
       if (head) cy += 12;
       ui.setFont(ctx, FONT);
       const lines = m.text ? ui.wrapText(ctx, m.text, maxBubble - PAD * 2) : [];
       let bw = Math.max(24, ...lines.map((l) => Math.ceil(ctx.measureText(l).width) + PAD * 2));
       let bh = lines.length * LINE_H + PAD * 2 - 2;
+      if (m.flagged) {
+        ui.setFont(ctx, 9);
+        bw = Math.max(bw, Math.ceil(ctx.measureText(EARLIER.note.replace('{when}', m.flagged)).width) + PAD * 2 + 10);
+        bh += 12;
+        ui.setFont(ctx, FONT);
+      }
       if (m.attachment) {
         const label = `${m.attachment.name}  ${m.attachment.size}`;
         bw = Math.max(bw, Math.ceil(ctx.measureText(label).width) + 34 + PAD * 2);
@@ -492,7 +531,7 @@ export class CalebThreadApp {
       }
       bw = Math.min(bw, maxBubble);
       items.push({ i, m, top: cy, bh, bw, lines, head });
-      cy += bh + 5;
+      cy += bh + (m.flagged ? 3 : 5);
     });
     const contentH = cy + 4;
     this.maxScroll = Math.max(0, contentH - h);
@@ -520,6 +559,19 @@ export class CalebThreadApp {
       if (this.redaction.hidden(it.i)) {
         // the censor bar: the bubble's own shape, nothing else touched
         this.bubble(ctx, bx, top, it.bw, it.bh, ERA1.black, ERA1.black);
+        continue;
+      }
+      if (it.m.flagged) {
+        // ⚑ S408 / 03-15 — held: the bubble greyed, his words dimmed, and the system's flag under them
+        this.bubble(ctx, bx, top, it.bw, it.bh, ERA1.silver, ERA1.grey);
+        ui.setFont(ctx, FONT);
+        ctx.fillStyle = ERA1.greyDark;
+        it.lines.forEach((l, r) => ctx.fillText(l, bx + PAD, top + PAD + r * LINE_H));
+        const ny = top + PAD + it.lines.length * LINE_H + 1;
+        ui.px(ctx, bx + PAD, ny + 2, 6, 6, ERA1.warn);
+        ui.setFont(ctx, 9);
+        ctx.fillStyle = ERA1.warnDark;
+        ctx.fillText(EARLIER.note.replace('{when}', it.m.flagged), bx + PAD + 10, ny);
         continue;
       }
       this.bubble(ctx, bx, top, it.bw, it.bh, mine ? ERA1.tooltip : ERA1.paper, mine ? ERA1.olive : ERA1.titleBlue);
@@ -607,7 +659,12 @@ export class CalebThreadApp {
       this.hits.push({ x: bx, y: y + 8, w: bw, h: 22, id: 'residue' });
       return;
     }
-    // finding C10: while he types, the tray is EMPTY — nothing is offered, so nothing is claimed
+    // finding C10: while he types, the tray offers nothing — ⚑ S408 / 03-16: and says that he is typing
+    if (this.stream.pending && (this.phase === 'chat' || this.phase === 'returning' || this.phase === 'answer')) {
+      ui.setFont(ctx, 9); ctx.fillStyle = ERA1.grey;
+      ctx.fillText(caleb.window.typing.replace('{name}', caleb.window.contact), x + 6, y + 13);
+      return;
+    }
     if (!this.awaiting || this.phase !== 'chat') return;
     if (this.awaitingCommit) {
       // THE COMMIT-PRESS: one chip, no alternative, no hint over it
@@ -654,7 +711,13 @@ export class CalebThreadApp {
       return;
     }
     if (hit.id === 'song-wait') { this.songHold = 'waiting'; this.dirty = true; return; }
-    if (hit.id === 'song-go') { this.songHold = 'released'; this.dirty = true; return; }
+    // ⚑ S408 / 03-16 (his: "when you press go on it should be a message… and then we wait for him to reply a bit") — Go on is
+    //   said to him, as a message; his next line comes after he has typed it
+    if (hit.id === 'song-go') {
+      this.songHold = 'released'; this.typingNext = true;
+      this.msgs.push({ from: 'you', text: HOLD.say }); this.stick = true;
+      this.dirty = true; return;
+    }
     if (hit.id === 'attachment') {
       const m = this.msgs.find((mm) => mm.attachment);
       if (m?.attachment && this.phase === 'chat') this.onOpenAttachment?.(m.attachment);
@@ -673,6 +736,7 @@ export class CalebThreadApp {
     this.startAt = Infinity;
     this.stream.reset();
     this.msgs.length = 0;
+    for (const a of EARLIER.attempts) this.msgs.push({ from: 'them', text: a.text, flagged: a.when });   // S408
     this.pendingChips = null;
     this.chipsAt = Infinity;
     this.songHold = 'released';

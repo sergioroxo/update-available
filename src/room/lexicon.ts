@@ -138,6 +138,8 @@ export class Lexicon {
   private panel = false;
   private audio: HTMLAudioElement | null = null;
   private audioFile: string | null = null;
+  /** ⚑ S406 / H1 — the control under the pointer (its hit id), set by the host before a draw; '' for none */
+  hover = '';
 
   constructor(private opts: LexiconOptions = {}) {}
 
@@ -213,6 +215,16 @@ export class Lexicon {
     else if (this.face === 'sources') this.drawSources(ctx, W, H, hits);
     else this.drawYours(ctx, W, H, hits);
     this.drawBar(ctx, W, H, hits);
+    // ⚑ S406 / H1 (his headset run, 20 Nov: "no hover state" on the Lexicon's bottom bar and its contents) — whatever is under
+    //   the pointer is ringed in the tooltip's pale yellow over a black line (a button also lights its face, in button()), on
+    //   every face: the chapter bar, the contents, the words' rows and links. The disc's own palette, no new colour.
+    const hv = this.hover ? hits.find((h) => h.id === this.hover) : undefined;
+    if (hv) {
+      ctx.save(); ctx.lineWidth = 2;
+      ctx.strokeStyle = ERA1.black; ctx.strokeRect(hv.x - 1, hv.y - 1, hv.w + 2, hv.h + 2);
+      ctx.strokeStyle = ERA1.tooltip; ctx.strokeRect(hv.x + 1, hv.y + 1, hv.w - 2, hv.h - 2);
+      ctx.restore();
+    }
   }
 
   /** the gilded title, in hard steps: shadow, three depths of gold, the face */
@@ -235,6 +247,7 @@ export class Lexicon {
   /** a bevelled button with a centred label in the era's bold face */
   private button(ctx: CanvasRenderingContext2D, hits: Hit[], label: string, x: number, y: number, w: number, h: number, id: string, down = false): void {
     bevel(ctx, x, y, w, h, !down);
+    if (this.hover === id && !down) px(ctx, x + 2, y + 2, w - 4, h - 4, ERA1.tooltip);   // S406 / H1: under the pointer, its face lights
     setFont(ctx, T_TINY);
     let s = T_TINY;
     while (ctx.measureText(label).width > w - 8 && s > 11) { s--; setFont(ctx, s); }
