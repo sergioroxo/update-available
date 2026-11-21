@@ -169,12 +169,17 @@ export class LScreen {
   /** the AI opens something on the right (it replaces what is there, or is laid over it with a way back) */
   open(page: Page, over = false): void {
     if (over) this.stack.push(page); else this.stack = [page];
+    this.closeOriginal();
     this.version++;
   }
   /** the page's own state changed (a thread opened, a line typed): redraw */
   touch(): void { this.version++; }
   get canGoBack(): boolean { return this.stack.length > 1; }
-  back(): boolean { if (this.stack.length <= 1) return false; this.stack.pop(); this.version++; return true; }
+  back(): boolean { if (this.stack.length <= 1) return false; this.stack.pop(); this.closeOriginal(); this.version++; return true; }
+  /** ⚑ S413 (the walk of 4ca2e2d0's dead end) — an original belongs to the page that shows it: when that page goes, it turns
+   *  back with it. It was left open behind the Kettle list (pressed again as L's cursor left Dad's thread): the AI's pane
+   *  stayed silent for good — the felt law holding over words no longer on the glass — and nothing could be pressed. */
+  private closeOriginal(): void { if (this.originalOpen) this.originalOpen = null; }
 
   // ── the conversation ───────────────────────────────────────────────────────
   // ⚑ S413 (26-14) — a new line no longer pulls the conversation down while the visitor is reading back (chatBack > 0): it

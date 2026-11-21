@@ -591,6 +591,16 @@ function* beat2(c: E4Acts): Beat {
     }
     // back to the list: L closes the thread, then says what it "said"
     yield* c.cursorTo('page-back', 0.9);
+    // ⚑ S413 — Dad's words turned over again as L's cursor heads for the back arrow: L waits for them to turn back (as long
+    //   as the taught turn waits, then turns them back itself); the screen never leaves an original open behind a page that
+    //   has gone (lScreen `closeOriginal`)
+    if (who === 'dad' && s.originalShown) {
+      c.path = ['orig-back:dad'];
+      const o0 = c.t;
+      yield () => !s.originalShown || c.t - o0 >= Math.max(24, readHold(B2.dad.original) + 14);
+      c.path = [];
+      yield 0.4;
+    }
     yield* c.click();
     s.back();
     c.feltNow = false;
