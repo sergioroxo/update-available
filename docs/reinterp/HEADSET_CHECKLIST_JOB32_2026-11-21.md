@@ -27,7 +27,8 @@ in `research/article-images-2026-11-20/job32/`, named by item id.*
   Watch whether the black band on the right edge (97-18) has gone with the dropped frames.
 - [ ] **H5 · sounds.**
   - 1997: every press on the computer gives one soft click.
-  - IRC: a soft blip when other people's lines arrive.
+  - 2003: every press gives one quieter click of its own (S411), and no second click on the alert or the update notice.
+  - IRC: a soft blip only when Rob writes to you privately. The channel's lines are silent (S410).
   - 2003, "Contacting your accountability network…": a ring as each contact is tried, and a low tone as each one fails.
 
 ## B · The entrance and 1997 (S407)
@@ -35,12 +36,13 @@ in `research/article-images-2026-11-20/job32/`, named by item id.*
 - [ ] **E2:** in the setup, press "Show me how". It offers "Match my table". Press it, and rest a hand on your table.
 - [ ] **E3:** when you arrive at Daniel's desk, the CRT is at a normal distance, with no recentring.
 - [ ] **E4:** the dissolve into the room is smooth (see H4).
-- [ ] **97-2:** at the 1997 desk, look right of the monitor. The calendar, Stand Firm and the band poster are whole,
-  even leaning in.
+- [ ] **97-2:** at the 1997 desk, look up and right of the monitor. The calendar now hangs higher, just above the
+  monitor's corner (S411), and Stand Firm and the band poster are further right. All three are whole, even leaning in.
+  Can you read the calendar's dates?
 - [ ] **97-3:** turn to the door behind you. There is no line of light at its top.
 - [ ] **97-4:** look down to the right of the chair. There is no paper on the floor.
 - [ ] **97-5 and 97-6:** the taskbar reads folder and number | Lamby | divider | 1997. Nothing lights up when you press
-  things.
+  things. The same in 2003 (the Your file badge), 2016 (My account) and 2026 (Memory): they count, but never light (S410).
 - [ ] **97-7 and 97-8:** after you go online, "Did you know" offers "Bring the TV here". Nothing moves before you press
   it. Then the TV comes in front of the CRT and plays.
 - [ ] **97-9:** from the FIT IN ad, the handheld comes in front of the screen, and the NetPilot music stops.
@@ -51,7 +53,9 @@ in `research/article-images-2026-11-20/job32/`, named by item id.*
   - On the placement letter, Next and Sign stay grey for a few seconds, so you can read.
 - [ ] **97-14:** after the cascade, press "Remind me later". Lamby's song is gone.
 - [ ] **97-15:** "Update deferred" appears in the taskbar, not over the form.
-- [ ] **97-21:** Release Work's second step ends "by name: 'Dad.'"
+- [ ] **97-21:** Release Work's steps now give invented examples in the programme's voice (S410), for example "Again.
+  Again.", "I waited up for you.", "You liked me better quiet.". They are never sentences from the book. Are the
+  two sentences right?
 
 ## C · The move to 2003, and 2003 (S408)
 

@@ -1320,7 +1320,8 @@ export class E4Browser {
   }
   /** ⚑ S401 (job 29 D2) — the taskbar's Memory item: a small mark, the word, the count; inverted while lit */
   private drawMemoryItem(ctx: CanvasRenderingContext2D, ty: number, pressable: boolean): void {
-    const M = FILE_ITEM.e4, lit = this.fileWatch.on, n = String(this.fileWatch.count);
+    // ⚑ S410 (his 21 Nov "yes": the file items of 2003–2026 stop lighting too, as 97-6 did for 1997's tray) — it counts, quietly; it never lights
+    const M = FILE_ITEM.e4, lit = false, n = String(this.fileWatch.count);
     ctx.font = monoFor(10);
     const dw = Math.ceil(ctx.measureText(V.oneScreen.taskbarDate).width);
     setFont(ctx, 10);

@@ -792,7 +792,8 @@ export class UpdateApp {
     }
     if (this.phase === 'notify') {
       // ⚑ S406 / H5 — in 1997 the glass already clicks (os.ts press_1997, Daniel's mouse): one press sound there, not two
-      if ((id === 'update-now' || id === 'remind-later') && this.key !== 'u2') playOnce('ui_press.mp3');
+      //   ⚑ S411 — and in 2003 (u3 is shown on its desktop), where the glass now clicks too (press_2003)
+      if ((id === 'update-now' || id === 'remind-later') && this.key !== 'u2' && this.key !== 'u3') playOnce('ui_press.mp3');
       switch (id) {
         case 'update-now':
           // R28-2c: "Update now" pressed while remind-later was NEVER used
