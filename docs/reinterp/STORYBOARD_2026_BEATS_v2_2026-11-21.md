@@ -406,3 +406,36 @@ figure with a soft halo. A small fund bar, "for Maya's name change", nearly full
 **13 · The way out.** The bedroom, warm again. The screen is dark. On the far wall, the bedroom door is open a crack,
 with warm light and coloured party light behind it. A small message on the dark screen: "we're outside. come down."
 Show three options for the door and its light.
+
+---
+
+## 7. His notes on draft 2 (21 Nov, part one: he stopped after beat 2; the rest to come)
+
+Kept in his words, for draft 3. Nothing is redrafted until the rest arrives.
+
+- **The photo stays, inside Shepherd Live:** "The photo aspect is not to be lost is to been integrated in the Shepard
+  Live." And on the logic: "that is why in the shepard live it tries to show you how woul'd yu look detranstiotioned,
+  it grabs a photo from your computer to alter it for you. That way we also keep more separate stuff that AI already
+  does to stuff it will be able too". *So the chain also sorts the real from the near future: L does what AI already
+  does (summarise, soften, flatter); Shepherd does what it will soon be able to do (alter your own photos, live, with a
+  face). That matches the Close's labels (documentary / speculative).*
+- **The escalation is the argument:** "As the system tries more to make Trans people be shown as in need of help we
+  have a the layer escalation of attemps (it showcases new methods but also a reality that as more they cannot prove
+  that ROGD and Social contagion are real, the more they try to attack you. So the excalation through the systems is
+  exactly that L to Secounf thoughts anf then Shepard Live, as more the system tries the more unhinge it is. (add to the
+  researhx aspect this evolution)." → research point 6 below.
+- **The logic:** "yes, one company, a chain of products. And the candency of harshness".
+- **Teach how the system works, in the chat itself:** "It is important that the audience is taught about the way the
+  system works right so as part, for example when the system tones down dad message it can write in the chat that it
+  did and say that if you wanna see the original is to press ✦ , that way we create the logic."
+- **Memory belongs to Second Thoughts:** "The memory becomes a Second thought thing." *(So no "Memory updated" before
+  the update in beat 5.)*
+- **Beat 1:** "Yes, it can even have a 'birthday card' type of image, to welcome her."
+- **Beat 2:** "Yes the systema gress but doesnt mean it doesnt pushes you. It is a pleasing system hidden." *(L agrees
+  with everything and still steers: the push is hidden inside the pleasing.)*
+
+**Research point 6 (his, 21 Nov): the escalation as the claims fail.** The less "social contagion" and ROGD can be shown
+to be real (the 2019 correction; the 2022 sex-ratio analysis; RESEARCH_2026_TRANS_PRESSURE §5), the harsher the attempts
+become, and each new product shows a new method. To trace: how the frame moved from one parent-report study (2018) to
+campaign material, law and products, and whether harsher methods follow the evidence failing. [VERIFY SOURCE] for any
+causal claim; the dates and the 2019 correction are already in the KB.
