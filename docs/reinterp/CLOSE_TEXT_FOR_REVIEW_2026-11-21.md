@@ -145,3 +145,28 @@ His seven cards go into `data/strings/close_message.json` in one change: each ca
 12 Nov "accepted" notes are removed), the old wording kept in each card's notes, card 7 and the sources note out, and
 the last card's foot set to "press to continue". The builder walks it and photographs every card on the computer and in
 the headset before it goes live.
+
+---
+
+## The final text (his yes to the four fixes, 21 Nov: "Yes, all four")
+
+**Seven cards, 250 words.** This is the text that goes into `data/strings/close_message.json`, word for word. Curly
+quotes as shown. Card 7's second sentence is his line of 2 Oct, word for word (`_s`).
+
+| Card | Text | By | Sources |
+|---|---|---|---|
+| 1 | L is invented, but being told to change is not. A conversion practice is any attempt to change who someone loves, or who they are. In a European survey of more than 100,000 LGBTIQ people, one in four said someone had tried to change them, and often it was family. | | fra, un |
+| 2 | For trans people it was nearly one in two. Today, pressure to change is twice as high for trans people, and of everyone who experienced it, three in four said they never agreed to it. | | fra |
+| 3 | Though many LGBT+ organisations support trans and gender-diverse people, the “gender ideology” campaign has taken root within the community, describing affirming trans young people as “conversion” and being trans as a “social contagion”. Groups calling themselves feminist or “LGB” oppose their rights. | | hate, lgbconv, inclusive |
+| 4 | Followed through four decades, these practices persist: tape, website, feed, and conversational AI. “Conversion therapy never goes away, no matter the scandals.” | — Global Project Against Hate and Extremism, 2022 | gpahe |
+| 5 | When a practice is banned by name, it simply takes on a new one. Their words of promise grew softer: “sick”, “struggler”, “freedom”, “restoration”, but the demand remained the same: change who you are. | | un |
+| 6 | Over a million Europeans urged the EU to ban them. In 2026 the EU responded with a recommendation that no country is required to follow and declined to propose a law. | | eci |
+| 7 | In the EU, harassment of LGBTIQ people rose from 37% to 55% in four years; for trans people, it was 69%. The next update is still being written, but their perpetrators are already making more victims. | | fra |
+
+**Sources that no card cites any more:** `ilga` (the seventeen countries left card 6) and `lgbonly` (card 3 no longer
+speaks of LGB-only services). They stay in the file's source list; whether the Credits still show them is the builder's
+to report.
+
+**How each card is marked in the file** (credit what is verified): *"his rewrite of 21 Nov 2026, typed on
+CLOSE_TEXT_FOR_REVIEW, an edit of the 12 Nov drafts; the four source fixes were proposed by the orchestrator and he
+approved them ('Yes, all four')"*. The 12 Nov "accepted" fields go. Each card's earlier wording is kept in its notes.
