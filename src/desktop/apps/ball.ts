@@ -1,5 +1,10 @@
 import V3 from '../../../data/dialog/s4_v3.json';
 /**
+ * ⚑ _retiredS415 (UiB job 33 Part D) — THIS 3D STREAM SPACE NO LONGER PLAYS IN THE VISIT. transjesus.str is on her desktop
+ * monitor now, whichever door she took (Act IV: e4ActFour.ts, streamCover.ts — the same people, dancer and fund bar, drawn
+ * flat), and its end is the shutdown and "coming soon" there. This file is kept, unreached in play, as the research state it
+ * is (s4_ball.json `_docRetiredS415`); its data's live keys are listed there.
+ *
  * ⚑ THE STREAM — transjesus.str (S293, 2026-11-02). Design of record: `docs/reinterp/ENDING_TRANSJESUS_2026-11-02.md`
  * (his: "To replace the Commons, why isn't this the TransJesus? … the Ballroom just didn't work"; "sure we can try.
  * Make this good and storytelling"). His earlier definition, which this file exists to keep: *the affirming queer

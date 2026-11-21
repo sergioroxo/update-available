@@ -162,7 +162,8 @@ const CONDITIONS: Record<string, Condition> = {
   stepsDone: (os) => !!os.e4?.browser.programDone || has4('headset'),
   headsetWorn: () => has4('headset'),
   commonsJoined: () => has4('commons'),
-  streamAnswered: (os) => !!os.e4?.ball.choice || has4('laptop'),
+  // ⚑ S415 — the stream is on her monitor (Act IV): her dance or stay, or the system come back for it (the shutdown files 'terminated')
+  streamAnswered: (os) => !!os.e4?.ball.choice || !!os.e4?.browser.acts.stream.choice || has4('terminated') || has4('laptop'),
   terminated: () => has4('laptop'),
   closed: () => updatedTo(0)
 };

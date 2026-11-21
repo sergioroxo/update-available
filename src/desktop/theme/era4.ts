@@ -1543,9 +1543,45 @@ function streamFigure(ctx: CanvasRenderingContext2D, x: number, yFloor: number, 
   }
 }
 
+/**
+ * ⚑ S415 (UiB job 33 Part D, beat 11) — TRANSJESUS ON THE STREAM, drawn flat: the 3D dancer of the retired stream space
+ * (src/room/commonsFigures.ts — a person in a flared gown and a crown, the one lit from within, arms rising on the beat), as
+ * the stream's camera shows them on Maya's monitor. Faceless like everyone in the piece; wordless; never a saint's likeness.
+ * `s` scales the figure (1 ≈ a person 36 px tall), `beat` is the music's beat count (122 BPM).
+ */
+function streamTJ(ctx: CanvasRenderingContext2D, x: number, yFloor: number, s: number, beat: number): void {
+  const phase = beat % 2;                                      // two beats a figure: arms up on the first, open on the second
+  const lean = Math.round(Math.sin(beat * Math.PI / 2) * 1.5 * s);
+  const bw = Math.round(7 * s), bh = Math.round(11 * s), skirtH = Math.round(13 * s), hs = Math.round(6 * s);
+  const waist = yFloor - skirtH, top = waist - bh;
+  // the gown: a flared skirt, widening to the floor in steps (no curve: integer rows)
+  for (let i = 0; i < skirtH; i++) {
+    const w = bw + Math.round((i / Math.max(1, skirtH - 1)) * 12 * s);
+    px(ctx, x - Math.round(w / 2) + lean, waist + i, w, 1, i % 3 === 2 ? PLACE.textile : PLACE.textileHi);
+  }
+  px(ctx, x - Math.round(bw / 2) + lean, top, bw, bh, PLACE.textileHi);
+  // the head (no face), the hair, the crown in the stage's gold
+  const hx = x - Math.round(hs / 2) + lean * 2, hy = top - hs - Math.round(2 * s);
+  px(ctx, hx, hy, hs, hs, ERA4.photoSkinHi);
+  px(ctx, hx - 1, hy - Math.round(2 * s), hs + 2, Math.round(3 * s), ERA4.photoHair);
+  const cw = Math.max(1, Math.round(s));
+  for (let k = 0; k < 3; k++) px(ctx, hx + Math.round((k * (hs - cw)) / 2), hy - Math.round(4 * s), cw, Math.round(2 * s), PLACE.sunHi);
+  // the arms: rising on the beat, then open
+  const aw = Math.max(1, Math.round(2.5 * s)), al = Math.round(10 * s);
+  if (phase < 1) {
+    px(ctx, x - Math.round(bw / 2) - aw + lean, top - Math.round(8 * s), aw, al, PLACE.textileHi);
+    px(ctx, x + Math.round(bw / 2) + lean, top - Math.round(8 * s), aw, al, PLACE.textileHi);
+  } else {
+    px(ctx, x - Math.round(bw / 2) - al + lean, top + Math.round(1 * s), al, aw, PLACE.textileHi);
+    px(ctx, x + Math.round(bw / 2) + lean, top + Math.round(1 * s), al, aw, PLACE.textileHi);
+  }
+}
+
 export function streamScene(
   ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number,
-  t: number, shot: StreamShot, landing: number
+  t: number, shot: StreamShot, landing: number,
+  /** ⚑ S415 — who has the floor: the old walker, or TransJesus dancing (transjesus.str on her monitor, beat 11) */
+  dancer: 'walker' | 'tj' = 'walker'
 ): void {
   const beat = (t * STREAM_BPM) / 60;
   const pulse = 1 - (beat % 1);                 // 1 on the beat, decaying
@@ -1587,7 +1623,8 @@ export function streamScene(
     ctx.save(); ctx.globalAlpha = 0.45;
     px(ctx, walkerX - Math.round(w * 0.12), horizon + 2, Math.round(w * 0.24), h, PLACE.rugHi);
     ctx.restore();
-    streamFigure(ctx, walkerX, y + h - 6, 1.7, PLACE.textileHi, false, Math.round(Math.sin(t * 3) * 2));
+    if (dancer === 'tj') streamTJ(ctx, walkerX, y + h - 6, 1.7, beat);
+    else streamFigure(ctx, walkerX, y + h - 6, 1.7, PLACE.textileHi, false, Math.round(Math.sin(t * 3) * 2));
   } else if (shot === 'walker') {
     // close: the walker large, mid-frame, walking; the crowd a blur behind
     for (let i = 0; i < 9; i++) {
@@ -1597,7 +1634,8 @@ export function streamScene(
       ctx.restore();
     }
     const stride = Math.round(Math.sin(t * 3.2) * 3);
-    streamFigure(ctx, x + Math.round(w * 0.5) + Math.round(Math.sin(t * 0.8) * w * 0.12), y + h + 6, 3.4, PLACE.textileHi, false, stride);
+    if (dancer === 'tj') streamTJ(ctx, x + Math.round(w * 0.5) + Math.round(Math.sin(t * 0.8) * w * 0.12), y + h - 2, 3.0, beat);
+    else streamFigure(ctx, x + Math.round(w * 0.5) + Math.round(Math.sin(t * 0.8) * w * 0.12), y + h + 6, 3.4, PLACE.textileHi, false, stride);
     ctx.save(); ctx.globalAlpha = 0.25 + 0.2 * pulse;
     px(ctx, x, y, w, Math.round(h * 0.3), PLACE.sunHi);
     ctx.restore();
@@ -1625,7 +1663,8 @@ export function streamScene(
     }
     ctx.restore();
     px(ctx, x, y + 4, w, 3, ERA4.panelEdge);
-    streamFigure(ctx, walkerX, y + h - 4, 1.3, PLACE.textileHi, landing > 0.3, Math.round(Math.sin(t * 3) * 2));
+    if (dancer === 'tj') streamTJ(ctx, walkerX, y + h - 4, 1.3, beat);
+    else streamFigure(ctx, walkerX, y + h - 4, 1.3, PLACE.textileHi, landing > 0.3, Math.round(Math.sin(t * 3) * 2));
   }
   // grain, always
   ctx.save(); ctx.globalAlpha = 0.08;

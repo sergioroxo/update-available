@@ -208,6 +208,9 @@ const OS_BEATS: BeatRow[] = [
   { label: '↳ 9 the photo — me, after.jpg, Becoming 99%', id: 'e4Act3Photo' },
   { label: '↳ 10 the friends break in — Remove · Yes (monitor)', id: 'e4Act3Friends' },
   { label: '↳ 10 the friends break in — Remove · Yes (headset)', id: 'e4Act3FriendsVR' },
+  { label: '⚑ 2026 Act IV · 11 the stream — transjesus.str on the monitor', id: 'e4Act4Stream' },
+  { label: '↳ 12 the shutdown — SESSION TERMINATED, the glitch', id: 'e4Act4Shutdown' },
+  { label: '↳ 13 coming soon — "we\'ll still exist.", L, into the Close', id: 'e4Act4End' },
   { label: 'E4 · ⚑ THE PLACE (worn — then turn, and see what happens)', id: 'e4Place' },
 
   { heading: 'E4 · L — the voice, and the room rewrites (S77)' },

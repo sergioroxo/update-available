@@ -15,13 +15,17 @@
  *     its last line (Junie's "i know. come in.") hands over to the stream (browser.ts `beginActs` → space.ts). ⚑ ONE SHEPHERD
  *     SURFACE (`shepherd`, shepherd.ts), held here, drawn wherever her door put it: the monitor (the screen's `full`) or the
  *     headset's glass (space.ts).
- *   · The stream and the end (11–13): Part D (S415).
+ *   · Act IV · the stream and the end (beats 11–13): src/desktop/apps/e4ActFour.ts (S415). Act III's last line (Junie's "i know.
+ *     come in.") leads straight into it; transjesus.str is drawn over the whole monitor (streamCover.ts, `stream` here), whichever
+ *     door she took; its last line (the update's own report) hands the visit to the Close (browser.ts `beginActs` → space.ts
+ *     `endFromActs`).
  *
  * The director never touches the room: the room reads the contract (src/narrative/e4Beats.ts), and the Lamby set is reached
  * through the two hooks app.ts gives it (`bringTv`, `tv`).
  */
 import { LScreen, type Chip } from './lScreen';
 import { ShepherdSession } from './shepherd';
+import { StreamCover } from './streamCover';
 import { readHold } from '../readHold';
 import { ledger } from '../../state/ledger';
 import { playOnce } from '../../audio/tapeAudio';
@@ -41,6 +45,14 @@ export class E4Acts {
   readonly shepherd = new ShepherdSession();
   private shSeen = -1;
   private shOnSeen = false;
+  /** ⚑ S415 — transjesus.str on her monitor, and the dark after it (Act IV, beats 11–13: e4ActFour.ts) */
+  readonly stream = new StreamCover();
+  private stSeen = -1;
+  /** ⚑ S415 — the stream is up (respite): no L, no Lamby, no mechanics — the guide is silent and the AI says nothing */
+  respite = false;
+  /** ⚑ S415 — probes and the walker's timing table (?debug=1 only): each beat as it begins, on the page's own clock */
+  readonly beatLog: { beat: string; at: number }[] = [];
+  private beatSeen = '';
   /** ⚑ S414 — the Join-in-VR door waits for the headset to be put on (the device glows; the guide's step is the headset's) */
   headsetWait = false;
   /** the visitor's last press the script has not taken yet */
@@ -90,6 +102,10 @@ export class E4Acts {
     this.t += dt;
     this.idle += dt;
     this.screen.update(dt);
+    // ⚑ S415 — the stream moves on its own steps; the monitor follows it (dirty only)
+    this.stream.update(dt);
+    if (this.stream.version !== this.stSeen) { this.stSeen = this.stream.version; this.screen.touch(); }
+    if (this.beat !== this.beatSeen) { this.beatSeen = this.beat; this.beatLog.push({ beat: this.beat, at: +(performance.now() / 1000).toFixed(2) }); }
     // ⚑ S414 — the session moves on its own steps; the monitor follows it only when it is the monitor's (Join here), or when it
     //   comes or goes (in the headset the monitor carries one still card): dirty only
     const sh = this.shepherd;

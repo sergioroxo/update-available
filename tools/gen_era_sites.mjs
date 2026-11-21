@@ -245,13 +245,18 @@ const lyricsOf = (name) => read(`data/dialog/${name}.json`).lines.map((ln) => ln
  * people tag in the stream, each with what the host says, the tag, the status word and its documented ground — the
  * deeper analysis his ruling put here, out of the stream. Only years that carry a `script` block show it.
  */
+/** ⚑ S415 — who says the move in the piece (S356's host by default) and, if anyone answers it, who: "L: “…” · Junie: …" */
+function saidBy(m) {
+  const said = `${m.who ?? 'The host'}: “${m.says}”`;
+  return m.tag ? `${said} · ${m.answerWho ?? 'the stream'}: ${m.tag}` : said;
+}
 function scriptHtml(X) {
   if (!X) return '';
   return `<h3 id="h-script">${esc(X.heading)}</h3>
 ${X.lead.map((p) => `<p>${esc(p)}</p>`).join('\n')}
 <h4>${esc(X.movesTitle)}</h4>
 ${X.moves.map((m) => `<article class="prac"><h4>${esc(m.move)} ${tag(m.status)}</h4>
-<p class="did">The host: “${esc(m.says)}” · the stream: ${esc(m.tag)}</p>
+<p class="did">${esc(saidBy(m))}</p>
 <p>${esc(m.ground)}</p></article>`).join('\n')}
 <p class="note">${esc(X.close)}</p>`;
 }
@@ -263,7 +268,7 @@ function scriptModel(X) {
     { k: 'h3', t: X.movesTitle },
     ...X.moves.flatMap((m) => [
       { k: 'h3', t: m.move, status: m.status, tag: short(m.status) },
-      { k: 'small', t: `The host: “${m.says}” · the stream: ${m.tag}` },
+      { k: 'small', t: saidBy(m) },
       { k: 'p', t: m.ground }
     ]),
     { k: 'note', t: X.close }

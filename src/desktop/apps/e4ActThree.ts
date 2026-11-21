@@ -62,7 +62,8 @@ export interface ActThreeHooks {
 }
 
 // ── the right pane after the friends: Junie's thread, her words sent at last ──
-function drawJunie(ctx: CanvasRenderingContext2D, pr: Rect, page: Page): void {
+/** ⚑ S415 — exported (and it returns where its last bubble ends) so Part D's link can follow Junie's "come in." in her thread */
+export function drawJunie(ctx: CanvasRenderingContext2D, pr: Rect, page: Page): number {
   px(ctx, pr.x, pr.y, pr.w, pr.h, KETTLE.ground);
   const x = pr.x + 14, w = pr.w - 28;
   roundRect(ctx, x, pr.y + 10, 26, 26, 13, KETTLE.avatarJunie);
@@ -83,9 +84,10 @@ function drawJunie(ctx: CanvasRenderingContext2D, pr: Rect, page: Page): void {
     setFont(ctx, 9); ctx.fillStyle = KETTLE.sub;
     const tw = Math.ceil(ctx.measureText(B10.toJunie).width); ctx.fillText(B10.toJunie, x + w - tw, y); y += 18;
   }
-  if (page.answered) { personBubble(ctx, x, y, w - 60, B10.answer.text, 14); }
+  if (page.answered) { const a = personBubble(ctx, x, y, w - 60, B10.answer.text, 14); y += a.h + 10; }
+  return y;
 }
-registerPage('junie', (ctx, r, p) => drawJunie(ctx, r, p));
+registerPage('junie', (ctx, r, p) => { drawJunie(ctx, r, p); });
 
 /** wire the act to the screen: the session draws over the AI's pane at its full width (or, while it is on the headset's glass,
  *  the still card that says so) */

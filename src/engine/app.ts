@@ -35,6 +35,7 @@ import { buildFluidNiche, type FacetState, type FluidNiche } from '../room/fluid
 import { buildCeilingWitness, type CeilingWitness } from '../room/ceilingWitness';
 import { onCommonsRoom, setCommonsWorld, setE4Dusk } from '../room/cluster';
 import { studioLightWant, STUDIO_LIGHT_COLOR } from '../room/studioLight';
+import { setStreamLight } from '../room/streamLight';
 import { e4Has, type E4Beat } from '../narrative/e4Beats';
 import { WORLD as COMMONS_WORLD, onTurnTo } from '../room/commonsWorld';
 const WORLD_SKY = COMMONS_WORLD.sky;
@@ -1255,6 +1256,8 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
         //   her, before the eye (heldDevice's grammar: the same take as 1997's FIT IN); the director waits while it is in her hands
         b.onConsole = () => { if (!devices || os.era !== 'e4') return false; devices.take('e4', xr?.active ? logicalHead() : camera); return devices.held('e4'); };
         b.consoleHeld = () => !!devices && devices.held('e4');
+        // ⚑ S415 (job 33 Part D, beat 12) — the stream is cut: LambyVision, if it is playing, stops with its picture (26-22)
+        b.onStopTv = () => teachingTvs?.freezeAll();
         // ⚑ S321 — 2026 v3: the screens turn her to the screen the story has moved to (no beat waits on a look)
         b.onFace = (s) => {
           if (scriptedBusy() || os.e4?.stage !== 'closed') return false;
@@ -4813,6 +4816,8 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       if (descentActive && !camMove) endDescent();
       // …and the relocation's legs hand over to each other the same way
       if (relocLeg && !camMove) advanceRelocation();
+      // ⚑ S415 — probes and the walk's 2026 timing table (?debug=1): each Close stage as it begins, on the page's clock
+      if (closeStage !== closeLogSeen) { closeLogSeen = closeStage; if (closeStage) closeLog.push({ stage: closeStage, at: +(performance.now() / 1000).toFixed(2) }); }
       // ⚑ the Close's four legs hand over the same way; `hold` is the one
       //   without a camera move, so it runs on its own small clock
       if (closeStage === 'line') {
@@ -4823,9 +4828,11 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
         // ⚑ S226 (his, 2026-10-10, cadence study Q6: "Press") — a card waits for a press, never for a clock: 39 words
         //   in 9 s was ~260 words a minute for readers in their second language. Each card says how to go on.
         void CLOSE_CARD_SECONDS;
-      } else if (closeStage === 'lead' || closeStage === 'hold' || closeStage === 'settled') {
+      } else if (closeStage === 'lead' || closeStage === 'hold' || closeStage === 'settled' || (closeStage === 'turn' && !camMove && !!xr?.active)) {
         closeHoldT += dt;
-        const cap = closeStage === 'lead' ? CLOSE_LEAD_SECONDS
+        // ⚑ S415 — in a headset the turn is one cut under the view's own cover (xrComfort): it is given the cover's time before
+        //   the crossing flies, so the cut lands whole and the flight does not start under it
+        const cap = closeStage === 'lead' ? closeLeadNow : closeStage === 'turn' ? 2.2
           : closeStage === 'hold' ? CLOSE_DUSK_SECONDS : CLOSE_MONITOR_AFTER_SECONDS;
         if (closeHoldT >= cap) advanceClose();
       } else if (closeStage && !camMove) advanceClose();
@@ -5689,7 +5696,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
    * The review route (`?close=1`) starts at Daniel's seat, so it keeps the old
    * order: lookUp, night on the stars, then the opening.
    */
-  type CloseStage = 'lead' | 'travel' | 'line' | 'lookUp' | 'message' | 'hold' | 'open' | 'settled' | null;
+  type CloseStage = 'lead' | 'turn' | 'travel' | 'line' | 'lookUp' | 'message' | 'hold' | 'open' | 'settled' | null;
   /** ⚑ S209 / P7-48 — THE CLOSE'S MESSAGE (data/strings/close_message.json): with the eyes on the stars and before
    *  the panels open, a few plain cards in the frame's voice — what SOGICE is, that it persists, that the law did not
    *  come, and his last line. Each holds CLOSE_CARD_SECONDS or until a press; the frame never plays. */
@@ -5737,6 +5744,10 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     openClosePanels();
   }
   let closeStage: CloseStage = null;
+  /** ⚑ S415 — the Close's stages as they began (read by the walk's timing table under ?debug=1; memory only) */
+  const closeLog: { stage: string; at: number }[] = [];
+  let closeLogSeen: CloseStage = null;
+  if (debugOn) (window as { __closeLog?: unknown }).__closeLog = closeLog;
   /** ⚑ S401 (UiB job 29 D3) — his line at Daniel's desk, before the Close (src/room/danielLine.ts) */
   const danielLine = options.reinterp === true && cloud ? buildDanielLine(app) : null;
   if (debugOn && danielLine) (window as { __danielLine?: unknown }).__danielLine = danielLine;
@@ -5744,6 +5755,24 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   let closeHoldT = 0;
   /** true once the night/constellation began during the sweep (C-01) */
   let closeMorphBegun = false;
+  /**
+   * ⚑ S415 (UiB job 33 Part D; 26-22, his: "we should not be flowing backwards we should rotate so we can see the room … it doesn't
+   * need to morph") — 2026's END COMES FROM THE ACTS NOW: the stream, the shutdown and "coming soon" have played on her monitor,
+   * and the update's own report is on it ("Your update has failed."). So the Close's way in from there is:
+   *   lead  · CLOSE_LEAD_ACTS_SECONDS on the report (the screens are already dark: nothing is left to die);
+   *   turn  · she is turned from the desk to face the room she will cross — on a screen a conducted turn in place
+   *           (CLOSE_TURN_SECONDS: 180° under the 9.1 °/s law at smoothstep's 1.5× crest, with margin); in a headset no conducted turn
+   *           (memory headset-no-fades-bring-it-close): ONE cut to that same facing, as every scripted move in a headset is;
+   *   travel · the crossing to Daniel's seat, FORWARD (she faces where she is going: never flowing backwards), and with no
+   *           morph (no glitch sweep through the building); then his line, the stars and the cards as today.
+   * The old way in (the glitch on the glass, 14.5 s of dying screens, the backwards glide with the building glitching) is
+   * kept for any other route that still reaches it.
+   */
+  const CLOSE_LEAD_ACTS_SECONDS = 2.5;
+  const CLOSE_TURN_SECONDS = 32;   // 180° at smoothstep's 1.5× crest: 8.4 °/s (30 s measured 9.5 at a 250 ms sample)
+  let closeLeadNow = 14.5;
+  /** the Close was entered from 2026's acts (S415): turn, then cross forward, with no morph */
+  let closeFromActs = false;
   const CLOSE_LEAD_SECONDS = 14.5;   // ⚑ Phase 7: FAIL.off is 14.5 s now; enterClose fires ~2.2 s after the stop, so the travel begins ~2 s over dead screens · was 7: ⚑ 2026-09-13: the desk's two screens die at FAIL.off (8.5 s after the device stops); the update's 2.2 s + this = the travel begins over dead screens
   /** 210° of turn: 1.875 × 210 / 44 = 8.95 °/s at the crest, under the 9.1 law */
   // ⚑ S226 (his, cadence study Q10: "keep, shorten the sweep") — since W1-G1 the crossing does not turn, so the
@@ -5808,10 +5837,24 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       //   wherever the look has got to (startCamMove reads camPos/camYaw)
       const dx = camPos.x - EYE.x, dz = camPos.z - EYE.z;
       roomBed.set(CLOSE_SONG, 4.0);   // S361: the song, from the first move to the last card (was the building's own sound)
+      if (closeFromActs && Math.hypot(dx, dz) > 0.5) {
+        // ⚑ S415 — first, turned to face the room she is about to cross (left, the long way round is the same 180°): on a
+        //   screen a slow turn in place; in a headset startCamMove makes it one cut to the same facing (no conducted turn)
+        closeStage = 'turn'; closeHoldT = 0;
+        const ahead = Math.atan2(dx, dz) * 180 / Math.PI;   // the bearing from her seat toward Daniel's
+        const dyaw = ((ahead - camYaw + 540) % 360) - 180;
+        startCamMove({ x: camPos.x, y: camPos.y, z: camPos.z, pitch: 0, yaw: camYaw + dyaw }, CLOSE_TURN_SECONDS, true, undefined, dyaw === -180 ? 180 : dyaw);
+        return;
+      }
+      closeStage = 'travel';
+    }
+    if (closeStage === 'turn') {
+      const dx = camPos.x - EYE.x, dz = camPos.z - EYE.z;
       if (Math.hypot(dx, dz) > 0.5) {
         closeStage = 'travel';
         // S361 / H50 — the glitch rolls through the building ahead of her, from Maya's seat to Daniel's, over the flight
-        cluster.glitchSweep({ x: camPos.x, z: camPos.z }, { x: EYE.x, z: EYE.z }, CLOSE_SWEEP_SECONDS);
+        // ⚑ S415 — not from the acts (26-22: "it doesn't need to morph"): she crosses the building as it is, facing ahead
+        if (!closeFromActs) cluster.glitchSweep({ x: camPos.x, z: camPos.z }, { x: EYE.x, z: EYE.z }, CLOSE_SWEEP_SECONDS);
         // the bezier control point sits over the partition between the rooms,
         // raised: the path bows up-and-over, the same stroke every relocation in
         // the piece takes.
@@ -5960,6 +6003,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
 
   function jumpToEraSettled(era: EraKey, navigation = false): void {
     if (!cluster) return;
+    setStreamLight(null);   // ⚑ S415 — the room's own light back (the stream's light and its dark are 2026's last beats only)
     // `settled`: a review jump wants the room's SETTLED state, not the
     // S2R.0/S2R.1 arrival narrative (silence → Lamby) — same spirit as
     // skipping O1/O3 at boot.
@@ -6043,12 +6087,15 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     //   on the laptop before its screen goes off (FAIL.off = 8.5 s after the
     //   device stops; this fires ~2.2 s after that).
     closeStage = 'lead'; closeHoldT = 0; closeMorphBegun = false;
+    // ⚑ S415 — from 2026's acts the screens are already dark and the report is on her monitor: a short lead, then the turn
+    closeFromActs = !!os.e4?.endedFromActs;
+    closeLeadNow = closeFromActs ? CLOSE_LEAD_ACTS_SECONDS : CLOSE_LEAD_SECONDS;
     // ⚑ Phase 7 (his: "no need to 'look to the right'") — the conducted turn to the laptop is gone.
     //   The eyes stay where she was facing and the seat eases back 30 cm, so the monitor and the
     //   laptop are both in frame while they die (0.08 m/s at the crest; no yaw at all)
     // ⚑ S359 / H20 (his D1) — not in a headset: there a 30 cm ease is a 30 cm jump of the world (under the re-form
     //   threshold, so it lands with no cover at all); the head sees the screens die from where it is
-    if (Math.hypot(camPos.x - EYE.x, camPos.z - EYE.z) > 0.5 && !xr?.active) {
+    if (Math.hypot(camPos.x - EYE.x, camPos.z - EYE.z) > 0.5 && !xr?.active && !closeFromActs) {
       const r = camYaw * Math.PI / 180;
       const back = { x: camPos.x + Math.sin(r) * 0.3, y: camPos.y + 0.04, z: camPos.z + Math.cos(r) * 0.3, pitch: -8, yaw: camYaw };
       startCamMove(back, 6, true);

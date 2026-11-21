@@ -1248,6 +1248,9 @@ export class TeachingTvs {
   get watching(): boolean { return TAPE_IDS.some((t) => this.tvs[t].held && this.tvs[t].playing); }
   /** Lamby's line is on the card in view */
   get carding(): boolean { return this.card.shown; }
+  /** ⚑ S415 (UiB job 33 Part D; 26-22: "LambyVision closed … but its screen kept playing") — the stream is cut: a set that is
+   *  playing stops with its picture (paused on the frame it was showing, by the story: ▶ goes on from there) */
+  freezeAll(): void { for (const id of TAPE_IDS) if (this.tvs[id].playing) this.tvs[id].pause('story'); }
 
   /**
    * every frame. `voices` = each of the story's voices by name, as a short signature ('' when silent). A voice that ARRIVES

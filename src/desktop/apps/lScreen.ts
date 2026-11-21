@@ -148,6 +148,9 @@ export class LScreen {
   /** ⚑ S414 (Act III) — something that takes the AI's pane over whole (Shepherd Live™'s session, at the pane's full width): drawn
    *  in the pane's place, publishing its own controls; it returns false when it has nothing to draw (the pane draws itself) */
   full: ((ctx: CanvasRenderingContext2D, r: Rect, push: (h: Hit) => void) => boolean) | null = null;
+  /** ⚑ S415 (Part D) — something that takes the WHOLE monitor (transjesus.str, beats 11–13: the stream fills the screen, then the
+   *  dark): drawn over everything, the taskbar included, publishing its own controls; it returns false when it has nothing to draw */
+  cover: ((ctx: CanvasRenderingContext2D, W: number, H: number, push: (h: Hit) => void) => boolean) | null = null;
   /** a press the screen does not handle itself (chips, page controls, the original's tag) */
   onPress: ((id: string) => void) | null = null;
   /** the taskbar's date */
@@ -288,6 +291,8 @@ export class LScreen {
     this.controls = [];
     this.anchors.clear();
     const push = (h: Hit): void => { if (pressable) this.controls.push(h); };
+    // ⚑ S415 — the stream (and the dark after it) has the whole glass: nothing of the AI's pane, her world or the taskbar under it
+    if (this.cover && this.cover(ctx, W, H, push)) return this.controls;
     const body = H - TASKBAR;
     px(ctx, 0, 0, W, H, V3.page);
     // ── her world (drawn first: the AI's pane is the frame's left edge, and a wide AI pane covers it) ──

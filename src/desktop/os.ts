@@ -4745,6 +4745,20 @@ export class DesktopOS {
         this.debugJump('e4Browser');
         this.e4?.debugActThree('friends', 'vr');
         break;
+      // ⚑ S415 (UiB job 33 Part D) — Act IV on the monitor (Acts I–III laid in as beat 10 leaves them): the stream, the
+      //   shutdown, the end (and from there the Close, as in play)
+      case 'e4Act4Stream':
+        this.debugJump('e4Browser');
+        this.e4?.debugActFour('stream');
+        break;
+      case 'e4Act4Shutdown':
+        this.debugJump('e4Browser');
+        this.e4?.debugActFour('shutdown');
+        break;
+      case 'e4Act4End':
+        this.debugJump('e4Browser');
+        this.e4?.debugActFour('end');
+        break;
       case 'e4Standby':
         this.setPhase('desktop');
         this.setDesktopEra('e4');

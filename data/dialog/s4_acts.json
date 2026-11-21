@@ -560,7 +560,8 @@
    "notes": [
     {
      "to": "to the lot",
-     "text": "I think I've been confused. I need some space to focus on my wellbeing. Please respect my decision."
+     "text": "I think I've been confused. I need some space. Please respect my decision.",
+     "_docS415": "⚑ S415 (H7, no card longer than three lines) — on the headset's glass this note ran to four lines; shortened, its word ('confused', his choice A — the one Junie answers) and its sense kept. Before: \"I think I've been confused. I need some space to focus on my wellbeing. Please respect my decision.\""
     },
     {
      "to": "to Mum",
@@ -652,6 +653,106 @@
    "byHer": "by her",
    "withHer": "by her friends, with her",
    "restored": "message: 1 unsent — restored; sent to Junie"
+  }
+ },
+ "act4": {
+  "_doc": "⚑ S415 (UiB job 33 Part D; draft 3 §4 beats 11–13 with his §8 answers; T97·26-19, 26-19b, 26-20, 26-22) — THE STREAM, THE SHUTDOWN, THE END. Beat 11, the stream: because Junie's \"i know. come in.\" — her link arrives in her thread and her own cursor opens it, and transjesus.str (the birthday stream for trans youth on the poster on Maya's wall, e_ballPoster) fills the desktop monitor, whichever door she took (his 21 Nov: \"the TransJesus to be now only a thing to be present on the desktop and not the VR headset\"), and its light fills the room. Respite: no L, no Lamby, no mechanics, nothing filed by the stream, never a trap, nothing revealed as fake; the chat's lines are the people's (s4_ball.json `stream`, kept live; the birthday and gift lines here are new). Beat 12, the shutdown: because the system was only damaged, not gone — a thin grey band of its own lines across the stream, then SESSION TERMINATED as built (s4_ball.json `system`, 26-22: \"the only part that is working\"); the picture freezes on the people mid-dance, the music is cut, LambyVision (if it is playing) stops with its picture; then the system's own update fails, tearing the screen and the room's light in bands, never more than three changes a second (reduced motion: a cut). Her room keeps its things; the light goes. Beat 13, coming soon: the screen dark; Junie's \"we'll still exist.\" (his words); then L's line (close_message.json `laptopLine`, his P7-48), its voice slowing and breaking; then \"Your update has failed.\" (updates.json close.restarting) and the turn into the Close. Claude's wording where the storyboard left it open; his edit wins.",
+  "b11": {
+   "_doc": "Beat 11 · the stream (respite). The link preview carries the poster's own words (s4_v3.json fundraiser.poster). The fund is the one draft 3 names: \"for Maya's name change\" — a bar that fills a hair at each gift, with no total, no thanks and no score (S350's rule). Rae has the candles: Act I's lot ended on Rae's \"who has the candles\"; here she holds them to her camera when Maya joins. The chat runs on its own lines (s4_ball.json stream.before → \"maya joined\" → welcome → `birthday` → ask), then her one press, dance or stay; with no press in `askSeconds` the chat carries on as if she stayed (nothing waits on her). Lines arrive `lineSeconds` apart; `afterSeconds` after her answer the system comes back (beat 12).",
+   "register": "respite",
+   "link": {
+    "url": "transjesus.str/live",
+    "title": "TransJesus birthday · LIVE",
+    "sub": "for trans youth · come as you are"
+   },
+   "fund": "for Maya's name change",
+   "fundFrom": 0.58,
+   "fundStep": 0.04,
+   "friends": {
+    "junie": "junie",
+    "rae": "rae"
+   },
+   "birthday": [
+    {
+     "who": "rae",
+     "text": "happy birthday maya!!"
+    },
+    {
+     "who": "junie",
+     "text": "rae has the candles"
+    },
+    {
+     "who": "pip",
+     "text": "HAPPY BIRTHDAY"
+    },
+    {
+     "who": "okra",
+     "text": "make a wish"
+    }
+   ],
+   "gifts": [
+    {
+     "who": "mira",
+     "text": "put a bit in for the name change",
+     "gift": true
+    },
+    {
+     "who": "sib",
+     "text": "me too. bus money",
+     "gift": true
+    }
+   ],
+   "askSeconds": 25,
+   "afterSeconds": 22,
+   "lineSeconds": 1.9,
+   "growSeconds": 1.0
+  },
+  "b12": {
+   "_doc": "Beat 12 · the shutdown. The band is the system's, on its own thin grey strip across the picture (never on a dancer or a chat line); each line `lineSeconds` apart, a system sound under each and the music ducked. Then SESSION TERMINATED as built (s4_ball.json system.terminated / reason / terminatedNote), held for its reading time; then the glitch: `glitchSeconds` long, in `glitchHz` steps a second (≤ 3: designed, not flashing).",
+   "band": [
+    "Restoring your environment…",
+    "Reinstalling Second Thoughts…",
+    "Unable to rank this stream.",
+    "Unable to caption this stream."
+   ],
+   "lineSeconds": 2.6,
+   "glitchSeconds": 3.0,
+   "glitchHz": 3
+  },
+  "b13": {
+   "_doc": "Beat 13 · coming soon. The screen dark. Junie's line arrives as her message does, in her colour, lowercase (felt: nothing else speaks while it is read). Then L's line, written as its voice reaches each phrase (`parts`), its voice slowing and breaking: the clip is rendered and processed by tools/tts/s415_soon.py (the same Kokoro voice, each phrase rendered slower, the last one running down), not by kokoro_lines.py (hence `clip`, not `audio`). Then the update's own report, plain, and the turn into the Close.",
+   "junie": {
+    "register": "felt",
+    "who": "Junie",
+    "text": "we'll still exist.",
+    "_s": "his words — his message on draft 3 (21 Nov 2026): \"Junies maybe can say \"We'll still exist\"\" — in Junie's lowercase; never rewritten, never paraphrased"
+   },
+   "soon": {
+    "register": "apparatus",
+    "_doc": "the words are his (data/strings/close_message.json `laptopLine`, P7-48); this block holds only the clip and where each phrase lands in it",
+    "clip": "l_b13_soon.mp3",
+    "seconds": 4.76,
+    "parts": [
+     {
+      "text": "L will be waiting",
+      "at": 0.0
+     },
+     {
+      "text": "for the next update —",
+      "at": 1.04
+     },
+     {
+      "text": "coming soon.",
+      "at": 2.83
+     }
+    ]
+   },
+   "titleSeconds": 4.0
+  },
+  "witness": {
+   "_doc": "⚑ S415 — what the end of 2026 files on the record (ledger.e4Space), in the machine's flattest voice. The stream files nothing (respite); the shell files her leaving (s4_ball.json commons.witness, as before), the termination, and the failure on her monitor (`failed`, filed as `laptop` so the map's last 2026 step keeps its key; s4_space.json corrupt.witness spoke of a device and a laptop that this ending no longer has).",
+   "terminated": "session: terminated — reason: social contagion",
+   "failed": "desk: the screen went dark — the monitor reported the update failed"
   }
  }
 }

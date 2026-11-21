@@ -553,7 +553,26 @@ async function main() {
    * Every pressable thing in the piece comes back with a page point already
    * computed, so the walker never has to know which mesh a surface is on.
    */
-  const probe = () => readVisitorState(page, VIEW);
+  /**
+   * ⚑ S415 (UiB job 33 Part D) — STILL STRETCHES IN 2026 AND THE CLOSE: any run of more than 20 s in which nothing on the
+   * screens changed and the camera did not move (the walk's own probes, so it errs short by a probe's interval). Each is
+   * reported with whether anything was pressable through it — the job's "name any stretch over 20 s where nothing moves and
+   * nothing is pressable".
+   */
+  const still = [];
+  let stillFrom = null, stillKey = '', stillPress = false, stillBeat = '';
+  const trackStill = (st) => {
+    if (!st || (st.era !== 'e4' && st.era !== 'close')) { stillFrom = null; return; }
+    const p = st.pose;
+    const key = st.screenHash + '|' + (p ? [p.x, p.y, p.z, p.yaw, p.pitch].map((v) => Number(v || 0).toFixed(2)).join(',') : '');
+    const now = Date.now();
+    if (key !== stillKey || stillFrom === null) {
+      if (stillFrom !== null && now - stillFrom > 20000) still.push({ from: stillFrom, to: now, seconds: +((now - stillFrom) / 1000).toFixed(1), beat: stillBeat, pressable: stillPress });
+      stillKey = key; stillFrom = now; stillPress = false; stillBeat = st.bstate?.beat || st.phase || '';
+    }
+    if ((st.targets || []).length) stillPress = true;
+  };
+  const probe = () => readVisitorState(page, VIEW).then((st) => { trackStill(st); return st; });
 
   /** ⚑ a real press: down, hold, up — the piece resolves the tap on RELEASE */
   const doPress = async (pt, settle = 1200) => {
@@ -1625,6 +1644,9 @@ async function main() {
      * Bounded, because some screens animate forever (a caret, Lamby idling):
      * after `TALK_WAIT_MAX` consecutive holds the walker presses anyway.
      */
+    // ⚑ S415 — transjesus.str's picture moves for as long as it is on (a stream): when its two presses are up, a person
+    //   presses one; holding for the picture to stop would wait out the chat's own cap
+    if (s.era === 'e4' && s.bstate?.stream && s.targets.some((t) => /^a4-(?:dance|stay)$/.test(t.id))) talkWaits = TALK_WAIT_MAX;
     if (!justWoke && talkWaits < TALK_WAIT_MAX) {
       const before = pulseOf(s);
       rememberParts(s);
@@ -1936,7 +1958,27 @@ async function main() {
   }
   // ⚑ S404 — the watched lines: where each was met (or that it never was)
   for (const [key] of WATCH) console.log(`  line met (S404): ${key} — ` + (watched[key]?.map((x) => `step ${x.step} ${x.era}/${x.phase} canvas ${x.size}`).join(' · ') || 'NOT MET'));
+  // ⚑ S415 — 2026, beat by beat: the acts' own beat log and the Close's stages (page clock), mapped to the walk's wall clock
+  const beatClock = await page.evaluate(() => ({ now: performance.now(), wall: Date.now(), beats: window.__os?.e4?.browser?.acts?.beatLog ?? [],
+    close: window.__closeLog ?? [] })).catch(() => null);
+  if (stillFrom !== null && Date.now() - stillFrom > 20000) still.push({ from: stillFrom, to: Date.now(), seconds: +((Date.now() - stillFrom) / 1000).toFixed(1), beat: stillBeat, pressable: stillPress });
+  const wakeStep = log.find((e) => e.kind === 'press' && e.target === 'e4-touch');
+  const beatRows = [];
+  if (beatClock && wakeStep) {
+    const off = beatClock.wall - beatClock.now;   // page ms → wall ms
+    const rows = [{ beat: 'wake (Press to wake the screen)', at: wakeStep.t }];
+    for (const b of beatClock.beats) if (b.beat) rows.push({ beat: b.beat, at: b.at * 1000 + off });
+    for (const c of beatClock.close) rows.push({ beat: 'close:' + c.stage, at: c.at * 1000 + off });
+    rows.sort((a, b) => a.at - b.at);
+    const firstCard = rows.find((r) => r.beat === 'close:message');
+    for (let i = 0; i < rows.length; i++) {
+      const r = rows[i], next = rows[i + 1];
+      beatRows.push({ beat: r.beat, fromWake: +((r.at - wakeStep.t) / 1000).toFixed(1), lasts: next ? +((next.at - r.at) / 1000).toFixed(1) : null });
+      if (r === firstCard) break;
+    }
+  }
   writeFileSync(join(OUT_DIR, 'WALK_' + stamp + '.json'), JSON.stringify({
+    beats2026: beatRows, still2026: still.map((x) => ({ ...x, fromWake: wakeStep ? +((x.from - wakeStep.t) / 1000).toFixed(1) : null })),
     fileItems,
     watched,
     when: new Date().toISOString(), port: PORT, viewport: VIEW,
@@ -2010,6 +2052,13 @@ async function main() {
       '> as always, so the eras stay comparable. Read beside the same day\'s exhaustive walk.', ''
     ] : []),
     ...(GUIDED_WALK ? ['*Walk policy: guided. Optional doors are verified separately; use --explore for an exhaustive audit. This differs from older exploratory press counts.*', ''] : []),
+    ...(beatRows.length ? ['## 2026, BEAT BY BEAT (S415)', '',
+      '*From "Press to wake the screen" to the Close\'s first card, on the page\'s own clock (the acts\' beat log and the Close\'s',
+      'stages). `lasts` runs to the next row.*', '',
+      '| beat | s from wake | lasts (s) |', '|---|---|---|',
+      ...beatRows.map((r) => '| `' + r.beat + '` | ' + r.fromWake + ' | ' + (r.lasts ?? '—') + ' |'), '',
+      '**Still stretches over 20 s** (nothing on the screens changed and the camera did not move):', '',
+      ...(still.length ? still.map((x) => '- ' + x.seconds + ' s at `' + x.beat + '` (from ' + (wakeStep ? ((x.from - wakeStep.t) / 1000).toFixed(0) : '?') + ' s after the wake) — ' + (x.pressable ? 'something was pressable' : '**nothing pressable**')) : ['- none']), ''] : []),
     '## MINUTES PER ERA', '',
     '*Wall-clock from the log\'s own timestamps, each era counted to its last step and the piece',
     'counted to `spine: done`. The tool\'s press settles and holds are summed and shown; the piece',

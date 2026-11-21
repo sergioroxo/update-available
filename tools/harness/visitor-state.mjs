@@ -357,7 +357,9 @@ const LAP = { w: 224, h: 140 };
     // ⚑ S414 — `headset`: Act III's Join in VR has lit the headset on the desk (its plane is the way on); `door`: where the
     //   session is (null before it begins)
     const bstate = b4 ? { mode: b4.mode, step: b4.step, picker: b4.picker, live: b4.live, turnDone: [...(b4.turnDone || [])], stepDone: [...(b4.stepDone || [])], done: !!b4.programDone, pending: typeof b4.turnPending === 'function' ? b4.turnPending() : null,
-      headset: !!b4.headsetOffered, door: b4.acts && b4.acts.shepherd && b4.acts.shepherd.on ? b4.acts.shepherd.door : null } : null;
+      headset: !!b4.headsetOffered, door: b4.acts && b4.acts.shepherd && b4.acts.shepherd.on ? b4.acts.shepherd.door : null,
+      // ⚑ S415 — the acts' beat now (the walk's 2026 timing table), and whether the stream (respite) is up
+      beat: b4.acts ? b4.acts.beat : '', stream: !!(b4.acts && b4.acts.stream && b4.acts.stream.on) } : null;
     const lapRects = e4 && Array.isArray(e4.laptopHits) ? e4.laptopHits : [];
     for (const r of lapRects) {
       add(r.id, 'laptop', r, onPlane('era3-device-laptop', r.x + r.w / 2, r.y + r.h / 2, LAP.w, LAP.h));

@@ -579,7 +579,7 @@ function gearIcon(ctx: CanvasRenderingContext2D, x: number, y: number, ink: stri
   px(ctx, x + 5, y, 2, 2, ink); px(ctx, x + 5, y + 10, 2, 2, ink); px(ctx, x, y + 5, 2, 2, ink); px(ctx, x + 10, y + 5, 2, 2, ink);
 }
 /** a cursor: an arrow in its owner's colour with a dark edge, its owner's name on it, a ring when it presses */
-function drawCursor(ctx: CanvasRenderingContext2D, x: number, y: number, ink: string, pressing: boolean, label: string, right: number): void {
+export function drawCursor(ctx: CanvasRenderingContext2D, x: number, y: number, ink: string, pressing: boolean, label: string, right: number): void {
   setFont(ctx, 9);
   const lw = Math.ceil(ctx.measureText(label).width) + 10, lx = x + 14 + lw > right - 2 ? x - lw - 4 : x + 14;
   pill(ctx, lx, y + 16, lw, 13, ink);

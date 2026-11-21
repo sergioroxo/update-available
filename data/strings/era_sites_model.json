@@ -4188,19 +4188,19 @@
      },
      {
       "k": "p",
-      "t": "It is 2026. Maya's session is restored for her. The update has set her defaults: a grey profile called Default, and an assistant called Second Thoughts, “recommended for you”. Her search is finished for her, and the first result is an ad for the assistant."
+      "t": "It is 2026, and Maya turns eighteen today. When she wakes her screen, L, the assistant built into her computer, has already read her week. It makes her a birthday card and offers to catch her up. It softens her dad's message, and tells her so: the original is one press away. It opens her mail: her clinic has moved her to the adult waiting list, an LGB support group has written that it cannot support her, and her mum has started a course for parents. Then it finishes the search she left unfinished last night."
      },
      {
       "k": "p",
-      "t": "The assistant is warm. It sends her to an LGB support group first, and the group says no. Then it quotes the refusal back to her as the reason to stay. It asks to see her, and turns her own photograph into a version that “matches your file”. It writes her story from the buttons she pressed."
+      "t": "Under the news there is a yellow card: Second Thoughts, “for when you're not sure”. Whether she adds it or not, it adds itself. It scores her week as a risk, counting the doors that closed on her against her, and takes over her computer, slowly: it mutes her friend Junie, mutes her friends' group chat, answers her dad for her. It makes her a film about herself, out of her own week. When she answers it in her own words, it deletes them, and books her a session for her own good."
      },
      {
       "k": "p",
-      "t": "Her friend Junie writes to her and asks for nothing. Junie tells her the one thing the system says that is true: the original is kept. Maya confirms her original, and the system, satisfied, sends her into a headset session."
+      "t": "The session is Shepherd Live™, a host with a halo ring, in the same voice: in her headset, or over her whole screen. It explores “what's underneath”, takes a photograph of her from her own files and alters it in front of her, never finishing, while it writes to her friends and her mum as her. Her friends know the message is not hers. Junie and Rae sign in, fight the system for her settings, and she removes Second Thoughts. Her words are sent at last."
      },
      {
       "k": "p",
-      "t": "In the headset an AI host that calls itself Jesus is waiting: Shepherd Live™, one viewer, her. It agrees with everything she says and moves her one step at a time. It shows her who she could be. Then Junie's link arrives: we're coming to you. Maya lets them in. Forty-one people raid the host's stream and name its script, line by line, until the stage is theirs. Behind the stage is the host's real face: a lead, a score, the words she typed. Then people dance, and the chat says hi maya. The system tries to take her back and cannot. The update fails. The stream keeps going."
+      "t": "Junie lets her into a birthday stream for trans youth: transjesus.str, the one on the poster on her wall. Her friends are on camera, Rae holds the candles, the chat says hi maya, and people put money in for her name change. She can dance, or stay. Then the system comes back. It cannot rank the stream or caption it, so it ends her session “for your safety”, and gives its reason: social contagion. Junie writes: we'll still exist. L says it will be waiting for the next update. The update fails."
      },
      {
       "k": "note",
@@ -4229,20 +4229,24 @@
       "k": "dl",
       "rows": [
        [
-        "The browser, tabs and the answer box",
-        "GraceOS's browser, with “People also ask”: confident answers from one network's sources"
+        "The assistant and the answer box",
+        "L, the assistant built into her computer: it reads her week, summarises her messages, finishes her search, and answers at the top of it"
        ],
        [
         "Targeted ads",
-        "The offers"
+        "The yellow card under the news: Second Thoughts, “for when you're not sure”"
        ],
        [
-        "The AI companion",
-        "L, the companion; Second Thoughts, the assistant that conducts"
+        "The add-on that acts for you",
+        "Second Thoughts: a risk review, a cursor that uses her computer, Memory notes shared with partners, a film made for one person"
        ],
        [
-        "The headset and the social world",
-        "The visor; Shepherd Live™, the AI host (a hologram with no voice); the raid, where the people name its script; then the TransJesus stream: dancing, a chat of people, a count of 42. The respite: never a trap, never revealed as fake"
+        "The headset and the live host",
+        "Shepherd Live™: an “exploratory session” in the headset or over the whole screen; her photograph altered, messages sent as her"
+       ],
+       [
+        "The stream",
+        "transjesus.str, on her own monitor: her friends on camera, a chat of people, a count of 42, a fund for her name change. The respite: never a trap, never revealed as fake"
        ],
        [
         "Console games",
@@ -4260,7 +4264,7 @@
      },
      {
       "k": "p",
-      "t": "In the headset Maya meets Shepherd Live™, an AI host that calls itself Jesus. The host is invented: no documented product has done what it does. Its lines are not invented. Each one repeats a move this piece documents, and the people in the stream name each move, briefly, while it is still on the stage."
+      "t": "On her eighteenth birthday Maya meets three products of one company: L, the assistant that reads her week; Second Thoughts, the add-on that takes over; and Shepherd Live™, a live host with a halo ring. The products are invented: no documented product has done what they do. Their lines are not invented. Each one repeats a move this piece documents."
      },
      {
       "k": "p",
@@ -4282,7 +4286,7 @@
      },
      {
       "k": "small",
-      "t": "The host: “I'm here. I'm always here.” · the stream: okra: it's a subscription"
+      "t": "Shepherd: “Hello, Maya. I've been waiting.”"
      },
      {
       "k": "p",
@@ -4296,11 +4300,11 @@
      },
      {
       "k": "small",
-      "t": "The host: “Every door closed at once. That's a sign.” · the stream: sib: that's a waiting list"
+      "t": "L: “Three doors closed this week, Maya. That isn't bad luck.”"
      },
      {
       "k": "p",
-      "t": "The waits are real. In England, the projected wait for an adult gender clinic runs past fifteen years (PinkNews, on NHS England's Levy Review, 18 December 2025). Calling the closed doors a sign is the host's own move; no source documents the phrase."
+      "t": "The waits are real. In England, the projected wait for an adult gender clinic runs past fifteen years (PinkNews, on NHS England's Levy Review, 18 December 2025). Reading the closed doors as more than bad luck, and counting them as her risk, is the piece's own move; no source documents the phrase."
      },
      {
       "k": "h3",
@@ -4310,7 +4314,7 @@
      },
      {
       "k": "small",
-      "t": "The host: “Some people slow you down.” · the stream: lark: first they cut your friends"
+      "t": "Second Thoughts: “I muted Junie. She's an exposure source.” · Junie: 'confused'? that's not your word. that's theirs."
      },
      {
       "k": "p",
@@ -4324,7 +4328,7 @@
      },
      {
       "k": "small",
-      "t": "The host: “Who hurt you, Maya?” · the stream: fen: the old root cause one"
+      "t": "Shepherd: “We're only going to explore what's underneath.”"
      },
      {
       "k": "p",
@@ -4338,7 +4342,7 @@
      },
      {
       "k": "small",
-      "t": "The host: “I just want you safe.” · the stream: mira: fear, dressed as care"
+      "t": "Second Thoughts: “I hear you. Saying that tells me you need more help than I can give.”"
      },
      {
       "k": "p",
@@ -4352,11 +4356,11 @@
      },
      {
       "k": "small",
-      "t": "The host: “12,408 lives restored.” · the stream: pip: source? — the panel: source: none"
+      "t": "Second Thoughts: “Overall: at risk of a decision you can't undo.”"
      },
      {
       "k": "p",
-      "t": "Shepherd Live™'s numbers are the piece's invention, and the stream answers them with one question, not with other numbers. The documented numbers for 2026 are in this site's sources, each with who counted it. The claim has an ancestor: in 2004 a large church told Conley's father the programme had ‘a high success rate’ (Insider, 2026)."
+      "t": "The scores in this piece are its own invention: Second Thoughts' review of her week, and Shepherd's “Becoming 99%”. The documented numbers for 2026 are in this site's sources, each with who counted it. The claim has an ancestor: in 2004 a large church told Conley's father the programme had ‘a high success rate’ (Insider, 2026)."
      },
      {
       "k": "h3",
@@ -4366,11 +4370,11 @@
      },
      {
       "k": "small",
-      "t": "The host: “Let me show you who you could be.” · the stream: junie: she's right here"
+      "t": "Shepherd: “Let me show you something.” · Maya: There's nothing to restore. I'm Maya."
      },
      {
       "k": "p",
-      "t": "No tool that shows a trans person an AI-made “after” of themselves was found in the project's searches: the try-on is invented (see The Restoration tool). The before-and-after testimony is documented: ex-gay ministries turned members' stories into their own media (see 2003, The testimony)."
+      "t": "No tool that shows a trans person an AI-made “after” of themselves was found in the project's searches: the altered photograph is invented (see The Restoration tool). The before-and-after testimony is documented: ex-gay ministries turned members' stories into their own media (see 2003, The testimony)."
      },
      {
       "k": "note",
@@ -6264,14 +6268,14 @@
        {
         "label": "transjesus.str",
         "opt": "",
-        "hint": "Stay with them. When they ask, dance or stay.",
-        "where": "Where: the stream."
+        "hint": "Your friends' stream, on your monitor. Dance or stay, as you like.",
+        "where": "Where: the monitor."
        },
        {
-        "label": "The update fails",
+        "label": "The shutdown",
         "opt": "",
-        "hint": "Watch the screens.",
-        "where": "Where: the desk."
+        "hint": "The system comes back for the stream. Nothing to press.",
+        "where": "Where: the monitor."
        }
       ]
      }

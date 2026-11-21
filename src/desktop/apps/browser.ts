@@ -66,6 +66,8 @@ import { E4Acts, type TvNow } from './e4Acts';
 import { actOne, wireActOne, layIn as layInActOne, type ActOneFrom } from './e4ActOne';
 import { actTwo, wireActTwo, type ActTwoFrom } from './e4ActTwo';
 import { actThree, wireActThree, layInActTwo, stopActThreeSound, type ActThreeFrom, type ActThreeHooks } from './e4ActThree';
+import { actFour, wireActFour, layInActThree, type ActFourFrom, type ActFourHooks } from './e4ActFour';
+import { setStreamLight } from '../../room/streamLight';
 import type { Door } from './shepherd';
 import { TASKBAR as ACTS_TASKBAR } from './lScreen';
 
@@ -232,6 +234,11 @@ export class E4Browser {
   headsetWorn: (() => boolean) | null = null;
   onHeadsetDown: (() => void) | null = null;
   onActsDone: (() => void) | null = null;
+  /** ⚑ S415 (Act IV) — the shell files her leaving for the stream, and the termination (space.ts); LambyVision, if it is playing,
+   *  stops with its picture (app.ts) */
+  onStreamJoined: (() => void) | null = null;
+  onTerminated: (() => void) | null = null;
+  onStopTv: (() => void) | null = null;
   /** ⚑ S414 — the Join-in-VR door has lit the headset on the desk: it is pressable (space.ts `deviceReady`; the walker's bstate) */
   headsetOffered = false;
   /** app.ts: bring the Lamby set off its shelf to the side of the monitor (Mum's link); and how the set is now */
@@ -396,7 +403,8 @@ export class E4Browser {
   get guideSilent(): boolean {
     return this.startMap.active || !this.pressable || this.phase !== 'open' || !!this.idleOrb || this.mode === 'game'
       || this.messenger.felt || this.enquiryOpen || this.draftLive
-      || (this.step === 'acts' && (this.acts.feltNow || this.acts.screen.originalShown));   // S412: a person's words on the glass
+      || (this.step === 'acts' && (this.acts.feltNow || this.acts.screen.originalShown))   // S412: a person's words on the glass
+      || (this.step === 'acts' && (this.acts.respite || this.acts.stream.on));   // S415: the stream (respite) and the dark after it
   }
   // ⚑ S370 — and while the clip owns the page (its narrator is the voice; one voice at a time): its 58 s now outlast the
   //   guide's 50 s tip, which would otherwise pop over the end slate
@@ -804,12 +812,15 @@ export class E4Browser {
   /** ⚑ S412 — Act I begins (from its first beat in play; a review jump may begin later) · ⚑ S413 — then Act II, on the same
    *  screen, from the seam's press (a review jump may begin inside Act II: `two`) · ⚑ S414 — then Act III (Shepherd Live™,
    *  beats 9–10; a review jump may begin inside it: `three`), and its last line hands over to the stream */
-  private beginActs(from: ActOneFrom, two?: ActTwoFrom, three?: { from: ActThreeFrom; door: Door }): void {
+  private beginActs(from: ActOneFrom, two?: ActTwoFrom, three?: { from: ActThreeFrom; door: Door }, four?: ActFourFrom): void {
     const a = this.acts;
     wireActOne(a);
     wireActTwo(a);
     wireActThree(a);
     stopActThreeSound();
+    // ⚑ S415 — the stream is not up, and its light is not in the room, until Act IV puts them there
+    a.stream.reset(); a.respite = false; a.screen.cover = null; wireActFour(a);
+    setStreamLight(null);
     a.bringTv = () => this.onHedge?.() ?? false;
     this.go('acts');
     this.actsHanded = false;
@@ -819,8 +830,23 @@ export class E4Browser {
       headsetOn: () => self.headsetWorn?.() ?? false,
       setDownHeadset: () => self.onHeadsetDown?.()
     };
+    const hooks4: ActFourHooks = {
+      joined: () => self.onStreamJoined?.(),
+      terminated: () => self.onTerminated?.(),
+      stopTv: () => self.onStopTv?.()
+    };
     a.start((function* () {
       let choice: 'add' | 'notnow' = 'add';
+      if (four) {
+        // ⚑ S415 (review only) — Act IV from one of its beats: Acts I–III laid in as beat 10 leaves them
+        layInActOne(a, 5); layInActTwo(a); layInActThree(a);
+        self.actsDone = true;
+        yield* actFour(a, hooks4, four);
+        a.done = true;
+        self.handOver();
+        self.onActsDone?.();
+        return;
+      }
       if (three) { layInActOne(a, 5); layInActTwo(a); }
       else {
         if (!two) choice = yield* actOne(a, { tvBusy: () => { const t = self.tvNow?.(); return !!t && (t.watching || t.arriving); } }, from);
@@ -831,6 +857,9 @@ export class E4Browser {
       self.actsDone = true;
       // ⚑ S414 — Act III: "Booked ✓ · today." leads straight into "Your session with Shepherd is ready."
       yield* actThree(a, hooks, three?.from ?? 'doors', three?.door ?? 'here');
+      // ⚑ S415 — Act IV: Junie's "i know. come in." leads straight into the stream; its last line (the update's own report)
+      //   hands the visit to the Close
+      yield* actFour(a, hooks4);
       a.done = true;
       self.handOver();
       self.onActsDone?.();
@@ -1470,6 +1499,8 @@ export class E4Browser {
     const ty = H - ACTS_TASKBAR;
     // ⚑ S413 (rule 3) — MEMORY belongs to Second Thoughts: its item on the taskbar from its first note (beat 6), never in
     //   Act I; open, its card lies over her world (the record of the day, read only); never over a person's words
+    // ⚑ S415 — the stream (and the dark after it) has the whole glass: no Memory item, no tray, no ring over it
+    if (this.acts.stream.on) { this.memOpen = false; this.lambyGuidePaint = { rings: [], balloon: false }; return; }
     const memory = this.acts.screen.rows.some((r) => r.who === 'memory');
     this.memOpen = this.memOpen && memory && !silent;
     if (memory && !this.acts.feltNow && !this.acts.screen.originalShown) this.drawMemoryItem(ctx, ty, pressable, this.acts.screen.date);
@@ -3311,6 +3342,16 @@ export class E4Browser {
     this.t = 0;
     this.filedSession = true;
     this.beginActs(4, undefined, { from, door });
+    this.version++;
+  }
+  /** ⚑ S415 (review only) — Act IV from one of its beats (the stream, the shutdown, the end); Acts I–III laid in as beat 10
+   *  leaves them (in either door: the stream is on the monitor whichever door she took) */
+  debugActFour(from: ActFourFrom): void {
+    this.settleT = 0;
+    this.phase = 'open';
+    this.t = 0;
+    this.filedSession = true;
+    this.beginActs(4, undefined, undefined, from);
     this.version++;
   }
   debugJumpTo(where: string): void {

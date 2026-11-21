@@ -164,6 +164,9 @@ const REGISTRY: Record<string, string> = {
   'l_b10_stay.mp3': `${AUDIO_BASE}l_b10_stay.mp3`,
   'l_b10_wait.mp3': `${AUDIO_BASE}l_b10_wait.mp3`,
   'l_b10_unavailable.mp3': `${AUDIO_BASE}l_b10_unavailable.mp3`,
+  // ⚑ S415 (UiB job 33 Part D, beat 13) — L's last line, its voice slowing and breaking (tools/tts/s415_soon.py: the same Kokoro
+  //   voice, each phrase rendered slower, the last running down); his words (close_message.json laptopLine)
+  'l_b13_soon.mp3': `${AUDIO_BASE}l_b13_soon.mp3`,
   'l_u1a.mp3': `${AUDIO_BASE}l_u1a.mp3`,
   'l_u1b.mp3': `${AUDIO_BASE}l_u1b.mp3`,
   'l_u1r_ok.mp3': `${AUDIO_BASE}l_u1r_ok.mp3`,

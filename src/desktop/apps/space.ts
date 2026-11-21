@@ -69,6 +69,7 @@ import { ledger } from '../../state/ledger';
 import { playOnce, playLoop, stopClip, roomBed } from '../../audio/tapeAudio';
 import space from '../../../data/dialog/s4_space.json';
 import ballScript from '../../../data/dialog/s4_ball.json';
+import actsScript from '../../../data/dialog/s4_acts.json';
 import { LVoice } from './lVoice';
 import { E4Offers } from './offers';
 import { E4Ball } from './ball';
@@ -293,7 +294,44 @@ export class E4Shell {
     //   (`setDownFromActs`, no fade). The acts' last line hands over to the stream (`joinStreamFromActs`).
     this.browser.headsetWorn = () => this.stageNow === 'worn';
     this.browser.onHeadsetDown = () => this.setDownFromActs();
-    this.browser.onActsDone = () => this.joinStreamFromActs();
+    // ⚑ S415 (UiB job 33 Part D) — ACT IV plays on the monitor (the stream, the shutdown, the end: e4ActFour.ts), whichever door
+    //   she took; the shell files what the machine saw of it (her leaving for the stream; the termination) and, when its last
+    //   line is read, hands the era to the Close (`endFromActs`). The old night in the 3D stream space is retired
+    //   (`joinStreamFromActs`, `_retiredS415`).
+    this.browser.onStreamJoined = () => {
+      if (!ledger.e4Space.some((e) => e.id === 'commons')) ledger.e4Space.push({ id: 'commons', outcome: 'joined', witness: ballScript.commons.witness });
+      this.browser.openStream();
+    };
+    this.browser.onTerminated = () => {
+      if (!ledger.e4Space.some((e) => e.id === 'terminated')) ledger.e4Space.push({ id: 'terminated', outcome: 'done', witness: actsScript.act4.witness.terminated });
+      meetWord('contagion', 'e4-session');   // S209 / P7-47 — the reason the session gave for ending her
+    };
+    this.browser.onActsDone = () => this.endFromActs();
+  }
+  /**
+   * ⚑ S415 — THE END OF 2026, FROM THE ACTS. The update's own report is on her dark monitor ("Your update has failed."); the
+   * device is not on her face (the VR door set it down in beat 10), so there is no glitch on the glass and nothing to take off:
+   * the shell hands off as `finishHandOff` does — the record's last line, the update door (os.ts arms `close` and accepts it
+   * on the spot) — and app.ts turns her to the room and into the Close.
+   */
+  endFromActs(): void {
+    if (this.handedOff) return;
+    this.handedOff = true;
+    this.fromActs = true;
+    this.stageNow = 'closed';
+    this.visorHits = [];
+    this.laptopV++;
+    this.version++;
+    ledger.e4Space.push({ id: 'laptop', outcome: 'read', witness: actsScript.act4.witness.failed });
+    this.onCloseRequest?.();
+  }
+  private fromActs = false;
+  /** ⚑ S415 — the era ended from the acts (app.ts `enterClose`: a short lead, the turn to the room, the crossing forward) */
+  get endedFromActs(): boolean { return this.fromActs; }
+  /** ⚑ S415 (review only) — Act IV from one of its beats (the stream, the shutdown, the end), Acts I–III laid in */
+  debugActFour(from: 'stream' | 'shutdown' | 'end'): void {
+    if (this.stageNow !== 'closed') { this.stageNow = 'closed'; this.version++; }
+    this.browser.debugActFour(from);
   }
   /** ⚑ S414 — Act III's session is on this glass (Join in VR) */
   private get sessionOnGlass(): boolean { return this.worn && this.browser.acts.shepherd.onGlass; }
@@ -321,6 +359,8 @@ export class E4Shell {
    * monitor. What the old flow did on Junie's link, then after the raid, the naming and backstage (all retired: s4_ball.json
    * `_retiredS414`): the record files the joining, the contract marks the stream, the monitor keeps the link, the night begins.
    */
+  /** ⚑ _retiredS415 — the old night (the 3D stream space) no longer follows the acts: Act IV plays the stream on her monitor
+   *  (e4ActFour.ts). Kept, unreached, as the research state it is. */
   joinStreamFromActs(): void {
     if (this.handedOff || this.ball.phaseId !== 'idle') return;
     ledger.e4Space.push({ id: 'commons', outcome: 'joined', witness: ballScript.commons.witness });
