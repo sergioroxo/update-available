@@ -4856,11 +4856,14 @@ export class DesktopOS {
    */
   private lastPressSound = -1;
   private pressSound(): void {
-    if (!this.reinterp || this.desktopEra !== 'e1' || this.phase === 'off' || this.phase === 'r_dark' || gameMenuBus.isOpen) return;
+    // ⚑ S411 (his 21 Nov: "we can try adding the click sound in 2003 okay") — and 2003's own: the optical mouse six years
+    //   on (tools/make_s406_sounds.py `press_2003`), quieter; the accountability alert's and the update notice's clicks
+    //   yield to it there too. 2016 and 2026 are unchanged.
+    if (!this.reinterp || (this.desktopEra !== 'e1' && this.desktopEra !== 'e2') || this.phase === 'off' || this.phase === 'r_dark' || gameMenuBus.isOpen) return;
     const now = performance.now();
     if (now - this.lastPressSound < 150) return;
     this.lastPressSound = now;
-    const a = playOnce('press_1997.mp3'); if (a) a.volume = 0.5;
+    const a = playOnce(this.desktopEra === 'e2' ? 'press_2003.mp3' : 'press_1997.mp3'); if (a) a.volume = 0.5;
   }
   handleClick(x: number, y: number): void {
     if (this.setup?.open) { if (!this.paused) this.setup.handleClick(x, y); return; }

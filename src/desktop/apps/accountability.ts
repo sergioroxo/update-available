@@ -800,9 +800,10 @@ export class AccountabilityApp {
     }
     if (!hit) return;
     switch (hit.id) {
-      case 'alert-next': playOnce('ui_press.mp3'); this.nextPressed = true; this.dirty = true; break;
-      case 'alert-ok': playOnce('ui_press.mp3'); this.closeAlert(false); break;
-      case 'alert-dismiss': playOnce('ui_press.mp3'); this.closeAlert(true); break;
+      // ⚑ S411 — no click of its own: 2003's glass clicks every press (os.ts press_2003), one press sound, not two
+      case 'alert-next': this.nextPressed = true; this.dirty = true; break;
+      case 'alert-ok': this.closeAlert(false); break;
+      case 'alert-dismiss': this.closeAlert(true); break;
       case 'mail-open': this.mail = 'letter'; this.glitchT = 0; this.dirty = true; break;
       case 'mail-read':
         // a toggle, so the row can always be told the truth about itself

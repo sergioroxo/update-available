@@ -326,6 +326,7 @@ const REGISTRY: Record<string, string> = {
   'irc_dm.mp3': `${AUDIO_BASE}irc_dm.mp3`,                   // S339 · a private message arrives: a brighter, insistent chime (tools/make_irc_tones.py; T50)
   // ⚑ S406 (UiB job 32 Part A, H5; his headset run of 20 Nov) — tools/make_s406_sounds.py, synthesized, ours
   'press_1997.mp3': `${AUDIO_BASE}press_1997.mp3`,           // 1997's one press sound: Daniel's mouse, on every press on its glass
+  'press_2003.mp3': `${AUDIO_BASE}press_2003.mp3`,           // S411: 2003's one press sound — the optical mouse of 2003, quieter
   'irc_pop_1997.mp3': `${AUDIO_BASE}irc_pop_1997.mp3`,       // a line from the room appearing in the channel (soft, rate-limited)
   'net_try_2003.mp3': `${AUDIO_BASE}net_try_2003.mp3`,       // "Contacting your accountability network…": each call placed
   'net_fail_2003.mp3': `${AUDIO_BASE}net_fail_2003.mp3`,     // …and each one failing (alert_2003 turned down)

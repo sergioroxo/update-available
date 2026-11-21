@@ -6,6 +6,12 @@
                     update notice's own tick yields to it there). It is not the system's voice: it is DANIEL'S MOUSE, the
                     microswitch of a two-button ball mouse of the period — a hard plastic tick (a 1.5 ms burst, its
                     switch ringing at ~3.1 and ~5.4 kHz) over the hollow of the shell (~820 Hz, 18 ms). 45 ms. Quiet.
+  press_2003      — (S411) 2003's ONE press sound, his 21 Nov: "we can try adding the click sound in 2003 okay". Six years
+                    on, the mouse on Daniel's desk is an optical one: a smaller, quieter switch — a shorter burst (1 ms),
+                    the switch ringing higher and dying faster (~4.3 and ~6.9 kHz), a lighter shell under it (~1.15 kHz,
+                    11 ms). 32 ms, softer than 1997's. Still the mouse, not the system's voice; every press on the 2003
+                    glass makes it, and the alert's and the update notice's own clicks yield to it there. Its noise has its
+                    own seed, so writing it alone (`press_2003` as an argument) leaves the other four untouched.
   irc_pop_1997    — a line arriving in the channel: "we need some sound of this space … the texts popping in" (21:37:12).
                     A soft, round blip, lower and duller than the client's own tick (irc_1997, which stays for his own
                     lines): a sine that drops a semitone as it sounds (D5 → C#5), its octave faint, through the same small
@@ -22,7 +28,7 @@
 ⚑ tools/make_tones.sh's law holds: nothing here imitates a real operating system's, a messenger's or a phone network's
 recorded sound — every partial is written out below. Deterministic (the noise is seeded): the same bytes every run.
 
-Usage: python3 tools/make_s406_sounds.py
+Usage: python3 tools/make_s406_sounds.py [stem …]   (no stem: all five)
        (writes assets/audio/<stem>.wav and publishes public/assets/audio/<stem>.mp3 with lame -V5)
 """
 import math
@@ -105,6 +111,19 @@ def press_1997():
     return fade_edges(lowpass(y, 7500), 0.0003, 0.008)
 
 
+def press_2003():
+    rng = np.random.default_rng(411)   # its own seed: writing it alone never shifts the others' noise
+    L = 0.032
+    burst = np.zeros(int(L * SR))
+    n = int(0.001 * SR)
+    burst[:n] = rng.standard_normal(n) * np.linspace(1, 0.15, n)
+    burst = highpass(burst, 2600)
+    switch = damped(4300, L, 980, 0.45) + damped(6900, L, 1300, 0.22, 0.4)
+    shell = damped(1150, L, 380, 0.28, 0.2)
+    y = burst * 0.7 + switch + shell
+    return fade_edges(lowpass(y, 8500), 0.0002, 0.006)
+
+
 def irc_pop_1997():
     L = 0.095
     t = t_of(L)
@@ -136,10 +155,14 @@ def net_fail_2003():
 
 
 def main():
-    write('press_1997', press_1997(), 0.5)
-    write('irc_pop_1997', irc_pop_1997(), 0.32)
-    write('net_try_2003', net_try_2003(), 0.3)
-    write('net_fail_2003', net_fail_2003(), 0.32)
+    want = set(sys.argv[1:])
+    # the shared seed's order is kept: the four of S406 come out byte for byte as before when all are written
+    for stem, make, peak in (('press_1997', press_1997, 0.5), ('irc_pop_1997', irc_pop_1997, 0.32),
+                             ('net_try_2003', net_try_2003, 0.3), ('net_fail_2003', net_fail_2003, 0.32),
+                             ('press_2003', press_2003, 0.4)):
+        y = make()
+        if not want or stem in want:
+            write(stem, y, peak)
 
 
 if __name__ == '__main__':
