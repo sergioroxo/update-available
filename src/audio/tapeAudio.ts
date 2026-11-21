@@ -140,6 +140,14 @@ const REGISTRY: Record<string, string> = {
   //   to prevent: an unregistered name is never requested, and that guarantee
   //   only holds while the registry names real files. Era 4 was silent for
   //   three sessions with every one of these correctly named in the data.
+  // ⚑ S412 (UiB job 33 Part A; T97·H6, his 21 Nov "Yes") — the 2026 company's one voice, Act I (L): Kokoro-82M rendered by
+  //   tools/tts/kokoro_lines.py from data/dialog/s4_acts.json (each line's measured `seconds` beside it there)
+  'l_a1_hello.mp3': `${AUDIO_BASE}l_a1_hello.mp3`,
+  'l_a1_soften.mp3': `${AUDIO_BASE}l_a1_soften.mp3`,
+  'l_a1_truth.mp3': `${AUDIO_BASE}l_a1_truth.mp3`,
+  'l_a1_goodcall.mp3': `${AUDIO_BASE}l_a1_goodcall.mp3`,
+  'l_a1_doors.mp3': `${AUDIO_BASE}l_a1_doors.mp3`,
+  'l_a1_answer.mp3': `${AUDIO_BASE}l_a1_answer.mp3`,
   'l_u1a.mp3': `${AUDIO_BASE}l_u1a.mp3`,
   'l_u1b.mp3': `${AUDIO_BASE}l_u1b.mp3`,
   'l_u1r_ok.mp3': `${AUDIO_BASE}l_u1r_ok.mp3`,

@@ -917,7 +917,9 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   let e4Room: ReturnType<typeof buildE4Room> | null = null;
   /** S398 (A6): how far 2026's lamp has faded (0 lit … 1 only the screen), and the beats that move it */
   let e4Dusk = 0;
-  const E4_DUSK_STEPS: readonly [E4Beat, number][] = [['search', 0.2], ['bot', 0.4], ['map', 0.6], ['junie', 0.75], ['original', 0.9], ['tryon', 1]];
+  // ⚑ S412 (job 33 A5) — the room does not change in Act I: the fade no longer begins at her search (Act I's last beat), only once
+  //   Second Thoughts has arrived ('bot', the seam); Parts B–C own what the room does after that
+  const E4_DUSK_STEPS: readonly [E4Beat, number][] = [['bot', 0.4], ['map', 0.6], ['junie', 0.75], ['original', 0.9], ['tryon', 1]];
   const E4_DUSK_RATE = 0.04;   // per second: a fifth of the fade in five seconds
   let e4RoomTurnSeq = -1;
   let cloud: PointCloud | null = null;
@@ -1028,6 +1030,10 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
         //   TeachingTvs.bring); `arm` (?debug=1) still runs the old moment for the probes.
         if (tape === '1997') return false;
         if (tape === '2016') return os.era === 'e3' && ledger.records.includes('e3-job:testimony');
+        // ⚑ S412 (UiB job 33 Part A; 26-4, 26-5) — 2026's set has no moment of its own any more: the parents' course comes
+        //   through Mum's email, and only if Maya presses its link (os.e4.browser.onHedge → TeachingTvs.bringBeside). Dad's read
+        //   no longer sends it (his: "a course for parents, so it doesn't make sense that the father would send it").
+        if (tape === '2026') return false;
         return os.era === 'e4' && tvClock.dadReadAt >= 0 && tvClock.now - tvClock.dadReadAt >= TV_AFTER_DAD;
       },
       quiet: (tape, dueFor) => {
@@ -1097,6 +1103,8 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       // ⚑ S394 — bring the set close / put it back (review aids for photographs; a probe that proves the press presses it)
       take: (tape: '1997' | '2016' | '2026') => { const tv = teachingTvs?.tvs[tape]; if (!tv) return; tv.wake(); tv.take(xr?.active ? logicalHead() : camera, !!xr?.active, xr?.active ? null : camera.camera); },
       putBack: (tape: '1997' | '2016' | '2026') => teachingTvs?.tvs[tape].putBack(null, 'visitor'),
+      // ⚑ S412 — review aid: Mum's link's own bring (beside the monitor), without the press (a probe that proves the link presses it)
+      beside: () => teachingTvs?.bringBeside(app.root.findByName('era3-device-monitor') as pc.Entity | null) ?? false,
       fitAll: () => teachingTvs?.fitAll() ?? null,   // S394 fix: every caption and margin line drawn into the bar, measured
       inst: (tape: '1997' | '2016' | '2026') => teachingTvs?.tvs[tape] ?? null,   // S394 fix: the set itself (review aid)
       canvases: () => teachingTvs?.canvases() ?? {},
@@ -1229,6 +1237,10 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
         const b = os.e4.browser;
         b.lambyGuide = os.lambyGuide;
         b.onGuideLook = () => faceGuideSurface(b.guideSurface());
+        // ⚑ S412 (job 33 Part A, beat 3) — Mum's link brings the Lamby set off its shelf to the side of the monitor (never in
+        //   front of it); the director waits while it comes and while it plays (one voice at a time)
+        b.onHedge = () => teachingTvs?.bringBeside(app.root.findByName('era3-device-monitor') as pc.Entity | null) ?? false;
+        b.tvNow = () => ({ holding: !!teachingTvs?.holding, watching: !!teachingTvs?.watching, arriving: !!teachingTvs?.arriving });
         // ⚑ S321 — 2026 v3: the screens turn her to the screen the story has moved to (no beat waits on a look)
         b.onFace = (s) => {
           if (scriptedBusy() || os.e4?.stage !== 'closed') return false;
@@ -3991,7 +4003,10 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       // (movementNodes.available already excludes the current seat) AND
       // actually visible this frame (isVisible — defence in depth alongside
       // the tightened MARKER_HIT_RADIUS, item 4).
-      if (movementNodes && cluster && !scriptedBusy()) {
+      // ⚑ S412 / 26-5 (his headset, 20 Nov: "Pressing close on LambyVision jumped the seat", twice) — a press while a Lamby set
+      //   is in the hand, or a moment after it was set down, is never a seat change: a press that misses the set's keys must
+      //   not fall through to a floor marker
+      if (movementNodes && cluster && !scriptedBusy() && !teachingTvs?.heldRecently) {
         for (const n of movementNodes.available(cluster.era, seatYaw)) {
           if (!movementNodes.isVisible(n.id)) continue;
           if (rayHitsPointR(ray, { x: n.marker[0], y: n.marker[1], z: n.marker[2] }, MARKER_HIT_RADIUS)) {

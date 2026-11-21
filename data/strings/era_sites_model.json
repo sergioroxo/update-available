@@ -4177,7 +4177,7 @@
     ],
     [
      "Beats",
-     "22"
+     "16"
     ]
    ],
    "tabs": {
@@ -6178,69 +6178,33 @@
         "where": "Where: the monitor."
        },
        {
-        "label": "Eighteen",
+        "label": "L reads your week",
         "opt": "",
-        "hint": "Your friends wrote. Read their chat on the laptop.",
-        "where": "Where: the laptop."
-       },
-       {
-        "label": "The new you",
-        "opt": "",
-        "hint": "The update restored your defaults. Press Continue.",
+        "hint": "L has read your week and made you a card. Press an answer: either one goes on.",
         "where": "Where: the monitor."
        },
        {
-        "label": "Mum",
+        "label": "Your messages",
         "opt": "",
-        "hint": "Read Mum, one year at a time.",
-        "where": "Where: the laptop."
-       },
-       {
-        "label": "Dad",
-        "opt": "",
-        "hint": "Dad wrote. Read him.",
-        "where": "Where: the laptop."
-       },
-       {
-        "label": "Mum's link",
-        "opt": "",
-        "hint": "Open the link Mum sent.",
-        "where": "Where: the laptop."
-       },
-       {
-        "label": "The number",
-        "opt": "",
-        "hint": "Your clinic wrote. Open the letter.",
+        "hint": "L is reading your messages to you. Press ✦ on Dad's if you want to see what he wrote.",
         "where": "Where: the monitor."
        },
        {
-        "label": "Support while you wait",
+        "label": "Three doors",
         "opt": "",
-        "hint": "Ask Meridian. Send, then close the reply.",
+        "hint": "L is opening your mail. Mum's email has a link to her course; it is yours to press, or not.",
         "where": "Where: the monitor."
        },
        {
-        "label": "Left",
+        "label": "Her search",
         "opt": "",
-        "hint": "Open the lot. Read it.",
-        "where": "Where: the laptop."
-       },
-       {
-        "label": "The room",
-        "opt": "",
-        "hint": "The piece turns you to the room. Nothing to press.",
-        "where": "Where: the room."
-       },
-       {
-        "label": "The search, finished",
-        "opt": "",
-        "hint": "Press the search. The engine finishes it for you.",
+        "hint": "L finishes last night's search for you. Press an answer to its offer.",
         "where": "Where: the monitor."
        },
        {
         "label": "Second Thoughts",
         "opt": "",
-        "hint": "The first result is an ad. Press Chat now.",
+        "hint": "Under the stories, the yellow card: ✚ Add to L, or Not now.",
         "where": "Where: the monitor."
        },
        {

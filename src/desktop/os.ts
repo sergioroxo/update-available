@@ -3288,7 +3288,9 @@ export class DesktopOS {
       //   registered and dead: a control the piece advertises as live and then
       //   ignores. `tools/walk.mjs` found it by pressing it and watching nothing
       //   move, which is the entire reason that check exists.
-      if (!this.e4.worn && this.e4.stage !== 'laptop') {
+      // ⚑ S412 — and not under 2026's one screen (job 33's acts): the monitor publishes its own controls there, and this
+      //   whole-glass rect pressed the monitor's centre — whatever happened to be under it (a story card, a thread)
+      if (!this.e4.worn && this.e4.stage !== 'laptop' && this.e4.browser.storyStep !== 'acts') {
         this.hits.push({ x: 0, y: 0, w: W, h: H, id: 'e4-touch' });
       }
       if (this.updateApp?.open) this.updateApp.draw(this.ctx);
@@ -4682,6 +4684,23 @@ export class DesktopOS {
       case 'e4BrowserSearch':
         this.debugJump('e4Browser');
         this.e4?.browser.debugJumpTo('search');
+        break;
+      // ⚑ S412 (UiB job 33 Part A) — Act I on the one screen, from each of its beats (what came before laid into the chat)
+      case 'e4Act1':
+        this.debugJump('e4Browser');
+        this.e4?.browser.debugActs(1);
+        break;
+      case 'e4Act1Messages':
+        this.debugJump('e4Browser');
+        this.e4?.browser.debugActs(2);
+        break;
+      case 'e4Act1Mail':
+        this.debugJump('e4Browser');
+        this.e4?.browser.debugActs(3);
+        break;
+      case 'e4Act1Search':
+        this.debugJump('e4Browser');
+        this.e4?.browser.debugActs(4);
         break;
       case 'e4Standby':
         this.setPhase('desktop');

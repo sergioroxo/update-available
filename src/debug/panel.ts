@@ -192,6 +192,11 @@ const OS_BEATS: BeatRow[] = [
   // place. Six tabs come back and the last one is not hers.
   { label: '⚑⚑ the browser · "Restoring your session" (REVIEW ONLY — not in play)', id: 'e4Browser' },
   { label: '↳ the search she did not finish — four completions, three of them out', id: 'e4BrowserSearch' },
+  // ⚑ S412 (UiB job 33 Part A) — 2026 rebuilt: the one screen, two panes; Act I (L) from each of its beats
+  { label: '⚑ 2026 Act I · 1 L reads your week — the birthday card', id: 'e4Act1' },
+  { label: '↳ 2 the softened father — Kettle, the ✦', id: 'e4Act1Messages' },
+  { label: '↳ 3 three doors — Larkpost, Mum\'s course', id: 'e4Act1Mail' },
+  { label: '↳ 4 her search — the stories, the yellow card (the seam)', id: 'e4Act1Search' },
   { label: 'E4 · ⚑ THE PLACE (worn — then turn, and see what happens)', id: 'e4Place' },
 
   { heading: 'E4 · L — the voice, and the room rewrites (S77)' },

@@ -52,7 +52,7 @@ import * as aero from '../desktop/theme/era3';
 import { drawLambyChar } from '../desktop/apps/lambyChar';
 import decisions from '../../data/strings/cx3b.json';
 import { holdVoice, releaseVoice, voiceHolder, setVoiceWanted } from '../state/voiceHold';
-import { buildLambySet, toLocal, hitBounds, keyAt, glassAt, GLASS, FACE, KEY_POINTS, KEY_ROW, DISPLAY, SET_NAME, deckPixels, type LambySet, type SetKey, type DeckState } from './lambyVision';
+import { buildLambySet, toLocal, hitBounds, keyAt, glassAt, GLASS, FACE, KEY_POINTS, KEY_ROW, DISPLAY, SET_NAME, deckPixels, BOUNDS, type LambySet, type SetKey, type DeckState } from './lambyVision';
 
 type Style = 'vcr' | 'dvd' | 'hedge';
 interface TvSpec { era: string; place: { pos: number[]; yaw: number }; style: Style; seat: number[] }
@@ -470,6 +470,7 @@ export class TeachingTv {
   /** the set comes before the eye (the pose fixed at the press, as the phone and the Game Boy do) */
   take(eye: pc.Entity, xr: boolean, cam?: pc.CameraComponent | null): void {
     if (this.pose === 'held' || this.pose === 'lifting' || !this.inEra) return;
+    this.beside = false;
     const { fwd, up } = eyeFrame(eye, xr);
     const rot = faceRot(fwd, up);
     let d: number, k: number, anchor: pc.Vec3;
@@ -498,6 +499,58 @@ export class TeachingTv {
     this.set.glow(HELD.glowHeld);
     liftToHeldLayer(this.set.root, xr);   // ⚑ S407 (97-7): in a headset it comes in front of the room, never behind the CRT
   }
+  /**
+   * ⚑ S412 (UiB job 33 Part A, beat 3; his note on draft 2: LambyVision "to the side yes, but not infront") — the set comes off
+   * its shelf and stands BESIDE THE SCREEN, never in front of it: in the band between the monitor's right edge and the edge
+   * of the view (a computer), or a little past the monitor's right edge at its depth (a headset, where the head is free),
+   * its glass at the monitor's height, turned to the eye, sized to the band. Held, it is the same set as ever: its keys, its
+   * glass, its body (a body press or ⏻ puts it back on the shelf and moves nothing else — 26-5). Returns false when there is
+   * no room beside the screen (a phone held upright): the caller brings it before the eye instead.
+   */
+  takeBeside(eye: pc.Entity, xr: boolean, cam: pc.CameraComponent | null | undefined, monitor: pc.Entity): boolean {
+    if (this.pose === 'held' || this.pose === 'lifting' || !this.inEra) return false;
+    const E = eye.getPosition().clone();
+    const { fwd, up } = eyeFrame(eye, xr);
+    const right = new pc.Vec3().cross(fwd, up).normalize();
+    const wt = monitor.getWorldTransform();
+    const at = (x: number, z: number): pc.Vec3 => { const o = new pc.Vec3(); wt.transformPoint(new pc.Vec3(x, 0, z), o); return o; };
+    const C = at(0, 0), R = at(0.5, 0);
+    const ang = (p: pc.Vec3, axis: pc.Vec3): number => { const v = p.clone().sub(E); return Math.atan2(v.dot(axis), v.dot(fwd)); };
+    const edge = ang(R, right);
+    const depthC = C.clone().sub(E).dot(fwd);
+    if (depthC <= 0.1) return false;
+    let a: number, b: number, d: number;
+    // a headset: the head is free, so the set comes out from the screen's side a little nearer than the glass, large enough to
+    //   read (its picture ~25° wide), its near edge just past the monitor's — a turn of the head to the side, never behind
+    if (xr) { a = edge + 1.5 * D2R; b = edge + 32 * D2R; d = depthC * 0.9; }
+    else {
+      const gd = pc.Application.getApplication()?.graphicsDevice;
+      const aspect = gd && gd.height > 0 ? gd.width / gd.height : 16 / 9;
+      const half = Math.atan(Math.tan(((cam?.fov ?? 42) / 2) * D2R) * aspect);
+      a = edge + 1.5 * D2R; b = Math.min(half - 1.5 * D2R, edge + 30 * D2R); d = depthC * 0.62;
+    }
+    if (b - a < 9 * D2R) return false;
+    const mid = (a + b) / 2;
+    const visW = BOUNDS.max[0] - BOUNDS.min[0];
+    const k = Math.max(0.22, Math.min(xr ? 0.8 : 1, (d * (Math.tan(b) - Math.tan(a))) / visW * 0.94));
+    const elev = ang(C, up);
+    const G = E.clone().add(fwd.clone().mulScalar(d)).add(right.clone().mulScalar(d * Math.tan(mid))).add(up.clone().mulScalar(d * Math.tan(elev)));
+    const toSet = G.clone().sub(E).normalize();
+    const rot = faceRot(toSet, up);
+    const anchor = new pc.Vec3(GLASS.cx, GLASS.cy, GLASS.z).mulScalar(k);
+    this.takenAt.copy(E);
+    this.to.pos.copy(G).sub(rot.transformVector(anchor)); this.to.rot.copy(rot); this.to.k = k;
+    this.from.pos.copy(this.set.root.getPosition()); this.from.rot.copy(this.set.root.getRotation()); this.from.k = this.set.root.getLocalScale().x;
+    this.path(E);
+    this.heldScale = k; this.heldDist = G.distance(E);
+    this.pose = 'lifting'; this.liftT = 0; this.setDown = false;
+    this.beside = true;
+    this.set.glow(HELD.glowHeld);
+    liftToHeldLayer(this.set.root, xr);
+    return true;
+  }
+  /** ⚑ S412 — it stands beside the screen (not before the eye) */
+  beside = false;
   /** back to its place, paused where it was (the visitor's body press or ⏻; or the story moving on) */
   putBack(eye: pc.Vec3 | null, by: 'visitor' | 'story'): void {
     if (this.pose === 'rest' || this.pose === 'returning') return;
@@ -506,7 +559,7 @@ export class TeachingTv {
     this.from.pos.copy(this.set.root.getPosition()); this.from.rot.copy(this.set.root.getRotation()); this.from.k = this.set.root.getLocalScale().x;
     this.to.pos.copy(this.restPos); this.to.rot.copy(this.restRot); this.to.k = 1;
     this.path(eye ?? this.from.pos.clone().add(new pc.Vec3(0, 0.3, 0)));
-    this.pose = 'returning'; this.liftT = 0;
+    this.pose = 'returning'; this.liftT = 0; this.beside = false;
     liftToHeldLayer(this.set.root, false);   // S407: back among the room's things on its way home
   }
   /** at once, no travel (the era left, a wipe) */
@@ -897,7 +950,7 @@ export class TeachingTv {
       draws: this.draws, place: { ...placeOf(this.tape) }, partOneEnd: this.data.partOneEnd, duration: this.data.duration, version: this.data.version,
       primed: this.primed, playStart: this.playStart,
       barInPicture: barInPicture(this.data), deck: this.deckState(),
-      pose: this.pose, held: this.held, heldScale: this.heldScale, heldDist: this.heldDist, lastPress: this.lastPress, setDown: this.setDown,
+      pose: this.pose, held: this.held, beside: this.beside, heldScale: this.heldScale, heldDist: this.heldDist, lastPress: this.lastPress, setDown: this.setDown,
       glass: { w: GLASS.w, h: GLASS.h, picFrac: this.pic.h / LH, barPx: this.barH }, floorCap: this.floorCap, barWorst: { ...this.barWorst }, bar: { ...this.bar, recent: [...this.bar.recent] }, targets: this.targets() };
   }
 }
@@ -1255,6 +1308,7 @@ export class TeachingTvs {
       }
     }
     for (const id of TAPE_IDS) this.tvs[id].update(dt);
+    this.heldAgo = this.holding || TAPE_IDS.some((t) => this.tvs[t].pose === 'returning') ? 0 : this.heldAgo + dt;
     this.card.update(dt, this.host.eye(), this.host.xr());
   }
 
@@ -1273,6 +1327,27 @@ export class TeachingTvs {
     this.playOnArrive = tv.tape;
     return true;
   }
+  /**
+   * ⚑ S412 (UiB job 33 Part A, beat 3) — MUM'S LINK. 2026's set has no moment any more (app.ts `due`): the course comes to
+   * Maya through Mum's email and only if she presses its link (26-4). The press brings the set off its shelf to the SIDE of
+   * the screen, never in front of it (`takeBeside`), and it plays from where it was (from its start the first time). Where there
+   * is no room beside the screen (a phone held upright) it comes before the eye, as every held set does. If nothing is
+   * pressed, nothing moves.
+   */
+  bringBeside(monitor: pc.Entity | null): boolean {
+    const tv = this.current();
+    if (!tv || tv.held) return false;
+    tv.wake();
+    const beside = !!monitor && tv.takeBeside(this.host.eye(), this.host.xr(), this.host.camera(), monitor);
+    if (!beside) tv.take(this.host.eye(), this.host.xr(), this.host.camera());
+    this.playOnArrive = tv.tape;
+    return true;
+  }
+  /** ⚑ S412 — a set was asked for and has not begun to play yet (on its way, or in the hand before ▶) */
+  get arriving(): boolean { return !!this.playOnArrive; }
+  /** ⚑ S412 / 26-5 — a set is in the hand, or was set down a moment ago: a press that misses it is not a seat change */
+  get heldRecently(): boolean { return this.heldAgo < 1.5; }
+  private heldAgo = 99;
   /** ⚑ S407 — the set has been named to the visitor (the era's "Did you know"): lit at rest, pressable; nothing moves */
   introduce(): void { this.current()?.wake(); }
   /** ⚑ S407 — the set is lit (woken, brought or played at least once): "Did you know" no longer needs to name it */

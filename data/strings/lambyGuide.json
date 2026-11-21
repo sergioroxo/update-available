@@ -335,64 +335,32 @@
           "saver-wake"
         ]
       },
-      "newyou": {
-        "tip": "The update restored your defaults. Continue is at the bottom.",
-        "here": "Continue is at the bottom.",
-        "again": "Shall I press Continue?",
+      "week": {
+        "tip": "L is asking if it can catch you up. Press an answer: either one goes on.",
+        "here": "The answers are under L's words.",
+        "again": "Either answer goes on.",
         "target": [
-          "ny-continue"
-        ],
-        "act": "press:ny-continue"
-      },
-      "link": {
-        "tip": "Mum sent you a link. It's in her chat, on the laptop.",
-        "here": "Mum's chat is on the laptop.",
-        "again": "Shall I open Mum's chat?",
-        "target": [
-          "row-mum",
-          "chat-mum"
-        ],
-        "act": "press:chat-mum"
-      },
-      "number": {
-        "tip": "Your clinic wrote. Open letter is at the bottom.",
-        "here": "Open letter is at the bottom.",
-        "again": "Shall I open the letter?",
-        "target": [
-          "clinic-open"
-        ],
-        "act": "press:clinic-open"
-      },
-      "meridian": {
-        "tip": "Support while you wait is at the bottom of the clinic page.",
-        "here": "It's at the bottom.",
-        "again": "Shall I open it?",
-        "target": [
-          "clinic-support",
-          "enq-send",
-          "enq-close"
-        ],
-        "act": "press:clinic-support"
+          "l-catchup",
+          "l-myself"
+        ]
       },
       "results": {
-        "tip": "Press Search. The engine finishes it for you.",
-        "here": "Search is at the bottom.",
-        "again": "Shall I press Search?",
+        "tip": "L offers to finish last night's search. Press an answer.",
+        "here": "The answers are under L's words.",
+        "again": "Either answer goes on.",
         "target": [
-          "search-go",
-          "search-open"
-        ],
-        "act": "press:search-go"
+          "l-finish",
+          "l-leave"
+        ]
       },
       "bot": {
-        "tip": "The first result is an ad. Chat now is at the bottom.",
-        "here": "Chat now is at the bottom.",
-        "again": "Shall I open it?",
+        "tip": "Under the stories there is a yellow card. Add to L, or Not now.",
+        "here": "The yellow card is under the stories.",
+        "again": "Either one goes on.",
         "target": [
-          "ad-chat",
-          "result-agent"
-        ],
-        "act": "press:ad-chat"
+          "st-add",
+          "st-notnow"
+        ]
       },
       "map": {
         "tip": "It wants an answer. Either answer goes on.",
@@ -421,6 +389,68 @@
         "again": "Shall I take you to the headset?",
         "target": [],
         "act": "move:headset"
+      },
+      "_docRetiredS412": "⚑ S412 (UiB job 33 Part A) — Act I rebuilt (draft 3, beats 1–4): the steps of the as-built Act I give way to L's (the week's answer, the offer to finish her search, the yellow card). The guide points; it never presses an answer for her (no `act`). The messages and the mail are L's own conducting (quiet or pressless): no step. Part D rewrites this era's face with L as the helper. Kept as they were:",
+      "_retiredS412": {
+        "newyou": {
+          "tip": "The update restored your defaults. Continue is at the bottom.",
+          "here": "Continue is at the bottom.",
+          "again": "Shall I press Continue?",
+          "target": [
+            "ny-continue"
+          ],
+          "act": "press:ny-continue"
+        },
+        "link": {
+          "tip": "Mum sent you a link. It's in her chat, on the laptop.",
+          "here": "Mum's chat is on the laptop.",
+          "again": "Shall I open Mum's chat?",
+          "target": [
+            "row-mum",
+            "chat-mum"
+          ],
+          "act": "press:chat-mum"
+        },
+        "number": {
+          "tip": "Your clinic wrote. Open letter is at the bottom.",
+          "here": "Open letter is at the bottom.",
+          "again": "Shall I open the letter?",
+          "target": [
+            "clinic-open"
+          ],
+          "act": "press:clinic-open"
+        },
+        "meridian": {
+          "tip": "Support while you wait is at the bottom of the clinic page.",
+          "here": "It's at the bottom.",
+          "again": "Shall I open it?",
+          "target": [
+            "clinic-support",
+            "enq-send",
+            "enq-close"
+          ],
+          "act": "press:clinic-support"
+        },
+        "results": {
+          "tip": "Press Search. The engine finishes it for you.",
+          "here": "Search is at the bottom.",
+          "again": "Shall I press Search?",
+          "target": [
+            "search-go",
+            "search-open"
+          ],
+          "act": "press:search-go"
+        },
+        "bot": {
+          "tip": "The first result is an ad. Chat now is at the bottom.",
+          "here": "Chat now is at the bottom.",
+          "again": "Shall I open it?",
+          "target": [
+            "ad-chat",
+            "result-agent"
+          ],
+          "act": "press:ad-chat"
+        }
       }
     }
   },
@@ -441,11 +471,11 @@
     "yes": "Play CLEAR"
   },
   "harbor": {
-  "text": "Your story is online! Share it on Harbor, so others who struggle can find it too.",
-  "yes": "Share it",
-  "_docS345": "\u2691 S345 (his 9 Nov answer 4) \u2014 said once after the upload, while the story is not yet posted; `yes` opens Harbor at the thread, where Post your story is the next press."
- },
- "root": {
+    "text": "Your story is online! Share it on Harbor, so others who struggle can find it too.",
+    "yes": "Share it",
+    "_docS345": "⚑ S345 (his 9 Nov answer 4) — said once after the upload, while the story is not yet posted; `yes` opens Harbor at the thread, where Post your story is the next press."
+  },
+  "root": {
     "here": "ROOTCAUSE.EXE is here on the desktop. You can also open it through Start → Programs.",
     "text": "Your answers are in. Root Cause came with the disk: it digs for where it all started. Find it in Start → Programs.",
     "next": "Rob's done for now. Before his Family Form: want to dig for where your feelings come from? Root Cause Digger came with the disk.",

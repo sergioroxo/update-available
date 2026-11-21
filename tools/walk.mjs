@@ -946,6 +946,13 @@ async function main() {
     if (/^min-|^taskbar-|^mirror-(?:enlarge|min|restore)$|^account-activity$/.test(id)) return false;
     // ⚑ S328 — 2026's one screen: enlarging a window and scrolling BACK are a reader's choices, never the way on
     if (/^win-(?:browser|kettle)$|^scroll-up$/.test(id)) return false;
+    // ⚑ S412 (UiB job 33 Part A) — 2026's one screen: the voice switch is a reader's choice; the stories, the page's back
+    //   arrow and Mum's course (the Lamby set beside the screen, 123 s) are optional doors, proved by tools/s412-act1-probe.mjs.
+    //   The walk follows L: either answer, the ✦ and its turning back, ✚ Add to L.
+    if (st?.era === 'e4' && /^l-voice$|^story-\d$|^page-back$|^hedge-link$/.test(id)) return false;
+    //   …and no bare press on the monitor's centre while the acts run: the screen publishes every control it has, so a
+    //   last-resort press there only lands on whatever is under the centre (Mum's link, a story) — a choice, not the way on
+    if (st?.era === 'e4' && st?.bstate?.step === 'acts' && t.surface === 'plane') return false;
     if (has('channel-joined') && /^web-/.test(id) && id !== 'web-close') return false;
     if (id === 'cancel' && t.surface === 'kit' && !has('went-online')) return false;
     if (/^dm-(?:up|down)$/.test(id) && (seen?.get(id) || 0) >= 1) return false;
