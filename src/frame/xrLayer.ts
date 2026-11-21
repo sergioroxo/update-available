@@ -74,7 +74,7 @@ const LAMBY: Record<string, Spot> = {
 export function mountXrLayer(app: pc.AppBase, deps: XrLayerDeps): XrLayer {
   const { head } = deps;
   const live = (): boolean => !!app.xr?.active;
-  const forced = { lamby: false, worn: false };
+  const forced = { lamby: false, worn: false, offer: false };
   /** facing the head about the vertical, for a stood-up plane (as xrFrame's hang) */
   const face = (e: pc.Entity, at: pc.Vec3, eye: pc.Vec3): void => {
     const d = at.clone().sub(eye); d.y = 0;
@@ -152,14 +152,14 @@ export function mountXrLayer(app: pc.AppBase, deps: XrLayerDeps): XrLayer {
   // ── VR-04 the table ──
   const TABLE_GRACE = 3, TABLE_HOLD = 1.5;
   let table: { t: number; hist: { t: number; p: pc.Vec3 }[][] } | null = null;
-  let offered = false, inRoomFor = 0;
+  let offered = false;
   const tickTable = (dt: number): void => {
     if (!live()) { table = null; return; }
-    if (!offered && deps.inRoom() && deps.comfort.calibrated) {
-      inRoomFor += dt;
-      // ⚑ S394 fix — never while something is held before the eyes (it hung over the Lamby set's keys): it waits until put down
-      if (inRoomFor > 6 && !deps.held()) { offered = true; deps.frame.notice(deps.strings.offer, 9); }
-    }
+    // ⚑ S407 (UiB job 32, E2; his headset 20 Nov, frame 212627) — the room's own offer is gone: hung 0.6 m out at keyboard
+    //   height where the head pointed, its banner ran into the CRT and off the edge of the view ("Match my ta…"). Match my
+    //   table is offered before the room now, in the setup's How to look window (setup.ts `setup-table`), and stays in the
+    //   Menu. `review({ offer })` still shows the old banner for the probes.
+    if (!offered && forced.offer && deps.inRoom() && deps.comfort.calibrated && !deps.held()) { offered = true; forced.offer = false; deps.frame.notice(deps.strings.offer, 9); }
     if (!table) return;
     table.t += dt;
     if (table.t > 24) { table = null; deps.frame.notice(deps.strings.none, 4); return; }
@@ -247,7 +247,7 @@ export function mountXrLayer(app: pc.AppBase, deps: XrLayerDeps): XrLayer {
     get mouseEngaged() { return !!grip; },
     review(what) {
       if (what.lamby !== undefined) forced.lamby = what.lamby; if (what.worn !== undefined) forced.worn = what.worn;
-      if (what.offer) { offered = false; inRoomFor = 7; }   // S394 fix (?debug=1): the table offer is due again at once
+      if (what.offer) { offered = false; forced.offer = true; }   // S394 fix (?debug=1): the old table offer, for a probe
     },
     pressLamby(physical, toLogical) {
       if (!lamby.enabled) return false;

@@ -42,7 +42,8 @@
     },
     {
       "_doc": "PLACEHOLDER — cycle 1, tap 2 of 3",
-      "prompt": "Use a full exhale. Address the person linked to the injury.",
+      "_docS407": "⚑ S407 (UiB job 32, 97-21; his headset 20 Nov 21:40:25: \"address the person linked to the injury … you can put examples like it had on the book\") — the step gives the record's one documented example, the name: \"Dad\" (Cohen's method as the Washington Post reporter watched him demonstrate it in 2005, \"with pillows, a tennis racket, and repeated references to \\\"Dad\\\"\"; debrief.sources[0], cleared S179; and the book as the 24 Jul Deep Research note summarises it: the client names the person and repeats the name). No example SENTENCES were added: none is in any source the project has read, and Coming Out Straight itself has not been read (LINK_PASS_2026-11-13). The Raise and Strike steps are unchanged. Was: \"Use a full exhale. Address the person linked to the injury.\"",
+      "prompt": "Use a full exhale. Address the person linked to the injury by name: “Dad.”",
       "buttons": ["Exhale"],
       "response": "",
       "animPose": "exhale"
@@ -73,7 +74,8 @@
     },
     {
       "_doc": "PLACEHOLDER — cycle 2, tap 2 of 3",
-      "prompt": "Use a full exhale. Address the person linked to the injury.",
+      "_docS407": "⚑ S407 (UiB job 32, 97-21; his headset 20 Nov 21:40:25: \"address the person linked to the injury … you can put examples like it had on the book\") — the step gives the record's one documented example, the name: \"Dad\" (Cohen's method as the Washington Post reporter watched him demonstrate it in 2005, \"with pillows, a tennis racket, and repeated references to \\\"Dad\\\"\"; debrief.sources[0], cleared S179; and the book as the 24 Jul Deep Research note summarises it: the client names the person and repeats the name). No example SENTENCES were added: none is in any source the project has read, and Coming Out Straight itself has not been read (LINK_PASS_2026-11-13). The Raise and Strike steps are unchanged. Was: \"Use a full exhale. Address the person linked to the injury.\"",
+      "prompt": "Use a full exhale. Address the person linked to the injury by name: “Dad.”",
       "buttons": ["Exhale"],
       "response": "",
       "animPose": "exhale"
@@ -104,7 +106,8 @@
     },
     {
       "_doc": "PLACEHOLDER — cycle 3, tap 2 of 3",
-      "prompt": "Use a full exhale. Address the person linked to the injury.",
+      "_docS407": "⚑ S407 (UiB job 32, 97-21; his headset 20 Nov 21:40:25: \"address the person linked to the injury … you can put examples like it had on the book\") — the step gives the record's one documented example, the name: \"Dad\" (Cohen's method as the Washington Post reporter watched him demonstrate it in 2005, \"with pillows, a tennis racket, and repeated references to \\\"Dad\\\"\"; debrief.sources[0], cleared S179; and the book as the 24 Jul Deep Research note summarises it: the client names the person and repeats the name). No example SENTENCES were added: none is in any source the project has read, and Coming Out Straight itself has not been read (LINK_PASS_2026-11-13). The Raise and Strike steps are unchanged. Was: \"Use a full exhale. Address the person linked to the injury.\"",
+      "prompt": "Use a full exhale. Address the person linked to the injury by name: “Dad.”",
       "buttons": ["Exhale"],
       "response": "",
       "animPose": "exhale"

@@ -28,13 +28,16 @@
    "title": "Un-Walk — Did you know?",
    "lead": "Did you know…",
    "items": {
+    "tv": "the fellowship sent a tape with your kit — Understanding Your Roots, on LambyVision, the set behind you.",
     "browse": "the fellowship's pages stay open in NetPilot — search, browse the directory, follow the ring.",
     "racket": "Release Work hangs on the wall by your bed — the racket and its sheet.",
     "rootcause": "a game came on your disk: ROOTCAUSE.EXE, on the desktop.",
     "handheld": "your handheld on the bed has a cartridge from the kit."
    },
    "outro": "Every part of the kit is part of your programme.",
-   "close": "Close"
+   "close": "Close",
+   "tvBring": "Bring the TV here",
+   "_docS407": "⚑ S407 (UiB job 32, 97-7 and 97-8; his headset 20 Nov: LambyVision \"moved before I pressed\", went behind the CRT and came too early — \"we have to follow the fellowship path\"; his idea, 21:34:12: introduce the TV through \"Did you know\", which every era has). `tv` names the Lamby set on 1997's card, which comes once he is online (os.ts maybePause), and `tvBring` is the card's one other button: the set comes before the eye and plays (TeachingTvs.bring). The set has no moment of its own in 1997 any more: nothing moves until this press. Named once, it is lit at rest and can be pressed there too. Claude's words; his edit wins."
   },
   "e2": {
    "title": "Restorify — Today",

@@ -71,7 +71,8 @@
   "taskbarNetvision": "NetVision",
   "_docTaskbar": "S165 / W-E2 (a): the taskbar buttons of the program windows (≤ 9 characters at the 9 px face; 64 px buttons). Period-true 1997/2003: pressed in while the window is up, raised while it waits.",
   "kitToast": "The parcel on your desk holds a companion disk. Insert it to begin.",
-  "logToast": "Logging to C:\\mirc\\logs\\#stillstruggling.log",
+  "logToast": "Logging to C:\\mirc\\logs\\#stillstruggling.log — the chat is kept in your file.",
+  "_docS407logToast": "⚑ S407 (UiB job 32, 97-11; his headset 20 Nov, 21:38:07: \"Does this login to C relate to your file?\"; his 21 Nov answer: link them, \"YEs\") — the line says where the log goes: the chat is filed (ledger `mirc-log`, \"channel log opened for review\", under the existing practice `channel`, \"The channel, and the log\": no new dossier text) in the same moment, so the tray's number below it goes up as it is said. Was: \"Logging to C:\\\\mirc\\\\logs\\\\#stillstruggling.log\".",
   "behindToast": "Record filed.",
   "eraSkins": {
    "_doc": "PLACEHOLDER — minimal per-era desktop shells after updates. Labels only; no mechanics or final copy. Uses existing Era-1 palette colors until the full per-era theme pass lands. Session 60: the third icon in every list was 'Dossier' — the served card. It is gone from the shelf; see `dossier._doc` for where it went and why it is now found rather than advertised.",

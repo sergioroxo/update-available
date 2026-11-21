@@ -6,8 +6,9 @@
    "leader": [
     "TRIEDPATH FELLOWSHIP",
     "UNDERSTANDING YOUR ROOTS",
-    "WATCH BEFORE STEP 2"
-   ]
+    "FOR YOUR FIRST STEPS"
+   ],
+   "_docS407": "⚑ S407 (UiB job 32, 97-7) — the leader's third line was \"WATCH BEFORE STEP 2\": wrong whenever the tape was watched after step 2, and the set no longer comes at a step of the kit. It is brought only from 1997's \"Did you know\" (pauses.json e1 `tv`) now, never by itself after kit-read."
   },
   "2016": {
    "_doc": "Brought in when Vera is back at the board after Renata's testimony job is sent: the platform assigns her the session that teaches the category it has just filed Renata under; the disc is in the Lamby set's player. The leader is the set's own input card with the assignment.",
@@ -45,7 +46,8 @@
  "lamby": {
   "_doc": "⚑ S394 (UiB job 27 B3; G2, his 15 Oct: \"reinstate Lamby as the connection point of the correction and forcing you to do stuff\"; his 15 Nov: no fades, the line in the 360° room, the set brought close) — `call`: Lamby, in the era's skin, says the tape is due and that he will bring the set; the line appears IN VIEW wherever the visitor looks (src/room/teachingTv.ts TvCall), its yes sends the set at once, and if the visitor closes the balloon (logged, like every dismissal) the set still comes: it is the programme's assignment, and Lamby is its voice. One balloon, inside the era's cap of eight. `e1`/`e3`/`e4` + `yes`/`no`: the ONE later offer per era, ignorable, only while the tape has more to play and the visitor has stalled; yes brings the set (▶ stays theirs).",
   "call": {
-   "e1": "Your Un-Walk kit says: watch the fellowship's tape before step 2. I'll bring the TV to you.",
+   "e1": "The fellowship sent a tape with your kit. I'll bring the TV to you.",
+  "_docS407e1": "⚑ S407 (UiB job 32, 97-7; his headset 20 Nov, frame 213103: the line said \"before step 2\" over a kit whose step 2 was already ticked done — the line was fixed, chosen by era only). Was: \"Your Un-Walk kit says: watch the fellowship's tape before step 2. I'll bring the TV to you.\" 1997's call is now heard only when a probe arms the old moment (`__teachingTv.arm`): in the visit the set is offered on \"Did you know\" (pauses.json e1 `tv`).",
    "e3": "GracePlatform has assigned you Heartwood, Session Two. I'll bring the disc to you.",
    "e4": "Your dad has sent you a course. I'll bring it to you."
   },

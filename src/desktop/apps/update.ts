@@ -215,6 +215,10 @@ export class UpdateApp {
   /** ⚑ S382 — the install's glitch window (the bar's stutter, `draw` below): the room's motes jump with it (src/room/specks.ts) */
   get glitching(): boolean { if (this.phase !== 'install') return false; const k = this.t / this.installTotal; return k > 0.72 && k < 0.96; }
   get deferred(): boolean { return this.phase === 'reminded'; }
+  /** ⚑ S407 (97-15) — the deferral's standing line, for a host that draws it in its own taskbar (`remindedOnHost`) */
+  get remindedLine(): string | null { return this.phase === 'reminded' && this.s.remindedOnHost ? (this.s.remindedStatus ?? REMIND_STATUS) : null; }
+  /** ⚑ S407 (97-14) — the pile of errors is still up (the collapse's song may play under it, never after) */
+  get cascading(): boolean { return this.phase === 'cascade'; }
 
   /** the notification is withdrawn while reminded; it returns once */
   get visible(): boolean {

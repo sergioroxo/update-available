@@ -34,6 +34,7 @@
  *
  * The tape's own words are Part A's, in its picture and its files; Lamby never voices, reads or delivers them.
  */
+import { liftToHeldLayer } from './heldLayer';
 import * as pc from 'playcanvas';
 import tvData from '../../data/room/teaching_tvs.json';
 import words from '../../data/strings/teaching_tv.json';
@@ -495,6 +496,7 @@ export class TeachingTv {
     this.heldScale = k; this.heldDist = d;
     this.pose = 'lifting'; this.liftT = 0; this.setDown = false;
     this.set.glow(HELD.glowHeld);
+    liftToHeldLayer(this.set.root, xr);   // ⚑ S407 (97-7): in a headset it comes in front of the room, never behind the CRT
   }
   /** back to its place, paused where it was (the visitor's body press or ⏻; or the story moving on) */
   putBack(eye: pc.Vec3 | null, by: 'visitor' | 'story'): void {
@@ -505,10 +507,12 @@ export class TeachingTv {
     this.to.pos.copy(this.restPos); this.to.rot.copy(this.restRot); this.to.k = 1;
     this.path(eye ?? this.from.pos.clone().add(new pc.Vec3(0, 0.3, 0)));
     this.pose = 'returning'; this.liftT = 0;
+    liftToHeldLayer(this.set.root, false);   // S407: back among the room's things on its way home
   }
   /** at once, no travel (the era left, a wipe) */
   snapHome(): void {
     this.pose = 'rest'; this.liftT = 1;
+    liftToHeldLayer(this.set.root, false);
     this.set.root.setPosition(this.restPos); this.set.root.setRotation(this.restRot); this.set.root.setLocalScale(1, 1, 1);
     this.set.glow(HELD.glowRest);
   }
@@ -1155,8 +1159,20 @@ class TvMoment {
   }
 }
 
+/**
+ * ⚑ S407 (UiB job 32, 97-19; his headset 20 Nov, 21:44:03: "there's no need for it to go away, it's still related to the
+ * piece") — the 1997 set STAYS through the update into 2003: the same set on the same chest of drawers in Daniel's aged room
+ * (reinterp_deltas.json: the chest leaves at r3 now, not r2), lit, paused where the 1997 tape was left, and the visitor's to
+ * bring close and play (▶ goes on from that second). 2003 has no tape of its own ("it has the new you", his 14 Nov) and no
+ * moment: nothing in 2003 brings it or speaks for it. Its 2003 voices (the arrival, Caleb, NetVision, the media player, the
+ * testimony) pause it and send it back like any voice (app.ts).
+ */
+const ownsEra = (id: TapeId, era: string): boolean => TAPE_ERA[id] === era || (id === '1997' && era === 'e2');
+
 /** THE THREE, and the rules they share: one era's set in the room at a time, one moment per room, one voice at a time */
 export class TeachingTvs {
+  /** ⚑ S407 (97-7 / 97-8) — the set the visitor asked for from "Did you know": it plays once it is in the hand */
+  private playOnArrive: TapeId | null = null;
   readonly tvs: Record<TapeId, TeachingTv>;
   private readonly moments: Record<TapeId, TvMoment>;
   private readonly card: TvCall;
@@ -1172,7 +1188,7 @@ export class TeachingTvs {
   get momentRunning(): boolean { return TAPE_IDS.some((t) => this.moments[t].running); }
   moment(tape: TapeId): TvMoment { return this.moments[tape]; }
   get audible(): boolean { return TAPE_IDS.some((t) => this.tvs[t].audible); }
-  current(): TeachingTv | null { const id = TAPE_IDS.find((t) => TAPE_ERA[t] === this.era); return id ? this.tvs[id] : null; }
+  current(): TeachingTv | null { const id = TAPE_IDS.find((t) => ownsEra(t, this.era)); return id ? this.tvs[id] : null; }
   /** a set is in the hand (or on its way): it is in front of everything for a press */
   get holding(): boolean { return TAPE_IDS.some((t) => this.tvs[t].held); }
   /** a held set is playing: the visitor is watching (the story waits: one voice at a time) */
@@ -1188,10 +1204,11 @@ export class TeachingTvs {
   update(dt: number, era: string, voices: Record<string, string>, updateArmed: boolean): void {
     if (era !== this.era) {
       for (const id of TAPE_IDS) {
-        const mine = TAPE_ERA[id] === era;
-        if (!mine) this.moments[id].abort();
+        const mine = ownsEra(id, era);
+        if (!mine || TAPE_ERA[id] !== era) this.moments[id].abort();   // S407: no moment in 2003, the set only
         this.tvs[id].setInEra(mine);
         if (mine && this.moments[id].stage === 'idle') this.tvs[id].preload();
+        if (mine && TAPE_ERA[id] !== era) this.tvs[id].wake();   // S407 (97-19): lit at rest in 2003, paused where 1997 left it
       }
       this.era = era;
     }
@@ -1227,9 +1244,39 @@ export class TeachingTvs {
       const tv = this.tvs[id];
       if (tv.pose === 'held' && tv.takenAt.distance(eyeNow) > 0.45) tv.putBack(eyeNow, 'story');
     }
+    // ⚑ S407 (97-8) — asked for from "Did you know": in the hand, it plays from where it was (from its start the first time)
+    if (this.playOnArrive) {
+      const tv = this.tvs[this.playOnArrive];
+      if (!tv.held) this.playOnArrive = null;   // put back on its way: nothing plays
+      else if (tv.pose === 'held') {
+        const p = placeOf(tv.tape);
+        tv.play(p.t < TAPES[tv.tape].duration - 1 ? p.t : 0);
+        this.playOnArrive = null;
+      }
+    }
     for (const id of TAPE_IDS) this.tvs[id].update(dt);
     this.card.update(dt, this.host.eye(), this.host.xr());
   }
+
+  /**
+   * ⚑ S407 (UiB job 32, 97-7 and 97-8; his headset 20 Nov: it "moved before I pressed 'Bring it here'", went behind the CRT,
+   * and came too early — "we have to follow the fellowship path"; his idea, 21:34:12: introduce the TV through "Did you
+   * know"). 1997's set no longer has a moment of its own (app.ts `due`: never by itself). The era's "Did you know" names it
+   * and offers it; this is that press: the set comes before the eye (heldDevice's grammar, in front of the room in a headset —
+   * src/room/heldLayer.ts) and plays once it is in the hand. Nothing moves before the press.
+   */
+  bring(): boolean {
+    const tv = this.current();
+    if (!tv || tv.held) return false;
+    tv.wake();
+    tv.take(this.host.eye(), this.host.xr(), this.host.camera());
+    this.playOnArrive = tv.tape;
+    return true;
+  }
+  /** ⚑ S407 — the set has been named to the visitor (the era's "Did you know"): lit at rest, pressable; nothing moves */
+  introduce(): void { this.current()?.wake(); }
+  /** ⚑ S407 — the set is lit (woken, brought or played at least once): "Did you know" no longer needs to name it */
+  get lit(): boolean { const tv = this.current(); return !!tv && tv.state !== 'off'; }
 
   /** ⚑ S394 — the guide's call and its one later offer, drawn IN VIEW (the card), from the guide's own view. Each frame. */
   guide(view: { era: string; rung: string; text: string | null; hidden: boolean }, active: boolean): void {
@@ -1279,7 +1326,7 @@ export class TeachingTvs {
   /** Lamby may offer to bring the set to a stalled visitor: the era's tape has more to play, it is not playing or held, the
    *  moment is over (the once-per-era is Lamby's own, src/narrative/lambyGuide.ts) */
   offerDue(era: string): boolean {
-    const tv = this.current(); if (!tv || TAPE_ERA[tv.tape] !== era) return false;
+    const tv = this.current(); if (!tv || !ownsEra(tv.tape, era)) return false;
     const p = placeOf(tv.tape);
     return this.moments[tv.tape].stage === 'done' && p.partOneSeen && !tv.playing && tv.pose === 'rest' && p.t < TAPES[tv.tape].duration - 1;
   }
@@ -1310,7 +1357,7 @@ export class TeachingTvs {
   /** ⚑ S396 (the MUTE fix) — called INSIDE a press's own handler (app.ts): the era's tape is primed once, before its moment
    *  plays it from the frame loop */
   prime(): void {
-    const id = TAPE_IDS.find((t) => TAPE_ERA[t] === this.era);
+    const id = TAPE_IDS.find((t) => ownsEra(t, this.era));
     if (!id) return;
     const st = this.moments[id].stage;
     if (st === 'idle' || st === 'call' || st === 'bring') this.tvs[id].prime();

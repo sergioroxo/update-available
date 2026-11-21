@@ -10,8 +10,7 @@ const E2_COL2 = 60;
 /** ⚑ S401 (job 29 D2) — 1997's file in the tray: the status well ends this far from the right edge (it ended at 116),
  *  and the file's well sits between it and Lamby's tray (W − 108) */
 const FILE_TRAY_RIGHT = 160;
-/** ⚑ S404 (UiB job 30 C4) — room for the words "Your file" beside the well (measured each draw; this until the first) */
-const FILE_LABEL_ROOM = 56;
+/** (S404's FILE_LABEL_ROOM, the room for the words "Your file" beside the well, went with the words in S407 / 97-5) */
 const FILE_TRAY_W = 46;
 const GLOW_MAY = new Set(['icon-folder1997', 'icon-rootcause', 'icon-provotype', 'icon-netvision']);
 import * as pc from 'playcanvas';
@@ -108,7 +107,7 @@ import originIntakeProvotypeData from '../../data/provotypes/origin_intake_e1.js
 import { Folder1997App } from './apps/folder1997';
 import { CompanionApp, type CompanionStage } from './apps/companion';
 import folderStrings from '../../data/strings/folder1997.json';
-import { voiceHeld, filmAudible } from '../state/voiceHold';
+import { voiceHeld, filmAudible, gameAudible } from '../state/voiceHold';
 
 /**
  * S2R.0/S2R.1 (R28-2d-i/ii): the E2 arrival sub-state machine, only
@@ -602,7 +601,13 @@ export class DesktopOS {
   /** ⚑ S401 (UiB job 29 D2) — the person's file on the screen: its count and its light (src/witness/fileItem.ts) */
   readonly fileWatch = new FileWatch();
   /** ⚑ S404 — how far from the right edge 1997's file begins (the well and its words; drawFileTray measures it) */
-  private fileTrayRight = FILE_TRAY_RIGHT + FILE_LABEL_ROOM;
+  private fileTrayRight = FILE_TRAY_RIGHT;
+  /** ⚑ S407 (97-5) — the tray's well as last drawn, and whether the pointer (or the headset's ray) rests on it: its tooltip */
+  private fileTrayRect: { x: number; y: number; w: number; h: number } | null = null;
+  private fileTrayHover = false;
+  /** ⚑ S407 (97-14) — the shut diary whose collapse song is still dying, and whether the update's cascade has been up since */
+  private collapseSong: DiaryApp | null = null;
+  private collapseSawCascade = false;
   /** ⚑ S190 — the 1997 browser: the search, between the dial-up and the channel */
   web: Web1997App | null = null;
   /** ⚑ S191 — 2003's forum: recommended after the first check-in; opened from its desktop icon */
@@ -625,6 +630,15 @@ export class DesktopOS {
   /** ⚑ S392 — Lamby's call while the piece takes the visitor to the teaching TV (src/room/teachingTv.ts TvHost.call) */
   tvCall: (() => string | undefined) | null = null;
   onGuideTv: (() => void) | null = null;
+  /** ⚑ S407 (97-8) — 1997's "Did you know" and the Lamby set (app.ts): its button brings the set (true: it is coming), the
+   *  set is lit once named, and the card leaves it out once it is lit */
+  onPauseTv: (() => boolean) | null = null;
+  pauseTvShown: (() => void) | null = null;
+  tvLit: (() => boolean) | null = null;
+  /** the pause card lists the set this time (its button is drawn) */
+  private pauseTv = false;
+  /** ⚑ S407 (97-19) — 2003's arrival is over (the set behind the seat may be pressed from here) */
+  get e2Arrived(): boolean { return this.desktopEra === 'e2' && this.e2Stage === 'active'; }
   private makeLambyGuide(): LambyGuide {
     return new LambyGuide({
       log: (outcome, beat, countDismissal, acknowledged) => {
@@ -975,6 +989,7 @@ export class DesktopOS {
       ? pauseCopy.returnCues.diaryFromForm : pauseCopy.returnCues.diaryFromPacket;
     this.diary.onBreakout = () => this.onGlitch?.('person');
     this.diary.onDone = () => {
+      this.collapseSong = this.diary; this.collapseSawCascade = false;   // S407 (97-14): its song is faded on from here
       this.diary = null;
       if (!ledger.records.includes('diary-glitch')) ledger.records.push('diary-glitch');
       this.dirty = true;
@@ -1533,10 +1548,13 @@ export class DesktopOS {
     }
     if (!due || !this.guideReady('pause')) return;
     this.pauseShown.add(era);
-    const lines = pauseItems(era);
+    // ⚑ S407 (97-8) — 1997's card names the Lamby set until it is lit (data/strings/pauses.json e1 `tv`), with its button
+    const lines = pauseItems(era, era === 'e1' && this.tvLit?.() ? ['tv'] : []);
     if (!lines.length) return;
     this.pauseLines = lines;
     this.pauseOpen = era;
+    this.pauseTv = era === 'e1' && !!this.onPauseTv && lines.includes((pauseCopy.pause.e1.items as Record<string, string>).tv ?? '\u0000');
+    if (this.pauseTv) this.pauseTvShown?.();
     if (era === 'e2') this.lambyWaitShown = true;   // the pause says it all; the older 'while you wait' toast retires
     this.dirty = true;
   }
@@ -1586,6 +1604,13 @@ export class DesktopOS {
     const bw = 80, bx = c.x + c.w - bw - 10, by = c.y + c.h - 28;
     ui.button(ctx, bx, by, bw, 20, P.close, { hover: this.hover === 'pause-close' });
     this.hits.push({ x: bx, y: by, w: bw, h: 20, id: 'pause-close' });
+    // ⚑ S407 (97-8) — the Lamby set's offer, the card's one other button (only while the card names it)
+    if (this.pauseTv && this.pauseOpen === 'e1') {
+      ui.setFont(ctx, 10);
+      const label = P.tvBring ?? '', tw = Math.ceil(ctx.measureText(label).width) + 20, tx = c.x + 40;
+      ui.button(ctx, tx, by, tw, 20, label, { hover: this.hover === 'pause-tv' });
+      this.hits.push({ x: tx, y: by, w: tw, h: 20, id: 'pause-tv' });
+    }
   }
 
   /** ⚑ S205 — 2003's testimony: Lamby asks for his story after the first check-in (s2_testimony.json) */
@@ -1729,7 +1754,8 @@ export class DesktopOS {
   private sync1997Loop(): void {
     let want: string | null = null;
     const quiet = this.phase === 'desktop' && !this.paused && !this.pauseOpen && !this.saver && !this.updateApp?.visible
-      && !filmAudible();   // S390: the programme's own music yields to the fellowship's video on the TV
+      && !filmAudible()   // S390: the programme's own music yields to the fellowship's video on the TV
+      && !gameAudible();   // S407 (97-9): and to a handheld game held before the eyes (FIT IN's own music)
     // ⚑ S351 / T34 — Release Work's own tape (tools/make_releasework_loop.py), in 1997 and in 2003 where "Release Work
     //   '97" came with him; it owns this channel while it is up, and Restorify's loop yields to it
     if (quiet && this.releaseWorkUp && (this.desktopEra === 'e1'
@@ -2488,6 +2514,12 @@ export class DesktopOS {
     if (this.phase === 'desktop' && this.irc) this.irc.update(dt);
     if (this.phase === 'desktop' && this.packet) this.packet.update(dt);
     if (this.phase === 'desktop' && this.diary) this.diary.update(dt);
+    // ⚑ S407 (97-14) — the collapse's song, handed on when the diary shut: it keeps dying under the cascade, and once the
+    //   pile has come and gone it is out within 1.5 s (DiaryApp.fadeSong)
+    if (this.collapseSong) {
+      if (this.updateApp?.cascading) this.collapseSawCascade = true;
+      if (!this.collapseSong.fadeSong(dt, this.collapseSawCascade && !this.updateApp?.cascading)) this.collapseSong = null;
+    }
     if (this.phase === 'desktop' && !this.diary && this.t >= this.diaryPendingAt && this.guideReady('diary')) this.openDiary();
     // S272 — the letter: the extras (Root Cause, the racket) have their turn between the form and the signature
     if (this.phase === 'desktop' && this.packetDueFrom !== Infinity && this.desktopEra === 'e1') {
@@ -2830,7 +2862,16 @@ export class DesktopOS {
   private xrScale = false;
   private xrHover: XrRect | null = null;
   xrPoint(x: number, y: number): { x: number; y: number } {
-    const rect = xrTarget(this.xrAimable(), x, y, 56);   // S271 (his 31 Oct: "it feels like it needs a target") — a wider catch: ~4° from the seat
+    // ⚑ S407 (UiB job 32, 97-13; his headset 20 Nov 21:41:31, frames 214159/214204: "I cannot press the no thanks") — while
+    //   "Time's up" forces the form every rect stays aimable (`pressOwnerAt` → undefined), and the rects are tried newest
+    //   first, so the FIT IN advertisement UNDER Lamby's balloon won the ray: its outline (the "empty white box") was drawn
+    //   over the balloon's buttons and the press snapped to the advertisement, which opened the form. Lamby's balloon is on
+    //   top, so it owns its own rectangle: inside it only its buttons are aimable, and nothing whose centre it covers is.
+    const box = this.lambyGuidePaint.box;
+    const inside = (px: number, py: number): boolean => !!box && px >= box.x && px <= box.x + box.w && py >= box.y && py <= box.y + box.h;
+    const own = (r: XrRect): boolean => !!r.id?.startsWith('lg-');
+    const rects = this.xrAimable().filter(r => inside(x, y) ? own(r) : own(r) || !inside(r.x + r.w / 2, r.y + r.h / 2));
+    const rect = xrTarget(rects, x, y, 56);   // S271 (his 31 Oct: "it feels like it needs a target") — a wider catch: ~4° from the seat
     if (JSON.stringify(rect) !== JSON.stringify(this.xrHover)) { this.xrHover = rect; this.dirty = true; }
     return rect ? { x: rect.x + rect.w / 2, y: rect.y + rect.h / 2 } : { x, y };
   }
@@ -3412,7 +3453,19 @@ export class DesktopOS {
       // ⚑ S401 (UiB job 29 D2) — THE FILE IN THE TRAY: a folder and its count beside Lamby, on every 1997 screen
       this.drawFileTray(W, H);
       ui.bevel(ctx, wellX, H - 19, wellW, 16, false);
-      const guideLine = this.lambyGuide.active || this.lambyGuide.hasStep || this.guideSilence.silent || this.otherVoices ? null : this.guide?.activeText;
+      // ⚑ S407 (UiB job 32, 97-15; his headset 20 Nov, frame 214342) — "Update deferred. It will ask again." used to stand in
+      //   its own bevelled strip just above the taskbar, over whatever window was there: it lay across the Family Form's
+      //   Close and Hold. It is the system talking to itself, so it lives IN the taskbar's status well now (updates.json
+      //   u2 `remindedOnHost`), clear of every window, for the whole deferral.
+      const deferLine = this.updateApp?.remindedLine ?? null;
+      if (deferLine) {
+        ui.setFont(ctx, 9); ctx.fillStyle = ERA1.black;
+        // a narrow well (several windows on the taskbar) keeps the first sentence whole rather than cutting the second
+        let shown = ctx.measureText(deferLine).width <= wellW - 12 ? deferLine : (deferLine.match(/^[^.]*\./)?.[0] ?? deferLine);
+        while (shown.length > 4 && ctx.measureText(shown).width > wellW - 12) shown = `${shown.slice(0, -4).trimEnd()}...`;
+        ctx.fillText(shown, wellX + 6, H - 16);
+      }
+      const guideLine = deferLine || this.lambyGuide.active || this.lambyGuide.hasStep || this.guideSilence.silent || this.otherVoices ? null : this.guide?.activeText;
       if (guideLine) {
         // ⚑ Phase 7 (his: "the suggestion flows over in the menu bar") — the line is kept inside its
         //   well; when it does not fit, the well shows its start and the whole line rises above the bar
@@ -3815,26 +3868,34 @@ export class DesktopOS {
   private drawFileTray(W: number, H: number): void {
     if (this.diary?.open) return;
     const { ctx } = this;
-    // ⚑ S404 (UiB job 30 C4; his 18 Nov on B8: "Okay, we can try that, as long as it doesnt steal too much attention") — the
-    //   words "Your file" beside the well, on the taskbar's own face, small and quiet: the clock's size and ink. Only the well
-    //   lights when something is filed; the words never do. A press on either opens the file.
-    ui.setFont(ctx, 10);
-    const label = FILE_ITEM.e1.label ?? '', lw = label ? Math.ceil(ctx.measureText(label).width) : 0;
-    this.fileTrayRight = FILE_TRAY_RIGHT + (lw ? lw + 8 : 0);
+    // ⚑ S407 (UiB job 32, 97-5; his headset 20 Nov, 21:28:51, frame 213004: "Your File" as the symbol only, so it is not
+    //   confused with Lamby) — S404's words "Your file" beside the well are gone from the taskbar: the folder and its number
+    //   are the item. The words (institution.json fileItem.e1 `label`) come back only as the tray's own 1997 tooltip, above
+    //   it, while the pointer (or the headset's ray) rests on it.
+    // ⚑ S407 (97-6; 21:38:26, frame 213926: "every time that I press a button this shouldn't light up … it's kind of forcing
+    //   me to look at it") — the well no longer lights navy when something is filed: the number goes up, and that is all.
+    this.fileTrayRight = FILE_TRAY_RIGHT;
     const x = W - this.fileTrayRight + 4, y = H - 19, w = FILE_TRAY_W, h = 16;
-    const lit = this.fileWatch.on;
     ui.bevel(ctx, x, y, w, h, false);
-    if (lit) ui.px(ctx, x + 1, y + 1, w - 2, h - 2, ERA1.navy);
     // the folder: a manila tab and body, 11 × 9
     const fx = x + 5, fy = y + 4;
-    ui.px(ctx, fx, fy, 5, 2, lit ? ERA1.white : ERA1.olive);
-    ui.px(ctx, fx, fy + 1, 11, 8, lit ? ERA1.white : ERA1.olive);
-    ui.px(ctx, fx + 1, fy + 3, 9, 5, lit ? ERA1.tooltip : ERA1.beige);
+    ui.px(ctx, fx, fy, 5, 2, ERA1.olive);
+    ui.px(ctx, fx, fy + 1, 11, 8, ERA1.olive);
+    ui.px(ctx, fx + 1, fy + 3, 9, 5, ERA1.beige);
     ui.setFont(ctx, 9);
-    ctx.fillStyle = lit ? ERA1.white : ERA1.black;
+    ctx.fillStyle = ERA1.black;
     ctx.fillText(String(this.fileWatch.count), fx + 15, H - 16);
-    if (lw) { ui.setFont(ctx, 10); ctx.fillStyle = ERA1.black; ctx.fillText(label, x + w + 4, H - 16); }
-    this.hits.push({ x, y, w: w + (lw ? lw + 6 : 0), h, id: 'file-tray' });
+    this.hits.push({ x, y, w, h, id: 'file-tray' });
+    this.fileTrayRect = { x, y, w, h };
+    // the divider: a 1997 tray's etched line between Lamby (the tray) and the clock "1997"
+    ui.px(ctx, W - 51, H - 19, 1, 16, ERA1.greyDark); ui.px(ctx, W - 50, H - 19, 1, 16, ERA1.white);
+    const tip = FILE_ITEM.e1.label ?? '';
+    if (this.fileTrayHover && tip) {
+      ui.setFont(ctx, 9);
+      const tw = Math.ceil(ctx.measureText(tip).width) + 10, th = 14, tx = Math.min(W - tw - 2, x), ty = y - th - 3;
+      ui.px(ctx, tx, ty, tw, th, ERA1.black); ui.px(ctx, tx + 1, ty + 1, tw - 2, th - 2, ERA1.tooltip);
+      ctx.fillStyle = ERA1.black; ctx.fillText(tip, tx + 5, ty + 3);
+    }
   }
 
   /** ⚑ S401 — 2003's Your file wears its count: a small white tag at the icon's corner, XP blue while it is lit */
@@ -4629,6 +4690,10 @@ export class DesktopOS {
   // ── input ──────────────────────────────────────────────────────────────
   handleMove(x: number, y: number): void {
     if (this.setup?.open) { this.setup.handleMove(x, y); return; }
+    // ⚑ S407 (97-5) — the file tray names itself in a tooltip while the pointer rests on it, whatever window is up
+    const r = this.fileTrayRect, onTray = !!r && this.phase === 'desktop' && this.desktopEra === 'e1'
+      && x >= r.x && x <= r.x + r.w && y >= r.y && y <= r.y + r.h;
+    if (onTray !== this.fileTrayHover) { this.fileTrayHover = onTray; this.dirty = true; }
     if (this.phase === 'desktop' && this.netvision?.open) { this.netvision.handleMove(x, y); return; }
     if (this.phase === 'desktop' && this.accountability?.modal) { this.accountability.handleMove(x, y); return; }
     if (this.phase === 'desktop' && this.mediaPlayer?.open && this.mediaPlayer.contains(x, y)) { this.mediaPlayer.handleMove(x, y); return; }
@@ -4775,6 +4840,8 @@ export class DesktopOS {
     // ⚑ S186 — the picture Rob sent owns the screen while it is open: only its close box answers
     if (this.phase === 'desktop' && this.pauseOpen) {   // S207 — the pause owns the screen until it is closed
       if (hit?.id === 'pause-close') { this.pauseOpen = null; this.modalCalm = 1; this.dirty = true; }
+      // ⚑ S407 (97-8) — the card's offer: it closes, and the Lamby set comes before the eye and plays (TeachingTvs.bring)
+      if (hit?.id === 'pause-tv') { this.pauseOpen = null; this.pauseTv = false; this.modalCalm = 1; this.dirty = true; this.onPauseTv?.(); }
       return;
     }
     if (this.phase === 'desktop' && this.yesOpen) {

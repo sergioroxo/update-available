@@ -10,7 +10,8 @@ import type { GuideEra, GuideView } from '../../narrative/lambyGuide';
 import copy from '../../../data/strings/lambyGuide.json';
 import decisions from '../../../data/strings/cx3b.json';
 export interface GuideHit { id: string; x: number; y: number; w: number; h: number; label?: string; tip?: string }
-export interface GuidePaint { rings: GuideHit[]; balloon: boolean }
+/** `box` (S407 / 97-13): the balloon's own rectangle while it is up — what lies under it cannot be aimed at or pressed */
+export interface GuidePaint { rings: GuideHit[]; balloon: boolean; box?: { x: number; y: number; w: number; h: number } }
 /** Extracted from Lamblippy's tooltip: 1px border and a stepped tail toward the lamb. */
 export function drawLambyTooltip(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number,
   ground: string = ERA1.tooltip, tailX = x + w - 36, tail = 6): void {
@@ -67,6 +68,7 @@ export function drawLambyGuide(ctx: CanvasRenderingContext2D, skin: GuideEra, st
   const h = Math.max(112, 58 + ui.wrapText(ctx, state.text, w - (skin === 'e4' ? 66 : 36)).length * 15);
   let y = W < 300 ? 2 : H - 22 - h - 70;
   if (pointing && selected.some(r => r.x < x + w && r.x + r.w > x && r.y < y + h && r.y + r.h > y)) y = 26;
+  out.box = { x, y, w, h };
   const cx = skin === 'e3' ? tx + 10 : W - 48, cy = H - 59;
   const left = selected.length > 0 && selected[0].x + selected[0].w / 2 < cx;
   if ((skin === 'e1' || skin === 'e2') && !guideBody.inRoom) drawLambyChar(ctx, cx, cy, { mood: 'cheerful', action: pointing ? 'point' : 'idle', scale: 0.48, t: state.frame / 3, moodStart: 0, pointLeft: left });

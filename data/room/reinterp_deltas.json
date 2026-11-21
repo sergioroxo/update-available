@@ -14,9 +14,14 @@
   ],
   "props": {
    "poster1": {
-    "pos": [0.77, 1.44, -0.695],
+    "pos": [1.32, 1.44, -0.695],
     "size": [0.28, 0.385, 0.02],
+    "_docS407": "⚑ S407 (UiB job 32, 97-2; his headset 20 Nov, frames 212818 and 212839: \"the bigger monitor covers the posters … since we have more space\"). MEASURED from the seat (tools/s407-wall-probe.mjs: a 7 × 7 grid on each face, a ray from the eye to each point against every prop's own box): in the headset (the ×1.2 monitor, the eye 0.15 m nearer it) the monitor hid 37 % of this poster, 71 % when he leans 10 cm towards the desk, and 43 % of the calendar. The three move right along the north wall, where nothing stood (calendar 0.47 → 1.00, this 0.77 → 1.32, the band poster 1.32 → 1.68): all three whole from the computer's eye, the headset's, and the headset's leaning 10 cm in. The trade-off: S398 put this poster whole inside the computer's FIRST view (42°, x ≤ 0.95 on this wall); no place is both inside that view and clear of the monitor in the headset, so it is now a short look to the right on the computer. Was pos [0.77, 1.44, -0.695].",
     "_docS398": "⚑ S398 (UiB job 29 A5; Fable's review §2.B1: the story posters sat at the top edge of the computer's first view, half cut). The camp poster, CHANGE STARTS HERE, comes down and in, beside the calendar, at A3 size (70 %): from the seat at the computer's own field (42°) it is whole and unhidden, and in the headset too (tools/s398-frames-probe.mjs; the placement searched by machine for the nearest spot that is whole, unhidden and clear of the calendar and the window). 1997 only (poster1 is gone in 2003); era1.json, the shipped baseline, is untouched."
+   },
+   "poster2": {
+    "pos": [1.68, 1.45, -0.695],
+    "_docS407": "⚑ S407 (UiB job 32, 97-2) — the band poster (LAMPSTAND) moves right with the other two (1.32 → 1.68) to make room for them clear of the monitor. See poster1's _docS407. 1997 only; era1.json, the shipped baseline, is untouched."
    },
    "cdStack": {
     "_doc": "Session 49 logged this and left it (its own finding-2 note, verbatim): 'cdStack (era1.json, pos y0.71 / half-height 0.07) still sits at the OLD box-shelf height and is now ~12cm sunk into the bookcase model's shelf — the same class of bug as the tapes' y0.646.' Session 54 fixes it: cdStack's base (0.71-0.07=0.64) targeted the OLD box shelfBoard1's top; the REAL bookcaseModel's bottom shelf surface is y0.76 (the same shared shelf boombox/tapeA/tapeB/mixtape already measure against — one shelf run, several props). New y0.83 puts cdStack's base back at 0.76, +0.12 from the old 0.71, matching the ~12cm S49 estimated by eye. teddyBox sits on the same old shelfBoard1 baseline and had the identical sink — flagged then, fixed now below (Session 55), since this session is already re-measuring this exact shelf. Session 55 ALSO moved x/z (1.98,0.9 → 2.02,0.62): its old z0.9 sat squarely in the middle of the three shelf tapes' new z-run (0.87-1.07 — the boombox's own Session 55 re-rotation widened its footprint and pushed the tapes into that space, see tapeA's _doc), and cdStack's box very nearly fully occluded tapeA from the seat (confirmed live: toggling cdStack.enabled off/on in-browser made tapeA go from invisible to visible). The shelf run only has ~0.3m free after the boombox — not enough for 3 legible tapes AND a 0.12m cdStack side by side — so cdStack moves to a second depth track instead, tucked behind the boombox (x2.02, near the bookcase's own back wall at x2.098, z0.62 matching the boombox's own z-centre) rather than competing for the same front row. It is not belongings-eligible (unlike teddyBox) so sitting mostly hidden behind the boombox costs no interaction, only its own visibility as background dressing.",
@@ -89,8 +94,10 @@
    "boomboxSpeakerR",
    "boomboxDeck",
    "sodaCan",
-   "moon"
+   "moon",
+   "homeworkPile"
   ],
+  "_docS407remove": "⚑ S407 (UiB job 32, 97-4; his headset 20 Nov, 21:28:14, frame 212847: \"a sheet of paper on the floor\" he could not place; his 21 Nov answer: find out what it is, remove the leftovers). It is `homeworkPile`, an incidental of the shipped baseline (era1.json: a 22 × 30 cm pile on the floor beside the chair, 1.2 cm high), not one of sends.json's carry-back papers (those are placed on desks, and only by a send). Nothing in the story reads it, and on the floor it reads as a stray sheet: it goes from 1997 (r2 already removed it).",
   "_docT51": "⚑ S343 / T51 (his 8 Nov, answer 1: 'what is this red box on top of the table?… remove it. The black plate on the computer stays.') — the red box beside the mouse was sodaCan, a bare era1.json cube S86 kept only as 'the one judgement call… flagged for Sérgio'. He has judged: gone from 1997 too (r2 already retired it).",
   "_docRetiredS401": "⚑ S401 (UiB job 29 D1; his 16 Nov: \"Yes it should go\") — THE BACK WALL GOES. The record's frame (terminalFrame) and the institution's corner of S181–S183 (the cabinet with drawer 12, the office desk and its floor, the intake terminal, the index card, her referral list, Daniel's suitcase) are retired here, one line each to restore; src/room/institution.ts went with them (git history). The file is on the screen now (src/desktop/os.ts drawFileItem). Photographed before it went, all four eras: research/article-images-2026-11-17/job29-partD-S401/backwall/before/.",
   "_retiredS401": [
@@ -174,14 +181,15 @@
    },
    {
     "id": "spineDoorPanel",
+    "_docS407": "⚑ S407 (UiB job 32, 97-3; his headset 20 Nov 21:28:22: \"still a gap between the door and the door frame\" — asked before, 7 Jul). Measured from the boxes, not the render: the panel stood 0–2.04 m under a lintel whose underside is at 2.08, so a 4 cm slit of wall showed across the door's top from the day it was built (S9); S18 fixed the lintel's short ends and never the slit. Now 0–2.10 m, its top 2 cm up inside the lintel, and 0.88 m wide (1 cm into each jamb): every joint is a hidden overlap, not two faces meeting at an edge. Was pos [1.2, 1.02, 3.7], size [0.86, 2.04, 0.05]. Do not re-align it back to the opening.",
     "pos": [
      1.2,
-     1.02,
+     1.05,
      3.7
     ],
     "size": [
-     0.86,
-     2.04,
+     0.88,
+     2.1,
      0.05
     ],
     "color": "#B89B7E"
@@ -429,7 +437,7 @@
     ],
     "color": "#8A5A3B"
    },
-   {"id": "calendar1997", "model": "calendar", "page": "e1", "pos": [0.47, 1.4, -0.695], "size": [0.24, 0.455, 0.02], "yaw": 0, "color": "#FBF7EE", "partColors": {"FFFFFF": "#FBF7EE", "1A1A1A": "#8C8C94"}, "_docS177": "⚑ S177 / R4-27 (his D1/D4) — Daniel's calendar, July 1997: SUGARWIRE on stage, and 'camp' written through 12–19 July in his mother's biro (src/room/calendarArt.ts). On the north wall between the monitor and the posters; its back 5 mm off the wall (surface z −0.70). Swapped for Restorify's at r2."},
+   {"id": "calendar1997", "model": "calendar", "page": "e1", "pos": [1.0, 1.4, -0.695], "_docS407": "⚑ S407 (UiB job 32, 97-2) — moved right from x 0.47, out from behind the monitor: from the seat the headset saw 57 % of it (43 % leaning in). See poster1's _docS407 (r1 props).", "size": [0.24, 0.455, 0.02], "yaw": 0, "color": "#FBF7EE", "partColors": {"FFFFFF": "#FBF7EE", "1A1A1A": "#8C8C94"}, "_docS177": "⚑ S177 / R4-27 (his D1/D4) — Daniel's calendar, July 1997: SUGARWIRE on stage, and 'camp' written through 12–19 July in his mother's biro (src/room/calendarArt.ts). On the north wall between the monitor and the posters; its back 5 mm off the wall (surface z −0.70). Swapped for Restorify's at r2."},
    {"id": "danielHandheld", "model": "handheld1997", "pos": [-1.36, 0.5, 1.62], "size": [0.09, 0.02, 0.15], "color": "#C9C6BE", "yaw": 24, "_docS187": "⚑ S187 (2026-09-28) — Phase 4's models (PLAN_PHASE4_GAMES; credited in assets/LICENSES.md and docs/reinterp/ATTRIBUTIONS.md). Daniel's own Game Boy-like handheld, face-up on his bed, 1997 — FIT IN's device (the cartridge will come with the starter kit). His, so it is there from the start."},
    {"id": "tvDresser", "pos": [1.89, 0.29, 1.75], "size": [0.44, 0.58, 0.62], "color": "#8A5A3B", "_docS392": "⚑ S392 (UiB job 26 Part B0; his note on job 25 B's page, 15 Nov: \"Daniel TV makes no sense there … like you have a whole background … this is about Lamby saying that you need to go behind\") — THE 1997 TV STANDS BEHIND THE SEAT: a low chest of drawers against the east wall, between the bookcase and the corner, with the VCR and the 21-inch CRT on it, facing into the room (west). From the seat it is 122° to the right of the desk and 2.0 m away — behind and to one side, clear of the flip (which turns to the south wall, 180°). Nobody is asked to look for it: the programme's kit sends the tape, Lamby says it is behind you and the piece turns the visitor to it (src/room/teachingTv.ts). Built from the room's own boxes, colours as S390 (the desk's wood, the window frame's lighter wood for the drawer fronts, the boombox's charcoal, Room 3's CRT bezel grey, the dead-glass hex). Was (S390) beside the desk under the posters. Gone at r2 with the rest of 1997's machines."},
    {"id": "tvDresserDrawerA", "pos": [1.667, 0.43, 1.75], "size": [0.006, 0.22, 0.56], "color": "#A8917B"},
@@ -481,7 +489,6 @@
    "kitFloppy",
    "kitFloppyShutter",
    "kitFloppyLabel",
-   "homeworkPile",
    "crtBody",
    "crtBezelTop",
    "crtBezelBottom",
@@ -498,13 +505,9 @@
    "poster1",
    "poster2",
    "bedModel",
-   "danielHandheld",
-   "tvDresser",
-   "tvDresserDrawerA",
-   "tvDresserDrawerB",
-   "tvDresserKnobA",
-   "tvDresserKnobB"
+   "danielHandheld"
   ],
+  "_docS407": "⚑ S407 (UiB job 32, 97-19; his headset 20 Nov, 21:44:03: \"there's no need for it to go away, it's still related to the piece\") — the Lamby set's chest of drawers (tvDresser, its two drawers and two knobs) no longer goes at r2 with 1997's machines: the 1997 set stands on it in 2003 too (src/room/teachingTv.ts `ownsEra`). It goes at r3 (Room 1 closes), where it was removed before.",
   "_docRetiredS401": "⚑ S401 (UiB job 29 D1) — 2003's additions to the institution's corner (the scanner and its lid, the house rules, the application packet and its clip) are retired with it, one line each to restore.",
   "_retiredS401": [
    {"id": "inst_scanner", "pos": [-1.9, 1.44, 3.36], "size": [0.38, 0.08, 0.34], "color": "#D8D4CC", "_docS181": "⚑ S181 / R5-03 — THE VIEW TO THE SYSTEM. Sérgio, 2026-09-27: in the pre-reinterp version 'the wall behind us had a symbolic representation of the institutional side, like a desk with a computer, a filing cabinet… I kinda miss that connection'; 'can we make the pressure for the fact Daniel is going to be sent out to a camp more visible? Does it make sense to add suitcases?'. The institution's corner returns around the record on the back wall — the record's own card already reads 'index · era 1 · drawer 12' — and it ages with the eras: paper (1997), scanned (2003), networked (2016), a light (2026). 2003: a flatbed scanner on the cabinet — the paper is being scanned (the record's own label: 'scanned')."},
@@ -821,7 +824,12 @@
    "bedModel2003",
    "bookcaseModel",
    "calendar2003",
-   "danielHandheld2003"
+   "danielHandheld2003",
+   "tvDresser",
+   "tvDresserDrawerA",
+   "tvDresserDrawerB",
+   "tvDresserKnobA",
+   "tvDresserKnobB"
   ],
   "_docRetiredS401": "⚑ S401 (UiB job 29 D1) — 2016's addition to the institution's corner (the router and its light) is retired with it, one line each to restore.",
   "_retiredS401": [
@@ -1944,6 +1952,14 @@
     "color": "#A8917B",
     "_doc": "See movingBox1 — Daniel's room, packed at the transfer."
    },
+   {"id": "movingBox1Tape", "pos": [0.72, 0.403, 1.15], "size": [0.504, 0.006, 0.07], "color": "#E8C9A0", "_docS407": "⚑ S407 (UiB job 32, 03-23; his headset 20 Nov, 22:02:55: \"There's some boxes there on the ground. Doesn't make a bunch of sense\"; his 21 Nov answer: if they are Daniel's packed things, keep them and make them look like moving boxes — \"Yes\"). They are: movingBox1 and movingBox2 arrive at r3 with Room 1 closing, Daniel transferred (their own _doc; S9/5 Sep noted they should read more like moving boxes). Each now wears packing tape over its top seam and down its side, and a paper label with a marker line, on the face towards the room's centre. Colours from era1.json's family. Gone with the boxes at r4. (The dark cube beside 2016's LambyVision, frame 220323, is Vera's PC tower, w_tower: her computer, his own 24 Aug ask, kept.)"},
+   {"id": "movingBox1TapeSide", "pos": [0.468, 0.33, 1.15], "size": [0.006, 0.14, 0.07], "color": "#E8C9A0"},
+   {"id": "movingBox1Label", "pos": [0.467, 0.24, 1.3], "size": [0.004, 0.1, 0.14], "color": "#F5F4ED"},
+   {"id": "movingBox1LabelInk", "pos": [0.465, 0.25, 1.3], "size": [0.002, 0.012, 0.1], "color": "#2C2C34"},
+   {"id": "movingBox2Tape", "pos": [1.17, 0.303, 1.6], "size": [0.404, 0.006, 0.06], "color": "#E8C9A0"},
+   {"id": "movingBox2TapeSide", "pos": [0.968, 0.25, 1.6], "size": [0.006, 0.1, 0.06], "color": "#E8C9A0"},
+   {"id": "movingBox2Label", "pos": [0.967, 0.16, 1.72], "size": [0.004, 0.08, 0.11], "color": "#F5F4ED"},
+   {"id": "movingBox2LabelInk", "pos": [0.965, 0.17, 1.72], "size": [0.002, 0.01, 0.08], "color": "#2C2C34"},
    {
     "id": "e_folders",
     "pos": [
@@ -2703,6 +2719,14 @@
    "w_mouse",
    "movingBox1",
    "movingBox2",
+   "movingBox1Tape",
+   "movingBox1TapeSide",
+   "movingBox1Label",
+   "movingBox1LabelInk",
+   "movingBox2Tape",
+   "movingBox2TapeSide",
+   "movingBox2Label",
+   "movingBox2LabelInk",
    "e_flagA",
    "e_flagB",
    "e_flagC",

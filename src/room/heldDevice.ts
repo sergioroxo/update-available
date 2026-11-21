@@ -17,6 +17,7 @@ import { dressDeviceHardware } from './deviceHardware';
  */
 import * as pc from 'playcanvas';
 import { makeScreenTexture } from '../engine/screenTexture';
+import { liftToHeldLayer } from './heldLayer';
 import { largeText } from '../desktop/theme/fonts';
 import type { RoomHandles } from './era1room';
 import type { Painter } from './calendarArt';
@@ -148,6 +149,7 @@ export function buildHeldDevice(room: RoomHandles, spec: DeviceSpec): HeldDevice
     const k = on && app?.xr?.active ? Math.max(1.3, (0.42 / (spec.holdDist ?? 0.37)) * 0.8) * XR_GROW : 1;
     wrap.setLocalScale(baseScale.x * k, baseScale.y * k, baseScale.z * k);
     if (spec.glow) applyGlow(on ? spec.glowHeld ?? spec.glow : spec.glow);
+    liftToHeldLayer(wrap, on && !!app?.xr?.active);   // ⚑ S407 (97-9): in a headset, nothing of the room covers it in the hand
   };
   const meshRoot = (wrap.findByName(`model-${spec.modelKey}-tilt`) as pc.Entity | null)?.children[0] as pc.Entity | undefined
     ?? (wrap.children[0] as pc.Entity | undefined);
