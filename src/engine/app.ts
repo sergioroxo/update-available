@@ -2597,7 +2597,9 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     //   move in a headset stays ONE cut under the dissolve.
     // ⚑ S359 / H23 (his headset, 10 Nov: "no flyover into the Close — it should have") — the way in (the sweep from
     //   Maya's desk up over the partition to Daniel's seat) flies too, on its own arc, the facing held (yawTurn 0)
-    const closeIn = closeStage === 'travel' || closeStage === 'lookUp' || closeStage === 'open';   // …and the eyes rising to the stars (45° over 20 s); S361: and the seat coming back down as the panels open
+    // ⚑ S415 — and the turn to the room from 2026's acts: in a headset it is one snap of the facing under the world's follow
+    //   (the turn's own leg, ~0 s), so the room is never re-formed under a captured view (that capture drew 90 calls at once)
+    const closeIn = closeStage === 'travel' || closeStage === 'lookUp' || closeStage === 'open' || (closeStage === 'turn' && !!xr?.active);   // …and the eyes rising to the stars (45° over 20 s); S361: and the seat coming back down as the panels open
     const fly = (!!relocLeg || closeIn) && (!!xr?.active || reducedMotion());
     if (fly) { if (!closeIn) via = undefined; }   // era legs fly straight; the Close's way in keeps its arc
     else if (xr?.active) { dur = 0.001; via = undefined; }
@@ -4830,9 +4832,9 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
         void CLOSE_CARD_SECONDS;
       } else if (closeStage === 'lead' || closeStage === 'hold' || closeStage === 'settled' || (closeStage === 'turn' && !camMove && !!xr?.active)) {
         closeHoldT += dt;
-        // ⚑ S415 — in a headset the turn is one cut under the view's own cover (xrComfort): it is given the cover's time before
-        //   the crossing flies, so the cut lands whole and the flight does not start under it
-        const cap = closeStage === 'lead' ? closeLeadNow : closeStage === 'turn' ? 2.2
+        // ⚑ S415 — in a headset the turn is one snap (no conducted turn, no cover); the room is given a breath to be seen before
+        //   the crossing flies
+        const cap = closeStage === 'lead' ? closeLeadNow : closeStage === 'turn' ? CLOSE_TURN_XR_HOLD
           : closeStage === 'hold' ? CLOSE_DUSK_SECONDS : CLOSE_MONITOR_AFTER_SECONDS;
         if (closeHoldT >= cap) advanceClose();
       } else if (closeStage && !camMove) advanceClose();
@@ -5762,14 +5764,19 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
    *   lead  · CLOSE_LEAD_ACTS_SECONDS on the report (the screens are already dark: nothing is left to die);
    *   turn  · she is turned from the desk to face the room she will cross — on a screen a conducted turn in place
    *           (CLOSE_TURN_SECONDS: 180° under the 9.1 °/s law at smoothstep's 1.5× crest, with margin); in a headset no conducted turn
-   *           (memory headset-no-fades-bring-it-close): ONE cut to that same facing, as every scripted move in a headset is;
+   *           (memory headset-no-fades-bring-it-close): ONE snap to that same facing (a blink cut: the world follows the seat
+   *           in one frame, with no cover and no captured view — the view morph's capture of the whole building drew 90 calls);
    *   travel · the crossing to Daniel's seat, FORWARD (she faces where she is going: never flowing backwards), and with no
    *           morph (no glitch sweep through the building); then his line, the stars and the cards as today.
    * The old way in (the glitch on the glass, 14.5 s of dying screens, the backwards glide with the building glitching) is
    * kept for any other route that still reaches it.
    */
   const CLOSE_LEAD_ACTS_SECONDS = 2.5;
-  const CLOSE_TURN_SECONDS = 32;   // 180° at smoothstep's 1.5× crest: 8.4 °/s (30 s measured 9.5 at a 250 ms sample)
+  const CLOSE_TURN_SECONDS = 32;
+  /** ⚑ S415 — in a headset, after the snap to the room's facing: a breath to see the room before the crossing flies */
+  const CLOSE_TURN_XR_HOLD = 1.6;
+  /** ⚑ S415 — under reduced motion the turn is the piece's reduced-motion cut (covered by the view morph): this long, not 32 s */
+  const CLOSE_TURN_REDUCED = 2.4;   // 180° at smoothstep's 1.5× crest: 8.4 °/s (30 s measured 9.5 at a 250 ms sample)
   let closeLeadNow = 14.5;
   /** the Close was entered from 2026's acts (S415): turn, then cross forward, with no morph */
   let closeFromActs = false;
@@ -5843,7 +5850,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
         closeStage = 'turn'; closeHoldT = 0;
         const ahead = Math.atan2(dx, dz) * 180 / Math.PI;   // the bearing from her seat toward Daniel's
         const dyaw = ((ahead - camYaw + 540) % 360) - 180;
-        startCamMove({ x: camPos.x, y: camPos.y, z: camPos.z, pitch: 0, yaw: camYaw + dyaw }, CLOSE_TURN_SECONDS, true, undefined, dyaw === -180 ? 180 : dyaw);
+        startCamMove({ x: camPos.x, y: camPos.y, z: camPos.z, pitch: 0, yaw: camYaw + dyaw }, xr?.active ? 0.001 : reducedMotion() ? CLOSE_TURN_REDUCED : CLOSE_TURN_SECONDS, true, undefined, dyaw === -180 ? 180 : dyaw);
         return;
       }
       closeStage = 'travel';

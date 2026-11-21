@@ -53,6 +53,7 @@ import { stampBanned } from './printArt';
 import { buildVeraDesk } from './veraDesk';
 import { GraceQueueLite, MIRROR_W } from './graceQueueLite';
 import { e4Bridge, claimRoomMount } from '../desktop/apps/space';
+import { PICTURE as STREAM_PICTURE } from '../desktop/apps/streamCover';
 import { ERA1_CANVAS } from '../desktop/theme/era1';
 import { px } from '../desktop/theme/chrome';
 import d from '../../data/strings/era3_devices.json';
@@ -1209,6 +1210,43 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
     const sh = e4Bridge()?.shell();
     return sh ? 1 + sh.browserVersion : 0;
   } });
+  /**
+   * ⚑ S415 (UiB job 33 Part D) — TRANSJESUS.STR'S MOVING PICTURE, ON ITS OWN SMALL PLANE OVER THE MONITOR. The stream fills her
+   * monitor (beat 11), and its picture moves at the stream's own steps; drawn into the monitor's canvas, each step re-sent the
+   * whole 2130 × 1152 texture (2840 × 1536 in a headset): measured 46–82 MB a second. So the picture is a child plane of the
+   * monitor's glass, exactly over the picture's rect (streamCover.ts `PICTURE`), 4 mm in front of it, with its own 960 × 660
+   * canvas; the monitor is re-sent only when its own parts change (the chat, the count, the fund). It follows the glass
+   * wherever it goes (the headset's ×1.2, the Close switching it off), is never pressed (nothing on the picture is a control;
+   * presses go to the monitor's rects), and is on only while the picture moves: frozen, torn, dark or growing, the monitor
+   * draws the picture itself. One draw call, while it is on.
+   */
+  let streamPic: { canvas: HTMLCanvasElement; ctx: CanvasRenderingContext2D; tex: pc.Texture; entity: pc.Entity; seen: number } | null = null;
+  const STREAM_PIC_SCALE = 2;
+  function driveStreamPicture(): void {
+    const mon = screens.find((sc) => sc.name === 'monitor');
+    const st = e4Bridge()?.shell()?.browser.acts.stream;
+    if (!mon || !st) { if (streamPic) streamPic.entity.enabled = false; return; }
+    st.planeReady = true;
+    if (!streamPic) {
+      const { canvas, ctx } = makeCanvas(STREAM_PICTURE.w, STREAM_PICTURE.h, STREAM_PIC_SCALE);
+      const tex = makeScreenTexture(app, canvas, 'screen');
+      const entity = makeScreenEntity('era4-stream-picture', tex, STREAM_PICTURE.w / LOGICAL.monitor.w, STREAM_PICTURE.h / LOGICAL.monitor.h);
+      // in the glass's own units (the parent's scale is its size): the picture's centre, and 4 mm toward her
+      entity.setLocalPosition((STREAM_PICTURE.x + STREAM_PICTURE.w / 2) / LOGICAL.monitor.w - 0.5, 0.004, (STREAM_PICTURE.y + STREAM_PICTURE.h / 2) / LOGICAL.monitor.h - 0.5);
+      entity.enabled = false;
+      mon.entity.addChild(entity);
+      streamPic = { canvas, ctx, tex, entity, seen: -1 };
+    }
+    const on = eraNow === 'e4' && mon.entity.enabled && st.planeOn;
+    if (streamPic.entity.enabled !== on) streamPic.entity.enabled = on;
+    if (!on) { streamPic.seen = -1; return; }
+    if (st.picVersion !== streamPic.seen) {
+      streamPic.seen = st.picVersion;
+      streamPic.ctx.clearRect(0, 0, STREAM_PICTURE.w, STREAM_PICTURE.h);
+      st.drawPicture(streamPic.ctx, STREAM_PICTURE.w, STREAM_PICTURE.h);
+      streamPic.tex.upload();
+    }
+  }
   add('phone', LOGICAL.phone, (ctx, w, h) => graceQueueLite.drawPhone(ctx, w, h), { versionOf: () => graceQueueLite.phoneVersion });
   // ⚑ 2026-09-12 — the stream: drawn by the ball, on while the Commons is on
   add('stream', LOGICAL.stream, (ctx, w, h) => {
@@ -1702,6 +1740,7 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
         }
         if (s.dirty) { s.tex.upload(); s.dirty = false; }
       }
+      driveStreamPicture();
     },
     closeForEraJump(): void {
       graceQueueLite.closeForEraJump();

@@ -28,10 +28,12 @@ export const ST = BALL.stream as unknown as { mark: string; live: string; watchi
 export const SYS = BALL.system as unknown as { mark: string; terminated: string; reason: string; terminatedNote: string };
 const TITLE = (V3DATA as unknown as { fundraiser: { title: string } }).fundraiser.title;
 
-/** the stream's own frame rate on the monitor: a stream's low steps, not the room's frames (the whole monitor is re-sent each:
- *  at 6 the probe measured 8.4 uploads and 64 MB a second through the stream; at 4, about two thirds of that) */
-export const STREAM_HZ = 4;
+/** the stream's own frame rate: a stream's low steps, not the room's frames. In the room each step re-sends only the picture's
+ *  own plane (960 × 660, era3Devices `streamPic`): ≈ 15 MB a second at 6, where the whole monitor at 6 measured 64–82 */
+export const STREAM_HZ = 6;
 const BAR = 24, FUND = 24, CHAT_W = 222;
+/** ⚑ the picture's rect on the monitor's 710 × 384 (the room puts its plane exactly here: era3Devices `streamPic`) */
+export const PICTURE = { x: 4, y: BAR + FUND + 2, w: 710 - CHAT_W - 8, h: 384 - (BAR + FUND + 2) - 4 } as const;
 /** the light's colour for each of the stream's shots (theme hexes only): it changes with the cut, never flashes */
 export const SHOT_LIGHT: Record<StreamShot, string> = { wide: PLACE.textileHi, walker: PLACE.sun, crowd: CAL_2026.transPink, lights: PLACE.rugHi };
 
@@ -90,17 +92,24 @@ export class StreamCover {
   }
   get frozen(): boolean { return this.frozenAt >= 0; }
   get shot(): StreamShot { return this.frozen ? this.frozenShot : streamShot(this.t + 30); }
-  touch(): void { this.version++; }
+  /** ⚑ the room has put the moving picture on its own small plane over the monitor (era3Devices `streamPic`): its frames are
+   *  re-sent there (960 × 660) and the monitor (2130 × 1152, 2840 × 1536 in a headset) only when its own parts change — the
+   *  probe measured the whole monitor re-sent 4–8 times a second otherwise (46–82 MB a second) */
+  planeReady = false;
+  /** the picture plane's version (its frames, her friends' candles, the band) */
+  picVersion = 0;
+  get planeOn(): boolean { return this.planeReady && this.on && this.grow === 0 && !this.frozen && !this.dark && this.glitch === 0; }
+  touch(): void { this.version++; this.picVersion++; }
 
   update(dt: number): void {
     if (!this.on || this.frozen || this.dark) return;
     this.t += dt;
     const f = Math.floor(this.t * STREAM_HZ);
-    if (f !== this.frame) { this.frame = f; this.version++; }
+    if (f !== this.frame) { this.frame = f; if (this.planeOn) this.picVersion++; else this.version++; }
   }
   /** the stream's second now (for the light's colour and the people's landings) */
   get clock(): number { return this.t; }
-  land(seconds: number): void { this.landingUntil = this.t + seconds; this.version++; }
+  land(seconds: number): void { this.landingUntil = this.t + seconds; this.touch(); }
   /** the picture stops where it is, on the people mid-dance (their arms up), and stays */
   freeze(): void {
     if (this.frozen) return;
@@ -108,7 +117,7 @@ export class StreamCover {
     const s = streamShot(this.t + 30);
     this.frozenShot = s === 'wide' || s === 'crowd' ? s : 'wide';
     this.landingUntil = Number.POSITIVE_INFINITY;
-    this.version++;
+    this.touch();
   }
   say(l: ChatLine): void {
     this.chat.push(l);
@@ -134,7 +143,7 @@ export class StreamCover {
     }
   }
 
-  private drawStream(ctx: CanvasRenderingContext2D, W: number, H: number, push: (h: Hit) => void): void {
+  private drawStream(ctx: CanvasRenderingContext2D, W: number, H: number, push: (h: Hit) => void, scaled = false): void {
     const t = this.frozen ? this.frozenAt : this.t;
     px(ctx, 0, 0, W, H, ERA4.panel);
     // ── the bar: LIVE · transjesus.str · birthday stream · for trans youth … 42 watching ──
@@ -157,20 +166,11 @@ export class StreamCover {
     pill(ctx, fx, BAR + 9, fw, 6, ERA4.rule);
     pill(ctx, fx, BAR + 9, Math.max(6, Math.round(fw * this.fund)), 6, PLACE.textileHi);
     if (gift) { ctx.fillStyle = PLACE.textileHi; ctx.fillText(gift, W - 10 - gw + 12, BAR + 7); }
-    // ── the picture: the community and TransJesus dancing, wordless ──
+    // ── the picture: the community and TransJesus dancing, wordless (on its own plane over the monitor while it moves, in the
+    //   room: here only the ground under it; drawn here when it is still, frozen, growing, or there is no room) ──
     const top = BAR + FUND + 2, pw = W - CHAT_W - 8, ph = H - top - 4, pic: Rect = { x: 4, y: top, w: pw, h: ph };
-    const landing = t < this.landingUntil ? 1 : 0;
-    streamScene(ctx, pic.x, pic.y, pic.w, pic.h, t + 30, this.frozen ? this.frozenShot : streamShot(t + 30), landing, 'tj');
-    // her friends on camera, at the picture's foot: Junie, and Rae holding the candles
-    this.drawTiles(ctx, pic, t);
-    // the system's thin grey band, across the top of the picture (over the rig, never on a dancer or the chat)
-    if (this.band) {
-      const by = pic.y + 6, bh = 24;
-      const was = ctx.globalAlpha; ctx.globalAlpha = 0.94; px(ctx, pic.x, by, pic.w, bh, V3.grey); ctx.globalAlpha = was;
-      px(ctx, pic.x, by + bh, pic.w, 1, V3.ink2);
-      assistantMark(ctx, pic.x + 8, by + 4, 16, V3.ink2, V3.grey);
-      setFont(ctx, 12); ctx.fillStyle = V3.ink; ctx.fillText(this.band, pic.x + 30, by + 5);
-    }
+    if (this.planeOn && !scaled) px(ctx, pic.x, pic.y, pic.w, pic.h, ERA4.field);
+    else this.paintPicture(ctx, pic, t);
     // SESSION TERMINATED, as built: the system's card over the frozen picture
     if (this.terminated) {
       // over the frozen picture's middle, below her friends' tiles (the system's card never covers the people who came for her)
@@ -188,6 +188,26 @@ export class StreamCover {
     this.drawChat(ctx, { x: W - CHAT_W - 2, y: top, w: CHAT_W, h: H - top - 2 }, push);
   }
 
+  /** the picture itself: the scene, her friends on camera, and the system's band when it comes */
+  private paintPicture(ctx: CanvasRenderingContext2D, pic: Rect, t: number): void {
+    const landing = t < this.landingUntil ? 1 : 0;
+    streamScene(ctx, pic.x, pic.y, pic.w, pic.h, t + 30, this.frozen ? this.frozenShot : streamShot(t + 30), landing, 'tj');
+    // her friends on camera: Junie, and Rae holding the candles
+    this.drawTiles(ctx, pic, t);
+    // the system's thin grey band, across the top of the picture (over the rig, never on a dancer or the chat)
+    if (this.band) {
+      const by = pic.y + 6, bh = 24;
+      const was = ctx.globalAlpha; ctx.globalAlpha = 0.94; px(ctx, pic.x, by, pic.w, bh, V3.grey); ctx.globalAlpha = was;
+      px(ctx, pic.x, by + bh, pic.w, 1, V3.ink2);
+      assistantMark(ctx, pic.x + 8, by + 4, 16, V3.ink2, V3.grey);
+      setFont(ctx, 12); ctx.fillStyle = V3.ink; ctx.fillText(this.band, pic.x + 30, by + 5);
+    }
+  }
+  /** ⚑ the picture plane's own canvas (era3Devices): the picture at its own size, at its own steps (`picVersion`) */
+  drawPicture(ctx: CanvasRenderingContext2D, w: number, h: number): void {
+    ctx.textBaseline = 'top';
+    this.paintPicture(ctx, { x: 0, y: 0, w, h }, this.frozen ? this.frozenAt : this.t);
+  }
   /** two small camera tiles at the picture's foot: a head and shoulders in their own light, never a face; Rae's candles */
   private drawTiles(ctx: CanvasRenderingContext2D, pic: Rect, t: number): void {
     // at the picture's top left, over the back wall (never over the floor, where TransJesus dances, nor under the band)
@@ -312,7 +332,7 @@ export class StreamCover {
       const r = { x: Math.round(f.x * (1 - e)), y: Math.round(f.y * (1 - e)), w: Math.round(f.w + (W - f.w) * e), h: Math.round(f.h + (H - f.h) * e) };
       ctx.save(); ctx.beginPath(); ctx.rect(r.x, r.y, r.w, r.h); ctx.clip();
       ctx.translate(r.x, r.y); ctx.scale(r.w / W, r.h / H);
-      this.drawStream(ctx, W, H, () => undefined);
+      this.drawStream(ctx, W, H, () => undefined, true);
       ctx.restore();
     }
     const c = this.junieCursor;
