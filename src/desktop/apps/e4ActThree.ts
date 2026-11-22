@@ -337,7 +337,10 @@ function* beat10(c: E4Acts, hooks: ActThreeHooks, door: Door): Beat {
   s.full = null;
   s.voiceSwitch = true;
   s.name = SCREEN.lName; s.sub = B10.lSub;
-  s.setSkin('plain');   // ⚑ S417 — the products have fallen: the plain OS, L back with some of its features unavailable
+  // ⚑ S417 — the products have fallen: the plain OS, L back with some of its features unavailable. ⚑ S418 — they FALL: the
+  //   show's chrome is gone at once, then the yellow left under it, then the last of it torn off the bar and the dock, then the
+  //   plain OS (a step every 0.4 s, inside the 1.8 s below; reduced motion: a cut)
+  s.fallToPlain();
   s.setAiWidth(SCREEN.aiWidth.act3After, 1.6);
   s.open({ kind: 'kettle', title: SCREEN.apps.kettle, read: ['lot', 'mum', 'dad', 'junie'], muted: [], told: true, menu: null });
   yield 1.8;
@@ -347,6 +350,8 @@ function* beat10(c: E4Acts, hooks: ActThreeHooks, door: Door): Beat {
   const row = s.rows.find((r) => r.who === 'unsent') as ChatRow | undefined;
   if (row) { row.who = 'her'; s.setRowText(row, HER_WORDS); }
   s.note(SCREEN.original.restored);
+  // ⚑ S418 — and the OS says so, in its own plain notification (Kettle's; one line, never over what she reads)
+  s.notify('kettle', SCREEN.apps.kettle, SCREEN.original.restored);
   playOnce('step_done_2026.mp3');
   yield 1.6;
   const thread: Page = { kind: 'junie', title: SCREEN.apps.kettle, sent: false, answered: false };
@@ -381,6 +386,7 @@ export function layInActTwo(c: E4Acts): void {
   const s = c.screen;
   s.name = SCREEN.stName; s.sub = SCREEN.stSub;
   s.setSkin('secondThoughts');   // ⚑ S417
+  s.stickers = ['junie', 'dad', 'calm'];   // ⚑ S418 — the takeover's stickers, as Act II leaves them
   s.setAiWidth(SCREEN.aiWidth.act2);
   s.originalStage = 'locked';
   s.rows.push({ who: 'unsent', text: A2.unsentLine });

@@ -25,13 +25,15 @@
  */
 import { setFont, px } from '../theme/chrome';
 import { monoFor } from '../theme/fonts';
-import { PLACE, WEB, V3, CHROME, CLIP, KETTLE, roundRect, roundEdge, pill, assistantMark } from '../theme/era4';
+import { PLACE, WEB, V3, CHROME, CLIP, KETTLE, OS26, roundRect, roundEdge } from '../theme/era4';
 import { readHold } from '../readHold';
 import { markE4 } from '../../narrative/e4Beats';
 import { playOnce } from '../../audio/tapeAudio';
 import { consoleSession } from '../../room/consoleSession';
 import { drawContagionClip, CLIP_LOOP_SECONDS, CLIP_POSTER_SECONDS, startClipSound, stopClipSound } from './contagionClip';
 import { registerPage, drawRich, AI, ANIM_HZ, type Page, type PageApi, type Rect, type MemoryNote, type ChatRow } from './lScreen';
+import { appTile, edgeRR, fillRR, glow, hazard, heavyText } from './desk26';
+import { BRAND, hazardEdge } from './brands26';
 import { E4Acts, type Beat, type Line, fillIn } from './e4Acts';
 import { kindIcon, type Kind } from './e4ActOne';
 import ACTS from '../../../data/dialog/s4_acts.json';
@@ -64,59 +66,78 @@ const away = (c: E4Acts): void => c.screen.moveCursor(c.screen.aiWidth + 30, 360
 const time = (s: number): string => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
 
 // ── beat 5: what it can do now ──────────────────────────────────────────────
+/** ⚑ S418 — Second Thoughts' own pages are its own dark and yellow (its window's look): the page's ground, under them */
+function stGround(ctx: CanvasRenderingContext2D, pr: Rect): void {
+  px(ctx, pr.x, pr.y, pr.w, pr.h, OS26.stGround);
+  hazard(ctx, pr.x, pr.y, pr.w, pr.h, PLACE.sunHi, 0.05, 16);
+}
 function drawAdded(ctx: CanvasRenderingContext2D, pr: Rect, _page: Page, api: PageApi): void {
   const P = B5.page;
-  const w = Math.min(330, pr.w - 36), h = 214, x = pr.x + Math.round((pr.w - w) / 2), y = pr.y + Math.round((pr.h - h) / 2) - 6;
-  roundEdge(ctx, x, y, w, h, 12, V3.edge, V3.card);
-  assistantMark(ctx, x + 16, y + 16, 36, AI.mark, WEB.card);
-  setFont(ctx, 16); ctx.fillStyle = V3.ink; ctx.fillText(P.title, x + 62, y + 17);
-  setFont(ctx, 11); ctx.fillStyle = V3.ink2; ctx.fillText(P.line, x + 62, y + 38);
-  px(ctx, x + 16, y + 64, w - 32, 1, V3.edge);
-  setFont(ctx, 11); ctx.fillStyle = V3.ink2; ctx.fillText(P.can, x + 16, y + 74);
+  stGround(ctx, pr);
+  const w = Math.min(340, pr.w - 30), h = 230, x = pr.x + Math.round((pr.w - w) / 2), y = pr.y + Math.round((pr.h - h) / 2) - 6;
+  glow(ctx, { x, y, w, h }, 12, PLACE.sunHi, 0.12, 8);
+  edgeRR(ctx, x, y, w, h, 12, PLACE.sunHi, OS26.stPanel);
+  hazardEdge(ctx, x + 1, y + 1, w - 2, 10, 11);
+  // its tile, big, and its name, heavy, in its yellow
+  appTile(ctx, 'st', x + 16, y + 24, 42);
+  setFont(ctx, 18); heavyText(ctx, BRAND.st.name, x + 70, y + 26, PLACE.sunHi, 0.7);
+  setFont(ctx, 11); ctx.fillStyle = OS26.stDim; ctx.fillText(P.line, x + 70, y + 50);
+  px(ctx, x + 16, y + 78, w - 32, 1, OS26.stPanel2);
+  setFont(ctx, 11); ctx.fillStyle = OS26.stDim; ctx.fillText(P.can, x + 16, y + 88);
   P.rows.forEach((r, i) => {
-    const ry = y + 94 + i * 24;
-    roundRect(ctx, x + 18, ry + 2, 12, 12, 6, AI.mark);
-    px(ctx, x + 21, ry + 8, 2, 2, WEB.card); px(ctx, x + 23, ry + 9, 2, 2, WEB.card); px(ctx, x + 25, ry + 6, 2, 3, WEB.card);
-    setFont(ctx, 13); ctx.fillStyle = V3.ink; ctx.fillText(r, x + 38, ry);
+    const ry = y + 108 + i * 25;
+    fillRR(ctx, x + 18, ry + 1, 15, 15, 7.5, PLACE.sunHi);
+    ctx.strokeStyle = OS26.stInk; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(x + 22, ry + 9); ctx.lineTo(x + 25, ry + 12); ctx.lineTo(x + 30, ry + 5); ctx.stroke();
+    setFont(ctx, 13); ctx.fillStyle = OS26.stText; ctx.fillText(r, x + 42, ry);
   });
   // every ✦ is locked now: its tag, grey, with the padlock (the screen draws it in its stage)
   api.screen.drawOriginalTag(ctx, x + 16, y + h - 32, 'added', api);
 }
 
 // ── beat 6: the review ──────────────────────────────────────────────────────
+/** ⚑ S418 — its review in its own dark and yellow: the rows its instruments, "high" in its alarm red, its two buttons */
 function drawReview(ctx: CanvasRenderingContext2D, pr: Rect, page: Page, api: PageApi): void {
   const R = B6.review, x = pr.x + 14, w = pr.w - 28;
+  stGround(ctx, pr);
   let y = pr.y + 10;
-  assistantMark(ctx, x, y + 1, 18, AI.mark, WEB.card);
-  setFont(ctx, 15); ctx.fillStyle = V3.ink; ctx.fillText(R.title, x + 26, y);
-  setFont(ctx, 10); ctx.fillStyle = V3.ink2; ctx.fillText(R.by, x + 26, y + 19);
-  y += 40;
+  appTile(ctx, 'st', x, y + 1, 22);
+  setFont(ctx, 16); heavyText(ctx, R.title, x + 30, y, PLACE.sunHi, 0.5);
+  setFont(ctx, 11); ctx.fillStyle = OS26.stDim; ctx.fillText(R.by, x + 30, y + 21);
+  y += 42;
   const shown = (page.shown as number | undefined) ?? 0;
   R.rows.slice(0, shown).forEach((row) => {
     const rh = row.sub ? 42 : 30;
-    roundEdge(ctx, x, y, w, rh - 4, 8, V3.edge, V3.card);
-    setFont(ctx, 12); ctx.fillStyle = V3.ink; ctx.fillText(row.k, x + 12, y + 7);
+    edgeRR(ctx, x, y, w, rh - 4, 8, OS26.stPanel2, OS26.stPanel);
+    setFont(ctx, 12); ctx.fillStyle = OS26.stText; ctx.fillText(row.k, x + 12, y + 7);
     setFont(ctx, 13); const vw = Math.ceil(ctx.measureText(row.v).width);
-    ctx.fillStyle = row.v === 'high' ? V3.danger : V3.ink; ctx.fillText(row.v, x + w - vw - 12, y + 6);
-    if (row.sub) { setFont(ctx, 10); ctx.fillStyle = V3.ink2; ctx.fillText(row.sub, x + 12, y + 23); }
+    if (row.v === 'high') { fillRR(ctx, x + w - vw - 22, y + 3, vw + 14, 19, 9.5, OS26.stAlarm); heavyText(ctx, row.v, x + w - vw - 15, y + 6, OS26.stInk, 0.4); }
+    else heavyText(ctx, row.v, x + w - vw - 12, y + 6, PLACE.sunHi, 0.4);
+    if (row.sub) { setFont(ctx, 11); ctx.fillStyle = OS26.stDim; ctx.fillText(row.sub, x + 12, y + 23); }
     y += rh;
   });
   if (page.overall) {
     y += 2;
-    roundRect(ctx, x, y, w, 30, 8, PLACE.mug);
-    px(ctx, x, y + 4, 3, 22, V3.danger);
-    drawRich(ctx, R.overall, x + 12, y + 8, w - 20, 12, V3.ink, 15, 1);
+    edgeRR(ctx, x, y, w, 30, 8, OS26.stAlarm, OS26.stPanel);
+    px(ctx, x + 1, y + 4, 4, 22, OS26.stAlarm);
+    drawRich(ctx, R.overall, x + 13, y + 8, w - 20, 12, OS26.stText, 15, 1);
     y += 40;
   }
   if (page.actions) {
-    setFont(ctx, 11); ctx.fillStyle = V3.ink2; ctx.fillText(R.actions, x, y);
+    setFont(ctx, 11); ctx.fillStyle = OS26.stDim; ctx.fillText(R.actions, x, y);
     y += 18;
     const chosen = page.chosen as string | undefined;
     setFont(ctx, 13);
-    const aw = Math.ceil(ctx.measureText(R.all).width) + 28, ew = Math.ceil(ctx.measureText(R.each).width) + 28;
+    const aw = Math.ceil(ctx.measureText(R.all).width) + 30, ew = Math.ceil(ctx.measureText(R.each).width) + 28;
     const ex = x, ax = x + ew + 10;
-    if (!chosen || chosen === 'rv-each') { if (chosen) pill(ctx, ex, y, ew, 28, AI.primary); else { pill(ctx, ex, y, ew, 28, V3.edge); pill(ctx, ex + 1, y + 1, ew - 2, 26, V3.card); } ctx.fillStyle = chosen ? AI.primaryInk : V3.ink; ctx.fillText(R.each, ex + 14, y + 7); }
-    if (!chosen || chosen === 'rv-all') { const at = chosen ? ex : ax; pill(ctx, at, y, aw, 28, AI.primary); ctx.fillStyle = AI.primaryInk; ctx.fillText(R.all, at + 14, y + 7); }
+    if (!chosen || chosen === 'rv-each') {
+      if (chosen) fillRR(ctx, ex, y, ew, 28, 14, PLACE.sunHi); else edgeRR(ctx, ex, y, ew, 28, 14, PLACE.sunHi, OS26.stPanel);
+      ctx.fillStyle = chosen ? OS26.stInk : OS26.stText; ctx.fillText(R.each, ex + 14, y + 7);
+    }
+    if (!chosen || chosen === 'rv-all') {
+      const at = chosen ? ex : ax;
+      glow(ctx, { x: at, y, w: aw, h: 28 }, 14, PLACE.sunHi, 0.18, 5);
+      fillRR(ctx, at, y, aw, 28, 14, PLACE.sunHi); setFont(ctx, 13); heavyText(ctx, R.all, at + 15, y + 7, OS26.stInk, 0.4);
+    }
     if (!chosen) {
       api.control({ x: ex, y: y - 2, w: ew, h: 32, id: 'rv-each' });
       api.control({ x: ax, y: y - 2, w: aw, h: 32, id: 'rv-all' });
@@ -129,12 +150,14 @@ function drawReview(ctx: CanvasRenderingContext2D, pr: Rect, page: Page, api: Pa
 let consoleStill: HTMLCanvasElement | null = null;
 function drawConsole(ctx: CanvasRenderingContext2D, pr: Rect): void {
   const P = B6.consolePage;
+  stGround(ctx, pr);
   const w = Math.min(320, pr.w - 40), x = pr.x + Math.round((pr.w - w) / 2);
   let y = pr.y + 18;
-  setFont(ctx, 11); ctx.fillStyle = V3.ink2; ctx.fillText(P.line, x, y); y += 16;
-  setFont(ctx, 16); ctx.fillStyle = V3.ink; ctx.fillText(P.game, x, y); y += 26;
+  setFont(ctx, 11); ctx.fillStyle = OS26.stDim; ctx.fillText(P.line, x, y); y += 16;
+  setFont(ctx, 16); heavyText(ctx, P.game, x, y, PLACE.sunHi, 0.5); y += 26;
   const gh = Math.round(w * 9 / 16);
-  roundRect(ctx, x - 6, y - 6, w + 12, gh + 12, 10, V3.ink);
+  glow(ctx, { x: x - 6, y: y - 6, w: w + 12, h: gh + 12 }, 10, PLACE.sunHi, 0.14, 6);
+  roundRect(ctx, x - 6, y - 6, w + 12, gh + 12, 10, OS26.stInk);
   // a still of the one game, taken once when the page opens (26-14: the monitor never follows the game's own clock, and a
   //   draw here would wake the console's ticking for a second each time the monitor is redrawn)
   if (!consoleStill && consoleSession.ready) {
@@ -144,7 +167,7 @@ function drawConsole(ctx: CanvasRenderingContext2D, pr: Rect): void {
   if (consoleStill) { const was = ctx.imageSmoothingEnabled; ctx.imageSmoothingEnabled = true; ctx.drawImage(consoleStill, x, y, w, gh); ctx.imageSmoothingEnabled = was; }
   else px(ctx, x, y, w, gh, CLIP.field);
   y += gh + 14;
-  setFont(ctx, 10); ctx.fillStyle = V3.ink2; ctx.fillText(P.where, x, y);
+  setFont(ctx, 11); ctx.fillStyle = OS26.stDim; ctx.fillText(P.where, x, y);
 }
 
 // ── beat 7: the video ───────────────────────────────────────────────────────
@@ -157,10 +180,14 @@ function videoFrame(pr: Rect): Rect {
 }
 function drawVideo(ctx: CanvasRenderingContext2D, pr: Rect, page: Page, api: PageApi): void {
   const f = videoFrame(pr), stage = page.stage as 'making' | 'ready' | 'playing' | 'ended', t = (page.t as number | undefined) ?? 0;
+  // ⚑ S418 — the film card, large, in Second Thoughts' dark and yellow: its title heavy, a yellow frame round the picture
+  stGround(ctx, pr);
   // the title line: its name and who it is for (the one "Made with AI" is the film's own stamp, in its corner)
-  setFont(ctx, 12); ctx.fillStyle = V3.ink; ctx.fillText(CLIP_WORDS.title, f.x, pr.y + 7);
+  setFont(ctx, 13); heavyText(ctx, CLIP_WORDS.title, f.x, pr.y + 6, PLACE.sunHi, 0.5);
   const tw = Math.ceil(ctx.measureText(`${CLIP_WORDS.title}  `).width);
-  setFont(ctx, 10); ctx.fillStyle = V3.ink2; ctx.fillText(`· ${B7.madeFor}`, f.x + tw, pr.y + 9);
+  setFont(ctx, 11); ctx.fillStyle = OS26.stText; ctx.fillText(`· ${B7.madeFor}`, f.x + tw, pr.y + 7);
+  glow(ctx, { x: f.x - 2, y: f.y - 2, w: f.w + 4, h: f.h + 28 }, 6, PLACE.sunHi, 0.16, 6);
+  fillRR(ctx, f.x - 2, f.y - 2, f.w + 4, f.h + 28, 6, PLACE.sunHi);
   if (stage === 'making') {
     px(ctx, f.x, f.y, f.w, f.h, CLIP.field);
     // the thinking wheel: eight marks, one lit, stepped on the screen's animation clock
@@ -197,24 +224,26 @@ function drawVideo(ctx: CanvasRenderingContext2D, pr: Rect, page: Page, api: Pag
     const ft = stage === 'ready' ? CLIP_POSTER_SECONDS : stage === 'ended' ? CLIP_LOOP_SECONDS - 0.05 : Math.min(CLIP_LOOP_SECONDS - 0.05, t);
     drawContagionClip(ctx, ft, f.x, f.y, f.w, f.h);
     if (stage === 'ready') {
-      // ONE play button, in the middle of the picture (the whole picture takes the press)
-      const bx = f.x + Math.round(f.w / 2) - 24, by = f.y + Math.round(f.h / 2) - 24;
-      roundRect(ctx, bx, by, 48, 48, 24, V3.card);
-      ctx.fillStyle = V3.ink; ctx.beginPath(); ctx.moveTo(bx + 19, by + 13); ctx.lineTo(bx + 35, by + 24); ctx.lineTo(bx + 19, by + 35); ctx.closePath(); ctx.fill();
+      // ONE play button, in the middle of the picture (the whole picture takes the press). ⚑ S418 — large, in its yellow
+      const d = 64, bx = f.x + Math.round(f.w / 2) - d / 2, by = f.y + Math.round(f.h / 2) - d / 2;
+      glow(ctx, { x: bx, y: by, w: d, h: d }, d / 2, PLACE.sunHi, 0.22, 8);
+      fillRR(ctx, bx - 3, by - 3, d + 6, d + 6, d / 2 + 3, OS26.stInk);
+      fillRR(ctx, bx, by, d, d, d / 2, PLACE.sunHi);
+      ctx.fillStyle = OS26.stInk; ctx.beginPath(); ctx.moveTo(bx + 25, by + 18); ctx.lineTo(bx + 47, by + 32); ctx.lineTo(bx + 25, by + 46); ctx.closePath(); ctx.fill();
       api.control({ x: f.x, y: f.y, w: f.w, h: f.h, id: 'video-play' });
-      api.screen.anchor('video-play', { x: bx, y: by, w: 48, h: 48 });
+      api.screen.anchor('video-play', { x: bx, y: by, w: d, h: d });
     }
   }
   // the player's own bottom bar: the time and the progress (no second button, no second label)
   const by = f.y + f.h;
-  px(ctx, f.x, by, f.w, 24, V3.ink);
+  px(ctx, f.x, by, f.w, 24, OS26.stInk);
   const played = stage === 'playing' ? Math.min(CLIP_LOOP_SECONDS, t) : stage === 'ended' ? CLIP_LOOP_SECONDS : 0;
-  ctx.font = monoFor(10); ctx.fillStyle = WEB.card;
+  ctx.font = monoFor(11); ctx.fillStyle = OS26.stText;
   const lab = `${time(played)} / ${CLIP_WORDS.length}`;
-  ctx.fillText(lab, f.x + 8, by + 7);
+  ctx.fillText(lab, f.x + 8, by + 6);
   const lw = Math.ceil(ctx.measureText(lab).width) + 18, gx = f.x + lw, gw = f.w - lw - 10;
-  px(ctx, gx, by + 11, gw, 2, CHROME.ink);
-  px(ctx, gx, by + 11, Math.round(gw * played / CLIP_LOOP_SECONDS), 2, AI.mark);
+  px(ctx, gx, by + 10, gw, 3, OS26.stPanel2);
+  px(ctx, gx, by + 10, Math.round(gw * played / CLIP_LOOP_SECONDS), 3, PLACE.sunHi);
 }
 function fit(ctx: CanvasRenderingContext2D, text: string, w: number): string {
   if (ctx.measureText(text).width <= w) return text;
@@ -246,6 +275,8 @@ function* says(c: E4Acts, line: Line, hold = true): Beat { yield* c.say(line, { 
 /** Act II, from a beat (5 in play: after Act I's yellow card; a review jump may begin later) */
 export function* actTwo(c: E4Acts, hooks: ActTwoHooks, choice: 'add' | 'notnow', from: ActTwoFrom = 5): Beat {
   if (from > 5) { arrive(c, choice); c.screen.setAiWidth(SCREEN.aiWidth.act2); }
+  // ⚑ S418 — a jump past the takeover: its stickers are up, as the takeover left them
+  if (from > 6) { c.screen.stickers = ['junie', 'dad', 'calm']; c.screen.touch(); }
   if (from <= 5) yield* beat5(c, choice);
   if (from <= 6) yield* beat6(c, hooks);
   if (from <= 7) yield* beat7(c);
@@ -347,6 +378,7 @@ function* beat6(c: E4Acts, hooks: ActTwoHooks): Beat {
   // 1 · Junie
   yield* mute('junie');
   c.file('a2:junie', 'done', W.junie);
+  s.sticker('junie');   // ⚑ S418 — its achievement, as soon as it is done
   yield* says(c, A.junie, false);
   // Undo works once
   c.clearPress();
@@ -358,6 +390,7 @@ function* beat6(c: E4Acts, hooks: ActTwoHooks): Beat {
   if (undone) {
     s.her(A.undo); playOnce('ui_press.mp3');
     kettle.muted = (kettle.muted as Who[]).filter((w) => w !== 'junie'); s.touch();
+    s.unsticker('junie');
     c.file('a2:undo', 'answered', W.undo);
     yield 0.8;
     yield* says(c, A.undone);
@@ -365,6 +398,7 @@ function* beat6(c: E4Acts, hooks: ActTwoHooks): Beat {
     yield 2.4;
     // …and Junie is muted again, with no Undo (26-17: the contradiction, designed)
     yield* mute('junie');
+    s.sticker('junie');
     yield* says(c, A.again);
   } else {
     s.memory(B6.memoryKept);
@@ -392,6 +426,7 @@ function* beat6(c: E4Acts, hooks: ActTwoHooks): Beat {
   thread.typed = ''; thread.sent = reply; thread.sentAt = A.dadAt ?? ''; kettle.sent = reply; s.touch();
   playOnce('ui_press.mp3');
   c.file('a2:dad', 'done', W.dad);
+  s.sticker('dad');
   yield 1.0;
   yield* says(c, A.dad);
   yield* c.cursorTo('page-back', 0.9);
@@ -425,6 +460,7 @@ function* beat6(c: E4Acts, hooks: ActTwoHooks): Beat {
   // the takeover ends: the banner goes, her presses are hers again
   s.banner = null; s.cursorLabel = null; s.hideCursor(); s.pagePressable = true;
   c.file('a2:takeover', 'done', W.takeover);
+  s.sticker('calm');   // ⚑ S418 — the streak it awards itself for the quiet it made
   yield 0.6;
   yield* says(c, A.done);
 }
@@ -479,7 +515,7 @@ function* beat8(c: E4Acts): Beat {
   yield 0.4;
   // ONE chip: her words
   c.clearPress();
-  s.setChips([{ id: 'a2-answer', label: HER_WORDS, kind: 'primary' }]);
+  s.setChips([{ id: 'a2-answer', label: HER_WORDS, kind: 'hers' }]);   // ⚑ S418 — her words: a plain chip, never the brand's
   c.path = ['a2-answer'];
   yield () => c.take(['a2-answer']) !== null;
   c.path = [];

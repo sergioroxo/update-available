@@ -9,6 +9,23 @@ chat app (its chat list, the model chip, a big greeting, rounded answers, the co
 beside the composer). The beats, lines, timings and presses below are unchanged. Job 33's frame (the V3 desk, the title bars,
 the thin taskbar) is kept in git: `src/desktop/apps/lScreen.ts` `draw`/`drawAi` at **bfad99bd** (walked at 7763b962).
 
+⚑ **S418 (job 34 Part B, 22 Nov): three brands, louder each act.** The desktop wears the product in front
+(`screen.desk.skin`; desk26.ts `LOOKS`, lScreen.ts `AI_LOOKS`, src/desktop/apps/brands26.ts): **L** (beats 1–4) glossy — its ✦
+in the menu bar with its boast "✦ 1,204 things handled for you this year", a sheen and a mint glow on its window, ✦ in its
+answers, a lavish birthday card (her flag, balloons, confetti that falls in 8 steps as it arrives, "personalised for you",
+"✦ made for you by L"), and the sponsored card as the loudest thing on the glass (a yellow glow, a hazard band, "FREE FROM 18");
+**Second Thoughts** (beats 5–8) a yellow takeover of the whole desktop — its yellow menu bar ("SECOND THOUGHTS™ · is using your
+computer", her greyed "Take back control" there during the takeover: job 33's banner, moved), its tile in the dock and her apps
+dimmed, a dark wallpaper under hazard stripes, every window's chrome yellow, its own window near-black with its wellbeing score
+(34 ▼, "3 doors closed this week") and achievement stickers as each act is done, "MUTED FOR YOU" on the rows it muted, its pages
+(the review, the console, the film card with its big play button) in its dark and yellow; **Shepherd Live™** (beats 9–10) live
+television about her through either door — a LIVE bug, the gold title, "exploratory session · episode 1", its sponsors, a navy
+set with stage lights, her photo turned into the show's graphic (the pictures to one side, "BECOMING" a big gold ring at 99%, the
+studio's APPLAUSE sign), its notes as on-screen captions, a gold ticker crawling at 4 steps a second. **At her Yes the brands
+fall** (the show's chrome, then the yellow, then the last of it torn off, then the plain OS: 2.5 changes a second; reduced motion:
+a cut). Her friends' tiles, Settings, the Remove dialog, Junie's words, Maya's words and the stream keep their own plain look.
+Beats 11–13 are as job 33 built them. The beats, lines, timings and presses are unchanged; S417's look is in git at **ba86112b**.
+
 One monitor, two panes (the AI on the left, her world on the right); thirteen beats in three acts and an end. Code:
 `src/desktop/apps/e4Acts.ts` (the director), `lScreen.ts` (the screen), `e4ActOne.ts`, `e4ActTwo.ts`, `e4ActThree.ts`
 (+ `shepherd.ts`), `e4ActFour.ts` (+ `streamCover.ts`); words in `data/dialog/s4_acts.json`.

@@ -2208,6 +2208,8 @@ export const PORTRAIT_FIGURE: {
  * ROLES, so Part B (S418) can add the brands to this same block: `wall*` the wallpaper's calm shapes per skin, `bar*` the
  * menu bar, `menu*` the Menu button and its panel, `win*` the windows, `dock*` the dock, `app*` her apps' tiles, `note*`
  * the notifications, `tip*` the dock's one-line reasons, `shadow` the windows' soft shadow (drawn as translucent layers).
+ * ⚑ S418 (Part B) added the brands' roles at the block's end: `l*` L's gloss, `st*` Second Thoughts' takeover (its yellow is
+ * PLACE.sunHi, reused, not new), `sh*` Shepherd Live™'s television. Drawn by src/desktop/apps/brands26.ts.
  */
 export const OS26 = {
   // the wallpaper, L's skin (Act I): large calm shapes on a pale lilac morning
@@ -2261,5 +2263,38 @@ export const OS26 = {
   note: '#FFFFFF',
   noteEdge: '#DDD8E8',
   tip: '#1E1A2A',
-  tipInk: '#FFFFFF'
+  tipInk: '#FFFFFF',
+
+  // ── ⚑ S418 (UiB job 34 Part B; T101: "Too plain, not over the top" … "it needs much more") — THE THREE BRANDS, louder each
+  //   act, under the same yes as the block above. L (Act I): glossy, premium, too perfect — its own mint (ERA4.l / WEB.accent)
+  //   polished with a sheen and a glow. Second Thoughts (Act II): the sponsored card's yellow (PLACE.sunHi, S412) taking the
+  //   whole desktop, on near-black. Shepherd Live™ (Act III): live television about her — navy, gold, a red LIVE bug. The
+  //   plain OS (after the friends' Yes) is the block above, untouched.
+  // L: the sheen on its window's title, its glow, its premium chip, the birthday card's gloss and its confetti's gold
+  lSheen: '#E9F8F2',
+  lGlow: '#5DCAA5',
+  lPremium: '#CFE9F7',
+  lGold: '#F2C14E',
+  // Second Thoughts: its near-black ground, its panels, its cream type, its dim type, its alarm (a score falling, a red line)
+  stGround: '#12110D',
+  stPanel: '#1C1A14',
+  stPanel2: '#2A271E',
+  stStripe: '#2E2B20',
+  stInk: '#15130E',
+  stText: '#FFF4D2',
+  stDim: '#B3A985',
+  stAlarm: '#FF7650',
+  stSticker: '#FFFFFF',
+  // Shepherd Live™: the studio's navy, its panels, its gold (and the ring's dark track), its LIVE red, its caption plates,
+  //   the booking's green plate
+  shNavy: '#0E1226',
+  shNavy2: '#1B2244',
+  shStage: '#27305A',
+  shGold: '#E9C25B',
+  shGoldHi: '#FBE3A0',
+  shGoldLo: '#5E4C22',
+  shLive: '#E2332E',
+  shPlate: '#080A16',
+  shText: '#F4F1E8',
+  shBooked: '#1E6B4C'
 } as const;

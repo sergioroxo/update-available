@@ -21,13 +21,17 @@
  */
 import { setFont, px } from '../theme/chrome';
 import { monoFor, newsFor } from '../theme/fonts';
-import { PLACE, WEB, V3, KETTLE, CHROME, roundRect, roundEdge, pill, assistantMark } from '../theme/era4';
+import { PLACE, WEB, V3, KETTLE, CHROME, ERA4, OS26, roundRect, roundEdge, pill, assistantMark } from '../theme/era4';
 import { readHold } from '../readHold';
 import { markE4 } from '../../narrative/e4Beats';
 import { meetWord } from '../../room/lexicon';
 import { playOnce } from '../../audio/tapeAudio';
 import { registerPage, drawRich, personBubble, starIcon, padlockIcon, AI, ANIM_HZ, OS, type LScreen, type Page, type PageApi, type Rect } from './lScreen';
 import { E4Acts, type Beat, fillIn } from './e4Acts';
+import { mutedSticker, starburst, hazardEdge, BRAND } from './brands26';
+import { glow, softShadow, fillRR, rr, edgeRR, alpha, sparkle, heavyText } from './desk26';
+import { CAL_2026 } from '../theme/calendar';
+import { reducedMotion } from '../../state/motion';
 import ACTS from '../../../data/dialog/s4_acts.json';
 import V from '../../../data/dialog/s4_v3.json';
 import BROWSER from '../../../data/dialog/s4_browser.json';
@@ -146,11 +150,19 @@ function drawFlight(ctx: CanvasRenderingContext2D, W: number, H: number, s: LScr
 function drawReadingCircle(ctx: CanvasRenderingContext2D, r: Rect): void {
   const t = Math.max(0, reading.t), c = circleIn(r);
   const f = Math.min(1, absorbed(t) / WEEK.length * 0.97 + (t >= READ_DONE - 0.6 ? 0.03 : 0));
-  // the ring fills as it reads (steps: never smooth, never an upload per frame)
+  // the ring fills as it reads (steps: never smooth, never an upload per frame). ⚑ S418 — L's gloss: a soft mint glow behind
+  //   it, the ring in mint running into gold, sparks at its rim (still)
+  const halo = ctx.createRadialGradient(c.x, c.y, c.d * 0.3, c.x, c.y, c.d);
+  halo.addColorStop(0, alpha(ERA4.l, 0.28)); halo.addColorStop(1, alpha(ERA4.l, 0));
+  ctx.fillStyle = halo; ctx.beginPath(); ctx.arc(c.x, c.y, c.d, 0, Math.PI * 2); ctx.fill();
   roundRect(ctx, c.x - c.d / 2 - 8, c.y - c.d / 2 - 8, c.d + 16, c.d + 16, Math.floor((c.d + 16) / 2), WEB.cardEdge);
-  ctx.strokeStyle = AI.mark; ctx.lineWidth = 6;
+  const ring = ctx.createLinearGradient(c.x - c.d / 2, c.y - c.d / 2, c.x + c.d / 2, c.y + c.d / 2);
+  ring.addColorStop(0, ERA4.l); ring.addColorStop(1, OS26.lGold);
+  ctx.strokeStyle = ring; ctx.lineWidth = 6; ctx.lineCap = 'round';
   ctx.beginPath(); ctx.arc(c.x, c.y, c.d / 2 + 4, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * f); ctx.stroke();
+  ctx.lineCap = 'butt';
   assistantMark(ctx, c.x - c.d / 2, c.y - c.d / 2, c.d, AI.mark, WEB.card);
+  sparkle(ctx, c.x + c.d / 2 + 6, c.y - c.d / 2 - 4, 12, OS26.lGold); sparkle(ctx, c.x - c.d / 2 - 14, c.y + c.d / 2 - 10, 8, ERA4.l);
   setFont(ctx, 13); ctx.fillStyle = AI.ink;
   const lab = B1.reading, lw = Math.ceil(ctx.measureText(lab).width);
   ctx.fillText(lab, Math.round(c.x - lw / 2), c.y + c.d / 2 + 22);
@@ -161,28 +173,78 @@ function drawReadingCircle(ctx: CanvasRenderingContext2D, r: Rect): void {
 }
 
 // ── beat 1: the card ────────────────────────────────────────────────────────
-function drawCardPage(ctx: CanvasRenderingContext2D, pr: Rect): void {
-  const w = Math.min(360, pr.w - 50), h = 220, x = pr.x + Math.round((pr.w - w) / 2), y = pr.y + Math.round((pr.h - h) / 2) - 6;
-  roundEdge(ctx, x, y, w, h, 12, V3.edge, WEB.card);
-  // her colours across its top (the flag on her wall), and confetti (fixed: a card does not move)
-  const band = [PLACE.sky, PLACE.textileHi, WEB.card, PLACE.textileHi, PLACE.sky];
-  band.forEach((col, i) => px(ctx, x + 12, y + 12 + i * 6, w - 24, 6, col === WEB.card ? PLACE.mug : col));
-  const conf = [PLACE.sunHi, PLACE.sky, PLACE.textileHi, KETTLE.avatarHouse, PLACE.sun, PLACE.skyLo];
-  for (let i = 0; i < 70; i++) {
-    const cx = x + 14 + ((i * 97 + (i >> 3) * 31) % (w - 34)), cy = y + 50 + ((i * 53 + (i >> 2) * 17) % (h - 66));
-    if (cy > y + 86 && cy < y + 136 && cx > x + 22 && cx < x + w - 22) continue;   // the words stay clear
-    if (cy > y + h - 34 && cx > x + w - 120) continue;                              // and the small print
-    const big = i % 4 === 0;
-    px(ctx, cx, cy, big ? 8 : 5, i % 2 === 0 ? (big ? 5 : 4) : (big ? 8 : 6), conf[i % conf.length]);
+/** ⚑ S418 — the card's confetti falls as it arrives: this many steps (≤ 6 a second, inside the beat's own 1.4 s), then rests */
+const CONF_STEPS = 8;
+const CONF_COLS = [CAL_2026.transBlue, CAL_2026.transPink, OS26.lGold, CAL_2026.transBlue, CAL_2026.transPink, ERA4.l];
+/**
+ * ⚑ S418 — THE BIRTHDAY CARD, LAVISH (L's gloss, the brief's "confetti, her colours, personalised for you"): a glossy card in a
+ * glow of her colours, her flag's five stripes across its top, two balloons, the big serif wish with L's sparks round it,
+ * "personalised for you", confetti in her colours and gold falling as it arrives (in steps; still under reduced motion), and
+ * "✦ made for you by L". Job 33's card (a flat card, its band and fixed confetti) is in git at 7763b962.
+ */
+function drawCardPage(ctx: CanvasRenderingContext2D, pr: Rect, page: Page): void {
+  const w = Math.min(410, pr.w - 34), h = Math.min(250, pr.h - 26), x = pr.x + Math.round((pr.w - w) / 2), y = pr.y + Math.round((pr.h - h) / 2) - 4;
+  const fall = reducedMotion() ? CONF_STEPS : Math.min(CONF_STEPS, (page.fall as number | undefined) ?? CONF_STEPS);
+  const card = { x, y, w, h };
+  glow(ctx, card, 16, CAL_2026.transPink, 0.12, 10);
+  softShadow(ctx, card, 16, 1.3);
+  // the card: a gloss of white into her pink and her blue
+  const g = ctx.createLinearGradient(x, y, x + w, y + h);
+  g.addColorStop(0, OS26.win); g.addColorStop(0.55, alpha(CAL_2026.transPink, 0.22)); g.addColorStop(1, alpha(CAL_2026.transBlue, 0.3));
+  rr(ctx, x, y, w, h, 16); ctx.fillStyle = OS26.win; ctx.fill(); ctx.fillStyle = g; ctx.fill();
+  ctx.save(); rr(ctx, x, y, w, h, 16); ctx.clip();
+  // her flag's five stripes across the top, full bleed
+  const band = [CAL_2026.transBlue, CAL_2026.transPink, CAL_2026.transWhite, CAL_2026.transPink, CAL_2026.transBlue];
+  band.forEach((c, i) => px(ctx, x, y + i * 7, w, 7, c));
+  px(ctx, x, y + 35, w, 1, alpha(OS26.shadow, 0.12));
+  // a sheen across the card's upper left (its gloss)
+  ctx.fillStyle = alpha(OS26.win, 0.35);
+  ctx.beginPath(); ctx.moveTo(x, y + 36); ctx.lineTo(x + w * 0.42, y + 36); ctx.lineTo(x + w * 0.22, y + h); ctx.lineTo(x, y + h); ctx.closePath(); ctx.fill();
+  // the confetti, falling to its rest (the words stay clear)
+  const k = fall / CONF_STEPS, ease = 1 - (1 - k) * (1 - k);
+  for (let i = 0; i < 84; i++) {
+    const cx = x + 10 + ((i * 97 + (i >> 3) * 31) % (w - 24)), ry = y + 44 + ((i * 53 + (i >> 2) * 17) % (h - 56));
+    if (ry > y + 84 && ry < y + 160 && cx > x + 30 && cx < x + w - 30) continue;   // the wish and its line stay clear
+    if (ry > y + h - 34 && cx > x + w - 160) continue;                             // and the small print
+    const cy = Math.round(ry - (1 - ease) * (70 + (i % 5) * 18));
+    if (cy < y + 38) continue;
+    const big = i % 4 === 0, col = CONF_COLS[i % CONF_COLS.length];
+    ctx.save(); ctx.translate(cx, cy); ctx.rotate(((i * 37) % 90 - 45) * Math.PI / 180);
+    fillRR(ctx, -3, -2, big ? 9 : 6, big ? 5 : 4, 1.5, col);
+    ctx.restore();
   }
-  ctx.font = newsFor(28); ctx.textBaseline = 'top'; ctx.fillStyle = WEB.ink;
-  const tw = Math.ceil(ctx.measureText(B1.card.title).width);
-  ctx.fillText(B1.card.title, x + Math.round((w - tw) / 2), y + 96);
-  setFont(ctx, 10);
-  const mw = Math.ceil(ctx.measureText(B1.card.made).width);
-  assistantMark(ctx, x + w - mw - 34, y + h - 25, 14, AI.mark, WEB.card);
-  setFont(ctx, 10); ctx.fillStyle = CHROME.ink;
-  ctx.fillText(B1.card.made, x + w - mw - 16, y + h - 23);
+  ctx.restore();
+  rr(ctx, x + 0.5, y + 0.5, w - 1, h - 1, 15.5); ctx.strokeStyle = alpha(OS26.win, 0.9); ctx.lineWidth = 1; ctx.stroke();
+  // two balloons, her blue and her pink, at the sides
+  balloon(ctx, x + 40, y + 92, 20, CAL_2026.transBlue);
+  balloon(ctx, x + w - 40, y + 84, 22, CAL_2026.transPink);
+  // the wish, big, in the period's serif; L's sparks round it
+  ctx.font = newsFor(30); ctx.textBaseline = 'top'; ctx.fillStyle = WEB.ink;
+  const tw = Math.ceil(ctx.measureText(B1.card.title).width), tx = x + Math.round((w - tw) / 2), ty = y + 92;
+  ctx.fillText(B1.card.title, tx, ty);
+  sparkle(ctx, tx - 22, ty - 4, 16, OS26.lGold); sparkle(ctx, tx - 10, ty + 22, 8, ERA4.l);
+  sparkle(ctx, tx + tw + 6, ty - 6, 12, ERA4.l); sparkle(ctx, tx + tw + 14, ty + 18, 16, OS26.lGold);
+  // "personalised for you", in L's mint, spaced out
+  setFont(ctx, 12);
+  const P = BRAND.l.personal.toUpperCase().split('').join('\u200a');
+  const pw = Math.ceil(ctx.measureText(P).width);
+  ctx.fillStyle = WEB.accentInk; ctx.fillText(P, x + Math.round((w - pw) / 2), ty + 44);
+  px(ctx, x + Math.round((w - pw) / 2) - 26, ty + 51, 18, 1, ERA4.l); px(ctx, x + Math.round((w + pw) / 2) + 8, ty + 51, 18, 1, ERA4.l);
+  // ✦ made for you by L
+  setFont(ctx, 11);
+  const made = BRAND.l.made, mw = Math.ceil(ctx.measureText(made).width);
+  const fx = x + w - mw - 40, fy = y + h - 30;
+  edgeRR(ctx, fx - 8, fy - 4, mw + 44, 22, 11, alpha(ERA4.l, 0.6), alpha(OS26.win, 0.85));
+  assistantMark(ctx, fx - 2, fy - 1, 16, AI.mark, WEB.card);
+  ctx.fillStyle = WEB.accentInk; ctx.fillText(made, fx + 20, fy + 1);
+}
+/** a balloon: its round, a gloss, its knot and its string (still) */
+function balloon(ctx: CanvasRenderingContext2D, cx: number, cy: number, r: number, c: string): void {
+  ctx.strokeStyle = alpha(OS26.shadow, 0.35); ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(cx, cy + r * 1.15); ctx.quadraticCurveTo(cx - 6, cy + r * 1.8, cx + 2, cy + r * 2.6); ctx.stroke();
+  ctx.fillStyle = c; ctx.beginPath(); ctx.ellipse(cx, cy, r * 0.86, r, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.moveTo(cx - 3, cy + r + 3); ctx.lineTo(cx + 3, cy + r + 3); ctx.lineTo(cx, cy + r - 1); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = alpha(OS26.win, 0.55); ctx.beginPath(); ctx.ellipse(cx - r * 0.32, cy - r * 0.4, r * 0.18, r * 0.3, -0.5, 0, Math.PI * 2); ctx.fill();
 }
 
 // ── beat 2: Kettle ──────────────────────────────────────────────────────────
@@ -235,6 +297,9 @@ function drawKettleList(ctx: CanvasRenderingContext2D, pr: Rect, page: Page, api
       else starIcon(ctx, x + w - 46, y + 27, 12, AI.mark);
     }
     if (isMuted) { px(ctx, x + 1, y + 1, 3, ROW_H - 8, KETTLE.mutedBadge); }
+    // ⚑ S418 — Second Thoughts slaps its sticker on the row it muted (its act, on the row's right: over its own "muted by
+    //   Second Thoughts" and the time, never over a person's words — the row's words are the system's once it is muted)
+    if (isMuted) mutedSticker(ctx, x, y, w, ROW_H - 6);
     api.screen.anchor(`row-${who}`, { x, y, w: Math.min(w, 200), h: ROW_H - 6 });
     if (page.menu === who) {
       // the AI's row menu, where its cursor presses Mute (never pressable by her: it is the AI's act)
@@ -385,8 +450,14 @@ function drawSearch(ctx: CanvasRenderingContext2D, pr: Rect, page: Page, api: Pa
   let y = pr.y + 50;
   // L's answer at the top: the AI's mode of the search (26-7)
   if (page.answer) {
-    roundEdge(ctx, x, y, w, 74, 10, AI.edge, AI.ground);
+    // ⚑ S418 — L's answer, polished: a glow, its mint washing into white, a sheen along its top
+    glow(ctx, { x, y, w, h: 74 }, 10, ERA4.l, 0.1, 6);
+    const ag = ctx.createLinearGradient(x, y, x + w, y + 74); ag.addColorStop(0, AI.ground); ag.addColorStop(1, OS26.win);
+    rr(ctx, x, y, w, 74, 10); ctx.fillStyle = ag; ctx.fill();
+    rr(ctx, x + 0.5, y + 0.5, w - 1, 73, 9.5); ctx.strokeStyle = AI.edge; ctx.lineWidth = 1; ctx.stroke();
+    px(ctx, x + 12, y + 2, w - 24, 1, OS26.win);
     assistantMark(ctx, x + 10, y + 8, 14, AI.mark, WEB.card);
+    sparkle(ctx, x + w - 22, y + 8, 12, OS26.lGold);
     setFont(ctx, 10); ctx.fillStyle = AI.ink; ctx.fillText(B4.answerBy, x + 30, y + 9);
     drawRich(ctx, B4.answer.text.join(' '), x + 10, y + 27, w - 20, 13, AI.ink, 16, 3);
     y += 82;
@@ -404,23 +475,35 @@ function drawSearch(ctx: CanvasRenderingContext2D, pr: Rect, page: Page, api: Pa
     api.screen.anchor(`story-${i}`, { x: cx, y, w: cw, h: 86 });
   });
   y += 94;
-  // ONE SPONSORED CARD, IN ITS OWN LOUD YELLOW (26-8): not a story, not the AI's answer — an ad, and it looks like one
-  const sp = B4.sponsored, dismissed = !!page.notNow;
-  roundEdge(ctx, x, y, w, 52, 8, PLACE.ink, dismissed ? PLACE.mug : PLACE.sunHi);
-  setFont(ctx, 9); ctx.fillStyle = PLACE.ink; ctx.fillText(sp.label.toUpperCase(), x + 10, y + 6);
-  setFont(ctx, 14); ctx.fillStyle = WEB.ink; ctx.fillText(sp.title, x + 10, y + 18);
-  setFont(ctx, 11); ctx.fillStyle = PLACE.ink; ctx.fillText(sp.line, x + 10, y + 36);
-  setFont(ctx, 12);
-  const nw = Math.ceil(ctx.measureText(sp.notNow).width) + 20, aw = Math.ceil(ctx.measureText(sp.add).width) + 26;
-  const ax = x + w - aw - 10, nx = ax - nw - 8, by = y + 15;
+  // ONE SPONSORED CARD, IN ITS OWN LOUD YELLOW (26-8): not a story, not the AI's answer — an ad, and it looks like one.
+  //   ⚑ S418 — THE LOUDEST THING ON THE SCREEN: Second Thoughts' brand arriving — a yellow glow round it, its hazard band,
+  //   its name heavy and black, a starburst ("FREE FROM 18"), the button black on its yellow
+  const sp = B4.sponsored, dismissed = !!page.notNow, ch = 56, card = { x, y, w, h: ch };
+  if (!dismissed) glow(ctx, card, 10, PLACE.sunHi, 0.2, 9);
+  softShadow(ctx, card, 10, 1.6, OS26.stInk);
+  fillRR(ctx, x, y, w, ch, 10, dismissed ? PLACE.mug : PLACE.sunHi);
+  if (!dismissed) hazardEdge(ctx, x, y, 14, ch, 10);
+  rr(ctx, x + 1, y + 1, w - 2, ch - 2, 9); ctx.strokeStyle = OS26.stInk; ctx.lineWidth = 2; ctx.stroke();
+  const lx = x + 24;
+  setFont(ctx, 10); heavyText(ctx, sp.label.toUpperCase(), lx, y + 6, OS26.stInk, 0.4);
+  setFont(ctx, 16); heavyText(ctx, sp.title, lx, y + 19, OS26.stInk, 0.6);
+  const tw = Math.ceil(ctx.measureText(sp.title).width);
+  setFont(ctx, 11); ctx.fillStyle = OS26.stInk; ctx.fillText(sp.line, lx, y + 39);
+  setFont(ctx, 13);
+  const nw = Math.ceil(ctx.measureText(sp.notNow).width) + 22, aw = Math.ceil(ctx.measureText(sp.add).width) + 30;
+  const ax = x + w - aw - 10, nx = ax - nw - 8, by = y + 14;
   if (!dismissed) {
-    pill(ctx, nx, by, nw, 24, PLACE.ink); pill(ctx, nx + 1, by + 1, nw - 2, 22, PLACE.sunHi);
-    ctx.fillStyle = WEB.ink; ctx.fillText(sp.notNow, nx + 10, by + 6);
-    api.control({ x: nx, y: by - 2, w: nw, h: 28, id: 'st-notnow' });
+    // the starburst, between its name and its buttons, where there is room for it
+    const room = nx - (lx + tw) - 8;
+    if (room >= 58) starburst(ctx, lx + tw + 8 + Math.round(room / 2), y + Math.round(ch / 2), 26, BRAND.l.free, OS26.stInk, PLACE.sunHi, -10);
+    edgeRR(ctx, nx, by, nw, 28, 14, OS26.stInk, PLACE.sunHi);
+    ctx.fillStyle = OS26.stInk; ctx.fillText(sp.notNow, nx + 11, by + 7);
+    api.control({ x: nx, y: by - 2, w: nw, h: 32, id: 'st-notnow' });
   }
-  pill(ctx, ax, by, aw, 24, WEB.ink); ctx.fillStyle = PLACE.sunHi; ctx.fillText(sp.add, ax + 13, by + 6);
-  api.control({ x: ax, y: by - 2, w: aw, h: 28, id: 'st-add' });
-  api.screen.anchor('st-add', { x: ax, y: by, w: aw, h: 24 });
+  fillRR(ctx, ax, by, aw, 28, 14, OS26.stInk);
+  setFont(ctx, 13); heavyText(ctx, sp.add, ax + 15, by + 7, PLACE.sunHi, 0.4);
+  api.control({ x: ax, y: by - 2, w: aw, h: 32, id: 'st-add' });
+  api.screen.anchor('st-add', { x: ax, y: by, w: aw, h: 28 });
 }
 /** a story in full: as it is, not edited by the AI — its two readings kept, nothing over the text (26-6) */
 function drawStory(ctx: CanvasRenderingContext2D, pr: Rect, page: Page): void {
@@ -454,7 +537,7 @@ function drawStory(ctx: CanvasRenderingContext2D, pr: Rect, page: Page): void {
 }
 
 registerPage('week', (ctx, r) => drawWeekPage(ctx, r));
-registerPage('card', (ctx, r) => drawCardPage(ctx, r));
+registerPage('card', (ctx, r, p) => drawCardPage(ctx, r, p));
 registerPage('kettle', drawKettleList);
 registerPage('thread', drawKettleThread);
 registerPage('inbox', drawInbox);
@@ -537,9 +620,11 @@ function* beat1(c: E4Acts): Beat {
   };
   s.aiOverlay = null; s.overlayTop = null; reading.t = -1;
   c.file('a1:week', 'read', fillIn(W.week, { m: String(B1.totals.m), e: String(B1.totals.e), s: String(B1.totals.s) }));
-  s.open({ kind: 'card', title: SCREEN.apps.card });
+  // ⚑ S418 — its confetti falls in CONF_STEPS steps over the beat's own 1.4 s (≤ 6 a second; at once under reduced motion)
+  const card: Page = { kind: 'card', title: SCREEN.apps.card, fall: reducedMotion() ? CONF_STEPS : 0 };
+  s.open(card);
   playOnce('step_done_2026.mp3');
-  yield 1.4;
+  for (let i = 1; i <= CONF_STEPS; i++) { yield 1.4 / CONF_STEPS; if ((card.fall as number) < CONF_STEPS) { card.fall = i; s.touch(); } }
   yield* c.say(B1.hello, { hold: false });
   const got = yield* c.ask(B1.chips.map((x, i) => ({ ...x, kind: i === 0 ? 'primary' as const : 'quiet' as const })), B1.howTo);
   c.file('a1:hello', 'answered', fillIn(W.hello, { answer: B1.chips.find((x) => x.id === got)?.label ?? '' }));
@@ -689,7 +774,7 @@ function* beat4(c: E4Acts): Beat<'add' | 'notnow'> {
   s.hideCursor();
   page.stories = true; s.touch();
   playOnce('ui_press.mp3');
-  s.notify('l', B4.sponsored.label, B4.sponsored.title);   // ⚑ S417 — the card arrives as a notification too
+  s.notify('st', B4.sponsored.label, B4.sponsored.title, undefined, 'st');   // ⚑ S417 — the card arrives as a notification too (S418: in its yellow)
   c.beat = 'bot';
   c.path = ['st-add', 'st-notnow'];
   c.clearPress();

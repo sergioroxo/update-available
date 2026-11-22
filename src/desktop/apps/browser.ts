@@ -1559,11 +1559,14 @@ export class E4Browser {
     setFont(ctx, 11);
     const lw = Math.ceil(ctx.measureText(M.label ?? '').width), nw = Math.ceil(ctx.measureText(n).width) + 10;
     const w = 6 + 12 + 5 + lw + 6 + nw + 4, h = MENU_H - 6, x = right - w, y = 3;
-    edgeRR(ctx, x, y, w, h, h / 2, OS26.barEdge, OS26.win);
-    assistantMark(ctx, x + 5, y + 2, 12, V3.primary, V3.primaryInk);
-    ctx.fillStyle = OS26.barInk; ctx.fillText(M.label ?? '', x + 22, y + 2);
-    fillRR(ctx, x + 22 + lw + 5, y + 2, nw, h - 4, (h - 4) / 2, V3.primary);
-    ctx.fillStyle = V3.primaryInk; ctx.fillText(n, x + 27 + lw + 5, y + 2);
+    // ⚑ S418 — Memory is Second Thoughts': on its yellow bar it is its own black and yellow
+    const st = this.acts.screen.desk.skin === 'secondThoughts' || this.acts.screen.desk.skin === 'shepherd';
+    const fill = st ? OS26.stInk : OS26.win, ink = st ? PLACE.sunHi : OS26.barInk, badge = st ? PLACE.sunHi : V3.primary, badgeInk = st ? OS26.stInk : V3.primaryInk;
+    edgeRR(ctx, x, y, w, h, h / 2, st ? OS26.stInk : OS26.barEdge, fill);
+    assistantMark(ctx, x + 5, y + 2, 12, badge, badgeInk);
+    ctx.fillStyle = ink; ctx.fillText(M.label ?? '', x + 22, y + 2);
+    fillRR(ctx, x + 22 + lw + 5, y + 2, nw, h - 4, (h - 4) / 2, badge);
+    ctx.fillStyle = badgeInk; ctx.fillText(n, x + 27 + lw + 5, y + 2);
     if (pressable) this.hits.push({ x, y: 0, w, h: MENU_H, id: 'mem-open' });
   }
   /** ⚑ S401 (job 29 D2) — the taskbar's Memory item: a small mark, the word, the count; inverted while lit */

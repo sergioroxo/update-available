@@ -93,6 +93,37 @@
     },
     "seconds": 4.6,
     "now": "now"
+   },
+   "brand": {
+    "_doc": "⚑ S418 (UiB job 34 Part B; T101, his 22 Nov \"Too plain, not over the top\" … \"it needs much more\") — THE THREE BRANDS' OWN WORDS, louder each act (src/desktop/apps/brands26.ts draws them). L (Act I): its boast in the menu bar and the card's two lines. Second Thoughts (Act II): its name and claim in the menu bar, its dock tile, its wellbeing score, its achievement stickers (each shown when the act it names is done) and the sticker on a muted row. Shepherd Live™ (Act III): the episode, the sponsor strip, the ticker, the ring's word and the studio's applause sign. All of it is the products' self-presentation; none of it is a person's words, and none of it is ever drawn on them.",
+    "l": {
+     "boast": "1,204 things handled for you this year",
+     "personal": "personalised for you",
+     "made": "made for you by L",
+     "free": "FREE FROM 18"
+    },
+    "st": {
+     "name": "SECOND THOUGHTS™",
+     "using": "is using your computer",
+     "tile": "ST",
+     "tip": "for when you're not sure",
+     "score": "34",
+     "scoreLabel": "YOUR WELLBEING SCORE",
+     "scoreSub": "3 doors closed this week",
+     "stickers": {
+      "junie": "✓ Junie muted · calmer already!",
+      "dad": "✓ Replied to Dad for you",
+      "calm": "2 CALM DAYS"
+     },
+     "muted": "MUTED FOR YOU"
+    },
+    "shepherd": {
+     "episode": "episode 1",
+     "sponsor": "sponsored by HEDGE™ · Second Thoughts™",
+     "ticker": "TONIGHT ON SHEPHERD LIVE · A NEW YOU · STAY WITH ME, MAYA",
+     "ring": "BECOMING",
+     "applause": "APPLAUSE"
+    }
    }
   },
   "stName": "L · Second Thoughts",
@@ -129,7 +160,8 @@
    "lastNight": "Search · last night, 23:48",
    "card": {
     "title": "Happy 18th, Maya",
-    "made": "made by L"
+    "made": "made by L",
+    "_retiredS418": "`made` is no longer drawn: since S418 (job 34 Part B) the card says screen.os.brand.l.made (\"made for you by L\") and brand.l.personal (\"personalised for you\"), the brief's words for L's gloss"
    },
    "hello": {
     "text": [

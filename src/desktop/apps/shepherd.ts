@@ -30,9 +30,11 @@
  */
 import { setFont, px } from '../theme/chrome';
 import { fontFor, monoFor } from '../theme/fonts';
-import { ERA4, PLACE, WEB, V3, CLIP, KETTLE, CHROME, roundRect, roundEdge, pill, assistantMark, mayaPhoto, paintPortrait, portraitAt, thumb } from '../theme/era4';
+import { ERA4, PLACE, WEB, V3, CLIP, KETTLE, CHROME, OS26, roundRect, roundEdge, pill, assistantMark, mayaPhoto, paintPortrait, portraitAt, thumb } from '../theme/era4';
 import { reducedMotion } from '../../state/motion';
 import { wrapRich, drawLine, AI, ANIM_HZ, type Hit, type Rect } from './lScreen';
+import { fillRR, edgeRR, rr, softShadow, hazard, heavyText, alpha } from './desk26';
+import { BRAND } from './brands26';
 import ACTS from '../../../data/dialog/s4_acts.json';
 
 export type Door = 'vr' | 'here';
@@ -48,6 +50,8 @@ const A3 = (ACTS as unknown as { act3: {
     settings: { title: string; row: string; sub: string; remove: string }; securing: string; ask: string; yes: string };
 } }).act3;
 const ST = A3.b9.studio, PH = A3.b9.photo, B10 = A3.b10;
+/** ⚑ S418 — the show's own words: its episode, its sponsors, its ticker, the ring's word, the applause sign */
+const SH = BRAND.shepherd;
 const AGENT_NAME = (ACTS as unknown as { screen: { stName: string } }).screen.stName;
 
 /** the studio's pale light: the same cold pale the room recedes into (app.ts `STUDIO_FOG`) */
@@ -58,8 +62,15 @@ const INK = { junie: PLACE.sunHi, rae: PLACE.textileHi, system: ERA4.l, shepherd
 const PHOTO_STEPS = 14;
 /** the size the portraits are painted at (cells of the 24 × 30 grid × 5), then copied */
 const PW = 120, PH_ = 150;
-const BAR = 22, BAND = 34;
+const BAR = 26, BAND = 34;
 const BREAK_SECONDS = 0.9;
+/** ⚑ S418 — the ticker along the foot (its height), and the steps it crawls in: ≤ 8 a second (ANIM_HZ's half), still under
+ *  reduced motion; the applause marks round the ring change on the same steps */
+const TICK = 18;
+export const TICK_HZ = 4;
+const TICK_PX = 7;
+/** the sponsor strip, under the bar, where the bar is too narrow to carry it (the headset's glass) */
+const SPONSOR_H = 16;
 
 export class ShepherdSession {
   version = 0;
@@ -103,6 +114,8 @@ export class ShepherdSession {
   /** the controls the visitor may press, as last drawn (the surface's own coordinates): one — the Yes */
   hits: Hit[] = [];
   private clock = 0;
+  /** ⚑ S418 — the ticker's (and the applause marks') step: TICK_HZ a second while the session is on and whole */
+  tick = 0;
   // ── the pictures, painted once ──
   private her: HTMLCanvasElement | null = null;
   private alt: HTMLCanvasElement | null = null;
@@ -119,7 +132,7 @@ export class ShepherdSession {
     this.on = true; this.door = door; this.t = 0; this.step = -1; this.intro = true; this.hostOn = false;
     this.line = ''; this.photos = 0; this.photoStep = 0; this.notes = []; this.booked = false;
     this.junie = []; this.signins = []; this.tiles = 0; this.settings = false; this.securing = false;
-    this.ask = false; this.yesRing = false; this.breakT = -1; this.dark = false;
+    this.ask = false; this.yesRing = false; this.breakT = -1; this.dark = false; this.tick = 0;
     for (const k of Object.keys(this.cur) as CurId[]) this.cur[k] = blank();
     this.version++;
   }
@@ -158,6 +171,9 @@ export class ShepherdSession {
     this.clock += dt;
     const tick = Math.floor(before * ANIM_HZ) !== Math.floor(this.clock * ANIM_HZ);
     this.t += dt;
+    // ⚑ S418 — the ticker crawls a step at TICK_HZ (and the applause marks change with it); still under reduced motion, and
+    //   still once the picture breaks (the show stops where it is)
+    if (!reducedMotion() && this.breakT < 0) { const k = Math.floor(this.t * TICK_HZ); if (k !== this.tick) { this.tick = k; this.version++; } }
     // the title card: four steps in, then held (the jingle has the floor)
     if (this.intro) { const s = Math.min(4, Math.floor(this.t * 3)); if (s !== this.step) { this.step = s; this.version++; } }
     for (const k of Object.keys(this.cur) as CurId[]) {
@@ -183,7 +199,17 @@ export class ShepherdSession {
   }
 
   // ── the picture ────────────────────────────────────────────────────────────
-  /** the whole session in `r`; `publish` takes the controls the visitor may press (the Yes) */
+  /**
+   * the whole session in `r`; `publish` takes the controls the visitor may press (the Yes).
+   * ⚑ S418 (UiB job 34 Part B; T101) — DRESSED AS LIVE TELEVISION ABOUT HER: a black bar with the red LIVE bug, the gold
+   * title SHEPHERD LIVE™ and "exploratory session · episode 1" (the product's own words: never therapy, a clinic or a
+   * diagnosis), its sponsors on the bar ("sponsored by HEDGE™ · Second Thoughts™"); a navy studio with a row of stage lights
+   * and the host in its pale key light; her photo turned into the show's graphic — "BECOMING", a big gold ring stuck at 99%,
+   * the studio's APPLAUSE sign lit, marks of applause round it; what it sent as her shown as the show's captions; and a gold
+   * ticker crawling along the foot ("TONIGHT ON SHEPHERD LIVE · A NEW YOU · STAY WITH ME, MAYA"). Her friends' tiles, the
+   * sign-ins, Settings and the one dialog are not the show's: they keep the OS's plain look, and Junie's words their own card.
+   * Job 33's studio (pale bands, the small ring under the pictures) is in git at 7763b962.
+   */
   draw(ctx: CanvasRenderingContext2D, r: Rect, publish: ((h: Hit) => void) | null = null): void {
     const hits: Hit[] = [];
     const push = (h: Hit): void => { hits.push(h); publish?.(h); };
@@ -194,81 +220,106 @@ export class ShepherdSession {
     if (this.dark) { px(ctx, r.x, r.y, r.w, r.h, ERA4.field); ctx.restore(); this.hits = []; return; }
     const friends = this.junie.length > 0 || this.signins.length > 0;
     const colW = this.notes.length || this.booked || friends || this.settings ? Math.max(150, Math.min(250, Math.round(r.w * (r.w < 600 ? 0.42 : 0.35)))) : 0;
-    const top = r.y + BAR, bandY = r.y + r.h - BAND;
+    // the sponsors ride on the bar where it is wide enough (the monitor), on a strip of their own under it where it is not
+    setFont(ctx, 11);
+    const sponsorW = Math.ceil(ctx.measureText(SH.sponsor).width) + 16;
+    setFont(ctx, 14);
+    const titleW = Math.ceil(ctx.measureText(ST.name.toUpperCase()).width);
+    setFont(ctx, 11);
+    const subText = `${ST.sub} · ${SH.episode}`, subW = Math.ceil(ctx.measureText(subText).width);
+    const sponsorOnBar = 62 + titleW + 10 + subW + 16 + sponsorW + 28 <= r.w;
+    const top = r.y + BAR + (sponsorOnBar ? 0 : SPONSOR_H), tickY = r.y + r.h - TICK, bandY = tickY - BAND;
     const stage: Rect = { x: r.x, y: top, w: r.w - colW, h: bandY - top };
-    // ── the studio: pale bands, a floor, the key light ──
-    const sky = [STUDIO.sky, STUDIO.skyHi, STUDIO.edge, STUDIO.haze];
-    const floorY = stage.y + Math.round(stage.h * 0.74);
-    for (let i = 0; i < 4; i++) px(ctx, r.x, stage.y + Math.round(((floorY - stage.y) * i) / 4), r.w, Math.ceil((floorY - stage.y) / 4) + 1, sky[i]);
-    px(ctx, r.x, floorY, r.w, bandY - floorY, STUDIO.floor);
-    px(ctx, r.x, floorY, r.w, 1, STUDIO.edge);
+    // ── the studio: a navy set, a row of stage lights along its top, a floor with a gold rim ──
+    const floorY = stage.y + Math.round(stage.h * 0.78);
+    const g = ctx.createLinearGradient(0, stage.y, 0, floorY);
+    g.addColorStop(0, OS26.shNavy); g.addColorStop(1, OS26.shStage);
+    ctx.fillStyle = g; ctx.fillRect(r.x, stage.y, r.w, floorY - stage.y);
+    px(ctx, r.x, floorY, r.w, bandY - floorY, OS26.shNavy2);
+    px(ctx, r.x, floorY, r.w, 2, OS26.shGoldLo);
+    for (let lx = r.x + 14; lx < r.x + stage.w - 6; lx += 30) {
+      fillRR(ctx, lx, stage.y + 5, 8, 8, 4, OS26.shGoldLo);
+      fillRR(ctx, lx + 2, stage.y + 7, 4, 4, 2, OS26.shGoldHi);
+    }
     if (this.intro) this.drawTitle(ctx, stage);
     else {
       const photoUp = this.photos === 2;
-      // the host: centre stage, or to the left of the picture once it is up
-      if (this.hostOn) {
-        const hs = Math.max(0.6, Math.min(1.25, stage.h / 260)) * (photoUp ? 0.62 : 1);
-        const hx = photoUp ? stage.x + Math.round(34 * hs) + 8 : stage.x + Math.round(stage.w / 2);
-        this.drawHost(ctx, hx, floorY, hs);
+      // the host: centre stage in its key light — until her photo becomes the show's graphic, which has the stage then
+      if (this.hostOn && !photoUp) {
+        const hs = Math.max(0.6, Math.min(1.25, stage.h / 260));
+        this.drawHost(ctx, stage.x + Math.round(stage.w / 2), floorY, hs);
       }
       if (photoUp) this.drawPhoto(ctx, stage, floorY);
       if (this.photos === 1) this.drawPhotos(ctx, stage, anchor);
     }
     // the friends' tiles at the glass's left edge (what they say is in Junie's thread at the edge)
     if (this.tiles > 0) this.drawTiles(ctx, stage);
-    // the sign-ins, a thin strip each under the bar
+    // the sign-ins, a thin strip each under the bar (the OS's own notices: plain)
     this.signins.forEach((s, i) => {
-      setFont(ctx, 10);
-      const w = Math.ceil(ctx.measureText(s).width) + 30, x = stage.x + Math.round((stage.w - w) / 2), y = stage.y + 6 + i * 20;
-      roundEdge(ctx, x, y, w, 17, 8, WEB.cardEdge, WEB.card);
-      keyIcon(ctx, x + 7, y + 4, CHROME.ink);
-      ctx.fillStyle = V3.ink; ctx.fillText(s, x + 22, y + 3);
+      setFont(ctx, 11);
+      const w = Math.ceil(ctx.measureText(s).width) + 32, x = stage.x + Math.round((stage.w - w) / 2), y = stage.y + 6 + i * 22;
+      roundEdge(ctx, x, y, w, 19, 9, WEB.cardEdge, WEB.card);
+      keyIcon(ctx, x + 8, y + 5, CHROME.ink);
+      ctx.fillStyle = V3.ink; ctx.fillText(s, x + 24, y + 3);
     });
     if (this.settings) this.drawSettings(ctx, stage, anchor);
-    // ── the edge: what it sent as her, and her friends' answer ──
+    // ── the edge: what it sent as her, as the show's captions; her friends' answer in their own card ──
     if (colW) this.drawColumn(ctx, { x: r.x + r.w - colW, y: top, w: colW, h: bandY - top });
-    // ── the dialog: the one press that changes anything ──
+    // ── the dialog: the one press that changes anything (the OS's own, plain: not the show's) ──
     if (this.ask) {
       // right of the friends' tiles (they are people: the system's dialog never covers them)
       const w = Math.min(280, stage.w - 74), h = 96, x = stage.x + stage.w - w - 6, y = stage.y + Math.round((stage.h - h) / 2) + 10;
-      roundEdge(ctx, x - 1, y - 1, w + 2, h + 2, 12, V3.ink, V3.card);
+      softShadow(ctx, { x, y, w, h }, 12, 1.6);
+      edgeRR(ctx, x, y, w, h, 12, OS26.winEdge, OS26.win);
       assistantMark(ctx, x + 12, y + 14, 22, AI.mark, WEB.card);
-      setFont(ctx, w < 250 ? 13 : 14); ctx.fillStyle = V3.ink; ctx.fillText(fitIn(ctx, B10.ask, w - 48), x + 40, y + 17);
+      setFont(ctx, w < 250 ? 13 : 14); ctx.fillStyle = OS26.winInk; ctx.fillText(fitIn(ctx, B10.ask, w - 48), x + 40, y + 17);
       setFont(ctx, 13);
       const bw = Math.max(84, Math.ceil(ctx.measureText(B10.yes).width) + 40), bx = x + w - bw - 14, by = y + h - 40;
-      if (this.yesRing) { ctx.strokeStyle = INK.junie; ctx.lineWidth = 2; ctx.strokeRect(bx - 4, by - 4, bw + 8, 34); }
-      pill(ctx, bx, by, bw, 26, AI.primary);
-      ctx.fillStyle = AI.primaryInk; ctx.fillText(B10.yes, bx + Math.round((bw - ctx.measureText(B10.yes).width) / 2), by + 6);
+      if (this.yesRing) { ctx.strokeStyle = INK.junie; ctx.lineWidth = 2; rr(ctx, bx - 4, by - 4, bw + 8, 34, 17); ctx.stroke(); }
+      fillRR(ctx, bx, by, bw, 26, 13, OS26.menuButton);
+      ctx.fillStyle = OS26.menuButtonInk; ctx.fillText(B10.yes, bx + Math.round((bw - ctx.measureText(B10.yes).width) / 2), by + 6);
       anchor('yes', { x: bx, y: by, w: bw, h: 26 });
       push({ x: bx - 6, y: by - 6, w: bw + 12, h: 38, id: 'a3-yes' });
     }
-    // ── the bar: LIVE · Shepherd Live™ · exploratory session; the gear at its right (Settings) ──
-    px(ctx, r.x, r.y, r.w, BAR, this.securing ? AI.primary : STUDIO.bar);
+    // ── the bar: the LIVE bug, SHEPHERD LIVE™, "exploratory session · episode 1", its sponsors; the gear at its right ──
     if (this.securing) {
-      assistantMark(ctx, r.x + 8, r.y + 3, 16, AI.primaryInk, AI.primary);
-      setFont(ctx, 11); ctx.fillStyle = AI.primaryInk; ctx.fillText(fitIn(ctx, B10.securing, r.w - 60), r.x + 30, r.y + 5);
+      // the system drags Settings back: its own yellow over the show's bar (Second Thoughts, fighting her friends)
+      px(ctx, r.x, r.y, r.w, BAR, PLACE.sunHi);
+      hazard(ctx, r.x, r.y + BAR - 3, r.w, 3, OS26.stInk, 1, 6);
+      assistantMark(ctx, r.x + 8, r.y + 5, 16, OS26.stInk, PLACE.sunHi);
+      setFont(ctx, 12); heavyText(ctx, fitIn(ctx, B10.securing, r.w - 60), r.x + 30, r.y + 6, OS26.stInk, 0.4);
     } else {
-      pill(ctx, r.x + 8, r.y + 4, 40, 14, V3.danger);
-      roundRect(ctx, r.x + 13, r.y + 8, 6, 6, 3, WEB.card);
-      ctx.font = monoFor(9); ctx.fillStyle = WEB.card; ctx.fillText(ST.live, r.x + 22, r.y + 7);
-      setFont(ctx, 11); ctx.fillStyle = STUDIO.barInk;
-      const nw = Math.ceil(ctx.measureText(ST.name).width);
-      ctx.fillText(ST.name, r.x + 56, r.y + 5);
-      setFont(ctx, 10); ctx.fillStyle = ERA4.text; ctx.fillText(fitIn(ctx, `· ${ST.sub}`, r.w - nw - 100), r.x + 62 + nw, r.y + 6);
+      px(ctx, r.x, r.y, r.w, BAR, OS26.shPlate);
+      px(ctx, r.x, r.y + BAR - 2, r.w, 2, OS26.shGold);
+      fillRR(ctx, r.x + 8, r.y + 5, 46, 16, 4, OS26.shLive);
+      fillRR(ctx, r.x + 13, r.y + 10, 6, 6, 3, OS26.shText);
+      setFont(ctx, 11); heavyText(ctx, ST.live, r.x + 22, r.y + 6, OS26.shText, 0.4);
+      setFont(ctx, 14); heavyText(ctx, ST.name.toUpperCase(), r.x + 62, r.y + 5, OS26.shGold, 0.6);
+      setFont(ctx, 11); ctx.fillStyle = OS26.shText;
+      const sx = r.x + 62 + titleW + 10;
+      ctx.fillText(fitIn(ctx, subText, Math.max(40, r.w - (sx - r.x) - 34 - (sponsorOnBar ? sponsorW + 16 : 0))), sx, r.y + 7);
+      if (sponsorOnBar) { setFont(ctx, 11); ctx.fillStyle = OS26.shGold; ctx.fillText(SH.sponsor, r.x + r.w - 30 - sponsorW + 8, r.y + 7); }
+      else {
+        px(ctx, r.x, r.y + BAR, r.w, SPONSOR_H, OS26.shNavy2);
+        setFont(ctx, 11); ctx.fillStyle = OS26.shGold;
+        ctx.fillText(fitIn(ctx, SH.sponsor, r.w - 16), r.x + r.w - 8 - Math.min(r.w - 16, sponsorW - 16), r.y + BAR + 1);
+      }
     }
-    gearIcon(ctx, r.x + r.w - 20, r.y + 5, this.securing ? AI.primaryInk : ERA4.text);
-    anchor('gear', { x: r.x + r.w - 22, y: r.y + 3, w: 16, h: 16 });
-    // ── the caption band: Shepherd's words ──
-    px(ctx, r.x, bandY, r.w, BAND, CLIP.band);
+    gearIcon(ctx, r.x + r.w - 22, r.y + 7, this.securing ? OS26.stInk : OS26.shGold, this.securing ? PLACE.sunHi : OS26.shPlate);
+    anchor('gear', { x: r.x + r.w - 24, y: r.y + 5, w: 16, h: 16 });
+    // ── the caption band: Shepherd's words, as the show's closed captions ──
+    px(ctx, r.x, bandY, r.w, BAND, OS26.shPlate);
     if (this.line) {
-      ctx.font = monoFor(9);
-      const tw = Math.ceil(ctx.measureText(ST.host).width) + 12;
-      px(ctx, r.x + 8, bandY - 13, tw, 13, CLIP.band);
-      ctx.fillStyle = this.speaking ? ERA4.l : ERA4.glow; ctx.fillText(ST.host, r.x + 14, bandY - 11);
-      ctx.font = fontFor(r.w < 560 ? 14 : 16, 'e4'); ctx.fillStyle = CLIP.ink;
+      setFont(ctx, 11);
+      const tw = Math.ceil(ctx.measureText(ST.host).width) + 14;
+      fillRR(ctx, r.x + 8, bandY - 16, tw, 16, 3, this.speaking ? OS26.shGold : OS26.shGoldLo);
+      ctx.fillStyle = OS26.shNavy; ctx.fillText(ST.host, r.x + 15, bandY - 14);
+      ctx.font = fontFor(r.w < 560 ? 14 : 16, 'e4'); ctx.fillStyle = OS26.shText;
       const t = fitIn(ctx, this.line, r.w - 20), lw = Math.ceil(ctx.measureText(t).width);
       ctx.fillText(t, r.x + Math.max(10, Math.round((r.w - lw) / 2)), bandY + 9);
     }
+    // ── the ticker along the foot, crawling in steps ──
+    this.drawTicker(ctx, { x: r.x, y: tickY, w: r.w, h: TICK });
     // ── the cursors: Shepherd's (taking her photo), the system's, and her friends' ──
     for (const k of ['shepherd', 'system', 'junie', 'rae'] as CurId[]) {
       const c = this.cur[k];
@@ -291,33 +342,56 @@ export class ShepherdSession {
     this.hits = hits;
   }
 
-  /** the monitor while the session is on the headset's glass: one still card, drawn on change only */
+  /** ⚑ S418 — the ticker: the show's own line, again and again, a step to the left at each tick (a gold strip, navy capitals) */
+  private drawTicker(ctx: CanvasRenderingContext2D, t: Rect): void {
+    px(ctx, t.x, t.y, t.w, t.h, OS26.shGold);
+    px(ctx, t.x, t.y, t.w, 1, OS26.shGoldHi);
+    setFont(ctx, 11);
+    const unit = `${SH.ticker}  ·  `, uw = Math.ceil(ctx.measureText(unit).width);
+    const off = (this.tick * TICK_PX) % uw;
+    ctx.save(); ctx.beginPath(); ctx.rect(t.x, t.y, t.w, t.h); ctx.clip();
+    for (let x = t.x + 8 - off; x < t.x + t.w; x += uw) heavyText(ctx, unit, x, t.y + 3, OS26.shNavy, 0.35);
+    ctx.restore();
+  }
+
+  /** the monitor while the session is on the headset's glass: one still card, drawn on change only (⚑ S418: the show's own
+   *  card — its bar's LIVE bug, its gold title, its words) */
   drawAway(ctx: CanvasRenderingContext2D, r: Rect): void {
     // (the anchors are the glass's: this card touches none of them)
-    px(ctx, r.x, r.y, r.w, r.h, STUDIO.skyHi);
-    px(ctx, r.x, r.y + Math.round(r.h * 0.62), r.w, Math.round(r.h * 0.38), STUDIO.haze);
-    const cx = r.x + Math.round(r.w / 2), cy = r.y + Math.round(r.h * 0.36);
-    haloRing(ctx, cx, cy, 30, STUDIO.halo, 4);
-    setFont(ctx, 18); ctx.fillStyle = V3.ink;
-    const nw = Math.ceil(ctx.measureText(ST.name).width); ctx.fillText(ST.name, cx - Math.round(nw / 2), cy + 44);
-    setFont(ctx, 11); ctx.fillStyle = V3.ink2;
-    const sw = Math.ceil(ctx.measureText(ST.sub).width); ctx.fillText(ST.sub, cx - Math.round(sw / 2), cy + 68);
-    setFont(ctx, 13); ctx.fillStyle = V3.ink;
-    const iw = Math.ceil(ctx.measureText(ST.inHeadset).width); ctx.fillText(ST.inHeadset, cx - Math.round(iw / 2), cy + 96);
+    const g = ctx.createLinearGradient(0, r.y, 0, r.y + r.h);
+    g.addColorStop(0, OS26.shNavy); g.addColorStop(1, OS26.shStage);
+    ctx.fillStyle = g; ctx.fillRect(r.x, r.y, r.w, r.h);
+    for (let lx = r.x + 14; lx < r.x + r.w - 6; lx += 30) { fillRR(ctx, lx, r.y + 8, 8, 8, 4, OS26.shGoldLo); fillRR(ctx, lx + 2, r.y + 10, 4, 4, 2, OS26.shGoldHi); }
+    const cx = r.x + Math.round(r.w / 2), cy = r.y + Math.round(r.h * 0.32);
+    haloRing(ctx, cx, cy, 34, OS26.shGold, 4);
+    fillRR(ctx, cx - 23, cy + 24, 46, 16, 4, OS26.shLive);
+    fillRR(ctx, cx - 18, cy + 29, 6, 6, 3, OS26.shText);
+    setFont(ctx, 11); heavyText(ctx, ST.live, cx - 9, cy + 25, OS26.shText, 0.4);
+    setFont(ctx, 24);
+    const name = ST.name.toUpperCase(), nw = Math.ceil(ctx.measureText(name).width);
+    heavyText(ctx, name, cx - Math.round(nw / 2), cy + 50, OS26.shGold, 0.8);
+    setFont(ctx, 12); ctx.fillStyle = OS26.shText;
+    const sub = `${ST.sub} · ${SH.episode}`, sw = Math.ceil(ctx.measureText(sub).width); ctx.fillText(sub, cx - Math.round(sw / 2), cy + 84);
+    setFont(ctx, 14); ctx.fillStyle = OS26.shText;
+    const iw = Math.ceil(ctx.measureText(ST.inHeadset).width); ctx.fillText(ST.inHeadset, cx - Math.round(iw / 2), cy + 112);
+    setFont(ctx, 11); ctx.fillStyle = OS26.shGold;
+    const pw = Math.ceil(ctx.measureText(SH.sponsor).width); ctx.fillText(SH.sponsor, cx - Math.round(pw / 2), r.y + r.h - 24);
   }
 
   // ── its parts ──────────────────────────────────────────────────────────────
+  /** the title card (the jingle's first seconds): the gold halo grows in steps, then SHEPHERD LIVE™, then its episode */
   private drawTitle(ctx: CanvasRenderingContext2D, s: Rect): void {
     const k = Math.max(0, this.step) / 4;
-    const cx = s.x + Math.round(s.w / 2), cy = s.y + Math.round(s.h * 0.4);
-    haloRing(ctx, cx, cy, Math.round(18 + 16 * k), STUDIO.halo, 3 + Math.round(2 * k));
+    const cx = s.x + Math.round(s.w / 2), cy = s.y + Math.round(s.h * 0.38);
+    haloRing(ctx, cx, cy, Math.round(20 + 18 * k), OS26.shGold, 3 + Math.round(2 * k));
     if (k >= 0.5) {
-      ctx.font = fontFor(s.w < 400 ? 20 : 24, 'e4'); ctx.fillStyle = V3.ink;
-      const nw = Math.ceil(ctx.measureText(ST.name).width); ctx.fillText(ST.name, cx - Math.round(nw / 2), cy + 44);
+      setFont(ctx, s.w < 400 ? 24 : 30);
+      const name = ST.name.toUpperCase(), nw = Math.ceil(ctx.measureText(name).width);
+      heavyText(ctx, name, cx - Math.round(nw / 2), cy + 40, OS26.shGold, 0.9);
     }
     if (k >= 0.75) {
-      setFont(ctx, 12); ctx.fillStyle = V3.ink2;
-      const sw = Math.ceil(ctx.measureText(ST.sub).width); ctx.fillText(ST.sub, cx - Math.round(sw / 2), cy + 74);
+      setFont(ctx, 13); ctx.fillStyle = OS26.shText;
+      const sub = `${ST.sub} · ${SH.episode}`, sw = Math.ceil(ctx.measureText(sub).width); ctx.fillText(sub, cx - Math.round(sw / 2), cy + 80);
     }
   }
 
@@ -327,11 +401,13 @@ export class ShepherdSession {
     const u = (n: number): number => Math.round(n * s);
     const headY = floorY - u(158);
     // the studio's key light behind it, and its pool on the floor
+    // ⚑ S418 — on the show's navy set, the key light is a spotlight: a soft pale cone falling from the rig, a pool on the floor
     ctx.save();
-    ctx.globalAlpha = 0.45; ctx.fillStyle = WEB.shimmer;
-    ctx.beginPath(); ctx.ellipse(cx, headY + u(52), u(74), u(78), 0, 0, Math.PI * 2); ctx.fill();
-    ctx.globalAlpha = 0.6; ctx.fillStyle = STUDIO.edge;
-    ctx.beginPath(); ctx.ellipse(cx, floorY, u(60), u(7), 0, 0, Math.PI * 2); ctx.fill();
+    const spot = ctx.createRadialGradient(cx, headY + u(40), u(10), cx, headY + u(60), u(110));
+    spot.addColorStop(0, alpha(OS26.shText, 0.42)); spot.addColorStop(0.6, alpha(OS26.shText, 0.14)); spot.addColorStop(1, alpha(OS26.shText, 0));
+    ctx.fillStyle = spot; ctx.beginPath(); ctx.ellipse(cx, headY + u(60), u(110), u(120), 0, 0, Math.PI * 2); ctx.fill();
+    ctx.globalAlpha = 0.5; ctx.fillStyle = STUDIO.edge;
+    ctx.beginPath(); ctx.ellipse(cx, floorY, u(64), u(8), 0, 0, Math.PI * 2); ctx.fill();
     ctx.restore();
     haloRing(ctx, cx, headY + u(4), u(27), this.speaking ? STUDIO.halo : ERA4.glow, Math.max(2, u(4)));
     // the robe: soft shoulders falling to the floor, the sleeves a little open
@@ -382,50 +458,83 @@ export class ShepherdSession {
     }
   }
 
-  /** the photo: a MIRROR on the headset's glass, SIDE BY SIDE on the monitor */
-  private drawPhoto(ctx: CanvasRenderingContext2D, s: Rect, floorY: number): void {
+  /** the photo: a MIRROR on the headset's glass, SIDE BY SIDE on the monitor. ⚑ S418 — turned into the show's graphic: the
+   *  pictures to the left (at the size their seams still show: job 33's beat, 26-18), BECOMING's big gold ring to the right */
+  private drawPhoto(ctx: CanvasRenderingContext2D, s: Rect, _floorY: number): void {
     this.ensureHer();
     this.ensureAlt();
     const mirror = this.door === 'vr';
-    const fh = Math.min(s.h - 54, mirror ? 236 : 220), fw = Math.round(fh * 0.8);
-    const ringR = Math.max(8, Math.round(fh / 22));
+    const R = Math.round(Math.max(40, Math.min(64, s.h * 0.27, s.w * (mirror ? 0.19 : 0.15))));
+    const ring = 2 * R + 30, pad = 12;
+    let fh = Math.min(s.h - 50, 178), fw = Math.round(fh * 0.8);
+    const avail = s.w - ring - 2 * pad - 10;
+    const need = (w: number): number => (mirror ? w + 10 : 2 * w + 18);
+    if (need(fw) > avail) { fw = Math.floor(mirror ? avail - 10 : (avail - 18) / 2); fh = Math.round(fw / 0.8); }
+    const y = s.y + Math.max(20, Math.round((s.h - fh - 22) / 2));
+    let x = s.x + pad + (mirror ? 6 : 0);
     if (mirror) {
-      const x = s.x + Math.round((s.w - fw) / 2) + 18, y = s.y + 10;
-      // the mirror's frame, and the altered picture in it
-      roundEdge(ctx, x - 8, y - 8, fw + 16, fh + 16, 10, ERA4.ruleHi, ERA4.panelHi);
+      // the mirror's frame, and the altered picture in it; her own photo, taken from her Photos, tucked into its corner
+      roundEdge(ctx, x - 7, y - 7, fw + 14, fh + 14, 10, OS26.shGold, OS26.shNavy2);
       this.blitAlt(ctx, x, y, fw, fh);
       stamp(ctx, x + fw - 4, y + 4, PH.made);
-      // her own photo, taken from her Photos, tucked into the frame's corner
-      const tw = Math.round(fw * 0.32), th = Math.round(tw * 1.25);
-      px(ctx, x - 12, y + fh - th + 4, tw + 6, th + 6, WEB.card);
-      if (this.her) { const was = ctx.imageSmoothingEnabled; ctx.imageSmoothingEnabled = false; ctx.drawImage(this.her, x - 9, y + fh - th + 7, tw, th); ctx.imageSmoothingEnabled = was; }
-      this.drawBecoming(ctx, x + Math.round(fw / 2), y + fh + 18, ringR);
+      const tw = Math.round(fw * 0.34), th = Math.round(tw * 1.25);
+      px(ctx, x - 10, y + fh - th + 4, tw + 6, th + 6, WEB.card);
+      if (this.her) { const was = ctx.imageSmoothingEnabled; ctx.imageSmoothingEnabled = false; ctx.drawImage(this.her, x - 7, y + fh - th + 7, tw, th); ctx.imageSmoothingEnabled = was; }
+      x += fw + 10;
     } else {
-      const gap = 26, x0 = s.x + Math.round((s.w - (2 * fw + gap)) / 2) + 30, y = s.y + 12;
       // hers, as taken from her Photos (its name under it), and the system's beside it
-      px(ctx, x0 - 3, y - 3, fw + 6, fh + 6, WEB.card);
-      if (this.her) { const was = ctx.imageSmoothingEnabled; ctx.imageSmoothingEnabled = false; ctx.drawImage(this.her, x0, y, fw, fh); ctx.imageSmoothingEnabled = was; }
-      setFont(ctx, 10); ctx.fillStyle = V3.ink2; ctx.fillText(A3.b9.photos.file, x0, y + fh + 8);
-      const x1 = x0 + fw + gap;
-      px(ctx, x1 - 3, y - 3, fw + 6, fh + 6, ERA4.ruleHi);
+      px(ctx, x - 3, y - 3, fw + 6, fh + 6, WEB.card);
+      if (this.her) { const was = ctx.imageSmoothingEnabled; ctx.imageSmoothingEnabled = false; ctx.drawImage(this.her, x, y, fw, fh); ctx.imageSmoothingEnabled = was; }
+      setFont(ctx, 11); ctx.fillStyle = OS26.shText; ctx.fillText(fitIn(ctx, A3.b9.photos.file, fw + 10), x, y + fh + 7);
+      const x1 = x + fw + 18;
+      px(ctx, x1 - 3, y - 3, fw + 6, fh + 6, OS26.shGold);
       this.blitAlt(ctx, x1, y, fw, fh);
       stamp(ctx, x1 + fw - 4, y + 4, PH.made);
       // the arrow between them: what was done to it
       const ay = y + Math.round(fh / 2);
-      for (let i = 0; i < 3; i++) px(ctx, x0 + fw + 7 + i * 4, ay - 1, 3, 3, AI.mark);
-      this.drawBecoming(ctx, x1 + Math.round(fw / 2), Math.min(floorY + 30, y + fh + 16), ringR);
+      for (let i = 0; i < 3; i++) px(ctx, x + fw + 4 + i * 4, ay - 1, 3, 3, OS26.shGold);
+      x = x1 + fw;
     }
+    const cx = Math.round(x + (s.x + s.w - x) / 2), cy = y + Math.round(fh / 2) - 12;
+    this.drawBecoming(ctx, cx, cy, R);
   }
-  /** the ring, stuck: "Becoming 99%" */
-  private drawBecoming(ctx: CanvasRenderingContext2D, cx: number, cy: number, rr: number): void {
-    const n = this.becoming, label = PH.becoming.replace('{n}', String(n));
-    setFont(ctx, 12);
-    const lw = Math.ceil(ctx.measureText(label).width), total = rr * 2 + 8 + lw, x = cx - Math.round(total / 2);
-    ctx.strokeStyle = ERA4.ruleHi; ctx.lineWidth = 3;
-    ctx.beginPath(); ctx.arc(x + rr, cy, rr, 0, Math.PI * 2); ctx.stroke();
-    ctx.strokeStyle = AI.mark;
-    ctx.beginPath(); ctx.arc(x + rr, cy, rr, -Math.PI / 2, -Math.PI / 2 + (Math.PI * 2 * n) / 100); ctx.stroke();
-    ctx.fillStyle = V3.ink; ctx.fillText(label, x + rr * 2 + 8, cy - 7);
+  /**
+   * ⚑ S418 — "BECOMING", the show's big gold ring, stuck at 99% (never 100): a dark gold track, its gold arc, the number large
+   * in the middle; under it the word, and the studio's APPLAUSE sign lit once it stops; marks of applause round the ring that
+   * change on the ticker's steps (still under reduced motion).
+   */
+  private drawBecoming(ctx: CanvasRenderingContext2D, cx: number, cy: number, R: number): void {
+    const n = this.becoming, lw = Math.max(7, Math.round(R * 0.17));
+    // its glow
+    const g = ctx.createRadialGradient(cx, cy, R * 0.4, cx, cy, R * 1.55);
+    g.addColorStop(0, alpha(OS26.shGold, 0.22)); g.addColorStop(1, alpha(OS26.shGold, 0));
+    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(cx, cy, R * 1.55, 0, Math.PI * 2); ctx.fill();
+    ctx.lineCap = 'round';
+    ctx.strokeStyle = OS26.shGoldLo; ctx.lineWidth = lw; ctx.beginPath(); ctx.arc(cx, cy, R, 0, Math.PI * 2); ctx.stroke();
+    if (n > 0) { ctx.strokeStyle = OS26.shGold; ctx.beginPath(); ctx.arc(cx, cy, R, -Math.PI / 2, -Math.PI / 2 + (Math.PI * 2 * n) / 100); ctx.stroke(); }
+    ctx.lineCap = 'butt';
+    setFont(ctx, Math.round(R * 0.5));
+    const num = `${n}%`, nw = Math.ceil(ctx.measureText(num).width);
+    heavyText(ctx, num, cx - Math.round(nw / 2), cy - Math.round(R * 0.3), OS26.shGoldHi, 1);
+    setFont(ctx, 13);
+    const word = SH.ring.split('').join('\u2009'), ww = Math.ceil(ctx.measureText(word).width);
+    heavyText(ctx, word, cx - Math.round(ww / 2), cy + R + lw / 2 + 6, OS26.shGold, 0.5);
+    if (n >= PH.stopAt) {
+      // the studio's applause sign, lit; marks of applause round the ring, changing on the ticker's steps
+      setFont(ctx, 11);
+      const aw = Math.ceil(ctx.measureText(SH.applause).width) + 16, ay = cy + R + lw / 2 + 26;
+      fillRR(ctx, cx - Math.round(aw / 2), ay, aw, 18, 4, OS26.shLive);
+      heavyText(ctx, SH.applause, cx - Math.round(aw / 2) + 8, ay + 3, OS26.shText, 0.4);
+      const alt = reducedMotion() ? 0 : this.tick % 2;
+      ctx.strokeStyle = OS26.shGoldHi; ctx.lineWidth = 2; ctx.lineCap = 'round';
+      for (let i = 0; i < 12; i++) {
+        if (i % 2 !== alt) continue;
+        const a = (i / 12) * Math.PI * 2 + 0.2, r0 = R + lw / 2 + 6, r1 = r0 + 8;
+        if (Math.sin(a) > 0.45) continue;   // clear of the word and the sign under the ring
+        ctx.beginPath(); ctx.moveTo(cx + Math.cos(a) * r0, cy + Math.sin(a) * r0); ctx.lineTo(cx + Math.cos(a) * r1, cy + Math.sin(a) * r1); ctx.stroke();
+      }
+      ctx.lineCap = 'butt';
+    }
   }
 
   /** the altered picture, copied in slices out of register: its seams show, and her own picture shows through them */
@@ -464,44 +573,48 @@ export class ShepherdSession {
     this.altStep = this.photoStep;
   }
 
-  /** the edge: each note under "Sent as Maya", Junie's answer under the lot's (through the mute), the booking */
+  /** the edge: each note under "Sent as Maya", Junie's answer under the lot's (through the mute), the booking.
+   *  ⚑ S418 — what it sent as her are the show's on-screen captions now (dark plates, a gold bar, SENT AS MAYA); Junie's words
+   *  keep their own plain card (felt stays bare); the booking is the show's green plate */
   private drawColumn(ctx: CanvasRenderingContext2D, c: Rect): void {
-    px(ctx, c.x, c.y, c.w, c.h, V3.page);
-    px(ctx, c.x, c.y, 1, c.h, V3.edge);
+    const was = ctx.globalAlpha; ctx.globalAlpha = 0.94; px(ctx, c.x, c.y, c.w, c.h, OS26.shNavy); ctx.globalAlpha = was;
+    px(ctx, c.x, c.y, 2, c.h, OS26.shGold);
     let y = c.y + 8;
-    const x = c.x + 8, w = c.w - 16;
+    const x = c.x + 9, w = c.w - 16;
     this.notes.forEach((n, i) => {
-      setFont(ctx, 9); ctx.fillStyle = V3.ink2;
-      ctx.fillText(fitIn(ctx, `${A3.b9.sentAs} · ${n.to}`, w), x, y);
-      y += 13;
-      // her words as it wrote them, whole (never cut: the edge is wide enough for three lines on the monitor)
-      const lines = wrapRich(ctx, n.text, w - 14, 10);
-      const bh = lines.length * 13 + 10;
-      roundRect(ctx, x, y, w, bh, 8, KETTLE.mine);
-      lines.forEach((l, j) => drawLine(ctx, l, x + 7, y + 5 + j * 13, 10, KETTLE.ink));
-      y += bh + 6;
-      // Junie's answer to the lot's message: through the mute
+      setFont(ctx, 11);
+      const head = `${A3.b9.sentAs.toUpperCase()} · ${n.to}`;
+      heavyText(ctx, fitIn(ctx, head, w), x, y, OS26.shGold, 0.35);
+      y += 15;
+      // her words as it wrote them, whole (three lines at most), on the show's caption plate
+      const lines = wrapRich(ctx, n.text, w - 18, 12).slice(0, 3);
+      const bh = lines.length * 15 + 10;
+      fillRR(ctx, x, y, w, bh, 4, OS26.shPlate);
+      px(ctx, x, y, 3, bh, OS26.shGold);
+      lines.forEach((l, j) => drawLine(ctx, l, x + 10, y + 5 + j * 15, 12, OS26.shText));
+      y += bh + 7;
+      // Junie's answer to the lot's message: through the mute (her own card: plain)
       if (i === 0 && this.junie.length) {
         roundRect(ctx, x + 2, y, 16, 16, 8, KETTLE.avatarJunie);
-        setFont(ctx, 9); ctx.fillStyle = V3.ink; ctx.fillText('J', x + 7, y + 3);
-        ctx.fillStyle = V3.ink2; ctx.fillText(`${B10.junie.who} · ${B10.junie.muted}`, x + 22, y + 3);
-        y += 19;
+        setFont(ctx, 10); ctx.fillStyle = V3.ink; ctx.fillText('J', x + 7, y + 3);
+        setFont(ctx, 11); ctx.fillStyle = OS26.shText; ctx.fillText(`${B10.junie.who} · ${B10.junie.muted}`, x + 22, y + 2);
+        y += 20;
         for (const said of this.junie) {
-          const jl = wrapRich(ctx, said, w - 24, 11);
-          const jh = jl.length * 14 + 10;
+          const jl = wrapRich(ctx, said, w - 24, 12);
+          const jh = jl.length * 15 + 10;
           roundEdge(ctx, x + 10, y, w - 10, jh, 8, KETTLE.rowEdge, KETTLE.theirs);
-          jl.forEach((l, j) => drawLine(ctx, l, x + 17, y + 5 + j * 14, 11, KETTLE.ink));
+          jl.forEach((l, j) => drawLine(ctx, l, x + 17, y + 5 + j * 15, 12, KETTLE.ink));
           y += jh + 5;
         }
         y += 3;
       }
     });
     if (this.booked) {
-      setFont(ctx, 10);
-      const lines = wrapRich(ctx, A3.b9.booked, w - 16, 10).slice(0, 2);
-      const bh = lines.length * 13 + 10;
-      roundRect(ctx, x, y, w, bh, 8, AI.primary);
-      lines.forEach((l, j) => drawLine(ctx, l, x + 8, y + 5 + j * 13, 10, AI.primaryInk));
+      setFont(ctx, 11);
+      const lines = wrapRich(ctx, A3.b9.booked, w - 18, 11).slice(0, 2);
+      const bh = lines.length * 14 + 10;
+      fillRR(ctx, x, y, w, bh, 4, OS26.shBooked);
+      lines.forEach((l, j) => drawLine(ctx, l, x + 9, y + 5 + j * 14, 11, OS26.shText));
       y += bh + 6;
     }
   }
@@ -574,8 +687,8 @@ function keyIcon(ctx: CanvasRenderingContext2D, x: number, y: number, ink: strin
   roundRect(ctx, x, y, 6, 6, 3, ink); px(ctx, x + 2, y + 2, 2, 2, WEB.card);
   px(ctx, x + 6, y + 2, 6, 2, ink); px(ctx, x + 9, y + 4, 1, 2, ink); px(ctx, x + 11, y + 4, 1, 2, ink);
 }
-function gearIcon(ctx: CanvasRenderingContext2D, x: number, y: number, ink: string): void {
-  roundRect(ctx, x + 2, y + 2, 8, 8, 4, ink); px(ctx, x + 4, y + 4, 4, 4, STUDIO.bar);
+function gearIcon(ctx: CanvasRenderingContext2D, x: number, y: number, ink: string, ground: string = STUDIO.bar): void {
+  roundRect(ctx, x + 2, y + 2, 8, 8, 4, ink); px(ctx, x + 4, y + 4, 4, 4, ground);
   px(ctx, x + 5, y, 2, 2, ink); px(ctx, x + 5, y + 10, 2, 2, ink); px(ctx, x, y + 5, 2, 2, ink); px(ctx, x + 10, y + 5, 2, 2, ink);
 }
 /** a cursor: an arrow in its owner's colour with a dark edge, its owner's name on it, a ring when it presses */

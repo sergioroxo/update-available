@@ -45,8 +45,9 @@ import { setFont, px } from '../theme/chrome';
 import { newsFor } from '../theme/fonts';
 import { PLACE, WEB, V3, KETTLE, CHROME, ERA4, OS26, roundRect, roundEdge, pill, assistantMark } from '../theme/era4';
 import { playOnce, stopClip } from '../../audio/tapeAudio';
-import { Desk26, drawWallpaper, drawMenuBar, drawDock, drawWindow, drawNote, aiWindow, worldWindow, contentOf, softShadow, rr, fillRR,
-  edgeRR, fit26, statusLeft, TITLE_H, WIN_RADIUS, APPS26, type App26, type DockApp, type MenuBar26, type SeamApi } from './desk26';
+import { Desk26, drawWallpaper, drawMenuBar, drawDock, drawWindow, drawNote, aiWindow, worldWindow, contentOf, softShadow, rr, fillRR, alpha,
+  edgeRR, fit26, look26, TITLE_H, WIN_RADIUS, APPS26, type App26, type Tile26, type DockApp, type MenuBar26, type SeamApi } from './desk26';
+import { drawScore, scoreHeight, BRAND, type StickerId } from './brands26';
 import ACTS from '../../../data/dialog/s4_acts.json';
 
 export interface Hit { x: number; y: number; w: number; h: number; id: string }
@@ -57,7 +58,8 @@ export type OriginalStage = 'told' | 'locked' | 'gone' | 'restored';
 export interface ChatRow { who: 'ai' | 'her' | 'note' | 'memory' | 'unsent' | 'booked'; text: string; mem?: MemoryNote; open?: boolean; id?: string }
 /** ⚑ S413 (rule 3) — what Second Thoughts files about her: the note, what it is used for, who it is shared with */
 export interface MemoryNote { memory: string; usedFor: string; sharedWith: string }
-export interface Chip { id: string; label: string; kind?: 'primary' | 'quiet' }
+/** an answer at the AI's foot. ⚑ S418 — 'hers': a chip that carries her own words (beat 8) is drawn plain, never branded */
+export interface Chip { id: string; label: string; kind?: 'primary' | 'quiet' | 'hers' }
 /** a page on the right: its kind names the renderer an act registered; anything else is the page's own state */
 export interface Page { kind: string; title?: string; [k: string]: unknown }
 /** what a page renderer is handed: where to draw, how to publish a control, and the screen itself */
@@ -109,6 +111,41 @@ export function registerPage(kind: string, draw: PageRenderer): void { PAGES.set
 export const AI = { ground: WEB.accentSoft, ink: WEB.accentInk, mark: WEB.accent, edge: WEB.accent, note: CHROME.ink, chip: WEB.card,
   chipEdge: WEB.cardEdge, primary: WEB.primary, primaryInk: WEB.primaryInk } as const;
 
+/**
+ * ⚑ S418 (UiB job 34 Part B) — THE AI'S WINDOW, PER BRAND. L's (Act I) is white and polished: its answers glossy, a ✦ in each
+ * one it offers. Second Thoughts' (Act II) is near-black with yellow and cream type, its own score at the head. The plain OS
+ * (after the friends) gives L back its window without the gloss. A person's words keep their own plain bubble in all of them,
+ * and the composer stays the OS's own white field (it is hers to fill, never the brand's).
+ */
+interface AiLook {
+  ground: string; ink: string; ink2: string; title: string; title2: string; titleMark: string; titleMarkInk: string;
+  mark: string; markInk: string;
+  primary: string; primaryInk: string; primaryHi: string | null; quiet: string; quietInk: string; quietEdge: string;
+  dots: string; memInk: string; memBox: string; memEdge: string; memKey: string; memVal: string; alarm: string;
+  booked: string; bookedInk: string; voice: string; voiceOn: string; voiceInk: string; voiceEdge: string; lock: string;
+  chip: string; chipInk: string; chipEdge: string; spark: boolean; send: string; sendInk: string;
+}
+const L_AI: AiLook = {
+  ground: OS26.win, ink: AI.ink, ink2: OS26.winInk2, title: OS26.winInk, title2: OS26.winInk2, titleMark: AI.mark, titleMarkInk: WEB.card,
+  mark: AI.mark, markInk: WEB.card,
+  primary: AI.primary, primaryInk: AI.primaryInk, primaryHi: WEB.accent, quiet: OS26.win, quietInk: AI.ink, quietEdge: AI.chipEdge,
+  dots: AI.mark, memInk: AI.ink, memBox: WEB.card, memEdge: AI.chipEdge, memKey: AI.note, memVal: AI.ink, alarm: V3.danger,
+  booked: AI.primary, bookedInk: AI.primaryInk, voice: OS26.win, voiceOn: WEB.accentSoft, voiceInk: AI.ink, voiceEdge: AI.edge, lock: CHROME.ink,
+  chip: OS26.lPremium, chipInk: AI.ink, chipEdge: AI.edge, spark: true, send: AI.primary, sendInk: AI.primaryInk
+};
+const PLAIN_AI: AiLook = { ...L_AI, primaryHi: null, spark: false, chip: WEB.accentSoft };
+const ST_AI: AiLook = {
+  ground: OS26.stPanel, ink: OS26.stText, ink2: OS26.stDim, title: OS26.stInk, title2: OS26.stPanel2, titleMark: OS26.stInk, titleMarkInk: PLACE.sunHi,
+  mark: PLACE.sunHi, markInk: OS26.stInk,
+  primary: PLACE.sunHi, primaryInk: OS26.stInk, primaryHi: null, quiet: OS26.stPanel2, quietInk: OS26.stText, quietEdge: PLACE.sunHi,
+  dots: PLACE.sunHi, memInk: PLACE.sunHi, memBox: OS26.stPanel2, memEdge: PLACE.sunHi, memKey: OS26.stDim, memVal: OS26.stText, alarm: OS26.stAlarm,
+  booked: PLACE.sunHi, bookedInk: OS26.stInk, voice: OS26.stPanel2, voiceOn: OS26.stPanel2, voiceInk: PLACE.sunHi, voiceEdge: PLACE.sunHi, lock: OS26.stDim,
+  chip: PLACE.sunHi, chipInk: OS26.stInk, chipEdge: PLACE.sunHi, spark: false, send: PLACE.sunHi, sendInk: OS26.stInk
+};
+const AI_LOOKS: Record<Desk26['skin'], AiLook> = { l: L_AI, plain: PLAIN_AI, secondThoughts: ST_AI, shepherd: ST_AI };
+/** the padlock's ink on the locked ✦ (dark on a pale window, dim on Second Thoughts' dark one) */
+let lockInk: string = CHROME.ink;
+
 export class LScreen {
   version = 0;
   /** every control on the monitor (monitor coordinates); E4Browser copies these into its `hits` */
@@ -158,6 +195,10 @@ export class LScreen {
   /** ⚑ S413 — the name on the AI's cursor (Second Thoughts', while it uses her computer) */
   cursorLabel: string | null = null;
   private memoryCount = 0;
+  /** ⚑ S418 — Second Thoughts' achievement stickers, each put up by the act when the thing it names has been done to her */
+  stickers: StickerId[] = [];
+  sticker(id: StickerId): void { if (!this.stickers.includes(id)) { this.stickers.push(id); this.version++; } }
+  unsticker(id: StickerId): void { const n = this.stickers.length; this.stickers = this.stickers.filter((x) => x !== id); if (this.stickers.length !== n) this.version++; }
   // ── her world ──
   private stack: Page[] = [];
   /** the visitor may press the back arrow (Act I: on a story); while the AI is navigating, the arrow is the AI's */
@@ -325,9 +366,12 @@ export class LScreen {
     if (this.desk.version !== dv) this.version++;
   }
   /** ⚑ S417 — a notification, at the top right (one at a time; it waits while anything else has the floor) */
-  notify(app: App26, title: string, text: string, seconds = OS.notes.seconds): void { this.desk.notify({ app, title, text, seconds }); }
+  notify(app: Tile26, title: string, text: string, seconds = OS.notes.seconds, tone?: 'st'): void { this.desk.notify({ app, title, text, seconds, tone }); }
   /** ⚑ S417 — which skin the desktop wears (the acts say when a product arrives and falls) */
   setSkin(skin: Desk26['skin']): void { this.desk.setSkin(skin); this.version++; }
+  /** ⚑ S418 — THE BRANDS FALL (her Yes): the show's chrome is gone, then the yellow left under it, then the last of it torn off,
+   *  then the plain OS — a step every 0.4 s (2.5 changes a second); reduced motion: a cut to the plain OS */
+  fallToPlain(): void { this.stickers = []; this.desk.fall(['secondThoughts', 'peel', 'plain'], 0.4); this.version++; }
 
   // ── the picture ────────────────────────────────────────────────────────────
   /**
@@ -359,48 +403,51 @@ export class LScreen {
     }
     if (!this.fullOn) this.drawAi(ctx, aw, push, api);
     // ── the menu bar (the Menu button, the app in front, the clock) and the dock ──
-    const bar: MenuBar26 = { app: this.fullOn ? SHEPHERD_NAME : this.name, menus: OS.menus, status: OS.status, date: this.date, menuOpen: this.menuOpen };
-    drawMenuBar(ctx, bar, api);
-    this.statusX = statusLeft(ctx, W, bar);
+    // ⚑ S418 — the menu bar wears the brand in front: L's ✦ and its boast (Act I); Second Thoughts' name and claim, and her
+    //   greyed way back while it uses her computer (Act II: job 33's banner, moved here from her world's title); Shepherd
+    //   Live™'s LIVE dot and its name (Act III). The plain OS: the app's name and nothing else.
+    const skin = this.desk.skin, B = BRAND;
+    const bar: MenuBar26 = {
+      app: skin === 'secondThoughts' ? B.st.name : skin === 'shepherd' ? (this.fullOn ? SHEPHERD_NAME.toUpperCase() : B.st.name) : this.name,
+      menus: OS.menus, status: OS.status, date: this.date, menuOpen: this.menuOpen,
+      appMark: skin === 'l' ? 'spark' : skin === 'shepherd' && this.fullOn ? 'live' : null,
+      claim: skin === 'secondThoughts' ? B.st.using : null,
+      boast: skin === 'l' ? B.l.boast : null,
+      control: skin === 'secondThoughts' && this.banner ? this.banner.control : null
+    };
+    this.statusX = drawMenuBar(ctx, bar, api).statusX;
     drawDock(ctx, this.dockApps(), api);
     // ── the one notification, in her world's title band (never over the words under it) ──
     if (ww.w > 60) drawNote(ctx, { x: ww.x, y: ww.y, w: ww.w, h: TITLE_H }, this.desk);
     if (this.overlayTop) this.overlayTop(ctx, W, H);
     // ── the AI's cursor, over everything ──
-    if (this.cur.on) drawCursor(ctx, this.cur.x, this.cur.y, this.cur.flash > 0, this.cursorLabel, W);
+    if (this.cur.on) drawCursor(ctx, this.cur.x, this.cur.y, this.cur.flash > 0, this.cursorLabel, W, this.desk.skin === 'secondThoughts');
     return this.controls;
   }
 
   /** her world's window: its title (the back arrow, what is open), the AI's banner over it while it uses her computer, the page */
   private drawWorld(ctx: CanvasRenderingContext2D, ww: Rect, pressable: boolean, push: (h: Hit) => void, api: SeamApi): void {
-    const page = this.page;
+    const page = this.page, L = look26(this.desk.skin);
     let tx = drawWindow(ctx, ww, { title: '' }, api);
     if (this.canGoBack) {
       setFont(ctx, 12);
       const label = `‹ ${S.back}`, bw = Math.ceil(ctx.measureText(label).width) + 16;
-      if (this.visitorBack) edgeRR(ctx, tx, ww.y + 3, bw, TITLE_H - 6, 8, OS26.winEdge, OS26.win);
-      ctx.fillStyle = this.visitorBack ? OS26.winInk : OS26.winInk2; ctx.fillText(label, tx + 8, ww.y + 5);
+      if (this.visitorBack) edgeRR(ctx, tx, ww.y + 3, bw, TITLE_H - 6, 8, L.winEdge === L.winTitle ? L.winInk : L.winEdge, L.winTitle === OS26.winTitle ? OS26.win : L.winTitle);
+      ctx.fillStyle = this.visitorBack || L.winTitle !== OS26.winTitle ? L.winInk : L.winInk2; ctx.fillText(label, tx + 8, ww.y + 5);
       this.anchor('page-back', { x: tx, y: ww.y + 3, w: bw, h: TITLE_H - 6 });
       if (this.visitorBack) push({ x: tx, y: ww.y + 1, w: bw, h: TITLE_H - 2, id: 'page-back' });
       tx += bw + 8;
     }
-    if (page?.title) { setFont(ctx, 12); ctx.fillStyle = OS26.winInk; ctx.fillText(fit26(ctx, page.title, ww.x + ww.w - tx - 10), tx, ww.y + 5); }
-    // ⚑ S413 (beat 6) — the AI is using her computer: its banner over her world's title, her way back there and greyed
-    if (this.banner) {
-      ctx.save(); rr(ctx, ww.x + 1, ww.y + 1, ww.w - 2, ww.h - 2, WIN_RADIUS - 1); ctx.clip();
-      px(ctx, ww.x, ww.y, ww.w, TITLE_H - 1, V3.primary);
-      ctx.restore();
-      assistantMark(ctx, ww.x + 9, ww.y + 4, 15, V3.primaryInk, V3.primary);
-      setFont(ctx, 11);
-      const cw = Math.ceil(ctx.measureText(this.banner.control).width) + 16;
-      pill(ctx, ww.x + ww.w - cw - 7, ww.y + 3, cw, TITLE_H - 7, V3.grey);
-      ctx.fillStyle = V3.ink2; ctx.fillText(this.banner.control, ww.x + ww.w - cw + 1, ww.y + 5);
-      ctx.fillStyle = V3.primaryInk; ctx.fillText(fitTo(ctx, this.banner.text, ww.w - cw - 48), ww.x + 30, ww.y + 5);
-    }
+    if (page?.title) { setFont(ctx, 12); ctx.fillStyle = L.winInk; ctx.fillText(fit26(ctx, page.title, ww.x + ww.w - tx - 10), tx, ww.y + 5); }
+    // ⚑ S413 (beat 6) — the AI is using her computer. ⚑ S418: its banner is the menu bar's now (Second Thoughts' yellow bar:
+    //   "SECOND THOUGHTS™ · is using your computer", her greyed way back at its right); her world's title band is its yellow
+    //   already, and carries the AI's mark at its right while it works there
+    if (this.banner) assistantMark(ctx, ww.x + ww.w - 24, ww.y + 4, 15, L.winInk, L.winTitle);
     const pr = contentOf(ww);
     ctx.save(); rr(ctx, ww.x + 1, ww.y + 1, ww.w - 2, ww.h - 2, WIN_RADIUS - 1); ctx.clip();
     ctx.beginPath(); ctx.rect(pr.x, pr.y, pr.w, pr.h); ctx.clip();
-    px(ctx, pr.x, pr.y, pr.w, pr.h, OS26.winSide);
+    // ⚑ S418 — under Second Thoughts her world's window is its dark too, wherever her own app does not lay its own ground
+    px(ctx, pr.x, pr.y, pr.w, pr.h, this.desk.skin === 'secondThoughts' ? OS26.stGround : OS26.winSide);
     const draw = page ? PAGES.get(page.kind) : undefined;
     if (page && draw) draw(ctx, pr, page, { screen: this, control: (h) => { if (this.pagePressable) push(h); }, pressable: pressable && this.pagePressable });
     ctx.restore();
@@ -416,24 +463,37 @@ export class LScreen {
   private drawAi(ctx: CanvasRenderingContext2D, r: Rect, push: (h: Hit) => void, api: SeamApi): void {
     iconLocked = this.originalStage === 'locked';
     if (r.w <= 0) return;
+    const P = AI_LOOKS[this.desk.skin];
+    lockInk = P.lock;
     const tx = drawWindow(ctx, r, { title: '', ai: true }, api);
     // ── the title: the mark, the name and its line (job 33's: they change as the products arrive and fall) ──
     const sx = r.x + r.w;
-    assistantMark(ctx, tx, r.y + 4, 15, AI.mark, WEB.card);
+    assistantMark(ctx, tx, r.y + 4, 15, P.titleMark, P.titleMarkInk);
     setFont(ctx, 12);
     const nameW = sx - 8 - (tx + 20);
     const name = fitTo(ctx, this.name, nameW);
-    ctx.fillStyle = OS26.winInk; ctx.fillText(name, tx + 20, r.y + 5);
+    ctx.fillStyle = P.title; ctx.fillText(name, tx + 20, r.y + 5);
     const nw = Math.ceil(ctx.measureText(name).width);
     setFont(ctx, 11);
-    if (nameW - nw - 10 > 40) { ctx.fillStyle = OS26.winInk2; ctx.fillText(fitTo(ctx, this.sub, nameW - nw - 10), tx + 28 + nw, r.y + 6); }
+    if (nameW - nw - 10 > 40) { ctx.fillStyle = P.title2; ctx.fillText(fitTo(ctx, this.sub, nameW - nw - 10), tx + 28 + nw, r.y + 6); }
     // ── the body ──
     const body = contentOf(r);
+    ctx.save(); rr(ctx, r.x + 1, r.y + 1, r.w - 2, r.h - 2, WIN_RADIUS - 1); ctx.clip();
+    px(ctx, body.x, body.y, body.w, body.h, P.ground);
+    ctx.restore();
     const own = this.desk.skin === 'l' || this.desk.skin === 'plain';
     let left = body.x, width = body.w, top = body.y;
     if (own && body.w >= SIDEBAR_MIN) { this.drawChatColumn(ctx, { x: body.x, y: body.y, w: SIDEBAR_W, h: body.h }); left += SIDEBAR_W; width -= SIDEBAR_W; }
     else if (own) { this.drawChatStrip(ctx, { x: body.x, y: body.y, w: body.w, h: STRIP_H }); top += STRIP_H; }
     const cx = left + PAD, cw = width - 2 * PAD;
+    // ⚑ S418 — Second Thoughts' head: its wellbeing score (the dial) and its achievement stickers, fixed above the conversation
+    //   (its instruments: the sharpest things in the era). They are its own; nothing of them is ever drawn on a person's words.
+    if (this.desk.skin === 'secondThoughts' && !this.aiOverlay) {
+      const hh = scoreHeight(ctx, cw, this.stickers);
+      drawScore(ctx, cx, top + 8, cw, this.stickers);
+      top += hh;
+      px(ctx, body.x + 6, top - 4, body.w - 12, 1, OS26.stPanel2);
+    }
     // the foot: the composer; the line under the answers; the answers
     const composerY = body.y + body.h - 7 - COMPOSER_H;
     let foot = composerY - 6;
@@ -441,11 +501,13 @@ export class LScreen {
     foot -= helpLines.length * 13;
     const helpY = foot;
     if (helpLines.length) foot -= 5;
-    // the answers: rounded chips, flowed left to right, wrapping (a long answer takes its own row)
+    // the answers: rounded chips, flowed left to right, wrapping (a long answer takes its own row). ⚑ S418 — L's offered
+    //   answers carry its ✦ (drawn before the words); a chip that is her own words carries nothing
+    const sparkW = (c: Chip): number => (P.spark && c.kind !== 'hers' && (c.kind ?? (this.chips.indexOf(c) === 0 ? 'primary' : 'quiet')) === 'primary' ? 16 : 0);
     setFont(ctx, 13);
     const chipRows: { id: string; w: number }[][] = [];
     for (const c of this.chips) {
-      const w = Math.min(cw, Math.ceil(ctx.measureText(c.label).width) + 30);
+      const w = Math.min(cw, Math.ceil(ctx.measureText(c.label).width) + 30 + sparkW(c));
       const row = chipRows[chipRows.length - 1];
       const used = row ? row.reduce((a, x) => a + x.w + 6, 0) : 0;
       if (row && used + w <= cw) row.push({ id: c.id, w }); else chipRows.push([{ id: c.id, w }]);
@@ -490,12 +552,18 @@ export class LScreen {
       for (const { row, kind, lines, h } of laid) {
         if (y + h > top - 40 && y < chatBottom + 20) {
           if (kind === 'chip') {
+            // ⚑ S418 — the model chip, polished: L's mint into a pale sky, a hairline of light along its top
             setFont(ctx, 11);
             const w = Math.min(cw, Math.ceil(lines[0]?.w ?? 0) + 18);
-            edgeRR(ctx, cx, y, w, 19, 9.5, AI.edge, WEB.accentSoft);
-            if (lines[0]) drawLine(ctx, lines[0], cx + 9, y + 3, 11, AI.ink);
+            if (P.spark) {
+              const g = ctx.createLinearGradient(cx, 0, cx + w, 0); g.addColorStop(0, WEB.accentSoft); g.addColorStop(1, P.chip);
+              rr(ctx, cx, y, w, 19, 9.5); ctx.fillStyle = g; ctx.fill();
+              rr(ctx, cx + 0.5, y + 0.5, w - 1, 18, 9); ctx.strokeStyle = P.chipEdge; ctx.lineWidth = 1; ctx.stroke();
+              px(ctx, cx + 8, y + 2, w - 16, 1, OS26.win);
+            } else edgeRR(ctx, cx, y, w, 19, 9.5, P.chipEdge, P.chip);
+            if (lines[0]) drawLine(ctx, lines[0], cx + 9, y + 3, 11, P.chipInk);
           } else if (kind === 'hello') {
-            this.drawGreeting(ctx, cx, y, cw);
+            this.drawGreeting(ctx, cx, y, cw, P.spark);
           } else if (row && row.who === 'her') {
             const bw = Math.min(cw - 30, Math.max(0, ...lines.map((l) => l.w)) + 22), bx = cx + cw - bw;
             fillRR(ctx, bx, y, bw, h, 12, KETTLE.mine);
@@ -503,18 +571,18 @@ export class LScreen {
           } else if (row && row.who === 'memory') {
             // ⚑ S413 (rule 3) — Memory: one small line, its own mark; open, the three lines of what it keeps and for whom
             const M = S.memory, m = row.mem!;
-            assistantMark(ctx, cx, y + 1, 11, AI.mark, WEB.card);
-            setFont(ctx, 11); ctx.fillStyle = AI.ink;
+            assistantMark(ctx, cx, y + 1, 11, P.mark, P.markInk);
+            setFont(ctx, 11); ctx.fillStyle = P.memInk;
             const lab = row.open ? M.updated : `${M.updated} ›`, lw = Math.ceil(ctx.measureText(lab).width);
             ctx.fillText(lab, cx + 15, y);
             if (row.id) push({ x: cx - 2, y: y - 4, w: lw + 24, h: row.open ? h + 4 : 21, id: row.id });
             if (row.open) {
               const kx = cx + 15, kw = cw - 15;
-              edgeRR(ctx, kx - 6, y + 15, kw + 6, 3 * 14 + 4, 7, AI.chipEdge, WEB.card);
+              edgeRR(ctx, kx - 6, y + 15, kw + 6, 3 * 14 + 4, 7, P.memEdge, P.memBox);
               const line3 = (k: string, v: string, yy: number): void => {
-                setFont(ctx, 11); ctx.fillStyle = AI.note; const kw2 = Math.ceil(ctx.measureText(`${k} · `).width);
+                setFont(ctx, 11); ctx.fillStyle = P.memKey; const kw2 = Math.ceil(ctx.measureText(`${k} · `).width);
                 ctx.fillText(`${k} · `, kx, yy);
-                ctx.fillStyle = AI.ink; ctx.fillText(fitTo(ctx, v, kw - kw2 - 6), kx + kw2, yy);
+                ctx.fillStyle = P.memVal; ctx.fillText(fitTo(ctx, v, kw - kw2 - 6), kx + kw2, yy);
               };
               line3(M.memory, m.memory, y + 18); line3(M.usedFor, m.usedFor, y + 32); line3(M.sharedWith, m.sharedWith, y + 46);
             }
@@ -522,30 +590,30 @@ export class LScreen {
             // ⚑ S413 (beat 8; 26-15) — where her words were: the system's line, small, on her side, a red ring; it scrolls up
             //   with the conversation (it is never left in the box)
             const lw = Math.max(0, ...lines.map((l) => l.w)), lx = cx + cw - lw;
-            roundRect(ctx, lx - 16, y + 1, 11, 11, 5, V3.danger);
+            roundRect(ctx, lx - 16, y + 1, 11, 11, 5, P.alarm);
             px(ctx, lx - 11, y + 3, 1, 4, WEB.card); px(ctx, lx - 11, y + 8, 1, 2, WEB.card);
-            lines.forEach((l, i) => drawLine(ctx, l, lx + (lw - l.w), y + 1 + i * 14, 11, V3.danger));
+            lines.forEach((l, i) => drawLine(ctx, l, lx + (lw - l.w), y + 1 + i * 14, 11, P.alarm));
           } else if (row && row.who === 'booked') {
             setFont(ctx, 12);
             const bw = Math.ceil(ctx.measureText(row.text).width) + 22;
-            pill(ctx, cx, y, bw, 22, AI.primary);
-            ctx.fillStyle = AI.primaryInk; ctx.fillText(row.text, cx + 11, y + 5);
+            pill(ctx, cx, y, bw, 22, P.booked);
+            ctx.fillStyle = P.bookedInk; ctx.fillText(row.text, cx + 11, y + 5);
           } else if (row && row.who === 'note') {
-            lines.forEach((l, i) => drawLine(ctx, l, cx, y + 1 + i * 14, 11, OS26.winInk2));
+            lines.forEach((l, i) => drawLine(ctx, l, cx, y + 1 + i * 14, 11, P.ink2));
           } else {
-            lines.forEach((l, i) => drawLine(ctx, l, cx, y + i * LINE, 14, AI.ink));
+            lines.forEach((l, i) => drawLine(ctx, l, cx, y + i * LINE, 14, P.ink));
           }
         }
         y += h + 8;
       }
-      if (this.typing) { for (let i = 0; i < 3; i++) fillRR(ctx, cx + i * 10, y + 6, 7, 7, 3.5, AI.mark); }
+      if (this.typing) { for (let i = 0; i < 3; i++) fillRR(ctx, cx + i * 10, y + 6, 7, 7, 3.5, P.dots); }
     }
     ctx.restore();
     // ⚑ S413 (26-14) — she has scrolled back: a small pill at the conversation's foot returns her to the newest line
     if (!this.aiOverlay && this.chatBack > 0) {
       setFont(ctx, 11);
       const lab = `${S.newest} ↓`, nw = Math.ceil(ctx.measureText(lab).width) + 18, nx = cx + cw - nw, ny = chatBottom - 23;
-      pill(ctx, nx, ny, nw, 19, AI.primary); ctx.fillStyle = AI.primaryInk; ctx.fillText(lab, nx + 9, ny + 3);
+      pill(ctx, nx, ny, nw, 19, P.primary); ctx.fillStyle = P.primaryInk; ctx.fillText(lab, nx + 9, ny + 3);
       push({ x: nx - 2, y: ny - 3, w: nw + 4, h: 25, id: 'chat-newest' });
     }
     // ⚑ S417 — the composer: "Ask L anything" (or the act's own word for it), her words as they are typed in for her (beat 8:
@@ -556,9 +624,9 @@ export class LScreen {
       setFont(ctx, 11);
       const word = this.voiceOn ? S.voiceOn : S.voiceOff;
       const vw = 22 + Math.ceil(ctx.measureText(word).width) + 10, vx = cx + cw - vw, vy = composerY + 2, vh = COMPOSER_H - 4;
-      edgeRR(ctx, vx, vy, vw, vh, vh / 2, AI.edge, this.voiceOn ? WEB.accentSoft : OS26.win);
-      speakerIcon(ctx, vx + 7, vy + 7, this.voiceOn ? AI.ink : AI.note, this.voiceOn);
-      ctx.fillStyle = this.voiceOn ? AI.ink : OS26.winInk2; ctx.fillText(word, vx + 22, vy + 5);
+      edgeRR(ctx, vx, vy, vw, vh, vh / 2, P.voiceEdge, this.voiceOn ? P.voiceOn : P.voice);
+      speakerIcon(ctx, vx + 7, vy + 7, this.voiceOn ? P.voiceInk : P.ink2, this.voiceOn);
+      ctx.fillStyle = this.voiceOn ? P.voiceInk : P.ink2; ctx.fillText(word, vx + 22, vy + 5);
       push({ x: vx - 3, y: composerY - 3, w: vw + 6, h: COMPOSER_H + 6, id: 'l-voice' });
       this.anchor('l-voice', { x: vx, y: vy, w: vw, h: vh });
       fw = cw - vw - 6;
@@ -572,26 +640,38 @@ export class LScreen {
       if (this.composerCaret) px(ctx, cx + 13 + Math.ceil(ctx.measureText(shown).width), composerY + 6, 1, 16, WEB.ink);
     } else { ctx.fillStyle = OS26.winInk2; ctx.fillText(fitTo(ctx, this.composer ?? OS.composer, fw - 40), cx + 12, composerY + 7); }
     const bx = cx + fw - COMPOSER_H + 3, by = composerY + 3, bd = COMPOSER_H - 6;
-    fillRR(ctx, bx, by, bd, bd, bd / 2, t ? AI.primary : OS26.winEdge);
-    ctx.strokeStyle = t ? AI.primaryInk : OS26.win; ctx.lineWidth = 1.8; ctx.lineCap = 'round';
+    fillRR(ctx, bx, by, bd, bd, bd / 2, t ? P.send : OS26.winEdge);
+    ctx.strokeStyle = t ? P.sendInk : OS26.win; ctx.lineWidth = 1.8; ctx.lineCap = 'round';
     ctx.beginPath(); ctx.moveTo(bx + bd / 2, by + bd - 6); ctx.lineTo(bx + bd / 2, by + 6); ctx.moveTo(bx + bd / 2 - 4, by + 10); ctx.lineTo(bx + bd / 2, by + 6); ctx.lineTo(bx + bd / 2 + 4, by + 10); ctx.stroke();
     ctx.lineCap = 'butt';
     // the answers
     this.chips.forEach((c) => {
       const h = chipRects.find((x) => x.id === c.id); if (!h) return;
       const i = this.chips.indexOf(c);
-      const primary = (c.kind ?? (i === 0 ? 'primary' : 'quiet')) === 'primary';
-      if (primary) fillRR(ctx, h.x, h.y, h.w, h.h, h.h / 2, AI.primary);
-      else edgeRR(ctx, h.x, h.y, h.w, h.h, h.h / 2, AI.chipEdge, OS26.win);
+      const hers = c.kind === 'hers';
+      const primary = !hers && (c.kind ?? (i === 0 ? 'primary' : 'quiet')) === 'primary';
+      // ⚑ S418 — a chip that carries her own words is hers: the OS's plain white, no brand (felt stays bare)
+      if (hers) edgeRR(ctx, h.x, h.y, h.w, h.h, h.h / 2, OS26.winEdge, OS26.win);
+      else if (primary && P.primaryHi) {
+        // L's gloss: its mint into its deep green, a sheen on the upper half, a glow around it
+        softShadow(ctx, h, h.h / 2, 0.8, P.primary);
+        const g = ctx.createLinearGradient(0, h.y, 0, h.y + h.h); g.addColorStop(0, P.primaryHi); g.addColorStop(1, P.primary);
+        rr(ctx, h.x, h.y, h.w, h.h, h.h / 2); ctx.fillStyle = g; ctx.fill();
+        fillRR(ctx, h.x + 6, h.y + 2, h.w - 12, Math.round(h.h * 0.38), h.h * 0.3, alpha(OS26.win, 0.22));
+      } else if (primary) fillRR(ctx, h.x, h.y, h.w, h.h, h.h / 2, P.primary);
+      else edgeRR(ctx, h.x, h.y, h.w, h.h, h.h / 2, P.quietEdge, P.quiet);
       setFont(ctx, 13);
-      const label = fitTo(ctx, c.label, h.w - 20);
+      const sw = sparkW(c);
+      const label = fitTo(ctx, c.label, h.w - 20 - sw);
       const lines = wrapRich(ctx, label, 9999, 13);
-      const tw = lines[0]?.w ?? 0;
-      if (lines[0]) drawLine(ctx, lines[0], h.x + Math.round((h.w - tw) / 2), h.y + 6, 13, primary ? AI.primaryInk : AI.ink);
+      const tw = (lines[0]?.w ?? 0) + sw;
+      const lx = h.x + Math.round((h.w - tw) / 2);
+      if (sw) starIcon(ctx, lx, h.y + 6, 12, primary ? P.primaryInk : P.mark);
+      if (lines[0]) drawLine(ctx, lines[0], lx + sw, h.y + 6, 13, hers ? WEB.ink : primary ? P.primaryInk : P.quietInk);
       push(h);
       this.anchor(c.id, h);
     });
-    helpLines.forEach((l, i) => drawLine(ctx, l, cx, helpY + i * 13, 11, OS26.winInk2));
+    helpLines.forEach((l, i) => drawLine(ctx, l, cx, helpY + i * 13, 11, P.ink2));
   }
 
   /** the big greeting's lines at this width (the serif of the period's chat apps; its ✦ drawn) */
@@ -602,14 +682,18 @@ export class LScreen {
     if (line) out.push(line);
     return out;
   }
-  private drawGreeting(ctx: CanvasRenderingContext2D, x: number, y: number, w: number): void {
+  private drawGreeting(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, gloss = false): void {
     ctx.font = newsFor(GREET, false); ctx.textBaseline = 'top';
     const lines = this.greetingLines(ctx, w);
     lines.forEach((l, i) => { ctx.fillStyle = OS26.winInk; ctx.fillText(l, x, y + i * (GREET + 4)); });
     const last = lines[lines.length - 1] ?? '';
     const lx = x + Math.ceil(ctx.measureText(last).width) + 5, ly = y + (lines.length - 1) * (GREET + 4) + 1;
     if (iconLocked) { starIcon(ctx, lx, ly, 15, WEB.faint); padlockIcon(ctx, lx + 8, ly + 7, CHROME.ink); }
-    else starIcon(ctx, lx, ly, 15, AI.mark);
+    else {
+      starIcon(ctx, lx, ly, 15, AI.mark);
+      // ⚑ S418 — L's gloss: two small sparks beside its ✦, one of them gold (still: a card does not glitter on its own)
+      if (gloss) { starIcon(ctx, lx + 15, ly - 4, 7, OS26.lGold); starIcon(ctx, lx + 16, ly + 9, 5, AI.mark); }
+    }
   }
   /** ⚑ S417 — L's chat list as a column (a wide window) */
   private drawChatColumn(ctx: CanvasRenderingContext2D, r: Rect): void {
@@ -658,11 +742,21 @@ export class LScreen {
   /** ⚑ S417 — the dock: which of her apps are open (a dot), and which she can reach now (the rest are dimmed and say why) */
   dockApps(): DockApp[] {
     const right = appOf(this.page?.kind ?? '');
-    return APPS26.map((app) => ({ app, label: OS.apps[app], open: !this.fullOn && (app === 'l' || app === right), reachable: this.reach(app) }));
+    const skin = this.desk.skin;
+    const mine: DockApp[] = APPS26.map((app) => ({ app, label: OS.apps[app], open: !this.fullOn && skin !== 'secondThoughts' && (app === 'l' || app === right), reachable: this.reach(app) }));
+    // ⚑ S418 — the products put themselves in her dock, first: Second Thoughts from its arrival (Act II), Shepherd Live™ beside
+    //   it while its session runs (Act III); her own apps dim under them (and say why, pressed)
+    const brands: DockApp[] = [];
+    if (skin === 'secondThoughts' || skin === 'shepherd') brands.push({ app: 'st', label: BRAND.st.name, open: skin === 'secondThoughts', reachable: true });
+    if (skin === 'shepherd') brands.push({ app: 'shepherd', label: SHEPHERD_NAME, open: true, reachable: true });
+    return [...brands, ...mine];
   }
   /** an app she can reach now: one that is open (a press brings it forward: it is already there), and Search while a story is
    *  open over it (a press is the back arrow's, which job 33 lets her press). Nothing while the AI uses her computer. */
-  private reach(app: App26): boolean {
+  private reach(app: Tile26): boolean {
+    if (app === 'st' || app === 'shepherd') return true;
+    // ⚑ S418 — while Second Thoughts is on, her apps are its: dimmed, and pressed they say so
+    if (this.desk.skin === 'secondThoughts') return false;
     if (this.fullOn || this.banner || !this.pagePressable) return false;
     if (app === 'l') return true;
     const right = appOf(this.page?.kind ?? '');
@@ -673,7 +767,7 @@ export class LScreen {
   private whyNot(): string { return OS.why[this.desk.skin] ?? OS.why.l; }
   /** ⚑ S417 — a dock press (or the Menu's app row): it brings the app forward where she may, says why where she may not, and
    *  never moves the story (it is not handed to the script) */
-  pressApp(app: App26): void {
+  pressApp(app: Tile26): void {
     playOnce('ui_press.mp3');
     if (!this.reach(app)) { this.desk.showTip(app, this.whyNot()); this.version++; return; }
     if (app === 'search' && this.page?.kind === 'story' && this.visitorBack && this.stack[0]?.kind === 'search') { this.back(); return; }
@@ -710,7 +804,7 @@ export class LScreen {
     if (h.id.startsWith('mem-note:')) { if (this.toggleMemory(h.id)) playOnce('ui_press.mp3'); return h.id; }
     if (h.id === 'chat-newest') { this.newest(); playOnce('ui_press.mp3'); return h.id; }
     // ⚑ S417 — the dock: a reader's press, handled here and never handed to the script (it cannot move a beat)
-    if (h.id.startsWith('dock:')) { this.pressApp(h.id.slice(5) as App26); return h.id; }
+    if (h.id.startsWith('dock:')) { this.pressApp(h.id.slice(5) as Tile26); return h.id; }
     this.onPress?.(h.id);
     return h.id;
   }
@@ -770,7 +864,7 @@ export function drawLine(ctx: CanvasRenderingContext2D, l: Line, x: number, y: n
   for (const p of l.pieces) {
     if (p.icon === 'star') {
       // ⚑ S413 — once Second Thoughts is on, every ✦ is grey, with a padlock (the original is unavailable)
-      if (iconLocked) { starIcon(ctx, cx + 1, y + Math.round(size * 0.05), Math.max(9, size - 2), WEB.faint); padlockIcon(ctx, cx + 7, y + Math.round(size * 0.35), CHROME.ink); }
+      if (iconLocked) { starIcon(ctx, cx + 1, y + Math.round(size * 0.05), Math.max(9, size - 2), WEB.faint); padlockIcon(ctx, cx + 7, y + Math.round(size * 0.35), lockInk); }
       else starIcon(ctx, cx + 1, y + Math.round(size * 0.05), Math.max(9, size - 2), AI.mark);
     }
     else if (p.icon === 'speaker') speakerIcon(ctx, cx + 1, y + Math.round(size * 0.1), ink, true);
@@ -808,19 +902,23 @@ export function padlockIcon(ctx: CanvasRenderingContext2D, x: number, y: number,
   px(ctx, x + 1, y, 1, 4, ink); px(ctx, x + 6, y, 1, 4, ink); px(ctx, x + 2, y, 4, 1, ink);
 }
 /** the AI's cursor: an arrow in L's mint with a dark edge, and a ring when it presses */
-function drawCursor(ctx: CanvasRenderingContext2D, x: number, y: number, pressing: boolean, label: string | null = null, W = 9999): void {
+function drawCursor(ctx: CanvasRenderingContext2D, x: number, y: number, pressing: boolean, label: string | null = null, W = 9999, st = false): void {
+  // ⚑ S418 — Second Thoughts' pointer is its own yellow (L's is L's mint)
+  const fill = st ? PLACE.sunHi : AI.primary, ink = st ? OS26.stInk : AI.primaryInk, body = st ? PLACE.sunHi : ERA4.l, edge = st ? OS26.stInk : AI.ink;
   // ⚑ S413 — its name on it while it uses her computer (the as-built agent idiom: a pointer that says whose it is)
   if (label) {
-    setFont(ctx, 9);
-    const lw = Math.ceil(ctx.measureText(label).width) + 22, lx = x + 14 + lw > W - 2 ? x - lw - 4 : x + 14;
-    pill(ctx, lx, y + 16, lw, 14, AI.primary);
-    assistantMark(ctx, lx + 2, y + 17, 12, AI.primaryInk, AI.primary);
-    ctx.fillStyle = AI.primaryInk; ctx.fillText(label, lx + 17, y + 18);
+    setFont(ctx, st ? 11 : 9);
+    const lh = st ? 17 : 14;
+    const lw = Math.ceil(ctx.measureText(label).width) + 24, lx = x + 14 + lw > W - 2 ? x - lw - 4 : x + 14;
+    if (st) fillRR(ctx, lx - 1, y + 15, lw + 2, lh + 2, (lh + 2) / 2, OS26.stInk);
+    pill(ctx, lx, y + 16, lw, lh, fill);
+    assistantMark(ctx, lx + 2, y + 17, lh - 2, ink, fill);
+    ctx.fillStyle = ink; ctx.fillText(label, lx + lh + 4, y + 18);
   }
-  if (pressing) { ctx.strokeStyle = AI.mark; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(x, y, 9, 0, Math.PI * 2); ctx.stroke(); }
+  if (pressing) { ctx.strokeStyle = st ? PLACE.sunHi : AI.mark; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(x, y, 9, 0, Math.PI * 2); ctx.stroke(); }
   const path = (): void => { ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x, y + 17); ctx.lineTo(x + 4, y + 13); ctx.lineTo(x + 7, y + 19); ctx.lineTo(x + 10, y + 18); ctx.lineTo(x + 7, y + 12); ctx.lineTo(x + 12, y + 12); ctx.closePath(); };
-  path(); ctx.fillStyle = AI.ink; ctx.fill();
-  ctx.save(); ctx.translate(x, y); ctx.scale(0.78, 0.78); ctx.translate(-x + 1.2, -y + 3); path(); ctx.fillStyle = ERA4.l; ctx.fill(); ctx.restore();
+  path(); ctx.fillStyle = edge; ctx.fill();
+  ctx.save(); ctx.translate(x, y); ctx.scale(0.78, 0.78); ctx.translate(-x + 1.2, -y + 3); path(); ctx.fillStyle = body; ctx.fill(); ctx.restore();
 }
 /** the person's own words: a plain bubble (their style, not the AI's) */
 export function personBubble(ctx: CanvasRenderingContext2D, x: number, y: number, maxW: number, text: string, size = 13): { w: number; h: number } {
