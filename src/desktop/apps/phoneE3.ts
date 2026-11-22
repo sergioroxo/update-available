@@ -1037,8 +1037,11 @@ export class PhoneE3 {
       ...BACKLOG.filter(b => !senders.includes(b.from)).map(b => { const read = this.readMessages.has(b.from + b.time); return { from: b.from, text: b.text, time: b.time, id: 'read-' + b.from + b.time, read, unread: read ? 0 : 1 }; })
     ];
   }
-  /** ⚑ S357fr / 16-9 — the Messages tile's badge: the sum of what the rows declare unread, a muted chat excepted */
-  get inboxBadge(): number { return this.inboxRows().reduce((n, r) => n + (r.muted ? 0 : r.unread), 0); }
+  /** ⚑ S357fr / 16-9 — the Messages tile's badge: what the list itself declares unread.
+   *  ⚑ S357fw (his 22 Nov: "Only dotted people") — only the rows that wear an unread dot count, so the badge empties as
+   *  she reads. The group previews (SisterSignal's "3 unread") carry no dot and cannot be opened: they no longer count,
+   *  so the badge no longer sticks at 3. */
+  get inboxBadge(): number { return this.inboxRows().reduce((n, r) => n + (r.read || r.muted ? 0 : r.unread), 0); }
 
   /** ⚑ read-only, and it files NOTHING. §6's design law: the piece never makes
    *  her open them, and if a player never touches this inbox that is also true
