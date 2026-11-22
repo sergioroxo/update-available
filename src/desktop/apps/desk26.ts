@@ -26,6 +26,11 @@
 import { setFont, px } from '../theme/chrome';
 import { OS26, ERA4, WEB } from '../theme/era4';
 import { reducedMotion } from '../../state/motion';
+import slice from '../../../data/strings/slice.json';
+import ACTS from '../../../data/dialog/s4_acts.json';
+/** the Menu button's word (every era's: slice.json desktop.startMenu.paperMenu) and a notification's time (s4_acts.json) */
+const MENU_WORD = slice.desktop.startMenu.paperMenu;
+const NOW_WORD = (ACTS as unknown as { screen: { os: { notes: { now: string } } } }).screen.os.notes.now;
 
 export type Skin26 = 'l' | 'secondThoughts' | 'shepherd' | 'plain';
 export type App26 = 'l' | 'kettle' | 'lark' | 'search' | 'photos' | 'settings';
@@ -241,7 +246,7 @@ export function drawMenuBar(ctx: CanvasRenderingContext2D, bar: MenuBar26, api: 
   const { W, desk } = api;
   const L = look26(desk.skin);
   setFont(ctx, 11);
-  const mlabel = 'Menu', mw = Math.ceil(ctx.measureText(mlabel).width) + 30;
+  const mlabel = MENU_WORD, mw = Math.ceil(ctx.measureText(mlabel).width) + 30;
   const button = { x: 5, y: 3, w: mw, h: MENU_H - 6 };
   if (!PAINTERS[desk.skin]?.menuBar?.(ctx, bar, api)) {
     ctx.fillStyle = alpha(L.bar, L.barAlpha); ctx.fillRect(0, 0, W, MENU_H);
@@ -393,7 +398,7 @@ export function drawWindow(ctx: CanvasRenderingContext2D, r: Rect26, w: Window26
 export function drawNote(ctx: CanvasRenderingContext2D, band: Rect26, desk: Desk26): void {
   const n = desk.note; if (!n || band.w < 120) return;
   setFont(ctx, 11);
-  const head = `${n.title} · now`;
+  const head = `${n.title} · ${NOW_WORD}`;
   const hw = Math.ceil(ctx.measureText(head).width);
   // the window's own title keeps its place at the band's left; the notification takes the rest, up to 380 px
   const maxW = Math.max(200, Math.min(band.w - 150, 380));
