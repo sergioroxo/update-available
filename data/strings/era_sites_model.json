@@ -47,7 +47,7 @@
    {
     "year": "2026",
     "who": "Maya",
-    "text": "An app-like page of cards. Maya's session is restored before she touches it."
+    "text": "An app-like page of cards. Maya turns eighteen; an AI has read her week."
    }
   ],
   "alsoTitle": "Also here",
@@ -4212,7 +4212,7 @@
      },
      {
       "k": "quote",
-      "t": "Maya turns eighteen today. Her referral moves to the adult waiting list, and an LGB-only group writes that it cannot support her. An AI assistant that only “wants to help” reads her mail, mutes her friend, ticks off “signs” and makes her a video about them. A friend’s link leads her to a stream where people say “we’re here”, and the update fails. This room is imagined; its script is not: AI summaries and chatbots now sit between people and their messages, and campaigns against trans people’s care run across Europe.",
+      "t": "Maya turns eighteen today. An AI assistant reads her week; her mum's email brings a course for parents. Then Second Thoughts adds itself, mutes her friend, answers her dad for her and makes her a film about “coming back”. Shepherd Live alters her photo and messages her friends as her. Her friends sign in and remove it. At her birthday stream the system ends the session: “social contagion”. This room is imagined; its script is not: AI agents now sit between people and their messages, and campaigns against trans people’s care run across Europe.",
       "status": "speculative",
       "tag": "inferred",
       "long": "Inferred — the piece's own creative inference from what is documented, and marked as such."
@@ -5804,7 +5804,7 @@
      {
       "k": "media",
       "title": "“HEDGE™” — a course for parents",
-      "what": "The link Maya’s father sent her on her eighteenth birthday, “watch this”, played on the Lamby set on her shelf: a campaign course for parents that tells its own story of “how it happens”, from 1988 to today, as escalation and fear. The line under its subtitles names where each reason was taught; under the player that line is printed with its times, each number leads to its full reference, and below them is the long version of its break, what it asked of people, pastors and families, with every source. 2 minutes 3. In the piece it starts where you left it on the Lamby set.",
+      "what": "The link Maya’s mum sent on her birthday, “Please watch the first one”, played on the Lamby set from her shelf: a campaign course for parents that tells its own story of “how it happens”, from 1988 to today, as escalation and fear. The line under its subtitles names where each reason was taught; under the player that line is printed with its times, each number leads to its full reference, and below them is the long version of its break, what it asked of people, pastors and families, with every source. 2 minutes 3. In the piece it starts where you left it on the Lamby set.",
       "file": "assets/video/teaching/2026/room.mp4",
       "type": "video",
       "credit": "Credit: Made in code for this piece by Claude (Anthropic, Opus 5.5), UiB job 28 (S395), from the look approved on 16 Nov 2026. Music: made in code for these tapes by Claude (Anthropic, Opus 5.5): 2026 B “Watchful”, his pick by ear (15 Nov 2026). Host, parent, the Prayer Wall's announcer and the faceless “expert”: build-time speech synthesis (Supertonic 3, stock voices: host F5, announcer M5 — his picks by ear, 15 Nov 2026 — parent M4, expert M3), the course's and its sellers' self-presentation (“Dramatisation. Voices are actors.” on screen). Maya and her family have no voice. Taught from: undefined, the title; “a tiny seed, a mere spore”; undefined, steps 1, 4 and 6; undefined, printed pp. 46–47 (PDF pp. 50–51); undefined, p. 1 (the admission), p. 2 (“only deeper”), p. 4 (the social group); undefined, web page; undefined, printed p. 43 (PDF p. 24); undefined, web; undefined, pp. 108, 127; undefined, web; undefined, the title; sections 2(f), 3(e), 3(g); undefined, pp. 4–5, paras 9–11; undefined, web pages, printed; undefined, web. Project-owned.",
@@ -5963,7 +5963,7 @@
      {
       "k": "media",
       "title": "transjesus.str — the stream",
-      "what": "The people's music. It arrives with the raid, when Maya's friends take the stage from the host, and plays on until the night ends. No voice: TransJesus dances and says nothing. About two minutes, made to loop.",
+      "what": "The people's music. It comes with the stream, when Junie lets Maya in, and plays until the system ends her session. No voice: TransJesus dances and says nothing. About two minutes, made to loop.",
       "file": "assets/audio/transjesus_song.mp3",
       "type": "audio",
       "credit": "Credit: Composed in code by Claude (Anthropic's AI) for the project, 11 Nov 2026, with tools/make_transjesus_song.py; chosen by the project lead. Project-original.",

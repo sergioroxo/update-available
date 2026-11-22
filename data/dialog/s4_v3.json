@@ -332,6 +332,7 @@
       "register": "felt",
       "text": "There's nothing to restore. I'm Maya.",
       "mark": "Not sent",
+      "_docS419": "⚑ S419 (UiB job 34 Part C; job 33's call 18) — `mark` is no longer read at the Close. Since job 33 her friends send this line to Junie at beat 10, so Daniel's CRT marks it with Kettle's tag, \"Sent to Junie\", from a key of its own (data/strings/close_line.json cards[1].mark; its _docS419 says why). `mark` here stays \"Not sent\" for the S404 draft box that still reads it (browser.ts drawDraft, a research state no longer reached in the visit), where the line is truly unsent. `text` is untouched.",
       "after": 2,
       "cps": 9,
       "hold": 2.2,

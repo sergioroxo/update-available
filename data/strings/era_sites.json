@@ -109,7 +109,7 @@
    "1997": "A home page of the early web. Daniel is sixteen.",
    "2003": "A portal of the broadband years. Daniel is an adult, in the same room.",
    "2016": "A flat platform. Vera edits other women's words.",
-   "2026": "An app-like page of cards. Maya's session is restored before she touches it."
+   "2026": "An app-like page of cards. Maya turns eighteen; an AI has read her week."
   },
   "doorAria": "Open the website for {year}",
   "alsoTitle": "Also here",
@@ -703,8 +703,8 @@
      "type": "video",
      "title": "“HEDGE™” — a course for parents",
      "_docS392": "⚑ S394 (UiB job 27 B4) — the v4 tape (the course tells its own history, 1988 to today, from the research). Drafts for his eye (T85).",
-     "what": "The link Maya’s father sent her on her eighteenth birthday, “watch this”, played on the Lamby set on her shelf: a campaign course for parents that tells its own story of “how it happens”, from 1988 to today, as escalation and fear. Under it, as text, is the piece’s margin: where each reason was taught, and the dated facts about the manuals and the professional bodies. Below that is the long version of its break, what it asked of people, pastors and families, with every source. {length}. In the piece it starts where you left it on the Lamby set.",
-     "whatV6": "The link Maya’s father sent her on her eighteenth birthday, “watch this”, played on the Lamby set on her shelf: a campaign course for parents that tells its own story of “how it happens”, from 1988 to today, as escalation and fear. The line under its subtitles names where each reason was taught; under the player that line is printed with its times, each number leads to its full reference, and below them is the long version of its break, what it asked of people, pastors and families, with every source. {length}. In the piece it starts where you left it on the Lamby set."
+     "what": "The link Maya’s mum sent on her birthday, “Please watch the first one”, played on the Lamby set from her shelf: a campaign course for parents that tells its own story of “how it happens”, from 1988 to today, as escalation and fear. Under it, as text, is the piece’s margin: where each reason was taught, and the dated facts about the manuals and the professional bodies. Below that is the long version of its break, what it asked of people, pastors and families, with every source. {length}. In the piece it starts where you left it on the Lamby set.",
+     "whatV6": "The link Maya’s mum sent on her birthday, “Please watch the first one”, played on the Lamby set from her shelf: a campaign course for parents that tells its own story of “how it happens”, from 1988 to today, as escalation and fear. The line under its subtitles names where each reason was taught; under the player that line is printed with its times, each number leads to its full reference, and below them is the long version of its break, what it asked of people, pastors and families, with every source. {length}. In the piece it starts where you left it on the Lamby set."
     },
     {
      "file": "assets/video/the_great_becoming.mp4",
@@ -724,7 +724,7 @@
      "file": "assets/audio/transjesus_song.mp3",
      "type": "audio",
      "title": "transjesus.str — the stream",
-     "what": "The people's music. It arrives with the raid, when Maya's friends take the stage from the host, and plays on until the night ends. No voice: TransJesus dances and says nothing. About two minutes, made to loop.",
+     "what": "The people's music. It comes with the stream, when Junie lets Maya in, and plays until the system ends her session. No voice: TransJesus dances and says nothing. About two minutes, made to loop.",
      "credit": "Composed in code by Claude (Anthropic's AI) for the project, 11 Nov 2026, with tools/make_transjesus_song.py; chosen by the project lead. Project-original."
     }
    ],
@@ -735,7 +735,7 @@
     "jump": "Play it on this page",
     "title": "Play MATCH MADE SIMPLE",
     "lead": [
-     "MATCH MADE SIMPLE is Second Thoughts' game, on the console on Maya's bed. In the piece the AI offers it to her as care, when she is most shaken: “Want to play something to help you relax? I've put it on your console.” It is only a suggestion. She does not have to play it, and neither do you.",
+     "MATCH MADE SIMPLE is Second Thoughts' game, on the console on Maya's bed. In the piece the AI puts it there as care, while it takes over her computer: “I put something calming on your console.” It is only a suggestion. She does not have to play it, and neither do you.",
      "This is the same game. There is no chat on this page, so the handle starts where the game itself starts it."
     ],
     "how": "Swap two tiles next to each other to make a line of three. Each match of yours pulls the handle under the picture back toward Maya. Then the programme's pointer makes a move of its own and pushes the handle forward again. START opens the menu, where STOP HERE ends the game at any time.",
@@ -832,6 +832,13 @@
       "Your file: the record read back across all four people"
      ]
     ]
+   },
+   "_docS419": "⚑ S419 (UiB job 34 Part C 3) — what the 2026 site still said of the screen before job 33, corrected plainly and no longer than it was: the hub's door (\"Maya's session is restored before she touches it\": since S412 the screen wakes on L, which has read her week); the HEDGE™ tape (its link comes in Mum's birthday email, s4_acts.json act1.b3.mum, not from her father; LambyVision comes off her shelf to stand beside the screen); the stream's music (it begins when Junie's link opens the stream, beat 11, and stops at the shutdown: the raid is retired, S414/S415); the game (Second Thoughts puts it on her console during the takeover, beat 6: \"I put something calming on your console.\"; Open it or leave it). The Close's panel quoted on the Story tab is close_network.json panels[3] (S419). The old strings are in `_retiredS419`.",
+   "_retiredS419": {
+    "hubDoor": "An app-like page of cards. Maya's session is restored before she touches it.",
+    "media0whatPrefix": "The link Maya’s father sent her on her eighteenth birthday, “watch this”, played on the Lamby set on her shelf:",
+    "media3what": "The people's music. It arrives with the raid, when Maya's friends take the stage from the host, and plays on until the night ends. No voice: TransJesus dances and says nothing. About two minutes, made to loop.",
+    "gameLead0": "MATCH MADE SIMPLE is Second Thoughts' game, on the console on Maya's bed. In the piece the AI offers it to her as care, when she is most shaken: “Want to play something to help you relax? I've put it on your console.” It is only a suggestion. She does not have to play it, and neither do you."
    }
   }
  }
