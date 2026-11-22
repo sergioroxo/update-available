@@ -84,7 +84,8 @@ export function faceEra(): FaceEra { return current; }
  *
  * The minimums are the smallest size that clears 0.8° on that era's glass from its seat, WITH the headset's bigger
  * glass (S374 ★3: every monitor ×1.2 about its glass centre): 1997/2003 0.48 m at 0.56 m → 0.096° a pixel, so 9 px;
- * 2016 0.77 m at 0.79 m (676 px across) → 0.083°, so 10 px; 2026 0.64 m at 0.66 m (710 px) → 0.078°, so 11 px. Body
+ * 2016 0.77 m at 0.79 m (676 px across) → 0.083°, so 10 px (⚑ S357fr / 16-1: now 0.645 m at 0.65 m, its own size brought
+ * nearer, the same 0.083°: xrGlass.ts); 2026 0.64 m at 0.66 m (710 px) → 0.078°, so 11 px. Body
  * text (10–12 px) lands at 0.86–1.05°. ⚑ If the glass goes back to its browser size these must rise by 1–2 px.
  * The browser keeps today's sizes: `largeText()` is false there, so nothing on the computer moves.
  */

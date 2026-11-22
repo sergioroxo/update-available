@@ -1021,11 +1021,20 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     // ⚑ S374 / J18-B2 — in a headset 2016's flat panel and 2026's monitor grow ×1.2 about their glass (src/room/xrGlass.ts);
     //   the planes' hit tests read their own world size (era3Devices `hitPlane`)
     //   ⚑ S357az: about the foot of their stand on the desk, not the glass centre (his: "it lost the stand for the screen")
+    //   ⚑ S357fr / 16-1 (his headset, 20 Nov: "Oh, it's a huge-ass screen … Quite unrealistic … the screen is still outside
+    //   of the table") — 2016's panel no longer grows: it keeps its size (k 1) and comes nearer by XR_NEARER_2016 along +x
+    //   (toward the chair). Derived, not eyeballed: the headset's eye is the seat's (−4.4, 1.16, 0.7) moved LEAN 0.15 m in
+    //   (xrComfort.ts) → (−4.55, 1.16, 0.7). Grown ×1.2 the glass was 0.774 m (1.145 mm a pixel, 676 px) with its centre at
+    //   (−5.327, 1.104), 0.779 m away: 0.0842° a pixel. At k 1 a pixel is 0.954 mm, so the same angle needs 0.649 m; with the
+    //   centre at its own height (1.045, 0.115 m under the eye) that is x −4.55 − √(0.649² − 0.115²) = −5.189, 0.108 m in
+    //   front of the glass's room place (−5.297). 2026's monitor is untouched (×1.2 about its foot, as S357az left it).
+    const XR_NEARER_2016 = 0.108;
     for (const [screen, prop, desk] of [['era3-device-workstation', 'w_flatPanelBody', 'w_desk'], ['era3-device-monitor', 'e_monitor', 'e_desk']] as const) {
       const glass = app.root.findByName(screen) as pc.Entity | null;
       if (!glass) continue;
       const sc = glass.getLocalScale();
-      mountXrGlass(app, glass, { w: sc.x, h: sc.z }, () => [room.props.get(prop)?.entity], roomUp, { footY: deskTop(desk) });
+      const near2016 = prop === 'w_flatPanelBody' ? { k: 1, nearer: { x: XR_NEARER_2016, y: 0, z: 0 } } : {};
+      mountXrGlass(app, glass, { w: sc.x, h: sc.z }, () => [room.props.get(prop)?.entity], roomUp, { footY: deskTop(desk), ...near2016 });
     }
     /**
      * ⚑ S394 (UiB job 27 Part B; S392, S390 before it) — THE LAMBY SET. The engine's half: when each era's moment is due and the
@@ -4092,7 +4101,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
    */
   function aimNameUnderRay(ray: Ray): string | null {
     const A = aimStrings as unknown as Record<string, string>;
-    aimAt = null; aimPick = false; aimHeldGlass = false;
+    aimAt = null; aimTagAt = null; aimPick = false; aimHeldGlass = false;
     // ⚑ S358 / H19 (his headset, 10 Nov, in the Close: "there's still no way to point to stuff"; "he cannot see where he
     //   is pressing") — the panels took a press but published nothing a ray could land on: the ray stayed a stub and
     //   nothing named what it was on. The same tests as the press (resolveTapRay), in its order: a panel names itself,
@@ -4159,11 +4168,14 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     if (dev) return dev;
     // ⚑ S382 — Vera's notebook and the mug on her desk name themselves (src/room/veraDesk.ts)
     const deskAim = era3Devices?.deskAim(ray);
-    if (deskAim) { aimAt = deskAim.at; return A[deskAim.key] ?? null; }
+    if (deskAim) { aimAt = deskAim.at; aimTagAt = deskAim.tag ?? null; return A[deskAim.key] ?? null; }
     return null;
   }
   /** ⚑ S345 / T29 — the room point the last aim named (room coordinates), so the headset's ray can end on it */
   let aimAt: { x: number; y: number; z: number } | null = null;
+  /** ⚑ S357fr / 16-2 — where the last aim's name tag is pinned when it must not lie on the thing (Vera's notebook: past the
+   *  page's far right corner), room coordinates; null: the tag hangs from the ray's end as before */
+  let aimTagAt: { x: number; y: number; z: number } | null = null;
   /** ⚑ S359 / H51 — the last aim was a holdable device that is not held: the grip icon goes beside it */
   let aimPick = false;
   /** ⚑ S408 / 03-20 (his headset, 22:01: "your phone, the screen… this should disappear", 220154) — the ray is on the glass of
@@ -4676,7 +4688,9 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     xrInput?.setAimTarget(aimShown && aimAt ? xrComfort.physicalPoint(new pc.Vec3(aimAt.x, aimAt.y, aimAt.z)) : null);
     // ⚑ S408 / 03-20 — the ray still ends on the held glass; only its tag is not drawn over the game
     const aimTag = aimHeldGlass ? null : aimShown;
-    xrFrame?.setAim(aimTag, aimTag ? xrInput?.end() ?? null : null, xrInput?.ray()?.p0 ?? null);
+    // ⚑ S357fr / 16-2 — a thing that says where its tag goes (the notebook) gets it there, off its own face
+    const tagEnd = aimTag && aimTagAt ? { point: xrComfort.physicalPoint(new pc.Vec3(aimTagAt.x, aimTagAt.y, aimTagAt.z)) } : null;
+    xrFrame?.setAim(aimTag, aimTag ? tagEnd ?? xrInput?.end() ?? null : null, xrInput?.ray()?.p0 ?? null);
     // ⚑ S359 / H51 — the grip icon: only while the controller's ray is on a device that can be picked up
     xrFrame?.setGrip(aimShown && aimPick && aimAt ? xrComfort.physicalPoint(new pc.Vec3(aimAt.x, aimAt.y, aimAt.z)) : null);
     if (xrFrame && xr?.active && !gameMenuBus.isOpen) xrFrame.setHint(siteViewerXr?.isOpen || closeStage === 'message' ? null : !xrComfort.calibrated ? menuStrings.xrSeat : deviceInHand ? null : aimName ? null : xrHelperText(helper?.text() ?? null, dt));

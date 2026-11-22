@@ -189,7 +189,9 @@ const PLACEMENT = {
     //   clears the glass by the same 3 mm everywhere instead of only at one
     //   edge. If the monitor's scale, yaw or position moves, re-derive — the
     //   arithmetic is in this comment, so it can be redone rather than guessed.
-    pos: { x: -5.327, y: 1.045, z: 0.7 },
+    // ⚑ S357fr / 16-1 — x -5.327 → -5.297: the prop moved 3 cm toward the chair (-5.33 → -5.30, reinterp_deltas.json
+    //   `w_flatPanelBody`: its raked top and foot hung 1.4 cm past the desk's back edge), and the plane rides its glass.
+    pos: { x: -5.297, y: 1.045, z: 0.7 },
     // ⚑ 0.52 × 0.30 → 0.60 × 0.35, 2026-08-21. Sérgio, on a screenshot: "the
     //   computer screen is too small for the size of the area of the desktop."
     //   The whole of Era 3 is read off this panel — a testimony, a rule, a
@@ -784,7 +786,7 @@ export interface Era3Devices {
   /** S149 — redraw counts per screen, for the review */
   debugDraws(): Record<string, number>;
   /** ⚑ S382 — Vera's notebook and Nuala's mug (src/room/veraDesk.ts): the sentence line, the walker's map, a probe */
-  deskAim(ray: { p0: pc.Vec3; p1: pc.Vec3 }): { key: string; at: { x: number; y: number; z: number } } | null;
+  deskAim(ray: { p0: pc.Vec3; p1: pc.Vec3 }): { key: string; at: { x: number; y: number; z: number }; tag?: { x: number; y: number; z: number } } | null;
   deskTargets(): { id: string; x: number; y: number; z: number; r: number }[];
   deskDebug(): Record<string, unknown>;
 }
@@ -993,14 +995,14 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
    * are never live at the same moment; `sendOfferPending` holds the spine's
    * breath while a summons is up, same law the felt window and E4 already use).
    */
-  // Felt conducted object: one lift, three seconds facing the authored seat, then home.
-  const WICK_TABLE = { x: -4.95, y: 0.758, z: 1.245 }, WICK_UP = new pc.Vec3(-1, 0, 0);   // S327 / T32: on the desk
-  let wickT = -1, wickDone = false;
-  let wickScale: pc.Vec3 | null = null;   // S359 / H21: the card's own size, restored after the hold
-  let wickRest: { p: pc.Vec3; q: pc.Quat } | null = null;
-  /** ⚑ S332 — the second rise: The Wick has been added to the places to avoid, Orla's invitation has been read, and
-   *  the card is brought up to her eye and stamped BANNED at the top of the rise (one redraw, one upload). */
-  let wickBan = false, wickStamped = false;
+  // ⚑ S357fr / 16-3 (his 21 Nov ruling 12: "The 'Wick' the card keeps on moving") — THE CARD RESTS. S327 (T32) raised it
+  //   once at sign-in and S332 a second time after the places list, stamped BANNED at the top of the rise; S359 (H21) kept
+  //   both rises on the desk (a 3 cm lift, a tip toward the seat, ×1.5, four seconds each). So it moved by itself twice, and
+  //   nothing she did asked it to. It now lies still, flat on the desk by the notepad, printed face up, for the whole era.
+  //   The BANNED stamp still lands (one redraw, one upload) when The Wick is on the places to avoid and Orla's invitation
+  //   has been read — on the card where it lies, nothing lifted.
+  const WICK_REST = { x: -4.95, y: 0.752, z: 1.25 };   // S327 / T32: on the desk beside the notepad
+  let wickStamped = false;
   const stampWick = (): void => {
     if (wickStamped) return;
     wickStamped = true;
@@ -1013,48 +1015,16 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
     stampBanned(c2, src.width, src.height);
     tex.upload();
   };
-  const tickWick = (dt: number, era: string): void => {
+  const tickWick = (_dt: number, era: string): void => {
     const card = app.root.findByName('w_wickCard') as pc.Entity | null;
     if (!card) return;
     // The printed paper is already a plane; its backing box would add a draw after unbatching.
     if (card.render) card.render.enabled = false;
-    // ⚑ S327 / T32 (his 8 Nov: "the hick is still floating and it should be on the table next to the notepad") — the
-    //   card RESTS lying flat on the desk beside the notepad (notepad z 0.94–1.16; the card's 12 cm along z, just past
-    //   it), printed face up, its top edge away from the seat so it reads from the chair. The rise-once starts and ends
-    //   there. Held every frame while it is not rising, so no fold or morph can leave it standing in the air.
-    if (era === 'e3' && wickT < 0) {
-      card.setPosition(WICK_TABLE.x, WICK_TABLE.y, WICK_TABLE.z);
-      card.lookAt(new pc.Vec3(WICK_TABLE.x, WICK_TABLE.y - 1, WICK_TABLE.z), WICK_UP);
-    }
-    if (!wickDone && graceQueueLite.wickCue && era === 'e3' && !graceQueueLite.deskConducting) {
-      wickDone = true; wickT = 0;
-      // T32: rest flat beside the notepad, rather than upright above it.
-      wickRest = { p: new pc.Vec3(-4.95, 0.752, 1.25), q: new pc.Quat().setFromEulerAngles(-90, 90, 0) };
-    }
-    if (wickDone && wickT < 0 && !wickBan && graceQueueLite.wickBanReady && era === 'e3') {
-      wickBan = true; graceQueueLite.takeWickBan(); wickT = 0; wickRest = { p: card.getPosition().clone(), q: card.getRotation().clone() };
-    }
-    if (wickBan && !wickStamped && wickT >= 0.9) stampWick();
-    // T32 (Codex): at rest the card lies flat on the table by the notepad
-    if (wickT < 0) {
-      card.setPosition(-4.95, 0.752, 1.25); card.setEulerAngles(-90, 90, 0);
-      return;
-    }
-    if (!wickRest) return;
-    graceQueueLite.wickConducting = true;
-    wickT += dt;
-    const k = wickT < 0.5 ? wickT / 0.5 : wickT <= 3.5 ? 1 : Math.max(0, 1 - (wickT - 3.5) / 0.5);
-    // ⚑ S359 / H21 (his headset, 10 Nov: the Wick "just jumped to my face… it can happen there on the table") — it no
-    //   longer flies to the eye: it stays ON THE DESK where it lies, lifts 3 cm, tips half-way up toward the seat (a card
-    //   propped to be read) and grows by half for the hold, so it reads at 0.9 m; then lies down again. Same 4 s, same
-    //   stamp at 0.9 s, same quiet for the platform while it is up.
-    const smooth = k * k * (3 - 2 * k);
-    wickScale ??= card.getLocalScale().clone();
-    card.setPosition(wickRest.p.x, wickRest.p.y + 0.03 * smooth, wickRest.p.z);
-    card.lookAt(new pc.Vec3(-4.4, 1.16, 0.70)); card.rotateLocal(0, 180, 0);
-    const face = card.getRotation().clone(); card.setRotation(new pc.Quat().slerp(wickRest.q, face, 0.55 * smooth));
-    card.setLocalScale(wickScale.x * (1 + 0.5 * smooth), wickScale.y * (1 + 0.5 * smooth), wickScale.z * (1 + 0.5 * smooth));
-    if (wickT >= 4 || era !== 'e3') { card.setPosition(wickRest.p); card.setRotation(wickRest.q); card.setLocalScale(wickScale); wickT = -1; graceQueueLite.wickConducting = false; }
+    // ⚑ S327 / T32 (his 8 Nov: "the hick is still floating and it should be on the table next to the notepad") — the card
+    //   lies flat on the desk beside the notepad, printed face up, its top edge away from the seat so it reads from the
+    //   chair. Held there every frame, so no fold or morph can leave it standing in the air. (S357fr: and nothing moves it.)
+    card.setPosition(WICK_REST.x, WICK_REST.y, WICK_REST.z); card.setEulerAngles(-90, 90, 0);
+    if (!wickStamped && era === 'e3' && graceQueueLite.wickBanReady) { graceQueueLite.takeWickBan(); stampWick(); }
   };
   let ritualTick = 0;
   function drawWorkstation(ctx: CanvasRenderingContext2D, w: number, h: number): void {

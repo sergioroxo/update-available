@@ -1406,9 +1406,10 @@
    },
    {
     "id": "w_flatPanelBody",
+    "_docS357fr": "⚑ S357fr / 16-1 (his headset, 20 Nov: \"Oh, it's a huge-ass screen … Quite unrealistic … the screen is still outside of the table\"). x -5.33 → -5.30: measured, the panel's raked top and its foot reached 1.4 cm past the desk's back edge (mesh box x -5.4194 against the desk's -5.4058), 3.2 cm in the headset when it grew ×1.2 about its foot. Three centimetres forward it stands 1.7 cm inside the edge. PLACEMENT.workstation (era3Devices.ts) and tools/shots.mjs moved with it. In the headset it no longer grows: it comes nearer at its own size (app.ts, xrGlass.ts `nearer`).",
     "model": "computerScreen",
     "pos": [
-     -5.33,
+     -5.30,
      0.75,
      0.7
     ],
