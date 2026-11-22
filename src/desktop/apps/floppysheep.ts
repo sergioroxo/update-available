@@ -1085,7 +1085,8 @@ function makeGame(bump: () => void) {
     hl.forEach((ln, i) => tu(ln, X + 26, hy + 29 + i * 14, 11.5, FLOPPY.ink, 'left', 700));
     const by = Y + PH - 36; rr(X + 40, by, PW - 80, 26, 13, ERA3.good); tu(g.intro.go, W / 2, by + 14, 14, ERA3.white, 'center', 800);
     bulbRing(X - 6, Y - 6, PW + 12, PH + 12, 16, 0, true);
-    tu(g.intro.length.replace('{t}', mmss(levelLen())), W / 2, Y + PH + 14, 10, ERA3.white, 'center', 600);
+    // ⚑ S357fr / 16-10 — the level's length line is cut (s3_floppysheep.json `length` is empty): nothing is drawn for it
+    if (g.intro.length) tu(g.intro.length.replace('{t}', mmss(levelLen())), W / 2, Y + PH + 14, 10, ERA3.white, 'center', 600);
   }
   /**
    * ⚑ S374 / J18-B1 — the introduction with large text on (a headset): the same card, the same order, spaced for 19-unit
@@ -1098,8 +1099,9 @@ function makeGame(bump: () => void) {
     const vl = wrapU(g.intro.voiceLarge, PW - 36, 13, 600), hl = wrapU(g.intro.howLarge, PW - 48, 11.5, 700);
     const vStep = XL + 2, hStep = XL + 1;
     const vy = Y + 80, sy = vy + vl.length * vStep + 2, hy = sy + 14, hh = 30 + hl.length * hStep;
-    const ll = wrapU(g.intro.length.replace('{t}', mmss(levelLen())), PW - 28, 10, 600);
-    const ly = hy + hh + 14, by = ly + ll.length * XL + 4, PH = Math.min(bottom - Y, by + 30 - Y);
+    // ⚑ S357fr / 16-10 — no length line when `length` is empty: the go button comes up under the how-to box
+    const ll = g.intro.length ? wrapU(g.intro.length.replace('{t}', mmss(levelLen())), PW - 28, 10, 600) : [];
+    const ly = hy + hh + 14, by = ll.length ? ly + ll.length * XL + 4 : hy + hh + 12, PH = Math.min(bottom - Y, by + 30 - Y);
     A(0.45, () => rect(0, HEADER_H + 4, W, Y + PH + 8 - HEADER_H - 4, ERA3.ink));
     ctx.save(); ctx.beginPath(); ctx.rect(0, HEADER_H + 4, W, Y + PH + 8 - HEADER_H - 4); ctx.clip(); starburst(W / 2, 220, 330, 190, 18, S.t * 0.25, BOMB.gold, 0.2); starburst(W / 2, 220, 290, 170, 18, -S.t * 0.2, BOMB.hot, 0.16); ctx.restore();
     rr(X, Y + 4, PW, PH, 20, FLOPPY.hillDk); rr(X, Y, PW, PH, 20, ERA3.white); rect(X + 16, Y, PW - 32, 4, FLOPPY.hillFar);

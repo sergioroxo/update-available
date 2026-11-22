@@ -9,7 +9,7 @@ import { veraDay, resetVeraDay } from '../state/veraDay';
 import polish from '../../data/strings/playtestPolish.json';
 import { drawLambyGuide, drawGuidePointer, type GuidePaint } from '../desktop/apps/lambyGuideDraw';
 import type { LambyGuide } from '../narrative/lambyGuide';
-import { refuse, drawLambientNote, measureLambientNote, resetRefusals, type DeskNote } from '../desktop/apps/lambientDesk';
+import { refuse, drawLambientNote, measureLambientNote, resetRefusals, REFUSAL, type DeskNote } from '../desktop/apps/lambientDesk';
 /**
  * THE CORRECTION LIST — the workstation, Era 3 (Session 64, E3-iii).
  * Spec: `docs/REINTERP_E3_THE_CORRECTION_LIST_2026-07-30.md` (revision 4).
@@ -1509,8 +1509,9 @@ export class GraceQueueLite {
       const done = this.cutQueue.shift()!;
       this.cutT = 0;
       if (!this.cutQueue.length) {
+        // ⚑ S357fr / 16-5 (his headset, 20 Nov: "the video should play when I want to") — the film no longer plays on by
+        //   itself after a cut: it waits where the cut left it, for her Play
         this.playT = this.resumeAfter(done.kind);
-        if (this.renataOpen() && this.mode === 'list' && !this.openSurface) this.playing = true;
       }
       this.bump();
     } else if (Math.floor(this.cutT / CUT_TICK) !== before) this.bump();
@@ -1715,8 +1716,9 @@ export class GraceQueueLite {
     const next = SUBMISSIONS.findIndex(sb => !this.subComplete(sb));
     this.subIdx = next < 0 ? 0 : next; this.submissionPage = 0;
     this.mode = 'list';
-    // ⚑ S386 — her film plays as her job opens (it is what the job is: the piece takes her there, on the screen she pressed)
-    if (this.renataOpen()) { if (this.playT >= this.filmSeconds()) this.playT = 0; this.playing = true; }
+    // ⚑ S386 — her film is what the job is: it fills the window as her job opens. ⚑ S357fr / 16-5 (his headset, 20 Nov:
+    //   "the video should play when I want to") — it no longer starts by itself: it waits on its first frame for her Play
+    if (this.renataOpen()) { if (this.playT >= this.filmSeconds()) this.playT = 0; this.playing = false; }
     // ⚑ the second conduction beat, once only: what the two verbs are, and
     //   what happens either way. "Either way it's recorded, so you can't get
     //   it wrong" is meant as reassurance and is the surveillance clause.
@@ -1817,8 +1819,9 @@ export class GraceQueueLite {
       // — nothing loads by itself. The break arms here, as before.
       if (sub.id === 1) this.earn('mentor');   // S332: the testimony's answer, held until the send is done and she is at rest
       this.storyDone = true;
-      // ⚑ S386 — the story done, the published version plays (after any cut still being made)
-      if (this.renataOpen()) { this.ownCutShown = false; if (!this.cutQueue.length) { this.playT = 0; this.playing = true; } }
+      // ⚑ S386 — the story done, the published version is on the screen (after any cut still being made). ⚑ S357fr / 16-5:
+      //   it waits for her Play like the film before it (her own 2014 cut still comes on its end, or on the first Back)
+      if (this.renataOpen()) { this.ownCutShown = false; if (!this.cutQueue.length) { this.playT = 0; this.playing = false; } }
       if (!ledger.records.includes('e3-job-done')) ledger.records.push('e3-job-done');
       if (this.workDone() >= maltaAfter()) this.armMalta();
       if (this.rosterComplete() && !ledger.records.includes('e3-day-done')) ledger.records.push('e3-day-done');
@@ -2822,6 +2825,28 @@ export class GraceQueueLite {
     const refs = wrapText(ctx, `${current.manual} · ${current.verse}`, copyW);
     return { need: Math.max(80, 32 + noteH + refs.length * REFS_LEAD + 4), copyW, note, refs };
   }
+  /** ⚑ S357fr / 16-4 (his headset, 20 Nov: "the image changed sizes … the zooms don't work for me. This needs to be
+   *  stable") — Renata's film was sized against the band of the rule on screen, so every Apply (a new rule, a longer
+   *  note, the cut's own rule while it is made) gave her film a new size. The band is now as tall as the tallest it can
+   *  ever be in this job — any rule's teaching line or rationale, any answer the refusal ladder can put in its place, with
+   *  the longest references — so the film keeps one size from the job's first second to its last, and only words change. */
+  private studioBandMax(ctx: CanvasRenderingContext2D, c: aero.AeroContent, sub: SubmissionDef): number {
+    const copyW = c.w - 190, items = this.items(sub);
+    if (!items.length) return 80;
+    let noteH = 0, refsN = 0;
+    for (const item of items) {
+      studioFont(ctx, 11);
+      if (item.teach) noteH = Math.max(noteH, measureLambientNote(ctx, copyW, { line: item.teach, voice: 'lambient' }));
+      else noteH = Math.max(noteH, wrapText(ctx, item.why, copyW).length * 14);
+      REFUSAL.lines.forEach((line, i) => {
+        const voice = i >= 3 ? 'admin' as const : 'lambient' as const;
+        for (const l of [line, `${item.rule}: ${line}`]) noteH = Math.max(noteH, measureLambientNote(ctx, copyW, { line: l, voice }));
+      });
+      studioFont(ctx, 10);
+      refsN = Math.max(refsN, wrapText(ctx, `${item.manual} · ${item.verse}`, copyW).length);
+    }
+    return Math.max(80, 32 + noteH + refsN * REFS_LEAD + 4);
+  }
   private drawTestimonyStudio(ctx: CanvasRenderingContext2D, c: aero.AeroContent, sub: SubmissionDef): void {
     if (sub.id === 1 && sub.video?.cues) { this.drawRenataStudio(ctx, c, sub); return; }   // ⚑ S386
     const V = vera.visual, video = sub.video!;
@@ -3021,7 +3046,7 @@ export class GraceQueueLite {
     sys.forEach((ln, i) => ctx.fillText(ln, sysX, c.y + (sys.length === 1 ? 6 : 0) + i * lead));
     const top = c.y + Math.max(28, sys.length * lead + 5);
     const band = this.studioBand(ctx, c);
-    const by = c.y + c.h - 2 - band.need;
+    const by = c.y + c.h - 2 - this.studioBandMax(ctx, c, sub);   // ⚑ S357fr / 16-4: one band height, one film size
     const rowH = Math.max(16, Math.round(textPx(10, 'e3')) + 6), colW = 124;
     const fh = Math.max(60, Math.min(by - 8 - rowH - 4 - top, Math.floor((c.w - colW - 10) * 9 / 16))), fw = Math.round(fh * 16 / 9);
     const fx = c.x, fy = top, frame = this.filmFrame();

@@ -30,7 +30,6 @@ const REPLY = m.reply as { text: string; time: string; hint: string };
 const REMOVED_LINE = m.removedLine as string;
 const VERA = 'Vera';
 const CASCADE = m.cascade as Msg[];
-const SLOTS = (mirrorCopy as unknown as { slots?: string[] }).slots ?? [];
 type Live = Msg & { key: string };
 const LINK_VOTE = m.linkVote as { masthead: string; headline: string };   // S227 / M1: the never-drawn standfirst and tapHint are gone
 const BACKLOG = m.backlog as { from: string; time: string; text: string; register?: string; stampCard?: string; opens?: string; thread?: { time: string; text: string }[] }[];
@@ -102,15 +101,15 @@ const testimonyDone = (): boolean => ledger.records.includes('e3-job:testimony')
 /** ⚑ S362 / H43 — the platform's "intervene immediately" alert holds this long before its first removal.
  *  ⚑ S368 / F04 — by the reading rule (was 4.5 s for 18 words), or until its OK (`endTakeoverAlert`) */
 const TAKEOVER_ALERT = Math.max(9, readHold([vera.removals.alertTag, vera.removals.takeoverLine, vera.removals.takeoverSub]));
-/** ⚑ S368 / F05·F10 (rule 4: "a clock jump is a visible passage of time, never a silent 21:49 → 22:51") — the one clock (the phone's,
- *  read by the workstation's taskbar too) ROLLS forward when the story jumps more than CLOCK_SNAP minutes: its digits run up over
- *  ROLL_MIN…ROLL_MAX seconds (about ROLL_PER_MIN a minute), redrawn at most every ROLL_STEP, and whatever carries the new time
- *  (an evening message, Bea's news) lands only when it has arrived. A minute or two (the cascade) just changes. */
-const CLOCK_SNAP = 5;
-const ROLL_PER_MIN = 0.035;
-const ROLL_MIN = 1.5;
-const ROLL_MAX = 3.5;
-const ROLL_STEP = 0.1;
+/** ⚑ S357fr / 16-12 (his headset, 20 Nov: "why is the time flying … we should remove this idea of the time jumping"; "No, the
+ *  timing flying, I hate it") — THE EVENING'S CLOCK IS A CLOCK. S368 (F05·F10) rolled the one clock (the phone's, read by the
+ *  workstation's taskbar too) up to each message's authored time — 18:04 → 18:41 in 13 s, then 19:22, 20:05, 21:41, 22:51 —
+ *  and held each message until it got there. Now it starts at EVENING_START with the era and runs a minute a minute, and
+ *  every message (tonight's people, Bea's news, her reply, the cascade, Orla's last) is stamped with the minute it actually
+ *  lands: nothing waits for the clock, nothing on the glass is from a time the clock has not reached, and the clock never
+ *  leaps. (The authored times in e3_mirror.json `slots`/`events` and s3_maiden.json `news`/`cascade`/`reply` are no longer
+ *  read for the evening; Deirdre's group's morning, `before`, keeps its own.) */
+const EVENING_START = '18:04';
 function clockMinutes(t: string): number { const [h, mm] = t.split(':').map(Number); return (h || 0) * 60 + (mm || 0); }
 function clockOf(min: number): string { const h = Math.floor(min / 60) % 24, mm = min % 60; return `${h}:${String(mm).padStart(2, '0')}`; }
 const CASCADE_REPEAT_VOLUME = 0.4;
@@ -207,9 +206,11 @@ export class PhoneE3 {
   get replyOffered(): boolean { return this.stage === 'news' && this.newsN >= NEWS.length && !this.replied && this.replyWaitT < REPLY_WAIT; }
   get inTakeover(): boolean { return this.stage === 'takeover' || this.stage === 'after'; }
   private liveMsgs(): Live[] {
-    const out: Live[] = NEWS.slice(0, this.newsN).map((n, i) => ({ ...n, key: 'n' + i }));
-    if (this.replied) out.push({ from: VERA, time: REPLY.time, text: REPLY.text, key: 'v' });
-    CASCADE.slice(0, this.cascadeN).forEach((c, i) => out.push({ ...c, key: 'c' + i }));
+    // ⚑ S357fr / 16-12 — each at the minute it landed (a review jump that lands them all at once: the clock's minute)
+    const at = (key: string): string => this.landedAt.get(key) ?? this.clockShown;
+    const out: Live[] = NEWS.slice(0, this.newsN).map((n, i) => ({ ...n, time: at('n' + i), key: 'n' + i }));
+    if (this.replied) out.push({ from: VERA, time: at('v'), text: REPLY.text, key: 'v' });
+    CASCADE.slice(0, this.cascadeN).forEach((c, i) => out.push({ ...c, time: at('c' + i), key: 'c' + i }));
     return out;
   }
   private removalOrder(): string[] {
@@ -263,25 +264,21 @@ export class PhoneE3 {
     this.screen = 'group'; this.openMessage = null; this.banner = null; this.markGroupSeen(); veraDay.phoneAnswered = true; this.bump();
   }
   private eveningFrom = '';
-  private slotN = 0;
-  /** the story's time (the target); `clockShown` is what the glass and the taskbar read — it rolls up to this (S368) */
-  private storyClock = '18:04';
-  private clockShown = '18:04';
-  private roll: { from: number; to: number; t: number; dur: number; drawn: number } | null = null;
-  /** ⚑ S368 — the clock is still running up to the story's time; what carries the new time waits for it */
-  get rolling(): boolean { return this.clockShown !== this.storyClock; }
+  /** ⚑ S357fr / 16-12 — what the glass and the taskbar read: EVENING_START plus the minutes the era has run, one a minute */
+  private clockShown = EVENING_START;
+  private clockSec = 0;
+  /** ⚑ S357fr / 16-12 — the minute each of the group's live messages landed ('n' + i Bea's news, 'v' her reply, 'c' + i the
+   *  cascade), so the thread shows the clock's own time for each, never an authored one ahead of it */
+  private landedAt = new Map<string, string>();
   private tickClock(dt: number): void {
-    if (this.clockShown === this.storyClock) { this.roll = null; return; }
-    const a = clockMinutes(this.clockShown), b = clockMinutes(this.storyClock);
-    if (b <= a || b - a <= CLOCK_SNAP) { this.clockShown = this.storyClock; this.roll = null; this.bump(); return; }
-    if (!this.roll || this.roll.to !== b) this.roll = { from: a, to: b, t: 0, dur: Math.min(ROLL_MAX, Math.max(ROLL_MIN, (b - a) * ROLL_PER_MIN)), drawn: 0 };
-    const r = this.roll; r.t += dt;
-    if (r.t >= r.dur) { this.clockShown = this.storyClock; this.roll = null; this.bump(); return; }
-    if (r.t - r.drawn < ROLL_STEP) return;
-    r.drawn = r.t;
-    const k = r.t / r.dur, eased = k * k * (3 - 2 * k);
-    const shown = clockOf(Math.round(r.from + (r.to - r.from) * eased));
-    if (shown !== this.clockShown && clockMinutes(shown) < b) { this.clockShown = shown; this.bump(); }
+    this.clockSec += dt;
+    const shown = clockOf(clockMinutes(EVENING_START) + Math.floor(this.clockSec / 60));
+    if (shown !== this.clockShown) { this.clockShown = shown; this.bump(); }
+  }
+  /** ⚑ S357fr / 16-12 — the camera roll's dates; Orla's last photo is dated the minute her message landed */
+  private photoDate(i: number): string {
+    const after = this.evening.find(e => e.id === 'after');
+    return (m.cameraRoll.dates[i] ?? '').replace('{t}', after?.time ?? this.clockShown);
   }
   /** ⚑ S368 / F05 — the phone goes to sleep: its lock screen, nothing over it (the evening passes there, then Orla writes) */
   sleep(): void {
@@ -298,31 +295,29 @@ export class PhoneE3 {
     this.eventQueue.push(e); this.deliverEvent();
   }
   /** ⚑ S327 — a message is waiting, or the last one is still being read: the platform's other voices wait for it */
-  get voiceBusy(): boolean { return this.bannerAge < this.holdFor || (this.atRest && this.eventQueue.length > 0) || this.notesPending || this.conductingNotes || this.rolling; }
+  get voiceBusy(): boolean { return this.bannerAge < this.holdFor || (this.atRest && this.eventQueue.length > 0) || this.notesPending || this.conductingNotes; }
   get queued(): number { return this.eventQueue.length; }
   /** S336 — diagnosis only: why a queued message is not being delivered */
   debugState(): Record<string, unknown> {
     return { queue: this.eventQueue.map(e => e.id), bannerAge: Math.round(this.bannerAge * 10) / 10, bannersHidden: this.bannersHidden,
       atRest: this.atRest, disconnected: this.disconnected, notesPending: this.notesPending, conductingNotes: this.conductingNotes,
-      screen: this.screen, stage: this.stage, delivered: this.evening.map(e => e.id) };
+      screen: this.screen, stage: this.stage, delivered: this.evening.map(e => e.id), clock: this.clockShown,
+      times: this.evening.map(e => `${e.id} ${e.time}`) };
   }
   delivered(id: string): boolean { return this.evening.some(e => e.id === id); }
   private deliverEvent(): void {
     if (!this.eventQueue.length || this.bannerAge < this.holdFor || this.bannersHidden || !this.atRest || this.disconnected || this.notesPending || this.conductingNotes) return;
-    const raw = this.eventQueue[0];
-    // ⚑ S332 — jobs finish in her order, so each message takes the evening's next slot (the clock never runs back)
-    const time = raw.id === 'after' ? raw.time : SLOTS[this.slotN] ?? raw.time;
-    // ⚑ S368 / F05·F10 — the evening passes visibly first: the clock runs up to the message's time, and it lands when it gets there
-    if (clockMinutes(time) - clockMinutes(this.clockShown) > CLOCK_SNAP) { this.storyClock = time; return; }
-    if (this.rolling) return;
-    this.eventQueue.shift();
-    if (raw.id !== 'after') this.slotN++;
-    const e = { ...raw, time };
+    const raw = this.eventQueue.shift()!;
+    // ⚑ S357fr / 16-12 — each message lands at the clock's own minute (it used to take the evening's next authored slot and
+    //   roll the clock up to it). Orla's quiz and her stamp line came at one minute: "should be like one minute less" — the
+    //   quiz is stamped a minute before the stamp line that lands under it (never before a message that came ahead of it).
+    const now = this.clockShown, last = this.evening[this.evening.length - 1];
+    const e = { ...raw, time: raw.id === 'arrival' ? clockOf(Math.max(clockMinutes(now) - 1, last ? clockMinutes(last.time) : 0)) : now };
     // ⚑ S368 / F08 — each message is held at least by the reading rule (2 s + 0.4 s a word), never less than S362's HOLDS
-    this.evening.push(e); this.storyClock = e.time; this.banner = e; this.bannerAge = 0; this.holdFor = Math.max(HOLDS[e.id] ?? READ_HOLD, readHold(e.text ?? ''));
+    this.evening.push(e); this.banner = e; this.bannerAge = 0; this.holdFor = Math.max(HOLDS[e.id] ?? READ_HOLD, readHold(e.text ?? ''));
     // ⚑ S327 / T04 (his 8 Nov: "two different messages from Orla, which doesn't make a lot of sense") — ONE banner for
     //   Orla's evening: the stamp line lands in the same thread, quietly, under the quiz message
-    if (e.id === 'arrival') { const st = mirrorCopy.events.find(x => x.id === 'stamp'); if (st && !this.delivered('stamp')) this.evening.push({ ...st, time: e.time }); }
+    if (e.id === 'arrival') { const st = mirrorCopy.events.find(x => x.id === 'stamp'); if (st && !this.delivered('stamp')) this.evening.push({ ...st, time: now }); }
     if (e.id === 'decision') this.notesPending = true;
     playOnce('phone_ping_2016.mp3'); this.bump();
   }
@@ -330,14 +325,15 @@ export class PhoneE3 {
   private newsBanner(messages: Msg[]): void {
     const e = messages[messages.length - 1];
     if (this.screen === 'group') { this.banner = null; this.bump(); return; }   // S327: it is landing on the open thread
-    if (e) this.banner = { from: e.from, time: e.time, text: e.text ?? (e.kind === 'link2' ? LINK_VOTE.headline : e.kind === 'link' ? m.link.headline : '') };
+    // ⚑ S357fr / 16-12 — it has just landed: the banner says the clock's minute, not the message's authored one
+    if (e) this.banner = { from: e.from, time: this.clockShown, text: e.text ?? (e.kind === 'link2' ? LINK_VOTE.headline : e.kind === 'link' ? m.link.headline : '') };
     this.bump();
   }
   get eveningClock(): string { return this.clockShown; }
   disconnected = false;
   disconnect(): void { this.disconnected = true; this.evening = []; this.eventQueue = []; this.readMessages.clear(); veraDay.personalMessageSeen = false; this.banner = null; this.openMessage = null; this.notesT = -1; this.refusalT = -1; this.refusalPending = false; this.screen = 'lock'; this.bump(); }
   get hitRects(): Rect[] { return this.rects; }
-  get unreadCount(): number { return BACKLOG.filter(b => !this.readMessages.has(b.from + b.time)).length + this.groupUnread() + this.evening.filter(e => e.from !== m.group.name && !this.readMessages.has('evening:' + e.id)).length; }
+  get unreadCount(): number { return this.inboxBadge; }   // ⚑ S357fr / 16-9: one count, the list's
   private bump(): void { this.version++; }
   get quietReading(): boolean { return this.screen === 'group' || this.screen === 'walk' || this.screen === 'platform' || this.screen === 'article' || this.screen === 'evening' || this.screen === 'photos' || this.screen === 'photo' || this.screen === 'notes' || this.personalOpen || this.screen === 'message' || this.screen === 'inbox'; }
   presentInbox(): void { this.screen = 'inbox'; this.openMessage = null; this.bump(); }
@@ -387,7 +383,7 @@ export class PhoneE3 {
     }
     // ⚑ S404 — the new note, waiting for the testimony: the Notes come back for it at the platform's next rest
     if (this.refusalPending && !this.disconnected && testimonyDone() && this.atRest && this.bannerAge >= this.holdFor && !this.bannersHidden
-      && !this.notesPending && this.eventQueue.length === 0 && !this.rolling) this.conductRefusal(false);
+      && !this.notesPending && this.eventQueue.length === 0) this.conductRefusal(false);
     if (this.refusalT >= 0 && REFUSAL_NOTE) {
       const old = Math.floor(this.refusalT * 10); this.refusalT += dt;
       if (!this.refusalWritten && this.refusalLetters() >= REFUSAL_NOTE.text.length) {
@@ -409,12 +405,10 @@ export class PhoneE3 {
         // ⚑ S362 / H28 — if she opened the article herself, the news waits for her to come back from it
         if (this.screen === 'article' && !this.articleConducted) return;
         if (this.newsPaused) return;
-        // ⚑ S368 / F10 — Bea's first message waits for the evening to reach her time (the clock rolls from the last slot to 21:41)
-        if (this.newsN === 0 && clockMinutes(NEWS[0].time) - clockMinutes(this.clockShown) > CLOCK_SNAP) { this.storyClock = NEWS[0].time; return; }
-        if (this.rolling) return;
+        // ⚑ S357fr / 16-12 — Bea's first message no longer waits for the clock to roll up to 21:41: it lands at the clock's minute
         this.newsT += dt;
         if (this.newsT >= newsWait(this.newsN)) {
-          this.newsT = 0; this.newsN++; this.storyClock = NEWS[this.newsN - 1].time;
+          this.newsT = 0; this.newsN++; this.landedAt.set('n' + (this.newsN - 1), this.clockShown);
           // the article's hold is over: back to the thread (if she is still on it), and the next message lands under her eyes
           if (this.articleConducted) { this.articleConducted = false; if (this.screen === 'article') { this.screen = 'group'; } }
           this.newsBanner(NEWS.slice(0, this.newsN));
@@ -445,7 +439,7 @@ export class PhoneE3 {
     this.cascadeT += dt;
     while (this.cascadeT >= CASCADE_STEP && this.cascadeN < CASCADE.length) {
       this.cascadeT -= CASCADE_STEP;
-      this.cascadeN++; this.storyClock = CASCADE[this.cascadeN - 1].time; this.newsBanner(CASCADE.slice(0, this.cascadeN));
+      this.cascadeN++; this.landedAt.set('c' + (this.cascadeN - 1), this.clockShown); this.newsBanner(CASCADE.slice(0, this.cascadeN));
       this.cascadeSound();
       if (this.screen === 'group') this.markGroupSeen();   // it landed under her eyes
       this.bump();
@@ -562,6 +556,8 @@ export class PhoneE3 {
     if (from === 'Mam' && this.notesPending) this.bannerAge = 0;
     if (this.banner?.from === from) this.banner = null;   // S327: opened, the notification has done its job
     for (const e of this.evening.filter(e => e.from === from)) this.readMessages.add('evening:' + e.id);
+    // ⚑ S357fr / 16-9 — her older messages from them are in the same thread (drawEvening): on the glass now, so read
+    for (const b of BACKLOG.filter(b => b.from === from)) this.readMessages.add(b.from + b.time);
     if (from === m.personalMessage.from) { this.readMessages.add('personal'); veraDay.personalMessageSeen = true; }
     if (this.screen === 'group') this.markGroupSeen();
     this.bump();
@@ -700,7 +696,7 @@ export class PhoneE3 {
       const size = Math.max(20, Math.min(144, H - top - 70)), x = Math.round((W - size) / 2), y = top + 20;
       ctx.drawImage(this.photoSprites[this.photoIndex], x, y, size, size);
       phoneFont(ctx, 11); ctx.fillStyle = PHONE.dim;
-      ctx.fillText(m.cameraRoll.dates[this.photoIndex], Math.max(52, x), y + size + 12);
+      ctx.fillText(this.photoDate(this.photoIndex), Math.max(52, x), y + size + 12);
     } else {
       const sprites = this.photoSprites.slice(0, this.evening.some(e => e.id === 'after') ? 5 : 4);
       const perPage = H < 260 ? 2 : 4, pages = sprites.length;
@@ -710,7 +706,7 @@ export class PhoneE3 {
         const size = Math.max(20, Math.min(H < 300 ? 56 : 72, H - top - 76));
         const x = 12 + (n % 2) * 84, y = top + 12 + Math.floor(n / 2) * (size + 18);
         ctx.drawImage(sprite, x, y, size, size);
-        phoneFont(ctx, 10); ctx.fillStyle = PHONE.dim; ctx.fillText(m.cameraRoll.dates[i], x, y + size + 5);
+        phoneFont(ctx, 10); ctx.fillStyle = PHONE.dim; ctx.fillText(this.photoDate(i), x, y + size + 5);
         this.rects.push({ x, y, w: size, h: size + 14, id: 'photo-' + i });
       });
       phoneFont(ctx, 14); ctx.fillStyle = PHONE.tint;
@@ -769,8 +765,6 @@ export class PhoneE3 {
     //   "No events today", on the day the era ends.
     if (H >= 300) dateWidget(ctx, 10, 24, W - 20, HOME.widgetWeekday, HOME.widgetDate, HOME.widgetNote);
 
-    const unread = this.groupUnread();
-    const unreadMail = BACKLOG.filter(b => !this.readMessages.has(b.from + b.time)).length;
 
     // ⚑ FOUR COLUMNS AT PHONE DENSITY, not a 2×2 of billboards. The four apps
     //   that matter sit in the first row and everything under them is set
@@ -789,7 +783,8 @@ export class PhoneE3 {
     appTile(ctx, col(0), rowY(0), s, PHONE.tileGroup, 'chat', HOME.shortPlatform, '');
     this.rects.push({ x: col(0), y: rowY(0), w: s, h: s + 12, id: 'platform' });
 
-    const unreadAll = unread + unreadMail;
+    // ⚑ S357fr / 16-9 — the badge is what the Messages list itself declares unread (inboxRows), not the backlog alone
+    const unreadAll = this.inboxBadge;
     appTile(ctx, col(1), rowY(0), s, PHONE.tileMail, 'mail', m.home.messagesLabel,
       unreadAll ? String(unreadAll) : '');
     this.rects.push({ x: col(1), y: rowY(0), w: s, h: s + 12, id: 'inbox' });
@@ -1017,6 +1012,34 @@ export class PhoneE3 {
     this.rects.push({ x, y, w, h: 56, id: msg.kind === 'link2' ? 'link2' : 'link' });
   }
 
+  /** ⚑ S357fr / 16-9 (his headset, 20 Nov: "it's saying seven messages but … I cannot …") — THE INBOX'S ROWS, one model for
+   *  the list and for the badge on the Messages tile. The badge used to count the backlog alone, apart from the list: it
+   *  said 7 while the rows on the glass said "87 unread" (muted), "3 unread" and "No new messages", and a person who had
+   *  written tonight AND before kept a counted message under a row with no dot. Now each row carries what it declares
+   *  unread — a dotted row its own unread messages (tonight's and the older ones in the same thread), the group its "N new
+   *  messages", a preview its "N unread" — and the badge is their sum, a muted chat excepted (its row says "muted"). */
+  private inboxRows(): { from: string; text: string; time: string; id: string; read: boolean; unread: number; muted?: boolean }[] {
+    // ⚑ S327 / T05 (his 8 Nov: "the mentor's message isn't on the phone") — tonight's people NEWEST FIRST, each once:
+    //   the mentor's message used to sit fourth in arrival order, off the first page. A person she has older messages
+    //   from is the same row (the thread holds both); the group's own check-in counts as the group's news.
+    const senders: string[] = [];
+    for (const e of [...this.evening].reverse()) if (e.from !== m.group.name && !senders.includes(e.from)) senders.push(e.from);
+    const groupNew = this.groupUnread() + this.evening.filter(e => e.from === m.group.name && !this.readMessages.has('evening:' + e.id)).length;
+    const older = (from: string): number => BACKLOG.filter(b => b.from === from && !this.readMessages.has(b.from + b.time)).length;
+    return [
+      ...senders.map(from => {
+        const mine = this.evening.filter(e => e.from === from), last = mine[mine.length - 1];
+        const unread = mine.filter(e => !this.readMessages.has('evening:' + e.id)).length + older(from);
+        return { from, text: last.text ?? '', time: last.time, id: 'evening:' + from, read: unread === 0, unread };
+      }),
+      ...m.groupPreviews.map(g => ({ from: g.name, text: (g.muted ? m.groupPreviewUI.muted + ' · ' : '') + m.groupPreviewUI.unread.replace('{n}', String(g.unread)), time: '', id: '', read: true, unread: g.unread, muted: g.muted })),
+      { from: m.home.groupLabel, text: groupNew ? m.home.groupUnread.replace('{n}', String(groupNew)) : m.home.groupQuiet, time: '', id: 'group', read: !groupNew, unread: groupNew },
+      ...BACKLOG.filter(b => !senders.includes(b.from)).map(b => { const read = this.readMessages.has(b.from + b.time); return { from: b.from, text: b.text, time: b.time, id: 'read-' + b.from + b.time, read, unread: read ? 0 : 1 }; })
+    ];
+  }
+  /** ⚑ S357fr / 16-9 — the Messages tile's badge: the sum of what the rows declare unread, a muted chat excepted */
+  get inboxBadge(): number { return this.inboxRows().reduce((n, r) => n + (r.muted ? 0 : r.unread), 0); }
+
   /** ⚑ read-only, and it files NOTHING. §6's design law: the piece never makes
    *  her open them, and if a player never touches this inbox that is also true
    *  of her. Drawn as a conversation LIST, with unread dots. */
@@ -1028,15 +1051,7 @@ export class PhoneE3 {
     // ⚑ S327 / T05 (his 8 Nov: "the mentor's message isn't on the phone") — tonight's people NEWEST FIRST, each once:
     //   the mentor's message used to sit fourth in arrival order, off the first page. A person she has older messages
     //   from is the same row (the thread holds both); the group's own check-in counts as the group's news.
-    const senders: string[] = [];
-    for (const e of [...this.evening].reverse()) if (e.from !== m.group.name && !senders.includes(e.from)) senders.push(e.from);
-    const groupNew = this.groupUnread() + this.evening.filter(e => e.from === m.group.name && !this.readMessages.has('evening:' + e.id)).length;
-    const rows = [
-      ...senders.map(from => { const mine = this.evening.filter(e => e.from === from); const last = mine[mine.length - 1]; return { from, text: last.text, time: last.time, id: 'evening:' + from, read: mine.every(e => this.readMessages.has('evening:' + e.id)) }; }),
-      ...m.groupPreviews.map(g => ({ from: g.name, text: (g.muted ? m.groupPreviewUI.muted + ' · ' : '') + m.groupPreviewUI.unread.replace('{n}', String(g.unread)), time: '', id: '', read: true })),
-      { from: m.home.groupLabel, text: groupNew ? m.home.groupUnread.replace('{n}', String(groupNew)) : m.home.groupQuiet, time: '', id: 'group', read: !groupNew },
-      ...BACKLOG.filter(b => !senders.includes(b.from)).map(b => ({ ...b, id: 'read-' + b.from + b.time, read: this.readMessages.has(b.from + b.time) }))
-    ];
+    const rows = this.inboxRows();
     // The era's news stays reachable on every page; private threads can be paged independently.
     const group = rows.splice(rows.findIndex(r => r.id === 'group'), 1)[0];
     const perPage = Math.max(1, Math.floor((H - y - 36) / 52) - 1);
@@ -1106,7 +1121,7 @@ export class PhoneE3 {
       // ⚑ S332 — her one reply, one press. It is real and it is sent; the platform removes it a moment later.
       case 'reply-bea':
         if (!this.replyOffered) return true;
-        this.replied = true; this.holdT = 0; this.storyClock = REPLY.time; playOnce('phone_msg_2016.mp3'); this.bump(); return true;
+        this.replied = true; this.holdT = 0; this.landedAt.set('v', this.clockShown); playOnce('phone_msg_2016.mp3'); this.bump(); return true;
       default:
         if (r.id.startsWith('evening:')) { this.openEvening(r.id.slice(8)); return true; }
         if (r.id.startsWith('photo-')) { this.photoIndex = Number(r.id.slice(6)); this.screen = 'photo'; this.bump(); return true; }

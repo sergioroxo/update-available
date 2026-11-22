@@ -76,7 +76,8 @@
   "original": "2014 original · retained",
   "_docS403": "⚑ S403 (UiB job 30 B3; his 17 Nov: \"the campaign kit repeating her 2014 story could go?\"): on \"Take my story down\" (veraSurfaces `drawRetainedCopies`) the first two cards (4 · Scheduled posts, 2 · External copies) no longer print the first sentence of `record.publishedText` (\"I came to my first night with a heart that was looking for home in the wrong place.\"); the third (1 · Original account, RETAINED) keeps her own words from `record.sentText`. No string here changed."
  },
- "provenance": "As sent · kept in archive · administrators only",
+ "provenance": "",
+ "_docS357frProvenance": "⚑ S357fr / 16-6 (his headset, 20 Nov, on Renata's editor: \"As sent, kept in archive, administrators only. No, it doesn't need to be there\"). Retired from the visit: the line under Apply / Skip and under the finished story is gone (graceQueueLite draws nothing for an empty provenance). Old: \"As sent · kept in archive · administrators only\". The ?cut=full page's `send.archive` (the same words) is frozen with that cut and left as it was.",
  "desk": {
   "card": "THE WICK",
   "stamps": "7 OF 8",

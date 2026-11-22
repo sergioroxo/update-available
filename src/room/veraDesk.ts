@@ -38,6 +38,11 @@ const PAGE_M = { w: 0.15, h: 0.2, inset: 0.008 };
 /** in her hand: how far from the eye, how far below the look, how much larger */
 export const HELD = { distance: 0.48, below: 3, scale: 1.3, up: 0.9, down: 0.7, maxHold: 60 };
 const NOTE_R = 0.12, MUG_R = 0.085;
+/** ⚑ S357fr / 16-2 — the notebook model's own red ruling and its paper (materials, by the GLB's names): the ruling takes
+ *  the paper under her page */
+const MODEL_RULING = 'F44336', MODEL_PAPER = 'FFEB3B';
+/** ⚑ S357fr / 16-2 — how far past the page's far right corner the ray's name tag is pinned, metres */
+const TAG_PAST = 0.012;
 
 function rayNear(ray: Ray, at: { x: number; y: number; z: number }, radius: number): boolean {
   const dx = ray.p1.x - ray.p0.x, dy = ray.p1.y - ray.p0.y, dz = ray.p1.z - ray.p0.z;
@@ -58,8 +63,9 @@ export interface VeraDesk {
   pressHeld(ray: Ray): boolean;
   /** a press on the notebook where it lies; true if it took the press (the mug takes none: S386) */
   pressRest(ray: Ray): boolean;
-  /** the sentence line: what the ray rests on here (a key in data/strings/aim.json) and where */
-  aim(ray: Ray): { key: string; at: { x: number; y: number; z: number } } | null;
+  /** the sentence line: what the ray rests on here (a key in data/strings/aim.json) and where; `tag`, where the headset's
+   *  name tag is pinned when it must not lie on the thing (S357fr / 16-2: the notebook's page) */
+  aim(ray: Ray): { key: string; at: { x: number; y: number; z: number }; tag?: { x: number; y: number; z: number } } | null;
   /** the published presses (the walker's map, ?debug=1): only what can be pressed right now */
   targets(): { id: string; x: number; y: number; z: number; r: number }[];
   debug(): Record<string, unknown>;
@@ -117,6 +123,17 @@ export function buildVeraDesk(app: pc.Application, gq: GraceQueueLite, env: {
     page.setLocalPosition(pageLocal);
     page.setLocalScale(PAGE_M.w, 1, PAGE_M.h);   // the plane lies face up; its top edge is the pad's far end (the binding)
     p.addChild(page);
+    // ⚑ S357fr / 16-2 (his headset, 20 Nov: "the two different layers of text"; the frames: her words did not sit on the
+    //   lines) — the model brings its OWN ruling: nine red strips across its top (its `F44336` material), 2.2 cm apart,
+    //   under a page whose rules are 1.4 cm apart and carry her words. The strips' ends showed past the page's edges as red
+    //   ticks out of step with every line she wrote, and in the headset they could show through it. The page is the paper
+    //   now: the strips take the model's own paper (its `FFEB3B` material) — not hidden, because they are the paper between
+    //   the sheet's yellow bands and hiding them opens nine gaps onto the cover below — so the only lines are the ones her
+    //   words sit on.
+    const insts: pc.MeshInstance[] = [];
+    p.forEach((n) => { const e = n as pc.Entity; if (e !== page) insts.push(...(e.render?.meshInstances ?? [])); });
+    const paper = insts.find((mi) => mi.material?.name === MODEL_PAPER)?.material;
+    if (paper) for (const mi of insts) if (mi.material?.name === MODEL_RULING) mi.material = paper;
   }
 
   // ── a pose tween (position, rotation, uniform scale) ──────────────────────
@@ -218,6 +235,18 @@ export function buildVeraDesk(app: pc.Application, gq: GraceQueueLite, env: {
     const c = p.getWorldTransform().transformPoint(pageLocal.clone());
     return { x: c.x, y: c.y, z: c.z };
   };
+  /** ⚑ S357fr / 16-2 (his headset, 20 Nov: the notebook's "label lies across it", frames 220401–220427) — where the ray's
+   *  name tag is pinned. The headset hangs the tag up and to the right of the ray's end, and the ray ended on the page's
+   *  centre: the tag lay across her words. It is now pinned just past the page's far right corner as seen from the chair
+   *  (the binding end, the monitor's side), so it hangs up and right of the page, over the desk, and her words stay clear.
+   *  The ray still ends on the page and the press still takes the whole page (`notebookAt`, NOTE_R). */
+  const notebookTagAt = (): { x: number; y: number; z: number } | null => {
+    const p = pad();
+    if (!p || !p.enabled) return null;
+    // the pad's local −Z is its far end (the binding); turned yaw 90 its local +X is world −z, the chair's right-hand side
+    const c = p.getWorldTransform().transformPoint(new pc.Vec3(pageLocal.x + PAGE_M.w / 2 + TAG_PAST, pageLocal.y, pageLocal.z - PAGE_M.h / 2 - TAG_PAST));
+    return { x: c.x, y: c.y, z: c.z };
+  };
   const mugAt = (): { x: number; y: number; z: number } | null => {
     const m = mugEnt();
     if (!m || !m.enabled) return null;
@@ -256,7 +285,7 @@ export function buildVeraDesk(app: pc.Application, gq: GraceQueueLite, env: {
     aim(ray) {
       if (era !== 'e3' || nb.phase !== 'rest') return null;
       const n = notebookAt();
-      if (n && rayNear(ray, n, NOTE_R)) return { key: 'veraNotebook', at: n };
+      if (n && rayNear(ray, n, NOTE_R)) return { key: 'veraNotebook', at: n, tag: notebookTagAt() ?? undefined };   // S357fr / 16-2: the tag off the page
       const m = mugAt();
       if (m && rayNear(ray, m, MUG_R)) return { key: gq.phone.delivered('nuala') ? 'veraMugNuala' : 'veraMug', at: m };
       return null;

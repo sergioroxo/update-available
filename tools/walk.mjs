@@ -361,18 +361,32 @@ async function main() {
     const per = new Map();
     const wrap = (P) => {
       if (!P) return;
-      const ft = P.fillText, fr = P.fillRect, cr = P.clearRect;
+      const ft = P.fillText, fr = P.fillRect, cr = P.clearRect, di = P.drawImage;
       const full = (ctx, x, y, w, h) => {   // in device pixels: the surfaces draw in logical units under a DPR scale
         const c = ctx.canvas, m = ctx.getTransform ? ctx.getTransform() : { a: 1, d: 1, e: 0, f: 0 };
         return x * m.a + m.e <= 0.5 && y * m.d + m.f <= 0.5 && (x + w) * m.a + m.e >= c.width - 0.5 && (y + h) * m.d + m.f >= c.height - 0.5;
       };
-      const frame = (ctx) => { per.set(ctx.canvas, []); };
+      // ⚑ S357fs — a frame resets only a canvas that already holds words. The piece makes throwaway canvases all the time
+      //   (a picture scaled or composited into a fresh canvas); with S357fq's drawImage frame start every one of them got
+      //   an entry, and this Map kept them all alive: a full walk hung at the end of 2016 (twice, same step), a one-era
+      //   walk did not. Text still creates an entry (fillText, below), exactly as before S357fq.
+      const frame = (ctx) => { if (per.has(ctx.canvas)) per.set(ctx.canvas, []); };
       P.fillText = function (t, ...rest) { const c = this.canvas; let a = per.get(c); if (!a) { a = []; per.set(c, a); } const v = String(t).trim(); if (v && a.length < 600) a.push(v); return ft.call(this, t, ...rest); };
       P.fillRect = function (x, y, w, h) { if (full(this, x, y, w, h)) frame(this); return fr.call(this, x, y, w, h); };
       P.clearRect = function (x, y, w, h) { if (full(this, x, y, w, h)) frame(this); return cr.call(this, x, y, w, h); };
+      // ⚑ S357fp — a picture blitted over the whole canvas starts a frame too. 2003's desktop begins with its wallpaper
+      //   (restorifyWallpaper.ts → blitGrid → one drawImage), never a full fillRect, so its census list filled to the cap
+      //   in the first seconds and froze: 28,400 draws later it still held the opening's words, and S404 reported
+      //   Daniel's and Caleb's lines "NOT MET" on every walk although both stand whole on the monitor.
+      P.drawImage = function (img, ...a) {
+        const d = a.length >= 8 ? a.slice(4, 8) : a.length >= 4 ? a.slice(0, 4) : [a[0], a[1], img?.width ?? 0, img?.height ?? 0];
+        if (full(this, d[0], d[1], d[2], d[3])) frame(this);
+        return di.call(this, img, ...a);
+      };
     };
     wrap(window.CanvasRenderingContext2D && CanvasRenderingContext2D.prototype);
     wrap(window.OffscreenCanvasRenderingContext2D && OffscreenCanvasRenderingContext2D.prototype);
+    window.__textCanvases = () => per.size;   // S357fs: how many canvases the census is holding (a leak shows here)
     window.__textNow = () => [...per.entries()].filter(([, a]) => a.length)
       .map(([c, a]) => ({ size: c.width + 'x' + c.height, text: [...new Set(a)].join(' | ') }));
   });

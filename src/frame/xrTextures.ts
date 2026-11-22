@@ -6,6 +6,13 @@
  *  minification and anisotropy; magnification stays NEAREST, so a pixel seen close is still a hard pixel. The
  *  screens (engine/screenTexture.ts) already do this for themselves and are left alone. Restored on exit. */
 import * as pc from 'playcanvas';
+import { runtimeQuery } from '../edition';
+
+/** ⚑ S357fp (his, 22 Nov: "solutions of the serrated lines") — `?roommips=1` gives the room's pictures the same treatment
+ *  in the BROWSER: a mip chain for the shrink, NEAREST kept for the magnify, so a poster across the room stops breaking
+ *  into stair-steps and shimmer while a pixel seen close is still a hard pixel. OFF by default: CLAUDE.md's pixel law
+ *  keeps the room's textures FILTER_NEAREST outside a headset, and bending it is his call, not ours. */
+const browserMips = (): boolean => runtimeQuery().get('roommips') === '1';
 
 type Saved = { mipmaps: boolean; minFilter: number; anisotropy: number };
 
@@ -31,10 +38,11 @@ export function mountXrTextures(app: pc.AppBase): void {
   };
   // new textures arrive with the story (an era's props, a calendar page): look again every two seconds
   app.on('update', (dt: number) => {
-    if (!app.xr?.active || (wait -= dt) > 0) return;
+    if (!(app.xr?.active || browserMips()) || (wait -= dt) > 0) return;
     wait = 2; sweep();
   });
   app.xr?.on('end', () => {
+    if (browserMips()) return;
     for (const [t, s] of saved) { t.mipmaps = s.mipmaps; t.minFilter = s.minFilter; t.anisotropy = s.anisotropy; }
     saved.clear(); wait = 0;
   });

@@ -7,8 +7,13 @@
  * headset only, each monitor and its glass are scaled ×1.2 about the CENTRE OF THE GLASS, so the glass stays exactly where
  * it was and every letter on it is 20 % bigger in the view:
  *   · 1997's CRT 0.40 → 0.48 m across (about a 21-inch tube), and 2003's LCD on the same glass;
- *   · 2016's flat panel 0.645 → 0.77 m;
+ *   · 2016's flat panel 0.645 → 0.77 m (⚑ S357fr / 16-1: no longer — see below);
  *   · 2026's monitor 0.533 → 0.64 m.
+ * ⚑ S357fr / 16-1 (his headset, 20 Nov: "Oh, it's a huge-ass screen … Quite unrealistic … the screen is still outside of the
+ * table") — 2016's panel keeps its browser size in the headset (0.675 m across, the glass 0.645 m: a large 2016 desk monitor)
+ * and comes NEARER instead, 10.8 cm toward the chair (`nearer`), so its letters keep the angle the ×1.2 gave them (0.084° a
+ * pixel, which fonts.ts's large-text minimum for 2016 was computed for): the glass at 0.65 m from the headset's eye, still
+ * past Meta's 0.5 m, its foot 8 cm short of the keyboard and 12 cm inside the desk's back edge. The arithmetic is in app.ts.
  * The browser look-modes keep today's sizes. `?xrglass=1` shows today's size in the headset and `?xrglass=1.1` (1–1.4)
  * tries another, without a build: the final size is his eye's call (UIB_JOB_18 "his Quest check").
  *
@@ -58,10 +63,15 @@ export interface XrGlass {
  * shown through by a rebuilt batch (xrComfort.ts S270c learned that).
  */
 export function mountXrGlass(app: pc.AppBase, glass: pc.Entity, size: { w: number; h: number }, parts: () => Array<pc.Entity | null | undefined>,
-  ready: () => boolean = () => true, opts: { footY?: number } = {}): XrGlass {
-  const K = xrGlassFactor();
+  ready: () => boolean = () => true, opts: { footY?: number; k?: number; nearer?: { x: number; y: number; z: number } } = {}): XrGlass {
+  // ⚑ S357fr / 16-1 (his headset, 20 Nov, on 2016's panel grown to 0.77 m: "Oh, it's a huge-ass screen … Quite unrealistic …
+  //   the screen is still outside of the table") — a mount may keep its own size in the headset (`k`, 1 = the browser's) and
+  //   instead come NEARER by `nearer` (room coordinates, toward the seat): the same angle for every letter, from a monitor of
+  //   a believable size standing on the desk. Both apply only in a headset, with the room up, exactly as the growth did.
+  const K = opts.k ?? xrGlassFactor();
+  const T = new pc.Vec3(opts.nearer?.x ?? 0, opts.nearer?.y ?? 0, opts.nearer?.z ?? 0);
   const pivots = new Map<pc.GraphNode, pc.Entity>();   // one pivot per original parent
-  let k = 1, mounted = false;
+  let k = 1, on = false, mounted = false;
   // ⚑ S357az (his note on job 18 B's page, 12 Nov: "in 2016 it lost the stand for the screen, same as in 2026"). The 2016
   //   panel and 2026's monitor are ONE mesh with their stand, so growing them about the glass centre sank the stand
   //   5–6 cm into the desk and the bigger panel came down over what was left: from the seat the screen stood on nothing.
@@ -75,13 +85,15 @@ export function mountXrGlass(app: pc.AppBase, glass: pc.Entity, size: { w: numbe
   const home = footY === null ? null : glass.getPosition().clone();   // its room place, as built
   const lift = (kk: number): number => (footY === null || !home ? 0 : (kk - 1) * (home.y - footY));
   const near = (a: pc.Vec3, b: pc.Vec3): boolean => a.distance(b) < 1e-3;
+  /** the glass's room place in the browser (`s` false) or in the headset (`s` true): raised by its growth, brought nearer */
+  const placeOf = (s: boolean): pc.Vec3 => new pc.Vec3(home!.x + (s ? T.x : 0), home!.y + lift(s ? K : 1) + (s ? T.y : 0), home!.z + (s ? T.z : 0));
   const placeGlass = (): void => {
     if (!home || footY === null) return;
     const p = glass.getPosition();
-    const up = new pc.Vec3(home.x, home.y + lift(k), home.z);
-    if (near(p, up)) return;
-    // only from its room place, raised or not: anywhere else something else has placed it (the Commons)
-    for (const kk of [1, K]) if (near(p, new pc.Vec3(home.x, home.y + lift(kk), home.z))) { glass.setPosition(up); return; }
+    const want = placeOf(on);
+    if (near(p, want)) return;
+    // only from its room place, in either state: anywhere else something else has placed it (the Commons)
+    for (const s of [false, true]) if (near(p, placeOf(s))) { glass.setPosition(want); return; }
   };
   const dirtyBatches = (root: pc.GraphNode): void => {
     root.forEach((n) => { const g = (n as pc.Entity).render?.batchGroupId; if (g !== undefined && g >= 0) app.batcher?.markGroupDirty(g); });
@@ -101,20 +113,21 @@ export function mountXrGlass(app: pc.AppBase, glass: pc.Entity, size: { w: numbe
     return moved;
   };
   app.on('update', () => {
-    const want = app.xr?.active && ready() ? K : 1;
-    if (!mounted && want === 1) return;   // the computer, and a headset before the room is up: untouched
+    const wantOn = !!(app.xr?.active && ready());
+    if (!mounted && !wantOn) return;   // the computer, and a headset before the room is up: untouched
     mounted = true;
     const moved = gather();
-    if (k === want && !moved) { placeGlass(); return; }
-    k = want;
+    if (on === wantOn && !moved) { placeGlass(); return; }
+    on = wantOn; k = on ? K : 1;
     glass.setLocalScale(size.w * k, 1, size.h * k);
     placeGlass();
     for (const [parent, pv] of pivots) {
       // the point it grows about, in the parent's coordinates (in 'update' the presentation stage is identity: room
       //   coordinates): the glass centre, or for a one-mesh monitor the point under it at the stand's foot
       const about = home && footY !== null ? new pc.Vec3(home.x, footY, home.z) : glass.getPosition();
-      const c = (parent as pc.Entity).getWorldTransform().clone().invert().transformPoint(about);
-      pv.setLocalPosition(c.x * (1 - k), c.y * (1 - k), c.z * (1 - k));
+      const inv = (parent as pc.Entity).getWorldTransform().clone().invert();
+      const c = inv.transformPoint(about), t = on ? inv.transformVector(T) : new pc.Vec3();
+      pv.setLocalPosition(c.x * (1 - k) + t.x, c.y * (1 - k) + t.y, c.z * (1 - k) + t.z);
       pv.setLocalScale(k, k, k);
       dirtyBatches(pv);
     }

@@ -40,7 +40,8 @@
     "how": "Tap or click to hop. Touch a lamb to call it. Call them in a row for OUTREACH!",
     "howLarge": "Tap to hop. Touch a lamb to call it. Call a row of them for OUTREACH!",
     "go": "let's go!",
-    "length": "the level lasts as long as the song · {t}"
+    "length": "",
+    "_docS357frLength": "⚑ S357fr / 16-10 (his headset, 20 Nov: \"It does like a bunch of text now on floppy. The level lasts as long as the song. We don't need this.\"). The start card's last line is cut; floppysheep.ts draws nothing for an empty `length`. Old: \"the level lasts as long as the song · {t}\" ({t} = the level's m:ss)."
   },
   "outro": {
     "title": "LEVEL COMPLETE!!!",

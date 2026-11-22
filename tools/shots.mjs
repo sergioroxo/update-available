@@ -232,7 +232,7 @@ const SEAT_SUBJECTS = {
     // own world centre instead — the same `plane` form Room 1's monitor uses,
     // and the thing that actually has to be in frame. Keep it in step with
     // era3Devices' PLACEMENT.workstation.pos.
-    { what: "Vera's workstation screen", kind: 'plane', at: [-5.327, 1.045, 0.7] },
+    { what: "Vera's workstation screen", kind: 'plane', at: [-5.297, 1.045, 0.7] },   // S357fr / 16-1: 3 cm forward
     { what: "Vera's desk", kind: 'prop', id: 'w_desk', required: false }
   ],
   r3: [
