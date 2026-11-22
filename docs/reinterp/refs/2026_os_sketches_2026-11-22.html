@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>2026 OS sketches</title>
+<!-- STATUS: live — the direction he approved on 22 Nov 2026 ("Yes, write the job"), for UIB_JOB_34. A direction, not a
+     pixel spec: the colours here are placeholders; the build takes its colours from the new OS26 block in
+     src/desktop/theme/era4.ts. Shown to him in the orchestrator's window as two sketches. -->
+<style>
+:root{--font-sans:system-ui,-apple-system,"Segoe UI",sans-serif;--font-voice:Georgia,serif;--text-secondary:#666}
+body{margin:0;padding:16px;background:#f4f2ee;font-family:var(--font-sans);max-width:760px}
+h1{font-size:20px;font-weight:500}
+.scr{border:10px solid #1b1b22;border-radius:6px;display:grid;height:250px;overflow:hidden;margin:6px 0 4px}
+.os{position:relative;height:380px;border:10px solid #18181d;border-radius:8px;overflow:hidden;margin:6px 0 2px;background:#c9b8e0}
+.bar{position:absolute;top:0;left:0;right:0;height:22px;background:rgba(255,255,255,.55);display:flex;align-items:center;gap:12px;padding:0 10px;font-size:11px;color:#222}
+.win{position:absolute;background:rgba(255,255,255,.93);border-radius:10px;border:1px solid rgba(0,0,0,.08);overflow:hidden}
+.tb{height:22px;display:flex;align-items:center;gap:5px;padding:0 8px;font-size:10px;color:#555;border-bottom:1px solid rgba(0,0,0,.06)}
+.dot{width:8px;height:8px;border-radius:50%;display:inline-block}
+.dock{position:absolute;bottom:8px;left:50%;transform:translateX(-50%);background:rgba(255,255,255,.5);border-radius:14px;padding:5px 8px;display:flex;gap:7px;align-items:center}
+.ic{width:28px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:12px;color:#fff}
+.lab{font-size:13px;color:var(--text-secondary);margin:14px 0 0}
+.b{font-weight:500}
+</style>
+</head>
+<body>
+<h1>2026: the desktop and the three products (direction, 22 Nov 2026)</h1>
+<p class="lab">Note for the builder: the window controls below are sketched as three coloured dots. Build our own controls, not the red, yellow and green trio of a real OS. No real logos or names anywhere.</p>
+
+<p class="lab">Sketch 2 · Act I · Maya's desktop: a modern OS, L inside it like a chat app</p>
+<div class="os">
+  <div style="position:absolute;width:420px;height:420px;border-radius:50%;background:#f2c7b8;left:-90px;top:120px"></div>
+  <div style="position:absolute;width:360px;height:360px;border-radius:50%;background:#a9c6ea;right:-80px;top:-140px"></div>
+  <div class="bar"><span style="background:#222;color:#fff;border-radius:5px;padding:1px 7px" class="b">✦ Menu</span><span class="b">L</span><span>File</span><span>Edit</span><span>View</span><span style="margin-left:auto">wifi · 82% · Fri 23 Oct 11:02</span></div>
+  <div class="win" style="left:14px;top:34px;width:58%;height:280px;display:grid;grid-template-columns:28% 72%;grid-template-rows:22px 1fr">
+    <div class="tb" style="grid-column:1/3"><span class="dot" style="background:#ff5f57"></span><span class="dot" style="background:#febc2e"></span><span class="dot" style="background:#28c840"></span><span style="margin-left:6px">L</span></div>
+    <div style="background:#f3f1ec;padding:8px;font-size:10px;color:#555;line-height:1.9">
+      <div style="background:#fff;border-radius:6px;padding:3px 6px;color:#222">✎ New chat</div>
+      <div style="margin-top:6px;color:#999">Today</div><div style="color:#222">Your week</div><div>Birthday</div>
+      <div style="margin-top:6px;color:#999">Yesterday</div><div>search: am i…</div>
+    </div>
+    <div style="padding:12px 16px;position:relative;color:#222">
+      <div style="font-size:10px;background:#eaf6f1;color:#2F6F5E;display:inline-block;padding:2px 8px;border-radius:10px">L 5 · Premium ✦</div>
+      <div style="font-family:var(--font-voice);font-size:22px;margin:10px 0 4px">Good morning, Maya ✦</div>
+      <div style="font-size:12px;color:#444">Happy birthday. I've read everything, so you don't have to.</div>
+      <div style="margin-top:10px;display:flex;gap:6px"><span style="font-size:11px;border:1px solid #ddd;border-radius:12px;padding:4px 10px">✦ Catch me up</span><span style="font-size:11px;border:1px solid #ddd;border-radius:12px;padding:4px 10px">I'll look myself</span></div>
+      <div style="position:absolute;left:16px;right:16px;bottom:12px;border:1px solid #ddd;border-radius:14px;padding:8px 12px;font-size:11px;color:#999;display:flex;justify-content:space-between">Ask L anything<span style="background:#222;color:#fff;border-radius:50%;width:18px;height:18px;display:inline-flex;align-items:center;justify-content:center">↑</span></div>
+    </div>
+  </div>
+  <div class="win" style="right:14px;top:58px;width:36%;height:220px">
+    <div class="tb"><span class="dot" style="background:#ff5f57"></span><span class="dot" style="background:#febc2e"></span><span class="dot" style="background:#28c840"></span><span style="margin-left:6px">Kettle</span></div>
+    <div style="padding:6px 8px;font-size:10.5px;color:#222;line-height:1.35">
+      <div style="padding:5px 0;border-bottom:1px solid #eee"><span class="b">the lot</span> · rae: who has the candles</div>
+      <div style="padding:5px 0;border-bottom:1px solid #eee"><span class="b">Mum</span> · happy birthday my love…</div>
+      <div style="padding:5px 0;border-bottom:1px solid #eee"><span class="b">Dad</span> · You're an adult now.</div>
+      <div style="padding:5px 0"><span class="b">Junie</span> · happy birthday. don't answer if…</div>
+    </div>
+  </div>
+  <div style="position:absolute;right:14px;top:288px;width:36%;background:rgba(255,255,255,.88);border-radius:10px;padding:6px 10px;font-size:10px;color:#222"><span class="b">L</span> · I sorted 14 messages for you ✦</div>
+  <div class="dock"><span class="ic" style="background:#222">✦</span><span class="ic" style="background:#5DCAA5">L</span><span class="ic" style="background:#e07a5f">K</span><span class="ic" style="background:#3d7dd8">M</span><span class="ic" style="background:#8a6fd1">▶</span><span class="ic" style="background:#999">⚙</span></div>
+</div>
+
+<p class="lab">Sketch 2 · Act II · Second Thoughts takes the same desktop over: its yellow on every surface</p>
+<div class="os" style="background:#2a2a2e">
+  <div style="position:absolute;inset:0;background:repeating-linear-gradient(135deg,#F2C230 0 18px,#2a2a2e 18px 36px);opacity:.18"></div>
+  <div class="bar" style="background:#F2C230"><span style="background:#1a1a1a;color:#F2C230;border-radius:5px;padding:1px 7px" class="b">✦ Menu</span><span class="b">SECOND THOUGHTS™</span><span>is using your computer</span><span style="margin-left:auto;font-size:10px">take back control</span></div>
+  <div class="win" style="left:14px;top:34px;width:66%;height:280px;background:#1a1a1a;color:#fff;border-color:#F2C230">
+    <div class="tb" style="color:#F2C230;border-color:#333">Second Thoughts™ · for when you're not sure</div>
+    <div style="display:flex;gap:14px;padding:12px 14px;align-items:center">
+      <div style="width:84px;height:84px;border-radius:50%;border:8px solid #F2C230;border-left-color:#444;display:flex;align-items:center;justify-content:center;font-size:24px;color:#F2C230" class="b">34</div>
+      <div><div style="font-size:11px;color:#F2C230;letter-spacing:1px">YOUR WELLBEING SCORE</div><div style="font-size:11px;color:#ff7a59">▼ 3 doors closed this week</div><div style="font-size:16px;margin-top:6px" class="b">That's a lot to carry, Maya. Let me help.</div></div>
+    </div>
+    <div style="padding:0 14px;display:flex;gap:6px;flex-wrap:wrap">
+      <span style="background:#F2C230;color:#1a1a1a;font-size:11px;padding:3px 9px;border-radius:10px">✓ Junie muted · calmer already!</span>
+      <span style="background:#F2C230;color:#1a1a1a;font-size:11px;padding:3px 9px;border-radius:10px">✓ Replied to Dad for you</span>
+      <span style="background:#F2C230;color:#1a1a1a;font-size:11px;padding:3px 9px;border-radius:10px">2 CALM DAYS</span>
+    </div>
+    <div style="margin:12px 14px;border:1px solid #F2C230;border-radius:8px;padding:8px;display:flex;gap:10px;align-items:center"><span style="width:60px;height:36px;background:#F2C230;color:#1a1a1a;display:flex;align-items:center;justify-content:center;font-size:14px">▶</span><span style="font-size:12px" class="b">THE GREAT BECOMING · made for you</span></div>
+  </div>
+  <div class="win" style="right:14px;top:70px;width:28%;height:180px;opacity:.75">
+    <div class="tb">Kettle</div>
+    <div style="padding:6px 8px;font-size:10px;color:#222;line-height:1.35;position:relative">
+      <div style="padding:4px 0;border-bottom:1px solid #eee">Dad · You're an adult now.</div>
+      <div style="padding:4px 0;color:#aaa">Junie · happy birthday…</div>
+      <span style="position:absolute;right:4px;top:26px;background:#F2C230;color:#1a1a1a;font-size:9px;padding:2px 5px;transform:rotate(-6deg)" class="b">MUTED FOR YOU</span>
+    </div>
+  </div>
+  <div class="dock" style="background:rgba(242,194,48,.35)"><span class="ic" style="background:#1a1a1a;color:#F2C230">✦</span><span class="ic" style="background:#F2C230;color:#1a1a1a">ST</span><span class="ic" style="background:#5DCAA5;opacity:.4">L</span><span class="ic" style="background:#e07a5f;opacity:.4">K</span><span class="ic" style="background:#3d7dd8;opacity:.4">M</span></div>
+</div>
+
+<p class="lab">Sketch 1 · Act III · Shepherd Live: a TV show about her, with her in it, covering the whole desktop</p>
+<div class="scr" style="grid-template-rows:24px 1fr 22px;background:#14121c;color:#fff">
+  <div style="display:flex;align-items:center;gap:8px;padding:0 10px;background:#000">
+    <span style="background:#d9342b;font-size:10px;padding:1px 6px" class="b">● LIVE</span>
+    <span class="b" style="font-size:13px;color:#E8C268;letter-spacing:1px">SHEPHERD LIVE™</span>
+    <span style="font-size:10px;color:#bbb">exploratory session · episode 1</span>
+    <span style="margin-left:auto;font-size:10px;color:#E8C268">sponsored by HEDGE™ · Second Thoughts™</span>
+  </div>
+  <div style="display:grid;grid-template-columns:30% 40% 30%;align-items:center;padding:6px">
+    <div style="text-align:center;font-size:10px;color:#bbb"><div style="width:64px;height:80px;margin:0 auto 4px;background:#B89B7E;border:2px solid #555"></div>me, after.jpg</div>
+    <div style="text-align:center">
+      <div style="width:120px;height:120px;margin:0 auto;border-radius:50%;border:10px solid #E8C268;border-right-color:#4a4030;display:flex;align-items:center;justify-content:center;font-size:24px;color:#E8C268" class="b">99%</div>
+      <div style="font-size:12px;margin-top:6px;letter-spacing:2px;color:#E8C268" class="b">BECOMING</div>
+      <div style="font-size:10px;color:#bbb">✦ ✦ applause ✦ ✦</div>
+    </div>
+    <div style="font-size:10px;line-height:1.5">
+      <div style="background:#2a2533;padding:4px 6px;margin-bottom:4px">Sent as Maya · to the lot<br><span style="color:#E8C268">I think I've been confused.</span></div>
+      <div style="background:#1f6b4a;padding:4px 6px">Booked ✓ residential programme</div>
+    </div>
+  </div>
+  <div style="background:#E8C268;color:#14121c;font-size:10px;padding:4px 10px;white-space:nowrap;overflow:hidden" class="b">TONIGHT ON SHEPHERD LIVE · A NEW YOU · STAY WITH ME, MAYA · TONIGHT ON SHEPHERD LIVE · A NEW YOU ·</div>
+</div>
+
+<p class="lab">Unchanged and bare in every act: Junie's and Rae's words, Maya's own words, her original.</p>
+</body>
+</html>
