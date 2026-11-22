@@ -21,7 +21,7 @@ dimmed, a dark wallpaper under hazard stripes, every window's chrome yellow, its
 (the review, the console, the film card with its big play button) in its dark and yellow; **Shepherd Live™** (beats 9–10) live
 television about her through either door — a LIVE bug, the gold title, "exploratory session · episode 1", its sponsors, a navy
 set with stage lights, her photo turned into the show's graphic (the pictures to one side, "BECOMING" a big gold ring at 99%, the
-studio's APPLAUSE sign), its notes as on-screen captions, a gold ticker crawling at 2 steps a second (S418b). **At her Yes the brands
+studio's APPLAUSE sign), its notes as on-screen captions, a gold flip ticker, one phrase at a time, a hard cut every 3 s, held while her photo is altered (S418c). **At her Yes the brands
 fall** (the show's chrome, then the yellow, then the last of it torn off, then the plain OS: 2.5 changes a second; reduced motion:
 a cut). Her friends' tiles, Settings, the Remove dialog, Junie's words, Maya's words and the stream keep their own plain look.
 Beats 11–13 are as job 33 built them. The beats, lines, timings and presses are unchanged; S417's look is in git at **ba86112b**.

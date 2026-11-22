@@ -64,13 +64,13 @@ const PHOTO_STEPS = 14;
 const PW = 120, PH_ = 150;
 const BAR = 26, BAND = 34;
 const BREAK_SECONDS = 0.9;
-/** ⚑ S418 — the ticker along the foot (its height), and the steps it crawls in, still under reduced motion; the applause
- *  marks round the ring change on the same steps. ⚑ S418b — 2 steps a second (of 14 px), not 4: each step re-sends the
- *  whole monitor (2840 × 1536 in the headset, ≈ 17 MB) or the glass (2048 × 1536), and job 33's had 0.33 a second here
- *  (tools: out/s418/uploads-probe.mjs measured 4.3–4.5 a second at 4 Hz) */
+/** ⚑ S418 — the ticker along the foot (its height). ⚑ S418c — A FLIP TICKER, as TV news has it: one whole phrase at a time,
+ *  held FLIP_SECONDS, a hard cut to the next (no scrolling, no fade); the applause marks round the ring change on the same
+ *  cuts. Each change re-sends the whole monitor (2840 × 1536 in the headset, ≈ 17 MB) or the glass (2048 × 1536): a crawl
+ *  at 4 steps a second measured 4.3–4.5 uploads a second and at 2 steps 2.2 (job 33: 0.17–0.33), where his headset run read
+ *  13–16 fps; a cut every 3 s adds a third of one. Still under reduced motion (one phrase). */
 const TICK = 18;
-export const TICK_HZ = 2;
-const TICK_PX = 14;
+export const FLIP_SECONDS = 3;
 /** the sponsor strip, under the bar, where the bar is too narrow to carry it (the headset's glass) */
 const SPONSOR_H = 16;
 
@@ -116,7 +116,7 @@ export class ShepherdSession {
   /** the controls the visitor may press, as last drawn (the surface's own coordinates): one — the Yes */
   hits: Hit[] = [];
   private clock = 0;
-  /** ⚑ S418 — the ticker's (and the applause marks') step: TICK_HZ a second while the session is on and whole */
+  /** ⚑ S418 — the ticker's phrase (and the applause marks' step): the next every FLIP_SECONDS while the session is whole */
   tick = 0;
   private tickT = 0;
   // ── the pictures, painted once ──
@@ -174,14 +174,13 @@ export class ShepherdSession {
     this.clock += dt;
     const tick = Math.floor(before * ANIM_HZ) !== Math.floor(this.clock * ANIM_HZ);
     this.t += dt;
-    // ⚑ S418 — the ticker crawls a step at TICK_HZ (and the applause marks change with it); still under reduced motion, and
-    //   still once the picture breaks (the show stops where it is). ⚑ S418b — and HELD while the filter is altering her photo
-    //   (26-18, the moment his headset run measured at 13–16 fps): each of its steps re-sends the whole surface, so it waits
-    //   for the ring to stop at 99 and crawls on from where it was
+    // ⚑ S418c — the ticker flips to its next phrase every FLIP_SECONDS (and the applause marks change with it); one phrase
+    //   under reduced motion, and still once the picture breaks (the show stops where it is). ⚑ S418b — HELD while the filter
+    //   is altering her photo (26-18, the moment his headset run measured at 13–16 fps): it waits for the ring to stop at 99
     const altering = this.photos === 2 && this.photoStep < PHOTO_STEPS;
     if (!reducedMotion() && this.breakT < 0 && !altering) {
       this.tickT += dt;
-      const k = Math.floor(this.tickT * TICK_HZ); if (k !== this.tick) { this.tick = k; this.version++; }
+      const k = Math.floor(this.tickT / FLIP_SECONDS); if (k !== this.tick) { this.tick = k; this.version++; }
     }
     // the title card: four steps in, then held (the jingle has the floor)
     if (this.intro) { const s = Math.min(4, Math.floor(this.t * 3)); if (s !== this.step) { this.step = s; this.version++; } }
@@ -351,15 +350,17 @@ export class ShepherdSession {
     this.hits = hits;
   }
 
-  /** ⚑ S418 — the ticker: the show's own line, again and again, a step to the left at each tick (a gold strip, navy capitals) */
+  /** ⚑ S418c — the flip ticker: the show's own line, one phrase at a time (a gold strip, a navy tab, navy capitals); the
+   *  phrase changes with a hard cut at each tick, never scrolls */
   private drawTicker(ctx: CanvasRenderingContext2D, t: Rect): void {
     px(ctx, t.x, t.y, t.w, t.h, OS26.shGold);
     px(ctx, t.x, t.y, t.w, 1, OS26.shGoldHi);
+    const phrases = SH.ticker.split(' · ');
+    const phrase = phrases[((this.tick % phrases.length) + phrases.length) % phrases.length] ?? SH.ticker;
+    fillRR(ctx, t.x + 8, t.y + 4, 10, t.h - 8, 2, OS26.shNavy);
     setFont(ctx, 11);
-    const unit = `${SH.ticker}  ·  `, uw = Math.ceil(ctx.measureText(unit).width);
-    const off = (this.tick * TICK_PX) % uw;
     ctx.save(); ctx.beginPath(); ctx.rect(t.x, t.y, t.w, t.h); ctx.clip();
-    for (let x = t.x + 8 - off; x < t.x + t.w; x += uw) heavyText(ctx, unit, x, t.y + 3, OS26.shNavy, 0.35);
+    heavyText(ctx, fitIn(ctx, phrase, t.w - 40), t.x + 26, t.y + 3, OS26.shNavy, 0.35);
     ctx.restore();
   }
 
