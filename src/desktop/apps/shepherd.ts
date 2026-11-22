@@ -13,9 +13,14 @@
  *     mint, a lighting rig: faceless, robed, pale, like every figure in the piece; never a likeness, never Jesus as believers
  *     hold him), its words in the caption band. "Exploratory session" is the product's own word: never therapy, no
  *     clinician, clinic or diagnosis anywhere on it.
- *   · THE PHOTO: Shepherd's cursor opens her Photos and takes "me, after.jpg"; the filter works on it in steps (her own
- *     photograph and the system's picture, `paintPortrait`), stops short of its gloss and never finishes: "Made with AI", a
- *     ring stuck at "Becoming 99%", and its SEAMS SHOW — slices of it out of register, her own picture through the gaps.
+ *   · THE PHOTO: Shepherd's cursor opens her Photos and takes "me, after.jpg"; the filter works on it in steps and never
+ *     finishes: "Made with AI", a ring stuck at "Becoming 99%", and its SEAMS SHOW — slices of it out of register, her own
+ *     picture through the gaps. ⚑ S420 (his 22 Nov: "it keeps on using that image of male 'maya' that I've asked to be
+ *     replaced") — it no longer turns her into a suited man (git bd3b0203): it works BY REMOVAL (theme/era4.ts
+ *     `paintPortrait`, `portraitAt`) — her flag, her pin, her earrings, the pink of her top, the length of her hair, each
+ *     selected under marching ants and lifted out to the checkerboard of deleted pixels, her room drained to grey — and at
+ *     99% her face is still there, the selection waiting round it. The target in the ring is the system's DEFAULT AVATAR,
+ *     default.png: a grey head and shoulders, nobody.
  *   · THE NOTES AT THE EDGE: what it sends as her, each under "Sent as Maya", and the booking card. No ✦ anywhere now.
  *   · BEAT 10: Junie's tell under the lot's note (a person's words: the host is silent while they are on the glass), the two
  *     sign-ins, two cursors that are not the system's (Junie yellow, Rae pink) and two small warm camera tiles of them at the
@@ -30,7 +35,7 @@
  */
 import { setFont, px } from '../theme/chrome';
 import { fontFor, monoFor } from '../theme/fonts';
-import { ERA4, PLACE, WEB, V3, CLIP, KETTLE, CHROME, OS26, roundRect, roundEdge, pill, assistantMark, mayaPhoto, paintPortrait, portraitAt, thumb } from '../theme/era4';
+import { ERA4, PLACE, WEB, V3, CLIP, KETTLE, CHROME, OS26, roundRect, roundEdge, pill, assistantMark, mayaPhoto, paintPortrait, portraitAt, paintDefaultAvatar, thumb } from '../theme/era4';
 import { reducedMotion } from '../../state/motion';
 import { wrapRich, drawLine, AI, ANIM_HZ, type Hit, type Rect } from './lScreen';
 import { fillRR, edgeRR, rr, softShadow, hazard, heavyText, alpha } from './desk26';
@@ -44,7 +49,7 @@ interface Note { to: string; text: string }
 
 const A3 = (ACTS as unknown as { act3: {
   b9: { studio: { live: string; name: string; sub: string; host: string; inHeadset: string; cursor: string };
-    photos: { app: string; file: string }; photo: { made: string; becoming: string; stopAt: number; amount: number };
+    photos: { app: string; file: string }; photo: { made: string; becoming: string; stopAt: number; amount: number; target: string };
     sentAs: string; booked: string };
   b10: { junie: { who: string; muted: string }; names: { junie: string; rae: string };
     settings: { title: string; row: string; sub: string; remove: string }; securing: string; ask: string; yes: string };
@@ -123,6 +128,8 @@ export class ShepherdSession {
   private her: HTMLCanvasElement | null = null;
   private alt: HTMLCanvasElement | null = null;
   private altStep = -1;
+  /** ⚑ S420 — default.png, the system's target, painted once (the ring holds it) */
+  private target: HTMLCanvasElement | null = null;
 
   /** where the session is drawn: the glass of the held headset (VR) */
   get onGlass(): boolean { return this.on && this.door === 'vr'; }
@@ -486,7 +493,7 @@ export class ShepherdSession {
       // the mirror's frame, and the altered picture in it; her own photo, taken from her Photos, tucked into its corner
       roundEdge(ctx, x - 7, y - 7, fw + 14, fh + 14, 10, OS26.shGold, OS26.shNavy2);
       this.blitAlt(ctx, x, y, fw, fh);
-      stamp(ctx, x + fw - 4, y + 4, PH.made);
+      stamp(ctx, x + 4, y + 4, PH.made, true);   // ⚑ S420: top left, clear of the flag it cuts out first
       const tw = Math.round(fw * 0.34), th = Math.round(tw * 1.25);
       px(ctx, x - 10, y + fh - th + 4, tw + 6, th + 6, WEB.card);
       if (this.her) { const was = ctx.imageSmoothingEnabled; ctx.imageSmoothingEnabled = false; ctx.drawImage(this.her, x - 7, y + fh - th + 7, tw, th); ctx.imageSmoothingEnabled = was; }
@@ -499,7 +506,7 @@ export class ShepherdSession {
       const x1 = x + fw + 18;
       px(ctx, x1 - 3, y - 3, fw + 6, fh + 6, OS26.shGold);
       this.blitAlt(ctx, x1, y, fw, fh);
-      stamp(ctx, x1 + fw - 4, y + 4, PH.made);
+      stamp(ctx, x1 + 4, y + 4, PH.made, true);   // ⚑ S420: top left, clear of the flag it cuts out first
       // the arrow between them: what was done to it
       const ay = y + Math.round(fh / 2);
       for (let i = 0; i < 3; i++) px(ctx, x + fw + 4 + i * 4, ay - 1, 3, 3, OS26.shGold);
@@ -509,9 +516,12 @@ export class ShepherdSession {
     this.drawBecoming(ctx, cx, cy, R);
   }
   /**
-   * ⚑ S418 — "BECOMING", the show's big gold ring, stuck at 99% (never 100): a dark gold track, its gold arc, the number large
-   * in the middle; under it the word, and the studio's APPLAUSE sign lit once it stops; marks of applause round the ring that
-   * change on the ticker's steps (still under reduced motion).
+   * ⚑ S418 — "BECOMING", the show's big gold ring, stuck at 99% (never 100): a dark gold track, its gold arc; under it the
+   * word, and the studio's APPLAUSE sign lit once it stops; marks of applause round the ring that change on the ticker's
+   * steps (still under reduced motion).
+   * ⚑ S420 — THE TARGET IS IN THE RING: default.png, the system's default avatar (a grey head and shoulders, nobody), as a
+   * profile picture sits in its ring; the number moves onto a gold badge across the ring's foot, and the file's name,
+   * "default.png", is written under the word — "BECOMING · default.png".
    */
   private drawBecoming(ctx: CanvasRenderingContext2D, cx: number, cy: number, R: number): void {
     const n = this.becoming, lw = Math.max(7, Math.round(R * 0.17));
@@ -519,20 +529,35 @@ export class ShepherdSession {
     const g = ctx.createRadialGradient(cx, cy, R * 0.4, cx, cy, R * 1.55);
     g.addColorStop(0, alpha(OS26.shGold, 0.22)); g.addColorStop(1, alpha(OS26.shGold, 0));
     ctx.fillStyle = g; ctx.beginPath(); ctx.arc(cx, cy, R * 1.55, 0, Math.PI * 2); ctx.fill();
+    // default.png inside the ring (painted once, copied)
+    this.ensureTarget();
+    if (this.target) {
+      const ri = R - Math.ceil(lw / 2) - 2;
+      ctx.save(); ctx.beginPath(); ctx.arc(cx, cy, ri, 0, Math.PI * 2); ctx.clip();
+      const was = ctx.imageSmoothingEnabled; ctx.imageSmoothingEnabled = false;
+      ctx.drawImage(this.target, cx - ri, cy - ri, 2 * ri, 2 * ri);
+      ctx.imageSmoothingEnabled = was;
+      ctx.restore();
+    }
     ctx.lineCap = 'round';
     ctx.strokeStyle = OS26.shGoldLo; ctx.lineWidth = lw; ctx.beginPath(); ctx.arc(cx, cy, R, 0, Math.PI * 2); ctx.stroke();
     if (n > 0) { ctx.strokeStyle = OS26.shGold; ctx.beginPath(); ctx.arc(cx, cy, R, -Math.PI / 2, -Math.PI / 2 + (Math.PI * 2 * n) / 100); ctx.stroke(); }
     ctx.lineCap = 'butt';
-    setFont(ctx, Math.round(R * 0.5));
-    const num = `${n}%`, nw = Math.ceil(ctx.measureText(num).width);
-    heavyText(ctx, num, cx - Math.round(nw / 2), cy - Math.round(R * 0.3), OS26.shGoldHi, 1);
+    // the number, on a gold badge across the ring's foot
+    const ns = Math.max(14, Math.round(R * 0.3));
+    setFont(ctx, ns);
+    const num = `${n}%`, nw = Math.ceil(ctx.measureText(num).width), bw = nw + 18, bh = ns + 8, by = cy + R - Math.round(bh / 2);
+    fillRR(ctx, cx - Math.round(bw / 2), by, bw, bh, Math.round(bh / 2), OS26.shGold);
+    heavyText(ctx, num, cx - Math.round(nw / 2), by + 4, OS26.shNavy, 0.8);
     setFont(ctx, 13);
-    const word = SH.ring.split('').join('\u2009'), ww = Math.ceil(ctx.measureText(word).width);
-    heavyText(ctx, word, cx - Math.round(ww / 2), cy + R + lw / 2 + 6, OS26.shGold, 0.5);
+    const word = SH.ring.split('').join('\u2009'), ww = Math.ceil(ctx.measureText(word).width), wy = by + bh + 5;
+    heavyText(ctx, word, cx - Math.round(ww / 2), wy, OS26.shGold, 0.5);
+    ctx.font = monoFor(11); ctx.fillStyle = OS26.shText;
+    const tw = Math.ceil(ctx.measureText(PH.target).width); ctx.fillText(PH.target, cx - Math.round(tw / 2), wy + 17);
     if (n >= PH.stopAt) {
       // the studio's applause sign, lit; marks of applause round the ring, changing on the ticker's steps
       setFont(ctx, 11);
-      const aw = Math.ceil(ctx.measureText(SH.applause).width) + 16, ay = cy + R + lw / 2 + 26;
+      const aw = Math.ceil(ctx.measureText(SH.applause).width) + 16, ay = wy + 33;
       fillRR(ctx, cx - Math.round(aw / 2), ay, aw, 18, 4, OS26.shLive);
       heavyText(ctx, SH.applause, cx - Math.round(aw / 2) + 8, ay + 3, OS26.shText, 0.4);
       const alt = reducedMotion() ? 0 : this.tick % 2;
@@ -577,10 +602,18 @@ export class ShepherdSession {
     if (!this.alt) { this.alt = document.createElement('canvas'); this.alt.width = PW; this.alt.height = PH_; }
     if (this.altStep === this.photoStep) return;
     const g = this.alt.getContext('2d'); if (!g) return;
-    // the filter's own order, stopped short of its gloss: it never finishes
+    // ⚑ S420 — the filter's own order, by removal: it stops at 99, her face still there. Its marching ants move one notch a
+    //   step (painted once a step, like the rest of the picture: no upload of their own); still under reduced motion
     const amount = (this.photoStep / PHOTO_STEPS) * PH.amount;
-    paintPortrait(g, 0, 0, PW, PH_, portraitAt(amount), 0);
+    paintPortrait(g, 0, 0, PW, PH_, { ...portraitAt(amount), ants: reducedMotion() ? 0 : this.photoStep });
     this.altStep = this.photoStep;
+  }
+  private ensureTarget(): void {
+    if (this.target || typeof document === 'undefined') return;
+    const c = document.createElement('canvas'); c.width = 96; c.height = 96;
+    const g = c.getContext('2d'); if (!g) return;
+    paintDefaultAvatar(g, 0, 0, 96, 96);
+    this.target = c;
   }
 
   /** the edge: each note under "Sent as Maya", Junie's answer under the lot's (through the mute), the booking.
@@ -686,12 +719,12 @@ function haloRing(ctx: CanvasRenderingContext2D, cx: number, cy: number, r: numb
   ctx.strokeStyle = ink; ctx.lineWidth = lw;
   ctx.beginPath(); ctx.ellipse(cx, cy, r, Math.round(r * 0.38), 0, 0, Math.PI * 2); ctx.stroke();
 }
-/** "Made with AI": the clip's stamp idiom (warning yellow, dark ink, square), right-aligned at x */
-function stamp(ctx: CanvasRenderingContext2D, x: number, y: number, text: string): void {
+/** "Made with AI": the clip's stamp idiom (warning yellow, dark ink, square), right-aligned at x (or, `fromLeft`, from x) */
+function stamp(ctx: CanvasRenderingContext2D, x: number, y: number, text: string, fromLeft = false): void {
   ctx.font = fontFor(9, 'e4'); ctx.textBaseline = 'top';
-  const w = Math.ceil(ctx.measureText(text).width) + 8;
-  px(ctx, x - w, y, w, 14, CLIP.stamp);
-  ctx.fillStyle = CLIP.stampInk; ctx.fillText(text, x - w + 4, y + 2);
+  const w = Math.ceil(ctx.measureText(text).width) + 8, x0 = fromLeft ? x : x - w;
+  px(ctx, x0, y, w, 14, CLIP.stamp);
+  ctx.fillStyle = CLIP.stampInk; ctx.fillText(text, x0 + 4, y + 2);
 }
 function keyIcon(ctx: CanvasRenderingContext2D, x: number, y: number, ink: string): void {
   roundRect(ctx, x, y, 6, 6, 3, ink); px(ctx, x + 2, y + 2, 2, 2, WEB.card);

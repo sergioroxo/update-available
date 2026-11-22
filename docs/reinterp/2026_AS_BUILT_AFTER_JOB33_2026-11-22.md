@@ -26,6 +26,17 @@ fall** (the show's chrome, then the yellow, then the last of it torn off, then t
 a cut). Her friends' tiles, Settings, the Remove dialog, Junie's words, Maya's words and the stream keep their own plain look.
 Beats 11–13 are as job 33 built them. The beats, lines, timings and presses are unchanged; S417's look is in git at **ba86112b**.
 
+⚑ **S420 (job 34, 22 Nov; his "it keeps on using that image of male 'maya' that I've asked to be replaced"): the suited figure
+is retired.** The filter no longer turns her photo into a man (the quiff, jacket, collar, tie and grin, the gloss, the
+"You, restored · 2027" caption: in git at **bd3b0203**, `src/desktop/theme/era4.ts` GOAL_* layers and `paintPortrait`,
+`src/desktop/apps/goalPicture.ts`). The system's target is its **default avatar, default.png** (a grey head and shoulders, no
+face, no hair, no clothes; `paintDefaultAvatar`, the `DEFAULT_PNG` greys from OS26). At beat 9 the filter works **by removal**
+on "me, after.jpg", in its order: her flag, her pin, her earrings, the pink of her top, the length of her hair, each selected
+under marching ants (one notch a step; still under reduced motion) and lifted out to the grey-and-white checkerboard of
+deleted pixels, her room draining to grey in lines. At 99% her face is still there and the selection waits round it;
+default.png sits inside the BECOMING ring, its name under the word. The same filter, in the same order, is on the console's
+Pride '24 picture at beat 6 (MATCH MADE SIMPLE, and its copy on the 2026 era site). Beats, lines, holds and presses unchanged.
+
 One monitor, two panes (the AI on the left, her world on the right); thirteen beats in three acts and an end. Code:
 `src/desktop/apps/e4Acts.ts` (the director), `lScreen.ts` (the screen), `e4ActOne.ts`, `e4ActTwo.ts`, `e4ActThree.ts`
 (+ `shepherd.ts`), `e4ActFour.ts` (+ `streamCover.ts`); words in `data/dialog/s4_acts.json`.

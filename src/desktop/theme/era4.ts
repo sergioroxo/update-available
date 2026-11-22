@@ -1771,20 +1771,26 @@ export const CLIP = {
 // ═══════════════════════════════════════════════════════════════════════════
 // ⚑ S364 — THE PORTRAIT (UiB job 14 Part B, N9 / N12). His notes on job 13's photos: "redesign the goal picture ('You,
 // restored') and Maya's own photo; both are disliked as drawn", and "integrate the gender-swap filter narrative".
+// `mayaPhoto` is hers: a young trans woman in her own room, happy — long hair, her pink top, a small trans-flag pin, gold
+// earrings, the flag on her wall, fairy lights, the window and its warm light. A drawn face on a 24 × 30 cell grid: two
+// dot eyes, brows, a mouth, a nose shadow — no likeness of anyone, no photograph, no camera (the Restoration Filter's
+// law: its "preview" is pre-authored).
 //
-// ONE PHOTOGRAPH, TWO STATES. `mayaPhoto` is hers: a young trans woman in her own room, happy — long hair, her pink top,
-// a small trans-flag pin, gold earrings, the flag on her wall, fairy lights, the window and its warm light. The goal
-// picture (`apps/goalPicture.ts`) is THE SAME PHOTOGRAPH run through the system's swap filter: the same pose and the same
-// framing, so a before/after slider reads cell for cell — the hair cropped, the jaw squared, the jacket, shirt and tie,
-// the grin, the room drained to the system's pale sky, and the advert's gloss on top (halo, rays, sparkles, a
-// "verified" tick, the caption band). `paintPortrait` draws any state between the two (the morph, `apps/swapFilter.ts`).
-//
-// A drawn face on a 24 × 30 cell grid: two dot eyes, brows, a mouth, a nose shadow — no likeness of anyone, no
-// photograph, no camera (the Restoration Filter's law: its "preview" is pre-authored). The person is never the joke:
-// what is over the top is the system's layer (the gloss), and the filter's work is shown as something done TO her.
-// Pixel discipline: integer cells, banded corners, no rotation; the morph is an ordered dither between two palettes,
-// so no colour on screen is one the palettes do not hold. Every colour below is a token from a block above, or the
-// trans-flag pin colours lifted verbatim from `calendar.ts` (TIDY.pin*).
+// ⚑ S420 (UiB job 34; his 22 Nov, on job 34's sheets: "it keeps on using that image of male 'maya' that I've asked to be
+// replaced"; 21 Nov: "I don't like the 'you, restored . 2027'. Let's remove that and rethink the picture interaction") —
+// THE FILTER NO LONGER MAKES HER INTO ANYONE. S364 ran her photograph into a suited man (a quiff, a squared jaw, a jacket,
+// collar and tie, a grin, a halo and a "verified" tick, captioned "You, restored · 2027"). That figure is RETIRED: its
+// layers (GOAL_HAIR/FACE/FEAT/MOUTH/BODY, keys N n C R w) and the gloss are in git at bd3b0203. The system's target now is
+// its DEFAULT AVATAR, `default.png` (`paintDefaultAvatar`, after OS26 below): the grey head and shoulders an app shows
+// when there is no photo — no face, no hair, no clothes. The system wants her to be its default; it never draws who she
+// "should" be. The filter works BY REMOVAL, on her own photo, in this order (`portraitAt`): the flag behind her, the pin
+// on her top, her earrings, the pink of her top, then the length of her hair. Each is selected under marching ants and
+// lifted out, and what is left is the grey-and-white checkerboard of deleted pixels — never filled in with another
+// person. Her room's colours drain to the default's grey under all of it. It stops at 99% (Shepherd's ring): her face is
+// still there, everything she chose is cut out, and the selection waits, still, round her face — the 1% it cannot take.
+// Her skin is never greyed (a grey face reads as illness: S367's rule for Junie, kept for her).
+// Pixel discipline: integer cells, no rotation; the drain is an ordered dither, row by row, between her room's tokens and
+// the default's grey; the checkerboard and the ants are OS26 greys (`DEFAULT_PNG`). Every colour is a token.
 // ═══════════════════════════════════════════════════════════════════════════
 export const PORTRAIT = {
   // her room
@@ -1814,31 +1820,25 @@ export const PORTRAIT = {
   rim: ERA4.photoWarm,
   gold: PLACE.sunHi,
   edge: ERA4.photoFrame,
-  // the room the filter puts her in: the goal's own flat sky, nothing of hers left in it
-  dSky: GOAL.sky,
-  // the template
-  shirt: GOAL.shirt,
-  shirtLo: ERA4.panelEdge,
-  collar: GOAL.collar,
-  tie: GOAL.tie,
-  teeth: GOAL.teeth,
-  // the gloss (the system's layer, and the only over-the-top thing in the picture)
-  halo: GOAL.halo,
-  haloHi: WEB.shimmer,
-  sparkle: GOAL.sparkle,
-  sparkleHi: GOAL.sparkleHi,
-  badge: WEB.accent,
-  badgeInk: WEB.shimmer,
-  badgeGone: ERA4.ruleHi
+  // ⚑ S420 — the cracks' white (the raid's grammar, goalPicture.ts `goalCracks`; it was the gloss's `haloHi`), and the red
+  //   of the Pride '24 rainbow (pridePicture.ts; it was the retired tie's token, GOAL.tie)
+  crack: WEB.shimmer,
+  rainbowRed: GOAL.tie
 } as const;
 
 /** the figure's grid (cells), and how many rows a landscape frame keeps (it crops at the chest) */
 export const PORTRAIT_GRID = { cols: 24, rows: 30, wideRows: 23 } as const;
 
-/** a state of the photograph: 0 = hers, 1 = the filter's, per region; `broken` = the gloss failing (the raid) */
-export interface PortraitState { hair: number; jaw: number; body: number; smile: number; drain: number; gloss: number; broken?: number }
-export const PORTRAIT_HERS: PortraitState = { hair: 0, jaw: 0, body: 0, smile: 0, drain: 0, gloss: 0 };
-export const PORTRAIT_RESTORED: PortraitState = { hair: 1, jaw: 1, body: 1, smile: 1, drain: 1, gloss: 1 };
+/**
+ * ⚑ S420 — a state of her photograph under the filter: per thing it lifts out, 0 = hers … 1 = cut (selected under the
+ * ants from the first step, lifted out at half, deselected at 1); `drain` = her room's colours gone to the default's grey;
+ * `face` = the filter has stopped (99%) and its selection waits round her face; `ants` = the selection's phase (one notch
+ * a step; 0 and still under reduced motion).
+ */
+export interface PortraitState { flag: number; pin: number; earrings: number; top: number; hair: number; drain: number; face?: boolean; ants?: number }
+export const PORTRAIT_HERS: PortraitState = { flag: 0, pin: 0, earrings: 0, top: 0, hair: 0, drain: 0 };
+/** the filter at its stop: everything she chose cut out, her face still there */
+export const PORTRAIT_CUT: PortraitState = { flag: 1, pin: 1, earrings: 1, top: 1, hair: 1, drain: 1, face: true };
 
 /** where the grid sits in a frame: cell size, grid origin, and the visible cell range */
 export interface PortraitLayout { c: number; ox: number; oy: number; gx0: number; gx1: number; gy0: number; gy1: number }
@@ -1858,30 +1858,33 @@ export function portraitLayout(x: number, y: number, w: number, h: number): Port
 /** 0..1 through a window of a larger 0..1 */
 export const stageK = (a: number, from: number, to: number): number => Math.max(0, Math.min(1, (a - from) / (to - from)));
 
-/** the order the filter works in, as one amount 0..1 (the morph's and the try-on's): the hair first, then the jaw, the
- *  body, the smile; the room drains under all of it; the gloss lands last */
+/** ⚑ S420 — the order the filter works in, as one amount 0..1: her flag, her pin, her earrings, the pink of her top, the
+ *  length of her hair, each lifted out in its own window; her room drains under all of it; at 1 it stops, round her face */
 export function portraitAt(amount: number): PortraitState {
+  const a = Math.max(0, Math.min(1, amount));
   return {
-    hair: stageK(amount, 0, 0.2),
-    jaw: stageK(amount, 0.2, 0.4),
-    body: stageK(amount, 0.4, 0.6),
-    smile: stageK(amount, 0.6, 0.72),
-    drain: stageK(amount, 0.05, 0.85),
-    gloss: stageK(amount, 0.72, 1)
+    flag: stageK(a, 0, 0.16),
+    pin: stageK(a, 0.16, 0.3),
+    earrings: stageK(a, 0.3, 0.44),
+    top: stageK(a, 0.44, 0.66),
+    hair: stageK(a, 0.66, 0.9),
+    drain: stageK(a, 0.04, 1),
+    face: a >= 1
   };
 }
+/** an item is lifted out (its pixels deleted) from half way through its window */
+export const isCut = (k: number): boolean => k >= 0.5;
 
 // ── the figure, layer by layer. 24 columns × 30 rows; '.' is nothing. Keys: H hair, h hair in the light, S skin,
-//    s skin in shadow, e ink (eyes, mouth), c blush, T her top, t its shadow side, W the window's rim of light,
-//    N the jacket, n its shadow side, C the collar, R the tie, w teeth.
+//    s skin in shadow, e ink (eyes, mouth), c blush, T her top, t its shadow side, W the window's rim of light.
+//    (⚑ S420: the template's keys N n C R w — jacket, its shadow, collar, tie, teeth — are retired with its layers.)
 type Layer = string[];
 const layer = (rows: Record<number, string>): Layer =>
   Array.from({ length: PORTRAIT_GRID.rows }, (_, r) => rows[r] ?? '.'.repeat(PORTRAIT_GRID.cols));
 const span = (from: number, to: number, row: string): Record<number, string> =>
   Object.fromEntries(Array.from({ length: to - from + 1 }, (_, i) => [from + i, row]));
 const P_KEY: Record<string, keyof typeof PORTRAIT> = {
-  H: 'hair', h: 'hairHi', S: 'skin', s: 'skinLo', e: 'ink', c: 'blush', T: 'top', t: 'topLo', W: 'rim',
-  N: 'shirt', n: 'shirtLo', C: 'collar', R: 'tie', w: 'teeth'
+  H: 'hair', h: 'hairHi', S: 'skin', s: 'skinLo', e: 'ink', c: 'blush', T: 'top', t: 'topLo', W: 'rim'
 };
 /** her hair behind her: long, to below the shoulders, the window's light on its left side */
 const HER_BACK = layer({
@@ -1931,155 +1934,82 @@ const HER_BODY = layer({
   19: '.WTTTTTTTTTssTTTTTTTTtt.',
   ...span(20, 29, '.WTTTTTTTTTTTTTTTTTTTtt.')
 });
-/** the template's hair: a side-parted quiff, short at the sides */
-const GOAL_HAIR = layer({
-  2: '..........hHHH..........',
-  3: '........HHHhHHHHH.......',
-  4: '.......HHHHHHHHHHH......',
-  5: '.......HHHHHHHHHH.......',
-  ...span(6, 8, '.......H........H.......')
-});
-/** the template's face: a square jaw, ears, a thick neck */
-const GOAL_FACE = layer({
-  ...span(6, 8, '........SSSSSSSS........'),
-  9: '.......sSSSSSSSSs.......',
-  10: '.......sSSSSSSSss.......',
-  ...span(11, 13, '........SSSSSSSs........'),
-  14: '.........SSSSSs.........',
-  15: '.........ssssss.........',
-  16: '.........ssssss.........'
-});
-const GOAL_FEAT = layer({
-  8: '........HHH..HHH........',
-  9: '..........e..e..........',
-  11: '............s...........'
-});
-/** the advert's grin */
-const GOAL_MOUTH = layer({
-  12: '.........ewwwwe.........',
-  13: '..........eeee..........'
-});
-/** the jacket, the white shirt's V, the tie; the shoulders squared and a cell broader each side */
-const GOAL_BODY = layer({
-  17: '......NNNCCRRCCNNN......',
-  18: '..NNNNNNNCCRRCCNNNNNNN..',
-  19: 'NNNNNNNNNNCRRCNNNNNNNNnn',
-  20: 'NNNNNNNNNNCRRCNNNNNNNNnn',
-  ...span(21, 26, 'NNNNNNNNNNNRRNNNNNNNNNnn'),
-  ...span(27, 29, 'NNNNNNNNNNNNNNNNNNNNNNnn')
-});
-const EMPTY = layer({});
 
-/** an ordered (Bayer 4 × 4) threshold per cell: the morph's dissolve, done in whole cells */
+/** ⚑ S420 — what the filter lifts out, in cells: the flag on her wall, her pin (over her heart), her earrings (a drop under
+ *  each ear), and the rows from which her hair is its LENGTH (the back layer below the jaw, the front over her shoulders) */
+const CUT_CELLS = {
+  flag: { c0: 19, c1: 22, r0: 1, r1: 5 },
+  pin: { c: 14, r: 24, n: 3 },
+  earrings: { cols: [7, 16], r: 12 },
+  lengthBack: 13,
+  lengthFront: 17
+} as const;
+const inFlag = (gx: number, gy: number): boolean => gx >= CUT_CELLS.flag.c0 && gx <= CUT_CELLS.flag.c1 && gy >= CUT_CELLS.flag.r0 && gy <= CUT_CELLS.flag.r1;
+const inPin = (gx: number, gy: number): boolean => gx >= CUT_CELLS.pin.c && gx < CUT_CELLS.pin.c + CUT_CELLS.pin.n && gy >= CUT_CELLS.pin.r && gy < CUT_CELLS.pin.r + CUT_CELLS.pin.n;
+
+/** an ordered (Bayer 4 × 4) threshold per cell (kept for the Pride picture's own uses) */
 const BAYER = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5];
 const bayer = (gx: number, gy: number): number => (BAYER[(((gy % 4) + 4) % 4) * 4 + (((gx % 4) + 4) % 4)] + 0.5) / 16;
+/** ⚑ S420 — the drain's order, ROW BY ROW (an ordered 1-D dither of 16): her colours leave in whole lines, like the seams of
+ *  a picture being processed, so the drain never reads as the checkerboard of what was cut out */
+const ROW_ORDER = [0, 8, 4, 12, 2, 10, 6, 14, 1, 9, 5, 13, 3, 11, 7, 15];
+const drainRow = (gy: number): number => (ROW_ORDER[((gy % 16) + 16) % 16] + 0.5) / 16;
 
-/** the sparkles: [col, row, which half-second they light on] — the advert's twinkle */
-const P_SPARKLES: [number, number, number][] = [[2, 3, 0], [21, 1, 1], [1, 12, 1], [22, 10, 0], [20, 15, 1], [3, 16, 0], [19, 7, 0], [4, 7, 1]];
-
-/** the room, cell by cell: hers, and the one the filter drains it to */
+/** the room, cell by cell: hers, and — drained — the default's grey ground, nothing of hers behind her */
 function roomCell(gx: number, gy: number, L: PortraitLayout, drained: boolean): string {
   const wx0 = Math.min(0, L.gx0 + 1);
   const inWin = gx >= wx0 && gx <= 3 && gy >= 1 && gy <= 14;
-  // ⚑ drained, the room is simply gone: no window, no sill, no flag — the advert's flat sky, nothing of hers behind her
-  if (drained) return PORTRAIT.dSky;
+  if (drained) return DEFAULT_PNG.ground;
   if (inWin) {
     const mull = Math.round((wx0 + 3) / 2);
     if (gx === wx0 || gx === 3 || gy === 1 || gy === 14 || gx === mull || gy === 7) return PORTRAIT.frame;
     return gy <= 8 ? PORTRAIT.glass : gy <= 10 ? PORTRAIT.haze : PORTRAIT.land;
   }
   if (gy === 15 && gx >= wx0 - 1 && gx <= 4) return PORTRAIT.sill;
-  if (gx >= 19 && gx <= 22 && gy >= 1 && gy <= 5) {
+  if (inFlag(gx, gy)) {
     // the flag on her wall
     return gy === 1 || gy === 5 ? PORTRAIT.flagBlue : gy === 3 ? PORTRAIT.flagWhite : PORTRAIT.flagPink;
   }
   return gy < 9 ? PORTRAIT.wallHi : PORTRAIT.wall;
 }
 
-/** the halo and the rays behind the template's head, cell by cell ('' = none) */
-function glossCell(gx: number, gy: number): string {
-  const dx = gx + 0.5 - 12, dy = gy + 0.5 - 8.5;
-  const d = Math.sqrt(dx * dx + dy * dy);
-  if (d <= 6) return PORTRAIT.halo;
-  if (d <= 7.1) return PORTRAIT.haloHi;       // the halo's white rim, round the head
-  // eight broad rays, a sunburst from behind the head — wide enough to read as rays on a 24-cell grid
-  const ang = (Math.atan2(dy, dx) * 180) / Math.PI + 360 + 11.25;
-  return ang % 45 < 22.5 ? PORTRAIT.halo : '';
-}
-
-/** one layer, her version against the template's, at stage `k`: 'cut' (her hair goes from the ends upward and the
- *  template's grows in), 'dither' (cell by cell, ordered), 'wipe' (top to bottom), 'swap' (all at once, at half) */
-function paintLayer(ctx: CanvasRenderingContext2D, L: PortraitLayout, her: Layer, goal: Layer, mode: 'cut' | 'dither' | 'wipe' | 'swap', k: number): void {
-  const { c, ox, oy } = L;
-  for (let r = 0; r < PORTRAIT_GRID.rows; r++) {
-    if (r < L.gy0 || r > L.gy1) continue;
-    const hr = her[r], gr = goal[r];
-    for (let col = 0; col < PORTRAIT_GRID.cols; col++) {
-      const a = hr[col], b = gr[col];
-      if (a === '.' && b === '.') continue;
-      if (mode === 'cut') {
-        const cut = k > 0.9 * Math.max(0, Math.min(1, (23 - r) / 21));
-        const grown = k > 0.55 + 0.4 * bayer(col, r);
-        if (a !== '.' && !cut) px(ctx, ox + col * c, oy + r * c, c, c, PORTRAIT[P_KEY[a]]);
-        if (b !== '.' && grown) px(ctx, ox + col * c, oy + r * c, c, c, PORTRAIT[P_KEY[b]]);
-        continue;
-      }
-      const on = mode === 'dither' ? k > bayer(col, r)
-        : mode === 'wipe' ? k > Math.min(0.98, Math.max(0, (r - 17) / 13))
-          : k >= 0.5;
-      const ch = on ? b : a;
-      if (ch !== '.') px(ctx, ox + col * c, oy + r * c, c, c, PORTRAIT[P_KEY[ch]]);
-    }
-  }
-}
-
-/** a ✓ in stepped squares inside a box of side `s` */
-function tickMark(ctx: CanvasRenderingContext2D, x: number, y: number, s: number, ink: string): void {
-  const u = Math.max(1, Math.round(s / 8));
-  for (const [i, j] of [[1, 4], [2, 5], [3, 6], [4, 5], [5, 4], [6, 3], [7, 2]]) {
-    px(ctx, x + Math.round((i * s) / 9), y + Math.round((j * s) / 9), u, u, ink);
-  }
-}
+/** a cell of her, after the filter: its colour, CUT (deleted: the checkerboard), or '' (nothing of her here) */
+export const CUT = '#cut';
+export type PortraitOwner = '' | 'hair' | 'length' | 'face' | 'top' | 'neck' | 'pin';
 
 /**
- * ⚑ S364 — paint the photograph at a state between hers and the filter's (see the block above). The caption band and
- * the cracks belong to the goal picture's own file; this paints the room, the person and the gloss. `t` twinkles the
- * sparkles (quantised to half-seconds). Clipped to the frame.
+ * ⚑ S420 — paint her photograph at a state of the filter (see the block above). Clipped to the frame. The photo is the
+ * caller's to cache: Shepherd paints it once a step and only copies it after (S406, 26-18).
  */
-export function paintPortrait(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, s: PortraitState, t = 0): void {
+export function paintPortrait(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, s: PortraitState): void {
   x = Math.round(x); y = Math.round(y); w = Math.round(w); h = Math.round(h);
   if (w <= 0 || h <= 0) return;
   const L = portraitLayout(x, y, w, h);
   const { c, ox, oy } = L;
-  const broken = s.broken ?? 0;
+  const flagCut = isCut(s.flag);
   ctx.save();
   ctx.beginPath(); ctx.rect(x, y, w, h); ctx.clip();
 
-  // ── the room (drained cell by cell), with the gloss's halo and rays over it — one pass, runs merged per row
+  // ── the room (drained cell by cell to the default's grey; her flag is never drained, only lifted out) — runs per row
   for (let gy = L.gy0; gy <= L.gy1; gy++) {
     let runX = L.gx0, runC = '';
     for (let gx = L.gx0; gx <= L.gx1 + 1; gx++) {
       let col = '';
-      if (gx <= L.gx1) {
-        col = roomCell(gx, gy, L, s.drain > bayer(gx, gy));
-        if (s.gloss > 0) {
-          const g = glossCell(gx, gy);
-          if (g && s.gloss > bayer(gx + 2, gy + 1) && !(broken > 0 && broken * 0.75 > bayer(gx + 1, gy + 3))) col = g;
-        }
-      }
+      if (gx <= L.gx1) col = inFlag(gx, gy) ? (flagCut ? CUT : roomCell(gx, gy, L, false)) : roomCell(gx, gy, L, s.drain > drainRow(gy));
       if (col !== runC) {
-        if (runC) px(ctx, ox + runX * c, oy + gy * c, (gx - runX) * c, c, runC);
+        if (runC) fillCell(ctx, L, runX, gy, gx - runX, runC);
         runX = gx; runC = col;
       }
     }
   }
 
-  // ── her fairy lights along the top of the wall: they go out as the room drains
+  // ── her fairy lights along the top of the wall: they go out as the room drains (never over the hole her flag left)
   if (s.drain < 0.6) {
     const top = L.gy0 + 1;
     const th = Math.max(1, Math.round(c / 4));
     for (let gx = L.gx0; gx <= L.gx1; gx++) {
       const sag = [0, 0, 1, 1, 1, 1, 0, 0][((gx % 8) + 8) % 8];
+      if (flagCut && inFlag(gx, top + sag)) continue;
       const sy = oy + (top + sag) * c;
       px(ctx, ox + gx * c, sy, c, th, PORTRAIT.string);
       if (s.drain < 0.35 && ((gx % 3) + 3) % 3 === 0) {
@@ -2097,15 +2027,21 @@ export function paintPortrait(ctx: CanvasRenderingContext2D, x: number, y: numbe
     ctx.globalAlpha = was;
   }
 
-  // ── the person, back to front
-  paintLayer(ctx, L, HER_BACK, GOAL_HAIR, 'cut', s.hair);
-  paintLayer(ctx, L, HER_FACE, GOAL_FACE, 'dither', s.jaw);
-  paintLayer(ctx, L, HER_FEAT, GOAL_FEAT, 'swap', s.jaw);
-  paintLayer(ctx, L, HER_MOUTH, GOAL_MOUTH, 'swap', s.smile);
-  paintLayer(ctx, L, HER_BODY, GOAL_BODY, 'wipe', s.body);
-  // her pin, over her heart: the trans flag, a dark rim, its corners knocked off — it goes when the jacket reaches it
-  if (s.body <= 7 / 13) {
-    const bx = ox + 14 * c, by = oy + 24 * c, bs = 3 * c, rim = Math.max(1, Math.round(c / 4));
+  // ── her, back to front, cell by cell: what each cell shows now, and whose it is (for the selection's edge)
+  const { col: cellCol, owner } = portraitCells(s);
+  for (let gy = Math.max(0, L.gy0); gy <= Math.min(PORTRAIT_GRID.rows - 1, L.gy1); gy++) {
+    let runX = 0, runC = '';
+    for (let gx = 0; gx <= PORTRAIT_GRID.cols; gx++) {
+      const col = gx < PORTRAIT_GRID.cols ? cellCol[gy][gx] : '';
+      if (col !== runC) {
+        if (runC) fillCell(ctx, L, runX, gy, gx - runX, runC);
+        runX = gx; runC = col;
+      }
+    }
+  }
+  // her pin, over her heart: the trans flag, a dark rim, its corners knocked off (lifted out: its cells are the checkerboard)
+  if (!isCut(s.pin) && !isCut(s.top)) {
+    const bx = ox + CUT_CELLS.pin.c * c, by = oy + CUT_CELLS.pin.r * c, bs = CUT_CELLS.pin.n * c, rim = Math.max(1, Math.round(c / 4));
     px(ctx, bx, by, bs, bs, PORTRAIT.edge);
     const ih = bs - 2 * rim;
     const stripes = [PORTRAIT.flagBlue, PORTRAIT.flagPink, PORTRAIT.flagWhite, PORTRAIT.flagPink, PORTRAIT.flagBlue];
@@ -2115,12 +2051,12 @@ export function paintPortrait(ctx: CanvasRenderingContext2D, x: number, y: numbe
     }
     for (const [cx, cy] of [[bx, by], [bx + bs - rim, by], [bx, by + bs - rim], [bx + bs - rim, by + bs - rim]]) px(ctx, cx, cy, rim, rim, PORTRAIT.top);
   }
-  paintLayer(ctx, L, HER_FRONT, EMPTY, 'cut', s.hair);
-  // her earrings: small gold drops, gone with the hair
-  if (s.hair < 0.5) {
-    const ew = Math.max(1, Math.round(c / 2));
-    px(ctx, ox + 7 * c + Math.floor((c - ew) / 2), oy + 12 * c, ew, c + Math.round(c / 2), PORTRAIT.gold);
-    px(ctx, ox + 16 * c + Math.floor((c - ew) / 2), oy + 12 * c, ew, c + Math.round(c / 2), PORTRAIT.gold);
+  // her earrings: small gold drops — lifted out, each leaves its own small hole
+  const ew = Math.max(1, Math.round(c / 2)), eh = c + Math.round(c / 2);
+  for (const col of CUT_CELLS.earrings.cols) {
+    const ex = ox + col * c + Math.floor((c - ew) / 2), ey = oy + CUT_CELLS.earrings.r * c;
+    if (isCut(s.earrings)) cutChecker(ctx, ex, ey, ew, eh, L);
+    else px(ctx, ex, ey, ew, eh, PORTRAIT.gold);
   }
   // the warm light falls on her too
   if (s.drain < 1) {
@@ -2130,35 +2066,50 @@ export function paintPortrait(ctx: CanvasRenderingContext2D, x: number, y: numbe
     ctx.globalAlpha = was;
   }
 
-  // ── the gloss, in front: the sheen, the sparkles, the tick
-  if (s.gloss > 0) {
-    const was = ctx.globalAlpha;
-    ctx.globalAlpha = was * 0.22 * s.gloss * (1 - broken);
-    for (let gy = L.gy0; gy <= L.gy1; gy++) {
-      for (const [d0, d1] of [[3, 5], [36, 38]]) {
-        const a = Math.max(L.gx0, d0 - gy), b = Math.min(L.gx1, d1 - gy);
-        if (b >= a) px(ctx, ox + a * c, oy + gy * c, (b - a + 1) * c, c, PORTRAIT.haloHi);
-      }
-    }
-    ctx.globalAlpha = was;
-    const phase = Math.floor(t * 2) % 2;
-    P_SPARKLES.forEach(([col, row, on], i) => {
-      if (s.gloss < 0.5 + i * 0.05) return;
-      if (broken > 0 && i < broken * P_SPARKLES.length) return;
-      const k = on === phase ? PORTRAIT.sparkleHi : PORTRAIT.sparkle;
-      const sx = ox + col * c, sy = oy + row * c;
-      px(ctx, sx - c, sy, c * 3, c, k);
-      px(ctx, sx, sy - c, c, c * 3, k);
-    });
-    if (s.gloss >= 0.9) {
-      // the "verified" tick on the template's corner — greyed once the raid has cracked the gloss
-      const bx = ox + 16 * c, by = oy + 1 * c, bs = 4 * c, ring = Math.max(1, Math.round(c / 3));
-      roundRect(ctx, bx - ring, by - ring, bs + 2 * ring, bs + 2 * ring, Math.floor(bs / 2) + ring, PORTRAIT.haloHi);
-      roundRect(ctx, bx, by, bs, bs, Math.floor(bs / 2), broken >= 0.5 ? PORTRAIT.badgeGone : PORTRAIT.badge);
-      tickMark(ctx, bx, by, bs, broken >= 0.5 ? PORTRAIT.dSky : PORTRAIT.badgeInk);
-    }
-  }
+  // ── the selection: marching ants round whatever the filter is lifting out now (still between its steps), and, once it
+  //    has stopped, round her face
+  const phase = s.ants ?? 0;
+  const live = (k: number): boolean => k > 0 && k < 1;
+  if (live(s.flag)) antsRect(ctx, ox + CUT_CELLS.flag.c0 * c, oy + CUT_CELLS.flag.r0 * c, (CUT_CELLS.flag.c1 - CUT_CELLS.flag.c0 + 1) * c, (CUT_CELLS.flag.r1 - CUT_CELLS.flag.r0 + 1) * c, c, phase);
+  if (live(s.pin)) antsRect(ctx, ox + CUT_CELLS.pin.c * c, oy + CUT_CELLS.pin.r * c, CUT_CELLS.pin.n * c, CUT_CELLS.pin.n * c, c, phase);
+  if (live(s.earrings)) for (const col of CUT_CELLS.earrings.cols) antsRect(ctx, ox + col * c - Math.ceil(c / 4), oy + CUT_CELLS.earrings.r * c - Math.ceil(c / 4), c + 2 * Math.ceil(c / 4), 2 * c + Math.ceil(c / 4), c, phase);
+  if (live(s.top)) antsAround(ctx, (gx, gy) => owner[gy]?.[gx] === 'top' || owner[gy]?.[gx] === 'pin', { c, ox, oy }, PORTRAIT_GRID.cols, PORTRAIT_GRID.rows, phase);
+  if (live(s.hair)) antsAround(ctx, (gx, gy) => owner[gy]?.[gx] === 'length', { c, ox, oy }, PORTRAIT_GRID.cols, PORTRAIT_GRID.rows, phase);
+  if (s.face) antsAround(ctx, (gx, gy) => owner[gy]?.[gx] === 'face', { c, ox, oy }, PORTRAIT_GRID.cols, PORTRAIT_GRID.rows, phase);
   ctx.restore();
+}
+
+/** a run of `n` cells in row `gy` from `gx`: one colour, or the checkerboard (CUT) */
+function fillCell(ctx: CanvasRenderingContext2D, L: PortraitLayout, gx: number, gy: number, n: number, col: string): void {
+  const X = L.ox + gx * L.c, Y = L.oy + gy * L.c, W = n * L.c;
+  if (col === CUT) cutChecker(ctx, X, Y, W, L.c, L);
+  else px(ctx, X, Y, W, L.c, col);
+}
+
+/** her cells, back to front, under the filter at `s`: the colour each shows (CUT where it was lifted out) and its owner.
+ *  Her face, her features, her neck and the hair on her head are never cut; nor is any cell `keep` names (the Pride '24
+ *  picture keeps one strand of her long hair: pridePicture.ts). Exported for that painter. */
+export function portraitCells(s: PortraitState, keep?: (gx: number, gy: number) => boolean): { col: string[][]; owner: PortraitOwner[][] } {
+  const R = PORTRAIT_GRID.rows, C = PORTRAIT_GRID.cols;
+  const col: string[][] = Array.from({ length: R }, () => new Array<string>(C).fill(''));
+  const owner: PortraitOwner[][] = Array.from({ length: R }, () => new Array<PortraitOwner>(C).fill(''));
+  const put = (L: Layer, who: (ch: string, gx: number, gy: number) => PortraitOwner, cut: (o: PortraitOwner) => boolean): void => {
+    for (let gy = 0; gy < R; gy++) for (let gx = 0; gx < C; gx++) {
+      const ch = L[gy][gx];
+      if (ch === '.') continue;
+      const o = keep?.(gx, gy) && who(ch, gx, gy) === 'length' ? 'hair' : who(ch, gx, gy);
+      owner[gy][gx] = o;
+      col[gy][gx] = cut(o) ? CUT : PORTRAIT[P_KEY[ch]];
+    }
+  };
+  const hairCut = isCut(s.hair), topCut = isCut(s.top), pinCut = isCut(s.pin);
+  put(HER_BACK, (_c, _x, gy) => (gy >= CUT_CELLS.lengthBack ? 'length' : 'hair'), (o) => o === 'length' && hairCut);
+  put(HER_FACE, () => 'face', () => false);
+  put(HER_FEAT, () => 'face', () => false);
+  put(HER_MOUTH, () => 'face', () => false);
+  put(HER_BODY, (ch, gx, gy) => (ch === 's' ? 'neck' : inPin(gx, gy) ? 'pin' : 'top'), (o) => (o === 'top' && topCut) || (o === 'pin' && (pinCut || topCut)));
+  put(HER_FRONT, (_c, _x, gy) => (gy >= CUT_CELLS.lengthFront ? 'length' : 'hair'), (o) => o === 'length' && hairCut);
+  return { col, owner };
 }
 
 /**
@@ -2166,26 +2117,25 @@ export function paintPortrait(ctx: CanvasRenderingContext2D, x: number, y: numbe
  * Every 2026 caller of `photograph(…, 3)` / `thumb(…, 3, …)` lands here. No camera input, no file input, ever.
  */
 export function mayaPhoto(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number): void {
-  paintPortrait(ctx, x, y, w, h, PORTRAIT_HERS, 0);
+  paintPortrait(ctx, x, y, w, h, PORTRAIT_HERS);
 }
 
 /**
  * ⚑ S367 (UiB job 15 Part B) — the photograph's FIGURE, read-only, for a painter that draws Maya somewhere else with
  * fillStyle + fillRect only: MATCH MADE SIMPLE's Pride '24 picture (src/games/pridePicture.ts). The same cells, the
- * same keys, the same Bayer order and the same gloss, so the filter there works on her exactly as `paintPortrait`'s
- * does here (hair cut from the ends, the jaw, the body wiped, the grin, the gloss last). Nothing here changes.
+ * same keys and the same Bayer order, so the filter there works on her exactly as `paintPortrait`'s does here.
+ * ⚑ S420 — the template (`goal`) and the gloss are retired; what it carries now is what the filter lifts out (`cut`).
  */
 export const PORTRAIT_FIGURE: {
   readonly her: { readonly back: readonly string[]; readonly face: readonly string[]; readonly feat: readonly string[]; readonly mouth: readonly string[]; readonly body: readonly string[]; readonly front: readonly string[] };
-  readonly goal: { readonly hair: readonly string[]; readonly face: readonly string[]; readonly feat: readonly string[]; readonly mouth: readonly string[]; readonly body: readonly string[] };
+  readonly cut: typeof CUT_CELLS;
   readonly key: Readonly<Record<string, keyof typeof PORTRAIT>>;
-  readonly sparkles: readonly (readonly [number, number, number])[];
   readonly bayer: (gx: number, gy: number) => number;
-  readonly gloss: (gx: number, gy: number) => string;
+  readonly drainRow: (gy: number) => number;
 } = {
   her: { back: HER_BACK, face: HER_FACE, feat: HER_FEAT, mouth: HER_MOUTH, body: HER_BODY, front: HER_FRONT },
-  goal: { hair: GOAL_HAIR, face: GOAL_FACE, feat: GOAL_FEAT, mouth: GOAL_MOUTH, body: GOAL_BODY },
-  key: P_KEY, sparkles: P_SPARKLES, bayer, gloss: glossCell
+  cut: CUT_CELLS,
+  key: P_KEY, bayer, drainRow
 };
 
 /**
@@ -2298,3 +2248,116 @@ export const OS26 = {
   shText: '#F4F1E8',
   shBooked: '#1E6B4C'
 } as const;
+
+/**
+ * ⚑ S420 (UiB job 34; his 22 Nov: "it keeps on using that image of male 'maya' that I've asked to be replaced") — DEFAULT.PNG:
+ * THE PICTURE THE SYSTEM WANTS HER TO BECOME IS ITS DEFAULT AVATAR. The generic grey head and shoulders an app shows when
+ * there is no photo: no face, no hair, no clothes. It is never who she "should" be; it is nobody. Drawn on her photo's own
+ * 24 × 30 cell grid (`portraitLayout`), so it frames as her photo does and lines up with it cell for cell: the head where her
+ * face is, the shoulders where her top was. Its greys are OS26's (no new colour): the window controls' grey for its ground,
+ * the plain desktop's pale grey for the figure. The filter's own marks are OS26 greys too — the checkerboard of deleted
+ * pixels (white and the plain lilac-grey, the editor's idiom for "nothing here") and the marching ants (the OS's ink and
+ * white). Her photo drains to the ground's grey (`paintPortrait`), and the holes it cuts in her are the figure's pale grey:
+ * at 99% the picture it made has become default.png everywhere but her face.
+ */
+export const DEFAULT_PNG = {
+  /** the default's ground, and what her room drains to */
+  ground: OS26.winControl,
+  /** its head and shoulders */
+  figure: OS26.plainGround,
+  /** the checkerboard of deleted pixels */
+  checkA: OS26.win,
+  checkB: OS26.plainLilac,
+  /** the marching ants */
+  antsDark: OS26.winInk,
+  antsLight: OS26.win
+} as const;
+
+/** anything that paints with fillStyle + fillRect: a 2D context, or a game's Pen (src/room/calendarArt.ts `Painter`) */
+export interface CutPen { fillStyle: string | CanvasGradient | CanvasPattern; fillRect(x: number, y: number, w: number, h: number): void }
+const fillPen = (p: CutPen, x: number, y: number, w: number, h: number, col: string): void => {
+  p.fillStyle = col; p.fillRect(Math.round(x), Math.round(y), Math.round(w), Math.round(h));
+};
+
+/** the default's head and shoulders, in her grid's cells: a round head over broad, rounded shoulders, a cell apart */
+export function inDefaultAvatar(gx: number, gy: number): boolean {
+  const x = gx + 0.5, y = gy + 0.5;
+  if ((x - 12) ** 2 + (y - 11.5) ** 2 <= 4.6 * 4.6) return true;
+  if (y < 16.5) return false;
+  const dy = Math.min(0, y - 26) / 9.5;
+  return Math.abs(x - 12) <= 10 * Math.sqrt(Math.max(0, 1 - dy * dy));
+}
+
+/**
+ * ⚑ S420 — paint default.png into (x, y, w, h): its ground over the whole frame, the figure on her photo's grid.
+ */
+export function paintDefaultAvatar(p: CutPen, x: number, y: number, w: number, h: number): void {
+  x = Math.round(x); y = Math.round(y); w = Math.round(w); h = Math.round(h);
+  if (w <= 0 || h <= 0) return;
+  fillPen(p, x, y, w, h, DEFAULT_PNG.ground);
+  // (below 24 px the grid's cell is one pixel and the frame crops it to the head and shoulders: a profile chip's avatar)
+  const L = portraitLayout(x, y, w, h);
+  for (let gy = Math.max(0, L.gy0); gy <= Math.min(PORTRAIT_GRID.rows - 1, L.gy1); gy++) {
+    let run = -1;
+    for (let gx = 0; gx <= PORTRAIT_GRID.cols; gx++) {
+      const on = gx < PORTRAIT_GRID.cols && inDefaultAvatar(gx, gy);
+      if (on && run < 0) run = gx;
+      if (!on && run >= 0) {
+        const x0 = Math.max(x, L.ox + run * L.c), x1 = Math.min(x + w, L.ox + gx * L.c), y0 = Math.max(y, L.oy + gy * L.c), y1 = Math.min(y + h, L.oy + (gy + 1) * L.c);
+        if (x1 > x0 && y1 > y0) fillPen(p, x0, y0, x1 - x0, y1 - y0, DEFAULT_PNG.figure);
+        run = -1;
+      }
+    }
+  }
+}
+
+/** ⚑ S420 — the checkerboard of deleted pixels over (x, y, w, h): squares of half a cell, aligned to the grid's origin, so
+ *  every hole in the picture is one continuous board */
+export function cutChecker(p: CutPen, x: number, y: number, w: number, h: number, g: { c: number; ox: number; oy: number }): void {
+  if (w <= 0 || h <= 0) return;
+  fillPen(p, x, y, w, h, DEFAULT_PNG.checkA);
+  const q = Math.max(2, Math.ceil(g.c / 2));
+  const i0 = Math.floor((x - g.ox) / q), i1 = Math.ceil((x + w - g.ox) / q);
+  const j0 = Math.floor((y - g.oy) / q), j1 = Math.ceil((y + h - g.oy) / q);
+  p.fillStyle = DEFAULT_PNG.checkB;
+  for (let j = j0; j < j1; j++) for (let i = i0; i < i1; i++) {
+    if (((i + j) & 1) === 0) continue;
+    const sx = Math.max(x, g.ox + i * q), sy = Math.max(y, g.oy + j * q);
+    const ex = Math.min(x + w, g.ox + (i + 1) * q), ey = Math.min(y + h, g.oy + (j + 1) * q);
+    if (ex > sx && ey > sy) p.fillRect(Math.round(sx), Math.round(sy), Math.round(ex - sx), Math.round(ey - sy));
+  }
+}
+
+/** one edge of a selection: dashes of the OS's ink and white along it, `len` px from (x, y); `off` moves them (a step) */
+function antsRun(p: CutPen, x: number, y: number, len: number, t: number, horiz: boolean, off: number, d: number): void {
+  let i = 0;
+  while (i < len) {
+    const X = horiz ? x + i : x, Y = horiz ? y : y + i;
+    const at = X + Y + off;
+    const n = Math.min(len - i, d - (((at % d) + d) % d));
+    fillPen(p, X, Y, horiz ? n : t, horiz ? t : n, (Math.floor(at / d) & 1) ? DEFAULT_PNG.antsLight : DEFAULT_PNG.antsDark);
+    i += n;
+  }
+}
+const antsSize = (c: number): { t: number; d: number } => ({ t: Math.max(1, Math.round(c / 4)), d: Math.max(2, Math.round(c * 0.8)) });
+
+/** ⚑ S420 — marching ants round a rectangle (inside its edge); `phase` steps them a notch (still between the filter's steps) */
+export function antsRect(p: CutPen, x: number, y: number, w: number, h: number, c: number, phase: number): void {
+  const { t, d } = antsSize(c), off = phase * Math.max(1, Math.round(d / 2));
+  antsRun(p, x, y, w, t, true, off, d); antsRun(p, x, y + h - t, w, t, true, off, d);
+  antsRun(p, x, y, h, t, false, off, d); antsRun(p, x + w - t, y, h, t, false, off, d);
+}
+
+/** ⚑ S420 — marching ants round the cells `inMask` covers on a grid (cell `c` px, origin (ox, oy), cols × rows), along every
+ *  edge where the mask meets anything else */
+export function antsAround(p: CutPen, inMask: (gx: number, gy: number) => boolean, g: { c: number; ox: number; oy: number }, cols: number, rows: number, phase: number): void {
+  const { c, ox, oy } = g, { t, d } = antsSize(c), off = phase * Math.max(1, Math.round(d / 2));
+  for (let gy = 0; gy < rows; gy++) for (let gx = 0; gx < cols; gx++) {
+    if (!inMask(gx, gy)) continue;
+    const X = ox + gx * c, Y = oy + gy * c;
+    if (!inMask(gx, gy - 1)) antsRun(p, X, Y, c, t, true, off, d);
+    if (!inMask(gx, gy + 1)) antsRun(p, X, Y + c - t, c, t, true, off, d);
+    if (!inMask(gx - 1, gy)) antsRun(p, X, Y, c, t, false, off, d);
+    if (!inMask(gx + 1, gy)) antsRun(p, X + c - t, Y, c, t, false, off, d);
+  }
+}

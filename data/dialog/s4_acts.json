@@ -641,7 +641,9 @@
     "becoming": "Becoming {n}%",
     "stopAt": 99,
     "seconds": 16,
-    "amount": 0.7
+    "amount": 1,
+    "target": "default.png",
+    "_docS420": "⚑ S420 (UiB job 34; his 22 Nov: \"it keeps on using that image of male 'maya' that I've asked to be replaced\"; 21 Nov: \"I don't like the 'you, restored . 2027'. Let's remove that and rethink the picture interaction\") — the filter no longer turns her photo into a suited man. It works by REMOVAL, in its order (theme/era4.ts portraitAt): her flag, her pin, her earrings, the pink of her top, the length of her hair, each selected under marching ants and lifted out to the checkerboard of deleted pixels; her room drains to grey. At its stop (`amount` 1, was 0.7, which stopped the man short of his gloss) her face is still there and the selection waits round it. `target` is the system's default avatar, shown in the BECOMING ring with its file name under the word: the system wants her to be its default."
    },
    "sentAs": "Sent as Maya",
    "notes": [

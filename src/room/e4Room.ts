@@ -84,6 +84,7 @@ export function buildE4Room(app: pc.Application, building: RoomHandles) {
   //   desk's front edge, between him and the monitor. It hangs on the wall behind the desk, left of the monitor, above
   //   the headset: on the wall, where a photograph is.
   // ⚑ S363 / N1 (his green cross on job 13's photo: "the framed image of Maya on the wall") — the desk photo frame is gone
+  // ⚑ S420 — the system's picture is its default avatar, default.png (goalPicture.ts); this frame is never shown (H47 below)
   const goal = picture('system-default-portrait', [5.66, 1.45, 1.98], .65, .64,
     c => { c.fillStyle = ERA4.rule; c.fillRect(0, 0, 256, 256); drawGoalPicture(c, 8, 8, 240, 240); });
   // ⚑ S365 (UiB job 14 Part C1, his 11 Nov) — the news strips and the clinic ticket are gone from her wall: the articles
