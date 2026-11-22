@@ -360,7 +360,11 @@ async function main() {
         const c = ctx.canvas, m = ctx.getTransform ? ctx.getTransform() : { a: 1, d: 1, e: 0, f: 0 };
         return x * m.a + m.e <= 0.5 && y * m.d + m.f <= 0.5 && (x + w) * m.a + m.e >= c.width - 0.5 && (y + h) * m.d + m.f >= c.height - 0.5;
       };
-      const frame = (ctx) => { per.set(ctx.canvas, []); };
+      // ⚑ S357fs — a frame resets only a canvas that already holds words. The piece makes throwaway canvases all the time
+      //   (a picture scaled or composited into a fresh canvas); with S357fq's drawImage frame start every one of them got
+      //   an entry, and this Map kept them all alive: a full walk hung at the end of 2016 (twice, same step), a one-era
+      //   walk did not. Text still creates an entry (fillText, below), exactly as before S357fq.
+      const frame = (ctx) => { if (per.has(ctx.canvas)) per.set(ctx.canvas, []); };
       P.fillText = function (t, ...rest) { const c = this.canvas; let a = per.get(c); if (!a) { a = []; per.set(c, a); } const v = String(t).trim(); if (v && a.length < 600) a.push(v); return ft.call(this, t, ...rest); };
       P.fillRect = function (x, y, w, h) { if (full(this, x, y, w, h)) frame(this); return fr.call(this, x, y, w, h); };
       P.clearRect = function (x, y, w, h) { if (full(this, x, y, w, h)) frame(this); return cr.call(this, x, y, w, h); };
@@ -376,6 +380,7 @@ async function main() {
     };
     wrap(window.CanvasRenderingContext2D && CanvasRenderingContext2D.prototype);
     wrap(window.OffscreenCanvasRenderingContext2D && OffscreenCanvasRenderingContext2D.prototype);
+    window.__textCanvases = () => per.size;   // S357fs: how many canvases the census is holding (a leak shows here)
     window.__textNow = () => [...per.entries()].filter(([, a]) => a.length)
       .map(([c, a]) => ({ size: c.width + 'x' + c.height, text: [...new Set(a)].join(' | ') }));
   });
