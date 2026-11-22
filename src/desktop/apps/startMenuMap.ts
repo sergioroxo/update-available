@@ -13,7 +13,12 @@ import type { StartModel } from '../../witness/startModel';
 import strings from '../../../data/strings/slice.json';
 import { enableExtra } from '../../state/cut';
 import panelStrings from '../../../data/strings/startPanel.json';
+import ACTS from '../../../data/dialog/s4_acts.json';
+import { OS26 } from '../theme/era4';
+import { MENU_H, appTile, edgeRR, fillRR, softShadow, fit26, type App26 } from './desk26';
 const S = strings.desktop.startMenu;
+/** ⚑ S417 — 2026's Menu: its own two headings (s4_acts.json screen.os.menu) */
+const MENU26 = (ACTS as unknown as { screen: { os: { menu: { apps: string; whatToDo: string } } } }).screen.os.menu;
 export interface StartHit extends Rect { id: string; title?: string }
 type Program = { id: string; label: string };
 
@@ -77,23 +82,166 @@ export class StartMenuMap {
     return false;
   }
 
-  draw(ctx: CanvasRenderingContext2D, W: number, H: number, era: PanelEra, model: StartModel, silent: boolean, programs: Program[] = []): StartHit[] {
+  draw(ctx: CanvasRenderingContext2D, W: number, H: number, era: PanelEra, model: StartModel, silent: boolean, programs: Program[] = [],
+    reachable: (id: string) => boolean = () => true): StartHit[] {
     this.hits = []; this.era = era;
+    this.reachable = reachable;
     programs = [...programs.filter(p => p.id !== 'icon-rootcause'), { id: 'icon-rootcause', label: rootCopy.skins[era].label }];
     if (era === 'e1' && !programs.some(p => p.id === 'icon-tapes')) programs.push({ id: 'icon-tapes', label: decisions.tapes.title });
     if (this.tapes && !silent) { this.tapes.draw(ctx); this.hits = this.tapes.hits; return this.hits; }
     if (this.root && !silent) {
-      ui.px(ctx, 0, 0, W, H, era === 'e3' ? aero.ERA3.glass : era === 'e4' ? CHROME.page : ERA1.teal);
+      ui.px(ctx, 0, 0, W, H, era === 'e3' ? aero.ERA3.glass : era === 'e4' ? OS26.wallGround : ERA1.teal);
       const scale = Math.min(W / 512, H / 384); const x = Math.round((W - 512 * scale) / 2), y = Math.round((H - 384 * scale) / 2);
       ctx.save(); ctx.translate(x, y); ctx.scale(scale, scale); this.root.draw(ctx); ctx.restore();
       this.hits = this.root.hits.map(r => ({ ...r, id: `sm-root:${r.id}`, x: x + r.x * scale, y: y + r.y * scale, w: r.w * scale, h: r.h * scale }));
       return this.hits;
     }
-    if (this.menu) this.drawMenu(ctx, W, H, era, model, silent, programs);
-    if (this.steps && !silent) this.drawSteps(ctx, W, H, era, model);
+    if (this.menu) { if (era === 'e4') this.drawMenu26(ctx, W, H, model, silent, programs); else this.drawMenu(ctx, W, H, era, model, silent, programs); }
+    if (this.steps && !silent) { if (era === 'e4') this.drawSteps26(ctx, W, H, model); else this.drawSteps(ctx, W, H, era, model); }
     if (this.confirm && !silent) this.drawConfirm(ctx, W, H);
-    if (this.refused && !silent) this.drawRefusal(ctx, W, H, era);
+    if (this.refused && !silent) { if (era === 'e4') this.drawRefusal26(ctx, W, H); else this.drawRefusal(ctx, W, H, era); }
     return this.hits;
+  }
+  /** ⚑ S417 — which of 2026's apps she may reach now (the Menu dims the rest, as the dock does) */
+  private reachable: (id: string) => boolean = () => true;
+
+  /**
+   * ⚑ S417 (UiB job 34 Part A; his "It is missing the Menu button btw") — 2026's MENU, in this OS's skin: a rounded panel under
+   * the menu bar's Menu button. Her apps at the top (the dock's six; one she cannot reach now is dimmed and, pressed, says why,
+   * as the dock does), and L's dig ("Shall we find where it started?", the Programs entry every era's menu has); then what to
+   * do now (the map's step, its hint, the next ones, all the steps); in the room; more to explore; jump to…; and at its foot
+   * Shut Down… (refused, as everywhere) and Leave… (the frame's door). The same model and the same ids as every era's menu.
+   */
+  private drawMenu26(ctx: CanvasRenderingContext2D, W: number, H: number, model: StartModel, silent: boolean, programs: Program[]): void {
+    const x = 6, y = MENU_H + 3, w = Math.min(332, W - 12), maxH = H - y - 6;
+    const pad = 12, tw = w - 2 * pad;
+    type Row = { kind: 'head' | 'item' | 'hint' | 'rule'; text?: string; id?: string; dim?: boolean; title?: string; strong?: boolean; drop?: number };
+    const rows: Row[] = [];
+    const head = (text: string): void => { rows.push({ kind: 'head', text }); };
+    const item = (text: string, id: string, dim = false, title?: string, strong = false, drop = 0): void => { rows.push({ kind: 'item', text, id, dim, title, strong, drop }); };
+    const apps = programs.filter((p) => p.id.startsWith('app:'));
+    const others = programs.filter((p) => !p.id.startsWith('app:'));
+    if (this.view === 'jump') {
+      head(S.jumpTitle);
+      model.jump.forEach((j) => item(`${j.current ? '▸ ' : ''}${j.label}`, `sm-jump-${j.era}`, j.current || silent, silent ? S.notNow : undefined));
+      item(panelStrings.e4.close, 'sm-back');
+    } else {
+      // the root-cause dig (L's add-on, every era's Programs entry)
+      const root = [...others, { id: 'icon-rootcause', label: rootCopy.skins.e4.label }].find((p) => p.id === 'icon-rootcause')!;
+      item(`✦ ${root.label}`, `sm-prog:${root.id}`, silent, silent ? S.notNow : undefined);
+      rows.push({ kind: 'rule' });
+      head(MENU26.whatToDo);
+      if (model.now) {
+        item(model.now.label, '', false, undefined, true);
+        ui.setFont(ctx, 11);
+        ui.wrapText(ctx, model.now.hint, tw - 6).slice(0, 3).forEach((text) => rows.push({ kind: 'hint', text, drop: 3 }));
+      }
+      model.next.forEach((b) => item(`${S.next} · ${b.label}`, '', true, undefined, false, 2));
+      item(S.allSteps, 'sm-allsteps', silent, silent ? S.notNow : undefined);
+      if (model.room.length) { head(S.room); model.room.forEach((b) => item(b.label, '', true, undefined, false, 1)); }
+      head(S.more);
+      model.extras.forEach((e) => {
+        const suffix = e.on ? S.on : e.passed ? S.alreadyPassed : '';
+        item(`${e.label}${suffix ? ` ${suffix}` : ''}${e.place ? ` · ${e.place}` : ''}`, `sm-extra:${e.id}`, silent || (e.id !== 'cassettes' && (e.on || e.passed)), e.place || undefined);
+      });
+      item(silent ? `${S.jump} — ${S.notNow}` : S.jump, 'sm-jump', silent, silent ? S.notNow : undefined);
+    }
+    // the heights: apps 62, a head 18, an item 19, a hint 14, a rule 9; the foot 36. Rows marked `drop` go first if it is tall.
+    const APPS_H = this.view === 'jump' ? 0 : 64, FOOT = 40;
+    const hOf = (r: Row): number => r.kind === 'head' ? 19 : r.kind === 'item' ? 20 : r.kind === 'hint' ? 14 : 9;
+    let laid = rows.slice();
+    for (const level of [1, 2, 3]) {
+      if (APPS_H + laid.reduce((a, r) => a + hOf(r), 0) + FOOT + 16 <= maxH) break;
+      laid = laid.filter((r) => (r.drop ?? 0) !== level);
+    }
+    const h = Math.min(maxH, APPS_H + laid.reduce((a, r) => a + hOf(r), 0) + FOOT + 16);
+    softShadow(ctx, { x, y, w, h }, 14, 1.2);
+    edgeRR(ctx, x, y, w, h, 14, OS26.menuEdge, OS26.menuPanel);
+    let cy = y + 10;
+    // her apps: the dock's six, in a row
+    if (APPS_H) {
+      ui.setFont(ctx, 11); ctx.fillStyle = OS26.menuHead; ctx.fillText(MENU26.apps, x + pad, cy);
+      cy += 18;
+      const cell = Math.floor(tw / Math.max(1, apps.length));
+      apps.forEach((a, i) => {
+        const can = this.reachable(a.id);
+        const cx = x + pad + i * cell, tile = 26;
+        appTile(ctx, a.id.slice(4) as App26, cx + Math.round((cell - tile) / 2), cy, tile, !can);
+        ui.setFont(ctx, 11); ctx.fillStyle = can ? OS26.winInk : OS26.menuQuiet;
+        const lab = fit26(ctx, a.label, cell - 2), lw = Math.ceil(ctx.measureText(lab).width);
+        ctx.fillText(lab, cx + Math.round((cell - lw) / 2), cy + tile + 3);
+        this.hits.push({ x: cx, y: cy - 2, w: cell, h: tile + 18, id: `sm-prog:${a.id}` });
+      });
+      cy += APPS_H - 18;
+    }
+    for (const r of laid) {
+      const rh = hOf(r);
+      if (cy + rh > y + h - FOOT) break;
+      if (r.kind === 'rule') { ui.px(ctx, x + pad, cy + 4, tw, 1, OS26.winRule); cy += rh; continue; }
+      if (r.kind === 'head') { ui.setFont(ctx, 11); ctx.fillStyle = OS26.menuHead; ctx.fillText(r.text ?? '', x + pad, cy + 4); cy += rh; continue; }
+      if (r.kind === 'hint') { ui.setFont(ctx, 11); ctx.fillStyle = OS26.winInk2; ctx.fillText(fit26(ctx, r.text ?? '', tw - 6), x + pad + 6, cy); cy += rh; continue; }
+      const live = !!r.id && !r.dim;
+      if (live) fillRR(ctx, x + pad - 5, cy - 1, tw + 10, rh - 2, 7, OS26.menuRowOn);
+      ui.setFont(ctx, r.strong ? 12 : 11);
+      ctx.fillStyle = r.dim ? OS26.menuQuiet : OS26.winInk;
+      ctx.fillText(fit26(ctx, r.text ?? '', tw - 4), x + pad + (live ? 2 : 0), cy + 3);
+      if (r.id || r.title) this.hits.push({ x: x + pad - 5, y: cy - 1, w: tw + 10, h: rh - 2, id: r.dim ? 'sm-disabled' : r.id!, title: r.title });
+      cy += rh;
+    }
+    // the foot: Shut Down… (the machine refuses) and Leave… (the frame's door)
+    const fy = y + h - FOOT + 6;
+    ui.px(ctx, x + pad, fy - 6, tw, 1, OS26.winRule);
+    const bw = Math.floor((tw - 8) / 2);
+    edgeRR(ctx, x + pad, fy + 2, bw, 24, 12, OS26.winEdge, OS26.win);
+    fillRR(ctx, x + pad + bw + 8, fy + 2, bw, 24, 12, OS26.menuButton);
+    ui.setFont(ctx, 11);
+    const sl = S.shutDown, ll = S.leave;
+    ctx.fillStyle = OS26.winInk; ctx.fillText(sl, x + pad + Math.round((bw - ctx.measureText(sl).width) / 2), fy + 7);
+    ctx.fillStyle = OS26.menuButtonInk; ctx.fillText(ll, x + pad + bw + 8 + Math.round((bw - ctx.measureText(ll).width) / 2), fy + 7);
+    this.hits.push({ x: x + pad, y: fy + 2, w: bw, h: 24, id: 'sm-shut' });
+    this.hits.push({ x: x + pad + bw + 8, y: fy + 2, w: bw, h: 24, id: 'sm-leave' });
+  }
+  /** ⚑ S417 — all the steps, in 2026's skin (a rounded sheet; 11 px and up, the headset's floor) */
+  private drawSteps26(ctx: CanvasRenderingContext2D, W: number, H: number, model: StartModel): void {
+    const x = 12, y = MENU_H + 6, w = Math.min(440, W - 24);
+    ui.setFont(ctx, 11);
+    const lines = model.steps.map((b) => ui.wrapText(ctx, `${b.label}${b.optional ? ` ${S.extra}` : ''}${b.place ? ` · ${b.place}` : ''}`, w - 50).slice(0, 2));
+    const h = Math.min(H - y - 8, 84 + lines.reduce((n, a) => n + a.length * 14 + 3, 0));
+    softShadow(ctx, { x, y, w, h }, 14, 1.2);
+    edgeRR(ctx, x, y, w, h, 14, OS26.menuEdge, OS26.menuPanel);
+    ui.setFont(ctx, 12); ctx.fillStyle = OS26.winInk; ctx.fillText(S.listTitle.e4, x + 14, y + 12);
+    ui.setFont(ctx, 12); ctx.fillStyle = OS26.winInk2; ctx.fillText('✕', x + w - 22, y + 11);
+    this.hits.push({ x: x + w - 30, y: y + 5, w: 24, h: 24, id: 'steps-close' });
+    ui.setFont(ctx, 11); ctx.fillStyle = OS26.winInk2; ctx.fillText(S.listLead, x + 14, y + 32);
+    let cy = y + 52;
+    model.steps.forEach((b, i) => {
+      if (cy + lines[i].length * 14 > y + h - 34) return;
+      ui.setFont(ctx, 11); ctx.fillStyle = b.state === 'done' ? OS26.menuQuiet : OS26.winInk;
+      ctx.fillText(b.state === 'done' ? '✓' : b.state === 'current' ? '▸' : '·', x + 14, cy);
+      this.hits.push({ x: x + 10, y: cy - 2, w: w - 20, h: lines[i].length * 14 + 2, id: b.id === 'rootcause' ? 'sm-prog:icon-rootcause' : 'steps-row' });
+      lines[i].forEach((line, j) => ctx.fillText(line, x + 30, cy + j * 14));
+      cy += lines[i].length * 14 + 3;
+    });
+    const cl = panelStrings.e4.close; ui.setFont(ctx, 11);
+    const cw = Math.ceil(ctx.measureText(cl).width) + 24;
+    fillRR(ctx, x + w - cw - 12, y + h - 30, cw, 22, 11, OS26.menuButton);
+    ctx.fillStyle = OS26.menuButtonInk; ctx.fillText(cl, x + w - cw, y + h - 26);
+    this.hits.push({ x: x + w - cw - 12, y: y + h - 30, w: cw, h: 22, id: 'steps-close' });
+  }
+  /** ⚑ S417 — Shut Down…'s refusal, in 2026's skin (the machine's, as everywhere: one line, OK) */
+  private drawRefusal26(ctx: CanvasRenderingContext2D, W: number, H: number): void {
+    const w = Math.min(340, W - 24);
+    ui.setFont(ctx, 12); const lines = ui.wrapText(ctx, S.shutRefused.line, w - 36), h = 82 + lines.length * 16;
+    const x = Math.round((W - w) / 2), y = Math.round((H - h) / 2);
+    softShadow(ctx, { x, y, w, h }, 14, 1.2);
+    edgeRR(ctx, x, y, w, h, 14, OS26.menuEdge, OS26.menuPanel);
+    ui.setFont(ctx, 13); ctx.fillStyle = OS26.winInk; ctx.fillText(S.shutRefused.title, x + 16, y + 14);
+    ui.setFont(ctx, 12); ctx.fillStyle = OS26.winInk2; ctx.fillText('✕', x + w - 22, y + 12);
+    this.hits.push({ x: x + w - 30, y: y + 6, w: 24, h: 24, id: 'shut-ok' });
+    ui.setFont(ctx, 12); ctx.fillStyle = OS26.winInk; lines.forEach((line, i) => ctx.fillText(line, x + 16, y + 38 + i * 16));
+    fillRR(ctx, x + w - 86, y + h - 34, 70, 24, 12, OS26.menuButton);
+    ui.setFont(ctx, 12); ctx.fillStyle = OS26.menuButtonInk; ctx.fillText(S.shutRefused.ok, x + w - 51 - Math.round(ctx.measureText(S.shutRefused.ok).width / 2), y + h - 29);
+    this.hits.push({ x: x + w - 86, y: y + h - 34, w: 70, h: 24, id: 'shut-ok' });
   }
   private palette(era: PanelEra) {
     return era === 'e3' ? { paper: aero.ERA3.white, edge: aero.ERA3.glassEdge, ink: aero.ERA3.ink, dim: aero.ERA3.greyDk, accent: aero.ERA3.accent }

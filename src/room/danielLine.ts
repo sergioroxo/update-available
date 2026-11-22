@@ -15,8 +15,9 @@
  * his machine (S380, closeCrt.ts: the same boxes, the same glass) — dark. On its black glass, one after another, each
  * line as it was met, in the piece's own surfaces:
  *   1. a small "2016" — Vera's phone Notes: the app's bar and her newest note (s3_maiden.json notes `refusal`);
- *   2. a small "2026" — Maya's own message box, the line in it, marked not sent, its send button grey (s4_v3.json
- *      bot.unsent);
+ *   2. a small "2026" — Maya's own message box, the line in it (s4_v3.json bot.unsent.text), its send button grey;
+ *      ⚑ S419 (job 33's call 18) — marked with the tag Kettle shows under it once her friends have sent it, "Sent to Junie"
+ *      (close_line.json cards[1].mark; it was bot.unsent.mark, "Not sent", with a red "!" ring: the story before job 33);
  *   3. a small "2003" — the Messenger's window (its title bar bare: his 18 Nov call c), Daniel's bubble (s2_caleb.json `residue.line`, Sérgio's ⟨S⟩ wording,
  *      VERBATIM and on one row: the type is sized to fit, never re-wrapped);
  *   4. no year — Caleb's answer arrives in the same window (`residue.answer`), a little larger, and stays longest.
@@ -54,10 +55,13 @@ const PACE = (caleb.pacing as unknown as { residue: { arriveSeconds: number } })
 const NOTES = (maiden.notes as unknown as { entries: { id?: string; text: string }[] }).entries;
 const VERA = NOTES.find((e) => e.id === 'refusal')?.text ?? '';
 const NOTES_TITLE = (maiden.home as unknown as { fNotes: string }).fNotes;
-const UNSENT = (v3.bot as unknown as { unsent: { text: string; mark: string } }).unsent;
-const S = staging as unknown as { cards: { year: string | null }[]; cardAt: number[]; reveal: number; holdLast: number;
+const UNSENT = (v3.bot as unknown as { unsent: { text: string } }).unsent;
+const S = staging as unknown as { cards: { year: string | null; mark?: string }[]; cardAt: number[]; reveal: number; holdLast: number;
   liftSeconds: number; xrDist: number; flatFill: number; flatMaxW: number; glassMinPx: number; glassFill: number; clearance: number };
 const CARDS = 4;
+/** ⚑ S419 — the 2026 card's mark: the tag Kettle shows under her words once her friends have sent them to Junie (beat 10). A key
+ *  of the Close's own: bot.unsent.mark ("Not sent") stays with the S404 draft box, a research state where it is still true. */
+const MAYA_MARK = S.cards[1]?.mark ?? '';
 
 /** the room's glass centre (app.ts SCREEN; the CRT's own origin), the case (era1.json crtBody) and the glass (closeCrt.ts
  *  GLASS), metres */
@@ -118,14 +122,14 @@ function messageBox(c: CanvasRenderingContext2D, measureOnly: boolean, at: { x: 
   c.font = face(BOX.size); c.textBaseline = 'top';
   const rows = sentences(c, UNSENT.text, maxW - BOX.padX * 2);
   c.font = face(BOX.mark);
-  const markW = 24 + 8 + Math.ceil(c.measureText(UNSENT.mark).width);
+  const markW = Math.ceil(c.measureText(MAYA_MARK).width);
   c.font = face(BOX.size);
   const textW = Math.ceil(Math.max(...rows.map((r) => c.measureText(r).width)));
   const w = Math.min(maxW, Math.max(BOX.minW, textW + BOX.padX * 2, 40 + markW + 16 + 34 + BOX.padX * 2));
   const h = BOX.padTop + rows.length * BOX.step + BOX.row + BOX.padBottom;
   const { x, y } = at;
   if (measureOnly) return { x, y, w, h };
-  // the composer: her words in it, the ＋ at its foot, the send button grey (it was never pressed), and the mark
+  // the composer: her words in it, the ＋ at its foot, the send button grey (nothing is left to send), and the mark
   v3Round(c, x, y, w, h, BOX.r, V3.edge);
   v3Round(c, x + 2, y + 2, w - 4, h - 4, BOX.r - 2, V3.page);
   c.fillStyle = V3.ink;
@@ -136,11 +140,11 @@ function messageBox(c: CanvasRenderingContext2D, measureOnly: boolean, at: { x: 
   v3Round(c, sx, cy - 17, 34, 34, 17, V3.grey);
   c.strokeStyle = V3.card; c.lineWidth = 3; c.lineCap = 'round';
   c.beginPath(); c.moveTo(sx + 17, cy + 9); c.lineTo(sx + 17, cy - 8); c.moveTo(sx + 9, cy); c.lineTo(sx + 17, cy - 8); c.lineTo(sx + 25, cy); c.stroke();
+  // ⚑ S419 — the mark as Kettle draws its tag at beat 10: plain, in its quiet ink (V3.ink2 is KETTLE.sub), no ring. (Until S419
+  //   a red "!" ring and the mark in V3.danger said the send had failed.)
   const mx = sx - 14 - markW;
-  v3Round(c, mx, cy - 12, 24, 24, 12, V3.danger);
-  c.fillStyle = V3.card; c.fillRect(mx + 10, cy - 7, 4, 9); c.fillRect(mx + 10, cy + 4, 4, 4);
-  c.font = face(BOX.mark); c.fillStyle = V3.danger;
-  c.fillText(UNSENT.mark, mx + 32, cy - Math.round(BOX.mark * 0.6));
+  c.font = face(BOX.mark); c.fillStyle = V3.ink2;
+  c.fillText(MAYA_MARK, mx, cy - Math.round(BOX.mark * 0.6));
   return { x, y, w, h };
 }
 

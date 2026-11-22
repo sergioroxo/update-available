@@ -10,7 +10,8 @@
  *   screen. Nothing in the story waits on it; the walker never needs it (it presses the monitor's published rects).
  * - TICKING. A game ticks while it is in hand (as before), and — new — while the console is lit (so the picture on the
  *   bed moves and the monitor's window is live), or for a second after the monitor last drew it. Only in 2026's era
- *   (the held device's own era gate).
+ *   (the held device's own era gate). ⚑ S413: lit and unplayed on the bed it is a still, lit picture (it ticks in the hand, for
+ *   a while after a tap, and for a second after the monitor drew it).
  * - RESTART. buildDevices() calls `_reset()`: a fresh game, unlit, not ready, the handle back at its default.
  *
  * ⚑ S367 (UiB job 15 Part B — the game is a tug of war; its handle IS the chat's ring). THE API THE CHAT CODES AGAINST:
@@ -159,7 +160,10 @@ function makeSession(): ConsoleSessionInternal {
       };
       return wrapped;
     },
-    ticksUnheld() { return lit || now() - lastDraw < VIEWED_MS; },
+    // ⚑ S413 (job 33 B, 26-14: "no per-frame uploads while the game opens") — lit on the bed and nobody playing, the console is a
+    //   still, lit picture: it no longer ticks its idle animation there (each tick re-sent its 960 × 540 glass, ~10 a second,
+    //   for the rest of 2026). It ticks in the hand, for a while after a tap, and for a second after the monitor drew it.
+    ticksUnheld() { return (lit && now() - lastAct < PLAYING_MS) || now() - lastDraw < VIEWED_MS; },
     probe() { return game ? game.probe : null; },
     _built(on) { built = on; },
     _reset() { game = null; wrapped = null; built = false; lit = false; lastAct = lastDraw = -1e9; earnedSeen = 0; matches = 0; pending = DEFAULT_PROGRESS; drawnKey = '\0'; }

@@ -3,7 +3,8 @@ import * as ui from '../theme/chrome';
 import * as aero from '../theme/era3';
 import { ERA1 } from '../theme/era1';
 import { ERA3 } from '../theme/era3';
-import { CHROME } from '../theme/era4';
+import { CHROME, OS26 } from '../theme/era4';
+import { edgeRR, fillRR, softShadow } from './desk26';
 import { drawLambyChar } from './lambyChar';
 import { reducedMotion } from '../../state/motion';
 import type { GuideEra, GuideView } from '../../narrative/lambyGuide';
@@ -74,7 +75,14 @@ export function drawLambyGuide(ctx: CanvasRenderingContext2D, skin: GuideEra, st
   if ((skin === 'e1' || skin === 'e2') && !guideBody.inRoom) drawLambyChar(ctx, cx, cy, { mood: 'cheerful', action: pointing ? 'point' : 'idle', scale: 0.48, t: state.frame / 3, moodStart: 0, pointLeft: left });
   if (pointing) for (const r of selected) out.rings.push(drawGuidePointer(ctx, r, skin === 'e3' ? { x: cx, y: ty - 4 } : { x: left ? cx - 44 : cx - 26, y: cy }, accent, state.frame));
   if (skin === 'e1' || skin === 'e2') drawLambyTooltip(ctx, x, y, w, h, ground);
-  else {
+  else if (skin === 'e4') {
+    // ⚑ S417 (UiB job 34 Part A) — 2026's skin wears the 2026 desktop's (desk26.ts): a rounded card, a soft shadow, its tail
+    softShadow(ctx, { x, y, w, h }, 12, 1.1);
+    edgeRR(ctx, x, y, w, h, 12, OS26.menuEdge, OS26.menuPanel);
+    const tailX = Math.max(x + 14, Math.min(x + w - 18, cx - 3));
+    ctx.beginPath(); ctx.moveTo(tailX, y + h - 1); ctx.lineTo(tailX + 6, y + h + 6); ctx.lineTo(tailX + 12, y + h - 1); ctx.closePath();
+    ctx.fillStyle = OS26.menuPanel; ctx.fill();
+  } else {
     const edge = skin === 'e3' ? ERA3.glassEdge : CHROME.fieldEdge;
     ui.px(ctx, x, y, w, h, edge); ui.px(ctx, x + 1, y + 1, w - 2, h - 2, ground);
     ui.px(ctx, x + 1, y + 1, w - 2, 2, accent);
@@ -86,7 +94,7 @@ export function drawLambyGuide(ctx: CanvasRenderingContext2D, skin: GuideEra, st
     ui.setFont(ctx, 18); ctx.fillStyle = accent; ctx.fillText(decisions.helper.e4, x + 16, y + 14);
     textX += 30; textW -= 30;
   }
-  ui.setFont(ctx, 11); ctx.fillStyle = ink;
+  ui.setFont(ctx, 11); ctx.fillStyle = skin === 'e4' ? OS26.winInk : ink;
   ui.wrapText(ctx, state.text, textW).forEach((line, i) => ctx.fillText(line, textX, y + 14 + i * 15));
   ui.setFont(ctx, 11); ctx.fillText(copy.ui.close, x + w - 16, y + 5);
   hits.push({ id: 'lg-x', x: x + w - 23, y: y + 2, w: 21, h: 20 });
@@ -106,9 +114,9 @@ export function drawLambyGuide(ctx: CanvasRenderingContext2D, skin: GuideEra, st
     ui.setFont(ctx, 10); const bw = Math.ceil(ctx.measureText(label).width) + 18, by = y + h - 29;
     if (skin === 'e3') aero.button(ctx, bx, by, bw, 21, label);
     else if (skin === 'e4') {
-      ui.px(ctx, bx, by, bw, 21, i === 0 ? CHROME.button : CHROME.fieldEdge);
-      if (i !== 0) ui.px(ctx, bx + 1, by + 1, bw - 2, 19, CHROME.field);
-      ui.setFont(ctx, 10); ctx.fillStyle = i === 0 ? CHROME.buttonInk : CHROME.ink; ctx.fillText(label, bx + 9, by + 5);
+      // ⚑ S417 — pills, as the 2026 desktop's (the first is the one it offers)
+      if (i === 0) fillRR(ctx, bx, by, bw, 21, 10.5, OS26.menuButton); else edgeRR(ctx, bx, by, bw, 21, 10.5, OS26.winEdge, OS26.win);
+      ui.setFont(ctx, 10); ctx.fillStyle = i === 0 ? OS26.menuButtonInk : OS26.winInk; ctx.fillText(label, bx + 9, by + 5);
     } else ui.button(ctx, bx, by, bw, 21, label);
     hits.push({ id, x: bx, y: by, w: bw, h: 21 }); bx += bw + 7;
   });

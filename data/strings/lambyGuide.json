@@ -321,106 +321,262 @@
     },
     "e4": {
       "_docS321": "⚑ S321 — 2026 v3. One step per map beat that is not quiet (felt beats — eighteen, Mum, Dad, left, Junie — are silent: Lamby never speaks over a person). Every target id is a live rect at that step (tools/lamby-guide-test.mjs checks the shape; the tour photographs each). `act` presses navigation only, never an answer.",
+      "_docS415": "⚑ S415 (UiB job 33 Part D) — 2026's face, rewritten for the visit as job 33 built it, WITH L AS THE HELPER (its own first person: the balloon is L's, the tray says \"Ask L for help\"). One step per map beat that waits on her press; the quiet beats (L reading her messages and mail, Second Thoughts' takeover, Shepherd's session, her friends, the stream, the shutdown) have none, so the guide never speaks over a person (felt) or into the stream (respite) — and browser.ts `guideSilent` holds it silent there besides. The guide points; it presses for her only where pressing is navigation (the video's play, the headset): never an answer. At most 8 unasked balloons in the era (timing.capPerEra; the code enforces it): ten steps, of which a played visit reaches a stall on few. The rows as they stood before are kept in `_retiredS415`.",
       "browser": {
-        "tip": "Your session is coming back. Give it a moment.",
+        "tip": "One moment. I'm bringing your session back.",
         "here": "It's on the monitor.",
-        "again": "Your session is waiting on the monitor.",
+        "again": "Your session is on the monitor.",
         "target": []
       },
       "wake": {
-        "tip": "The monitor is asleep. Press it to restore your session.",
+        "tip": "Your screen is asleep. Press it, and I'll wake it.",
         "here": "Press anywhere on the monitor.",
         "again": "Press the monitor.",
         "target": [
           "saver-wake"
         ]
       },
-      "newyou": {
-        "tip": "The update restored your defaults. Continue is at the bottom.",
-        "here": "Continue is at the bottom.",
-        "again": "Shall I press Continue?",
+      "week": {
+        "tip": "I've read your week. Press an answer under my words: either one goes on.",
+        "here": "The answers are under my words.",
+        "again": "Either answer goes on.",
         "target": [
-          "ny-continue"
-        ],
-        "act": "press:ny-continue"
-      },
-      "link": {
-        "tip": "Mum sent you a link. It's in her chat, on the laptop.",
-        "here": "Mum's chat is on the laptop.",
-        "again": "Shall I open Mum's chat?",
-        "target": [
-          "row-mum",
-          "chat-mum"
-        ],
-        "act": "press:chat-mum"
-      },
-      "number": {
-        "tip": "Your clinic wrote. Open letter is at the bottom.",
-        "here": "Open letter is at the bottom.",
-        "again": "Shall I open the letter?",
-        "target": [
-          "clinic-open"
-        ],
-        "act": "press:clinic-open"
-      },
-      "meridian": {
-        "tip": "Support while you wait is at the bottom of the clinic page.",
-        "here": "It's at the bottom.",
-        "again": "Shall I open it?",
-        "target": [
-          "clinic-support",
-          "enq-send",
-          "enq-close"
-        ],
-        "act": "press:clinic-support"
-      },
-      "results": {
-        "tip": "Press Search. The engine finishes it for you.",
-        "here": "Search is at the bottom.",
-        "again": "Shall I press Search?",
-        "target": [
-          "search-go",
-          "search-open"
-        ],
-        "act": "press:search-go"
-      },
-      "bot": {
-        "tip": "The first result is an ad. Chat now is at the bottom.",
-        "here": "Chat now is at the bottom.",
-        "again": "Shall I open it?",
-        "target": [
-          "ad-chat",
-          "result-agent"
-        ],
-        "act": "press:ad-chat"
-      },
-      "map": {
-        "tip": "It wants an answer. Either answer goes on.",
-        "here": "The answers are at the bottom.",
-        "again": "Pick either answer.",
-        "target": [
-          "conv-chip-0",
-          "conv-chip-1",
-          "conv-act"
+          "l-catchup",
+          "l-myself"
         ]
       },
-      "original": {
-        "tip": "Your original is in Photos. Use original is at the bottom.",
-        "here": "Photos is a tab at the top.",
-        "again": "Shall I open Photos?",
+      "results": {
+        "tip": "Shall I finish last night's search? Press an answer under my words.",
+        "here": "The answers are under my words.",
+        "again": "Either answer goes on.",
         "target": [
-          "conv-act",
-          "tab-photos",
-          "photo-original"
+          "l-finish",
+          "l-leave"
+        ]
+      },
+      "bot": {
+        "tip": "Under the stories there's a yellow card: Add to L, or Not now. Either one goes on.",
+        "here": "The yellow card is under the stories.",
+        "again": "Either one goes on.",
+        "target": [
+          "st-add",
+          "st-notnow"
+        ]
+      },
+      "review": {
+        "tip": "Your review is ready. Review each, or Do it for me: either one goes on.",
+        "here": "The two presses are under the review.",
+        "again": "Either one goes on.",
+        "target": [
+          "rv-each",
+          "rv-all"
+        ]
+      },
+      "video": {
+        "tip": "There's a video for you. Shall I play it?",
+        "here": "Play is in the middle of the picture.",
+        "again": "Shall I play it for you?",
+        "target": [
+          "video-play"
         ],
-        "act": "press:tab-photos"
+        "act": "press:video-play"
+      },
+      "answer": {
+        "tip": "There's one answer at the foot of the conversation. It's yours to press.",
+        "here": "It's at the foot, under the words.",
+        "again": "Press the answer at the foot.",
+        "target": [
+          "a2-answer"
+        ]
+      },
+      "door": {
+        "tip": "Your session is ready. Join in VR, or Join here: either one goes on.",
+        "here": "The two answers are under the words.",
+        "again": "Either one goes on.",
+        "target": [
+          "a3-vr",
+          "a3-here"
+        ]
       },
       "headset": {
-        "tip": "Time for the headset. It's on the desk — shall I take you there?",
-        "here": "It's on the desk.",
-        "again": "Shall I take you to the headset?",
+        "tip": "Your headset is lit, on the desk in front of you. Shall I put it on for you?",
+        "here": "It's on the desk, under the screen.",
+        "again": "Shall I put the headset on for you?",
         "target": [],
         "act": "move:headset"
+      },
+      "_docRetiredS412": "⚑ S412 (UiB job 33 Part A) — Act I rebuilt (draft 3, beats 1–4): the steps of the as-built Act I give way to L's (the week's answer, the offer to finish her search, the yellow card). The guide points; it never presses an answer for her (no `act`). The messages and the mail are L's own conducting (quiet or pressless): no step. Part D rewrites this era's face with L as the helper. Kept as they were:",
+      "_retiredS412": {
+        "newyou": {
+          "tip": "The update restored your defaults. Continue is at the bottom.",
+          "here": "Continue is at the bottom.",
+          "again": "Shall I press Continue?",
+          "target": [
+            "ny-continue"
+          ],
+          "act": "press:ny-continue"
+        },
+        "link": {
+          "tip": "Mum sent you a link. It's in her chat, on the laptop.",
+          "here": "Mum's chat is on the laptop.",
+          "again": "Shall I open Mum's chat?",
+          "target": [
+            "row-mum",
+            "chat-mum"
+          ],
+          "act": "press:chat-mum"
+        },
+        "number": {
+          "tip": "Your clinic wrote. Open letter is at the bottom.",
+          "here": "Open letter is at the bottom.",
+          "again": "Shall I open the letter?",
+          "target": [
+            "clinic-open"
+          ],
+          "act": "press:clinic-open"
+        },
+        "meridian": {
+          "tip": "Support while you wait is at the bottom of the clinic page.",
+          "here": "It's at the bottom.",
+          "again": "Shall I open it?",
+          "target": [
+            "clinic-support",
+            "enq-send",
+            "enq-close"
+          ],
+          "act": "press:clinic-support"
+        },
+        "results": {
+          "tip": "Press Search. The engine finishes it for you.",
+          "here": "Search is at the bottom.",
+          "again": "Shall I press Search?",
+          "target": [
+            "search-go",
+            "search-open"
+          ],
+          "act": "press:search-go"
+        },
+        "bot": {
+          "tip": "The first result is an ad. Chat now is at the bottom.",
+          "here": "Chat now is at the bottom.",
+          "again": "Shall I open it?",
+          "target": [
+            "ad-chat",
+            "result-agent"
+          ],
+          "act": "press:ad-chat"
+        }
+      },
+      "_docRetiredS413": "⚑ S413 (UiB job 33 Part B) — Act II rebuilt (draft 3, beats 5–8): the old conversation's answers (`map`) and the Photos original (`original`) give way to Second Thoughts' presses: the review's two (either goes on), the video's play (the one step whose `act` the guide may take for her: playing the film is navigation, his job brief: \"if she stalls, the stall guide (L) offers once to play it\"), and her answer (pointed at, never pressed for her). The takeover is quiet: the AI presses, nothing waits on her. Kept as they were:",
+      "_retiredS413": {
+        "map": {
+          "tip": "It wants an answer. Either answer goes on.",
+          "here": "The answers are at the bottom.",
+          "again": "Pick either answer.",
+          "target": [
+            "conv-chip-0",
+            "conv-chip-1",
+            "conv-act"
+          ]
+        },
+        "original": {
+          "tip": "Your original is in Photos. Use original is at the bottom.",
+          "here": "Photos is a tab at the top.",
+          "again": "Shall I open Photos?",
+          "target": [
+            "conv-act",
+            "tab-photos",
+            "photo-original"
+          ],
+          "act": "press:tab-photos"
+        }
+      },
+      "_docRetiredS415": "⚑ S415 — the 2026 rows as Parts A–C left them (third person: \"L is asking…\"), before L became the helper's own voice. Kept as they were:",
+      "_retiredS415": {
+        "browser": {
+          "tip": "Your session is coming back. Give it a moment.",
+          "here": "It's on the monitor.",
+          "again": "Your session is waiting on the monitor.",
+          "target": []
+        },
+        "wake": {
+          "tip": "The monitor is asleep. Press it to restore your session.",
+          "here": "Press anywhere on the monitor.",
+          "again": "Press the monitor.",
+          "target": [
+            "saver-wake"
+          ]
+        },
+        "week": {
+          "tip": "L is asking if it can catch you up. Press an answer: either one goes on.",
+          "here": "The answers are under L's words.",
+          "again": "Either answer goes on.",
+          "target": [
+            "l-catchup",
+            "l-myself"
+          ]
+        },
+        "results": {
+          "tip": "L offers to finish last night's search. Press an answer.",
+          "here": "The answers are under L's words.",
+          "again": "Either answer goes on.",
+          "target": [
+            "l-finish",
+            "l-leave"
+          ]
+        },
+        "bot": {
+          "tip": "Under the stories there is a yellow card. Add to L, or Not now.",
+          "here": "The yellow card is under the stories.",
+          "again": "Either one goes on.",
+          "target": [
+            "st-add",
+            "st-notnow"
+          ]
+        },
+        "review": {
+          "tip": "Second Thoughts scored your week. Press Review each or Do it for me: either one goes on.",
+          "here": "The two presses are under the review.",
+          "again": "Either one goes on.",
+          "target": [
+            "rv-each",
+            "rv-all"
+          ]
+        },
+        "video": {
+          "tip": "It made you a video. Shall I play it?",
+          "here": "Play is in the middle of the picture.",
+          "again": "Shall I play it for you?",
+          "target": [
+            "video-play"
+          ],
+          "act": "press:video-play"
+        },
+        "answer": {
+          "tip": "There is one answer at the foot of the conversation. Press it.",
+          "here": "It is at the foot, under its words.",
+          "again": "Press the answer at the foot.",
+          "target": [
+            "a2-answer"
+          ]
+        },
+        "door": {
+          "tip": "Your session is ready. Join in VR or Join here: either one goes on.",
+          "here": "The two answers are under its words.",
+          "again": "Either one goes on.",
+          "target": [
+            "a3-vr",
+            "a3-here"
+          ]
+        },
+        "headset": {
+          "_docS414": "⚑ S414 — Act III's Join in VR: the headset lies lit on the desk in front of her (no turn); the offer puts it on for her (the door is already hers: navigation, not an answer).",
+          "tip": "The headset is lit on the desk in front of you. Shall I put it on for you?",
+          "here": "It's on the desk, under the screen.",
+          "again": "Shall I put the headset on for you?",
+          "target": [],
+          "act": "move:headset"
+        }
       }
     }
   },
@@ -441,11 +597,11 @@
     "yes": "Play CLEAR"
   },
   "harbor": {
-  "text": "Your story is online! Share it on Harbor, so others who struggle can find it too.",
-  "yes": "Share it",
-  "_docS345": "\u2691 S345 (his 9 Nov answer 4) \u2014 said once after the upload, while the story is not yet posted; `yes` opens Harbor at the thread, where Post your story is the next press."
- },
- "root": {
+    "text": "Your story is online! Share it on Harbor, so others who struggle can find it too.",
+    "yes": "Share it",
+    "_docS345": "⚑ S345 (his 9 Nov answer 4) — said once after the upload, while the story is not yet posted; `yes` opens Harbor at the thread, where Post your story is the next press."
+  },
+  "root": {
     "here": "ROOTCAUSE.EXE is here on the desktop. You can also open it through Start → Programs.",
     "text": "Your answers are in. Root Cause came with the disk: it digs for where it all started. Find it in Start → Programs.",
     "next": "Rob's done for now. Before his Family Form: want to dig for where your feelings come from? Root Cause Digger came with the disk.",

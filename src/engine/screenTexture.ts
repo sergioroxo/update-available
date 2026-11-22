@@ -121,6 +121,9 @@ export function makeScreenEntity(name: string, tex: pc.Texture, w: number, h: nu
   material.diffuse = new pc.Color(0, 0, 0);
   material.emissiveMap = tex;
   material.emissive = new pc.Color(1, 1, 1);
+  // ⚑ S414 (26-21) — a screen is never in the studio's fog (src/room/studioLight.ts): the room recedes, the glass in front of her
+  //   stays sharp (the witness side is the sharp side)
+  material.useFog = false;
   if (transparent) {
     material.opacityMap = tex;
     material.opacityMapChannel = 'a';

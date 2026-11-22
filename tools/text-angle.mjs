@@ -126,7 +126,10 @@ async function main() {
         1: [['os', 'profile'], ['os', 'kit'], ['os', 'diary'], ['os', 'irc'], ['os', 'web']],
         2: [['os', 'netvision'], ['os', 'e2Restorify'], ['os', 'foundFile'], ['os', 'calebChat']],
         3: [['gq', 'consent'], ['gq', 'board'], ['gq', 'list'], ['gq', 'noa'], ['gq', 'boardDone'], ['gq', 'maltaOpen'], ['gq', 'board'], ['gq', 'floppy'], ['gq', 'floppyPlay']],
-        4: [['os', 'e4Browser'], ['os', 'e4BrowserSearch'], ['os', 'e4L'], ['os', 'e4Offers'], ['os', 'e4Chips']]
+        // ⚑ S417 (UiB job 34) — 2026 since job 33 is the acts on one screen (S412–S415): its jumps, each given time for the beat's
+        //   page to draw, and 2026's Menu opened once (S417; a build without it simply has nothing there to press)
+        4: [['os', 'e4Act1'], ['menu', ''], ['os', 'e4Act1Messages'], ['os', 'e4Act1Mail'], ['os', 'e4Act1Search'], ['os', 'e4Act2Review'],
+          ['os', 'e4Act2Video'], ['os', 'e4Act2Answer'], ['os', 'e4Act3Here'], ['os', 'e4Act3Friends'], ['os', 'e4Act4Stream']]
       }[era] ?? [];
       // a surface counts as in front of the eye if it was switched on at ANY beat of the visit (2026's monitor goes dark
       //   when the headset is worn, and its lines were drawn while it was on)
@@ -135,12 +138,18 @@ async function main() {
         for (const n of SURFACES) { const e = a.root.findByName(n); if (!e) continue; let on = true; for (let x = e; x; x = x.parent) if (!x.enabled) { on = false; break; } if (on) window.__seenOn.add(n); }
       }, SURFACES);
       for (const [who, beat] of ROUTE) {
+        if (who === 'menu') {
+          // ⚑ S417 — 2026's Menu: pressed by its published rect, read for a moment, closed with the same button
+          const press = () => p.evaluate(() => { const b = window.__os.e4?.browser; const h = b?.hits.find((r) => r.id === 'start-menu'); return h ? window.__os.e4.pressBrowser(h.x + h.w / 2, h.y + h.h / 2) : false; });
+          if (await press()) { await wait(2500); await markOn(); await press(); await wait(800); }
+          continue;
+        }
         await p.evaluate((who, beat) => {
           const os = window.__os;
           try { if (who === 'os') os.debugJump(beat); else window.__graceQueue?.()?.debugBeat(beat); } catch { /* */ }
           try { os.update(0.1); } catch { /* */ }
         }, who, beat);
-        await wait(beat === 'floppyPlay' ? 4000 : 1200);
+        await wait(beat === 'floppyPlay' ? 4000 : era === 4 ? 9000 : 1200);
         await markOn();
       }
       await wait(1000);

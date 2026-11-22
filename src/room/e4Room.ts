@@ -84,6 +84,7 @@ export function buildE4Room(app: pc.Application, building: RoomHandles) {
   //   desk's front edge, between him and the monitor. It hangs on the wall behind the desk, left of the monitor, above
   //   the headset: on the wall, where a photograph is.
   // ⚑ S363 / N1 (his green cross on job 13's photo: "the framed image of Maya on the wall") — the desk photo frame is gone
+  // ⚑ S420 — the system's picture is its default avatar, default.png (goalPicture.ts); this frame is never shown (H47 below)
   const goal = picture('system-default-portrait', [5.66, 1.45, 1.98], .65, .64,
     c => { c.fillStyle = ERA4.rule; c.fillRect(0, 0, 256, 256); drawGoalPicture(c, 8, 8, 240, 240); });
   // ⚑ S365 (UiB job 14 Part C1, his 11 Nov) — the news strips and the clinic ticket are gone from her wall: the articles
@@ -124,13 +125,12 @@ export function buildE4Room(app: pc.Application, building: RoomHandles) {
       return;
     }
     if (generation !== ledgerGeneration) { leftT = 0; revealT = -1; seen = ''; generation = ledgerGeneration; }
-    // ⚑ S360 (UiB job 13 Part A: "her friends never leave") — nobody leaves the house chat any more; the room's conducted
-    //   turn follows Meridian's refusal instead, once its email has been read (the screens wait for 'room': browser 'pause')
-    if (e4Has('meridian') && !e4Has('room') && !e4Has('terminated')) {
-      leftT += dt;
-      if (leftT >= 6.5 && revealT < 0 && conduct?.()) revealT = 0;
-      if (revealT >= 0) { revealT += dt; if (revealT >= 9.7 && revealed?.()) markE4('room'); }
-    }
+    // ⚑ S412 (UiB job 33 Part A, A5; draft 3 §3: "The room … does not change in Acts I and II") — THE CONDUCTED TURN AFTER THE
+    //   TAPE IS RETIRED. It followed Meridian's refusal (S360) and showed the room emptied; now the room does not change in
+    //   Act I, and nothing turns the visitor (the headset law: no conducted turns). `setConduct` is kept for the seam's shape;
+    //   nothing marks 'room' any more. Kept as it was, unreached:
+    //     if (e4Has('meridian') && !e4Has('room') && !e4Has('terminated')) { leftT += dt; … conduct?.() … markE4('room') }
+    void leftT; void revealT; void conduct; void revealed; void markE4; void dt;
     const ceilingKey = `${ledgerGeneration}:${e4BeatsVersion()}:${data.viewers}`;
     if (ceiling.entity.enabled && ceilingKey !== ceilingSeen) {
       ceilingSeen = ceilingKey;
@@ -143,7 +143,11 @@ export function buildE4Room(app: pc.Application, building: RoomHandles) {
     // S360: the barer room (friends' photo down, the throw) comes with the refusal now; ⚑ H47 (his headset: "'You, restored'
     //   is on the front, the table and the wall… the change to yourself should be in the headset only") — the goal
     //   picture is never on the table or the wall
-    const n = !restored && e4Has('number'), m = !restored && e4Has('meridian'), l = m;
+    // ⚑ S412 (UiB job 33 Part A, A5) — THE EMPTYING IS RETIRED: the plant, the flag, the friends' photo, the throw and the bedding
+    //   going grey at the clinic's number and Meridian's no. The room does not change in Acts I and II (draft 3 §3); it changes
+    //   only when Shepherd takes the space (Part C) and when the stream's light fills it (Part D). Kept, never true:
+    const EMPTYING_RETIRED_S412 = true;
+    const n = !EMPTYING_RETIRED_S412 && !restored && e4Has('number'), m = !EMPTYING_RETIRED_S412 && !restored && e4Has('meridian'), l = m;
     plant.forEach(p => visible(p, !n)); visible(flag, !m); visible(friends, !l); visible(goal, false);
     throwProp.material.diffuse = hex(l ? ERA4.text : PLACE.textileHi); throwProp.material.update();
     // The crude defaults spread to the bedding, curtains and rug; preserve the real per-model materials.

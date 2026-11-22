@@ -19,28 +19,30 @@
  * ⚑ DAYLIGHT, NOT THE STARRY SKY (his standing rule allows either; never string lights or lanterns). Judged on the
  * console's size (the monitor's window is ~300 px wide, a cell ≈ 2 px): the two heads are dark-haired, and against a
  * night sky Junie's curls and Maya's hair merge into it; against a blue sky every head, face and flag keeps its edge.
- * And the filter's gloss (the halo, the rays, the sparkles) is cream, white and gold — on daylight it still reads as
- * the brightest thing in the picture, and its drained sky (the goal's flat grey-blue) reads as a hole in the day.
+ * And (⚑ S420) the filter's grey and its checkerboard read on daylight as holes in the day.
  *
- * THE FILTER (`filter`, 0 = hers … 1). The same swap filter, in the same order, as `drawSwapMorph` / `portraitAt`:
- * her hair cut from the ends upward and the quiff grown in, the jaw, the jacket wiping down over her top, the grin,
- * the life around her draining to the goal's flat sky, the gloss landing last. It works on MAYA ONLY: the drain and
- * the gloss stop at the line between the two of them, and nothing of Junie — not her arm across Maya's shoulders,
- * not her hand — is ever filtered.
- * ⚑ IT NEVER SEATS. Whatever `filter` is, three things stay hers: one strand of her long hair falling from the quiff to
- * her shoulder (the cut never reaches it), her trans-flag pin (it stays on the lapel when the jacket comes down over
- * her top), and the gloss never completes (it stops short of the "verified" tick, which therefore never appears).
+ * THE FILTER (`filter`, 0 = hers … 1). ⚑ S420 (his 22 Nov: "it keeps on using that image of male 'maya' that I've asked
+ * to be replaced") — the same filter, in the same order, as Shepherd's photo (theme/era4.ts `portraitAt`, `paintPortrait`):
+ * BY REMOVAL, never into another person. Her trans flag, her pin, her earrings, the pink of her top, then the length of her
+ * hair are each selected under marching ants (still, in the game) and lifted out to the grey-and-white checkerboard of
+ * deleted pixels, and the day on her side drains to the default avatar's grey (`DEFAULT_PNG`). S367's swap into a quiff,
+ * a squared jaw, a jacket, a grin and a gloss is retired (git bd3b0203). It works on MAYA ONLY: the drain and the cuts stop
+ * at the line between the two of them, and nothing of Junie — not her arm across Maya's shoulders, not her hand — is ever
+ * filtered: Junie is drawn over the filter's work, the selection included.
+ * ⚑ IT NEVER SEATS. Whatever `filter` is, her face stays, and one strand of her long hair falling to her shoulder is never
+ * cut (the game's handle never passes 99%, so the selection never closes on her face as Shepherd's does at its stop).
  *
  * `junieMute` (0..1, optional, default 0): Junie greyed toward "muted" — built and kept OFF in the game. See
  * matchMade.ts's header for why (the reading it would cost).
  *
- * `t` twinkles the gloss's sparkles (quantised to half-seconds). Colours: the game's MATCHMADE palette and the era4
- * PORTRAIT tokens, nothing else (pixel discipline). No likeness of anyone; drawn faces.
+ * `t` is kept for the callers and unused since S420 (the gloss it twinkled is retired). Colours: the game's MATCHMADE
+ * palette, the era4 PORTRAIT tokens and ⚑ S420 the DEFAULT_PNG greys (OS26's), nothing else (pixel discipline). No likeness
+ * of anyone; drawn faces.
  */
 import type { Painter } from '../room/calendarArt';
 import { text as text57, textW } from '../room/font57';
 import { MATCHMADE as M } from '../desktop/theme/calendar';
-import { PORTRAIT as P, PORTRAIT_FIGURE as FIG, portraitAt } from '../desktop/theme/era4';
+import { PORTRAIT as P, PORTRAIT_FIGURE as FIG, DEFAULT_PNG, CUT, portraitAt, portraitCells, isCut, cutChecker, antsAround, antsRect } from '../desktop/theme/era4';
 import D from '../../data/dialog/s4_matchmade.json';
 
 export const PRIDE_GRID = { cols: 64, rows: 36 } as const;
@@ -49,13 +51,13 @@ export interface PrideOpts {
   filter: number;
   /** 0..1 — Junie greyed toward "muted" (optional; off in the game) */
   junieMute?: number;
-  /** seconds; twinkles the gloss */
+  /** seconds (unused since S420: the gloss it twinkled is retired) */
   t?: number;
 }
 const GW = PRIDE_GRID.cols, GH = PRIDE_GRID.rows;
 /** where Maya's 24 × 30 figure sits in the picture (her cell (c, r) → picture (MX + c, MY + r)), and Junie's */
 const MX = 9, MY = 6, JX = 29, JY = 6;
-/** the line between them: the drain and the gloss are Maya's side only (columns below it) */
+/** the line between them: the drain and the cuts are Maya's side only (columns below it) */
 const BOUND = 30;
 
 /** the cell size and the grid's origin inside a rect */
@@ -72,10 +74,10 @@ export function prideMaya(x: number, y: number, w: number, h: number): { hx: num
 
 // ── the painter's state for one call (module-level; the function is synchronous and re-entrant only in sequence) ────
 let PT: Painter | null = null;
-let CS = 1, OX = 0, OY = 0, XC: number = GW;
-/** one run of cells, clipped to the grid (and to columns < XC while the gloss paints) */
+let CS = 1, OX = 0, OY = 0;
+/** one run of cells, clipped to the grid */
 function cell(gx: number, gy: number, gw: number, gh: number, col: string): void {
-  const a = Math.max(0, gx), b = Math.max(0, gy), e = Math.min(XC, gx + gw), f = Math.min(GH, gy + gh);
+  const a = Math.max(0, gx), b = Math.max(0, gy), e = Math.min(GW, gx + gw), f = Math.min(GH, gy + gh);
   if (e <= a || f <= b || !PT) return;
   PT.fillStyle = col; PT.fillRect(OX + a * CS, OY + b * CS, (e - a) * CS, (f - b) * CS);
 }
@@ -83,7 +85,16 @@ function cell(gx: number, gy: number, gw: number, gh: number, col: string): void
 // ═════════════════════════════════════════════════════════════════════════════════════════════════════════════════
 // THE DAY BEHIND THEM — built once as a cell map (nothing writes to it after); the drain reads it per cell.
 // ═════════════════════════════════════════════════════════════════════════════════════════════════════════════════
-const RAINBOW = [P.tie, M.orange, M.gold, M.green, M.blue, M.violet];
+const RAINBOW = [P.rainbowRed, M.orange, M.gold, M.green, M.blue, M.violet];
+/** the two flags on Maya's side: each column's wave (its rows' offset) */
+const TRANS_DY = [0, 0, 1, 1, 1, 0, 0, 1, 1, 1], RAINBOW_DY = [1, 0, 0, 1, 1, 0];
+/** ⚑ S420 — her trans flag's cloth, cell by cell (what the filter lifts out first; the rainbow flag is drawn over its foot) */
+const HER_FLAG: boolean[][] = (() => {
+  const m = Array.from({ length: GH }, () => new Array<boolean>(GW).fill(false));
+  for (let i = 0; i < 10; i++) for (let s = 0; s < 5; s++) m[2 + s + TRANS_DY[i]][4 + i] = true;
+  for (let i = 0; i < 6; i++) for (let s = 0; s < 6; s++) m[8 + s + RAINBOW_DY[i]][6 + i] = false;
+  return m;
+})();
 const TRANS = [P.flagBlue, P.flagPink, P.flagWhite, P.flagPink, P.flagBlue];
 /** the crowd, back to front: [col, head row, near (a bigger head, with eyes), skin, hair, top, arm up: -1 left / 1 right / 0] */
 type Person = [number, number, boolean, string, string, string, number];
@@ -114,9 +125,9 @@ function buildDay(): string[][] {
   put(34, 4, 1, 18, M.wood); put(61, 4, 1, 18, M.wood);
   // Maya's side: her trans flag, flying, and a rainbow flag
   put(3, 2, 1, 14, M.wood);
-  for (let i = 0; i < 10; i++) { const dy = [0, 0, 1, 1, 1, 0, 0, 1, 1, 1][i]; for (let s = 0; s < 5; s++) put(4 + i, 2 + s + dy, 1, 1, TRANS[s]); }
+  for (let i = 0; i < 10; i++) for (let s = 0; s < 5; s++) put(4 + i, 2 + s + TRANS_DY[i], 1, 1, TRANS[s]);
   put(12, 8, 1, 8, M.wood);
-  for (let i = 0; i < 6; i++) { const dy = [1, 0, 0, 1, 1, 0][i]; for (let s = 0; s < 6; s++) put(6 + i, 8 + s + dy, 1, 1, RAINBOW[s]); }
+  for (let i = 0; i < 6; i++) for (let s = 0; s < 6; s++) put(6 + i, 8 + s + RAINBOW_DY[i], 1, 1, RAINBOW[s]);
   // Junie's side: the placard (a heart), on its stick
   put(56, 14, 1, 4, M.wood);
   put(52, 8, 9, 7, M.wood); put(53, 8, 7, 6, M.cream);
@@ -196,39 +207,18 @@ function layerAt(L: Layer, x0: number, y0: number, key: Record<string, string>, 
 }
 
 // ═════════════════════════════════════════════════════════════════════════════════════════════════════════════════
-// MAYA, under the filter — the same cells and modes as era4's paintPortrait (cut, dither, swap, wipe)
+// MAYA, under the filter — ⚑ S420: the same cells, owners and cuts as era4's paintPortrait (`portraitCells`)
 // ═════════════════════════════════════════════════════════════════════════════════════════════════════════════════
-const PK = (ch: string): string => P[FIG.key[ch]];
-/** the strand the cut never reaches: from the side of the quiff down to her shoulder (her grid's cells) */
+/** the strand the cut never reaches: from the side of her face down to her shoulder (her grid's cells) */
 const STRAND = new Set<string>(['7,8', '7,9', '7,10', '7,11', '7,12', '7,13', '7,14', '6,15', '6,16', '6,17', '6,18', '6,19', '5,20', '5,21', '5,22']);
 const inStrand = (c: number, r: number): boolean => STRAND.has(`${c},${r}`);
-function mayaLayer(her: Layer, goal: Layer, mode: 'cut' | 'dither' | 'wipe' | 'swap', k: number, keep = false): void {
-  for (let r = 0; r < 30; r++) {
-    const hr = her[r], gr = goal[r];
-    // one colour per cell ('' = nothing), then runs of the same colour painted as one rect
-    let runX = 0, runC = '';
-    for (let c = 0; c <= 24; c++) {
-      let col = '';
-      if (c < 24) {
-        const a = hr[c], b = gr[c];
-        if (a !== '.' || b !== '.') {
-          if (mode === 'cut') {
-            // her hair is cut from the ends upward (bar the strand that stays), the template's grows in over it
-            const cut = k > 0.9 * Math.max(0, Math.min(1, (23 - r) / 21)) && !(keep && inStrand(c, r));
-            const grown = k > 0.55 + 0.4 * FIG.bayer(c, r);
-            col = b !== '.' && grown ? PK(b) : a !== '.' && !cut ? PK(a) : '';
-          } else {
-            const on = mode === 'dither' ? k > FIG.bayer(c, r) : mode === 'wipe' ? k > Math.min(0.98, Math.max(0, (r - 17) / 13)) : k >= 0.5;
-            const ch = on ? b : a;
-            col = ch !== '.' ? PK(ch) : '';
-          }
-        }
-      }
-      if (col !== runC) { if (runC) cell(MX + runX, MY + r, c - runX, 1, runC); runX = c; runC = col; }
-    }
-  }
+/** the board of deleted pixels over a run of picture cells (aligned to the picture's own grid); only ever on her side of
+ *  the line (`BOUND`): a cut past it leaves what is behind as it was */
+function checkerCells(gx: number, gy: number, gw: number, gh: number): void {
+  const a = Math.max(0, gx), b = Math.max(0, gy), e = Math.min(BOUND, gx + gw), f = Math.min(GH, gy + gh);
+  if (e <= a || f <= b || !PT) return;
+  cutChecker(PT, OX + a * CS, OY + b * CS, (e - a) * CS, (f - b) * CS, { c: CS, ox: OX, oy: OY });
 }
-const EMPTY: Layer = lay({});
 
 /**
  * ⚑ THE PICTURE. `filter` 0..1 (hers … the filter's); see the header. Nothing in the game can change this function.
@@ -237,33 +227,29 @@ export function paintPride(p: Painter, x: number, y: number, w: number, h: numbe
   x = Math.round(x); y = Math.round(y); w = Math.round(w); h = Math.round(h);
   if (w <= 0 || h <= 0) return;
   const L = prideLayout(x, y, w, h);
-  PT = p; CS = L.c; OX = L.ox; OY = L.oy; XC = GW;
+  PT = p; CS = L.c; OX = L.ox; OY = L.oy;
   // the mount, round whatever the grid leaves
   p.fillStyle = M.plum; p.fillRect(x, y, w, h);
   const s = portraitAt(Math.max(0, Math.min(1, opts.filter)));
-  // ⚑ it never seats: the gloss stops short of the "verified" tick (which paintPortrait draws at gloss ≥ 0.9)
-  const gloss = Math.min(s.gloss, 0.86);
   const mute = Math.max(0, Math.min(1, opts.junieMute ?? 0));
-  const t = opts.t ?? 0;
   DAY ??= buildDay();
 
-  // ── the day, drained on her side only (soft over the four columns before the line), the gloss's halo and rays over it
+  // ── the day, drained on her side only (soft over the four columns before the line) to the default's grey; her trans
+  //    flag is never drained, only lifted out (the checkerboard where it flew; its pole stays)
+  const flagCut = isCut(s.flag);
   for (let gy = 0; gy < GH; gy++) {
     let runX = 0, runC = '';
     for (let gx = 0; gx <= GW; gx++) {
       let col = '';
       if (gx < GW) {
         col = DAY[gy][gx];
-        if (gx < BOUND) {
+        if (HER_FLAG[gy][gx]) { if (flagCut) col = CUT; }
+        else if (gx < BOUND) {
           const edge = Math.max(0, Math.min(1, (BOUND - gx) / 4));
-          if (s.drain * edge > FIG.bayer(gx, gy)) col = P.dSky;
-          if (gloss > 0) {
-            const gc = FIG.gloss(gx - MX, gy - MY);
-            if (gc && gloss * edge > FIG.bayer(gx + 2, gy + 1)) col = gc;
-          }
+          if (s.drain * edge > FIG.drainRow(gy)) col = DEFAULT_PNG.ground;
         }
       }
-      if (col !== runC) { if (runC) cell(runX, gy, gx - runX, 1, runC); runX = gx; runC = col; }
+      if (col !== runC) { if (runC) { if (runC === CUT) checkerCells(runX, gy, gx - runX, 1); else cell(runX, gy, gx - runX, 1, runC); } runX = gx; runC = col; }
     }
   }
   // the banner's words (Junie's side, never drained)
@@ -278,15 +264,19 @@ export function paintPride(p: Painter, x: number, y: number, w: number, h: numbe
   layerAt(FIG.her.body, JX, JY, J_KEY, mute, J_MUTE);
   const arm = (k: string): string => (mute > 0 ? J_MUTE[k] : J_KEY[k]);
 
-  // ── MAYA, back to front, the filter in its order
-  mayaLayer(FIG.her.back, FIG.goal.hair, 'cut', s.hair, true);
-  mayaLayer(FIG.her.face, FIG.goal.face, 'dither', s.jaw);
-  mayaLayer(FIG.her.feat, FIG.goal.feat, 'swap', s.jaw);
-  mayaLayer(FIG.her.mouth, FIG.goal.mouth, 'swap', s.smile);
-  mayaLayer(FIG.her.body, FIG.goal.body, 'wipe', s.body);
-  // her pin, over her heart — ⚑ it stays: the jacket comes down over her top and the pin is still on it
-  {
-    const bx = MX + 14, by = MY + 24;
+  // ── MAYA, back to front, the filter in its order: each cell hers or lifted out (her side of the line only: a cut past it
+  //    leaves Junie behind as she was)
+  const { col: mc, owner } = portraitCells(s, inStrand);
+  for (let r = 0; r < 30; r++) {
+    let runX = 0, runC = '';
+    for (let c = 0; c <= 24; c++) {
+      const col = c < 24 ? mc[r][c] : '';
+      if (col !== runC) { if (runC) { if (runC === CUT) checkerCells(MX + runX, MY + r, c - runX, 1); else cell(MX + runX, MY + r, c - runX, 1, runC); } runX = c; runC = col; }
+    }
+  }
+  // her pin, over her heart, until it is lifted out (its cells are then the board)
+  if (!isCut(s.pin) && !isCut(s.top)) {
+    const bx = MX + FIG.cut.pin.c, by = MY + FIG.cut.pin.r;
     cell(bx, by, 3, 3, P.edge);
     if (CS >= 3) {
       // five stripes inside a one-sub-cell rim (in pixels: the pin is the one place finer than a cell)
@@ -294,14 +284,25 @@ export function paintPride(p: Painter, x: number, y: number, w: number, h: numbe
       for (let i = 0; i < 5; i++) { const a = Math.round((i * iw) / 5), b = Math.round(((i + 1) * iw) / 5); if (b > a) { p.fillStyle = TRANS[i]; p.fillRect(x0, y0 + a, iw, b - a); } }
     } else for (let i = 0; i < 3; i++) cell(bx, by + i, 3, 1, TRANS[i * 2]);
   }
-  mayaLayer(FIG.her.front, EMPTY, 'cut', s.hair, true);
-  // her earrings, gone with the hair
-  if (s.hair < 0.5) { cell(MX + 7, MY + 12, 1, 1, P.gold); cell(MX + 16, MY + 12, 1, 1, P.gold); }
+  // her earrings, until they are lifted out
+  for (const ec of FIG.cut.earrings.cols) { if (isCut(s.earrings)) checkerCells(MX + ec, MY + FIG.cut.earrings.r, 1, 1); else cell(MX + ec, MY + FIG.cut.earrings.r, 1, 1, P.gold); }
+  // ── the selection round whatever the filter is lifting out now: still (the game's screen keeps its own clock), on her
+  //    side of the line, and under Junie (drawn next, over it)
+  {
+    const g = { c: CS, ox: OX, oy: OY }, live = (k: number): boolean => k > 0 && k < 1;
+    const mine = (gx: number, gy: number): boolean => gx >= 0 && gx < BOUND && gy >= 0 && gy < GH;
+    const at = (gx: number, gy: number): string => (gx - MX >= 0 && gx - MX < 24 && gy - MY >= 0 && gy - MY < 30 ? owner[gy - MY][gx - MX] : '');
+    if (live(s.flag)) antsAround(p, (gx, gy) => mine(gx, gy) && HER_FLAG[gy][gx], g, GW, GH, 0);
+    if (live(s.pin)) antsRect(p, OX + (MX + FIG.cut.pin.c) * CS, OY + (MY + FIG.cut.pin.r) * CS, FIG.cut.pin.n * CS, FIG.cut.pin.n * CS, CS, 0);
+    if (live(s.earrings)) for (const ec of FIG.cut.earrings.cols) antsRect(p, OX + (MX + ec) * CS, OY + (MY + FIG.cut.earrings.r) * CS, CS, CS, CS, 0);
+    if (live(s.top)) antsAround(p, (gx, gy) => mine(gx, gy) && (at(gx, gy) === 'top' || at(gx, gy) === 'pin'), g, GW, GH, 0);
+    if (live(s.hair)) antsAround(p, (gx, gy) => mine(gx, gy) && at(gx, gy) === 'length', g, GW, GH, 0);
+  }
   // ── JUNIE'S ARM round Maya — a hug, read from Junie to Maya (his review of the first cut: two yellow bars read as
   //    shoulder pads). NEAR SIDE: one sleeve growing out of Junie's own top and rising toward Maya's neck, over Maya's
   //    hair, until it passes behind her head. FAR SIDE: only Junie's hand — a yellow cuff where her arm comes out from
   //    behind Maya's hair, her brown fingers draped over the top of Maya's shoulder onto her top. Drawn after the filter,
-  //    over the top or over the jacket alike: nothing of Junie is ever under it. (Maya's grid cells: `armCell`.)
+  //    over her top or over the board it leaves alike: nothing of Junie is ever under it. (Maya's grid cells: `armCell`.)
   const armCell = (c: number, r: number, w: number, k: string): void => cell(MX + c, MY + r, w, 1, arm(k));
   // the sleeve: a band on a diagonal from the point of Junie's shoulder up to Maya's neck, its underside in a fold of
   // shade so it parts from Junie's top as an arm (three of yellow and one of shade in each row)
@@ -317,16 +318,5 @@ export function paintPride(p: Painter, x: number, y: number, w: number, h: numbe
   layerAt(J_MOUTH, JX, JY, J_KEY, mute, J_MUTE);
   layerAt(J_FRINGE, JX, JY, J_KEY, mute, J_MUTE);
 
-  // ── the gloss's sparkles, Maya's side only (it never completes: no tick)
-  if (gloss > 0) {
-    XC = BOUND;
-    const phase = Math.floor(t * 2) % 2;
-    FIG.sparkles.forEach(([c0, r0, on], i) => {
-      if (gloss < 0.5 + i * 0.05) return;
-      const k = on === phase ? P.sparkleHi : P.sparkle, sx = MX + c0, sy = MY + r0;
-      cell(sx - 1, sy, 3, 1, k); cell(sx, sy - 1, 1, 3, k);
-    });
-    XC = GW;
-  }
   PT = null;
 }

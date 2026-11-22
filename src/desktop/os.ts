@@ -3288,7 +3288,9 @@ export class DesktopOS {
       //   registered and dead: a control the piece advertises as live and then
       //   ignores. `tools/walk.mjs` found it by pressing it and watching nothing
       //   move, which is the entire reason that check exists.
-      if (!this.e4.worn && this.e4.stage !== 'laptop') {
+      // ⚑ S412 — and not under 2026's one screen (job 33's acts): the monitor publishes its own controls there, and this
+      //   whole-glass rect pressed the monitor's centre — whatever happened to be under it (a story card, a thread)
+      if (!this.e4.worn && this.e4.stage !== 'laptop' && this.e4.browser.storyStep !== 'acts') {
         this.hits.push({ x: 0, y: 0, w: W, h: H, id: 'e4-touch' });
       }
       if (this.updateApp?.open) this.updateApp.draw(this.ctx);
@@ -4682,6 +4684,80 @@ export class DesktopOS {
       case 'e4BrowserSearch':
         this.debugJump('e4Browser');
         this.e4?.browser.debugJumpTo('search');
+        break;
+      // ⚑ S412 (UiB job 33 Part A) — Act I on the one screen, from each of its beats (what came before laid into the chat)
+      case 'e4Act1':
+        this.debugJump('e4Browser');
+        this.e4?.browser.debugActs(1);
+        break;
+      case 'e4Act1Messages':
+        this.debugJump('e4Browser');
+        this.e4?.browser.debugActs(2);
+        break;
+      case 'e4Act1Mail':
+        this.debugJump('e4Browser');
+        this.e4?.browser.debugActs(3);
+        break;
+      case 'e4Act1Search':
+        this.debugJump('e4Browser');
+        this.e4?.browser.debugActs(4);
+        break;
+      // ⚑ S413 (UiB job 33 Part B) — Act II on the one screen, from each of its beats (Act I laid into the chat)
+      case 'e4Act2':
+        this.debugJump('e4Browser');
+        this.e4?.browser.debugActTwo(5);
+        break;
+      case 'e4Act2Review':
+        this.debugJump('e4Browser');
+        this.e4?.browser.debugActTwo(6);
+        break;
+      case 'e4Act2Video':
+        this.debugJump('e4Browser');
+        this.e4?.browser.debugActTwo(7);
+        break;
+      case 'e4Act2Answer':
+        this.debugJump('e4Browser');
+        this.e4?.browser.debugActTwo(8);
+        break;
+      // ⚑ S414 (UiB job 33 Part C) — Act III, Shepherd Live™ (Acts I and II laid into the chat): the doors; the session in each
+      //   door (the VR door puts the device on first); the photo; the friends (in each door)
+      case 'e4Act3':
+        this.debugJump('e4Browser');
+        this.e4?.debugActThree('doors', 'here');
+        break;
+      case 'e4Act3VR':
+        this.debugJump('e4Browser');
+        this.e4?.debugActThree('session', 'vr');
+        break;
+      case 'e4Act3Here':
+        this.debugJump('e4Browser');
+        this.e4?.debugActThree('session', 'here');
+        break;
+      case 'e4Act3Photo':
+        this.debugJump('e4Browser');
+        this.e4?.debugActThree('photo', 'here');
+        break;
+      case 'e4Act3Friends':
+        this.debugJump('e4Browser');
+        this.e4?.debugActThree('friends', 'here');
+        break;
+      case 'e4Act3FriendsVR':
+        this.debugJump('e4Browser');
+        this.e4?.debugActThree('friends', 'vr');
+        break;
+      // ⚑ S415 (UiB job 33 Part D) — Act IV on the monitor (Acts I–III laid in as beat 10 leaves them): the stream, the
+      //   shutdown, the end (and from there the Close, as in play)
+      case 'e4Act4Stream':
+        this.debugJump('e4Browser');
+        this.e4?.debugActFour('stream');
+        break;
+      case 'e4Act4Shutdown':
+        this.debugJump('e4Browser');
+        this.e4?.debugActFour('shutdown');
+        break;
+      case 'e4Act4End':
+        this.debugJump('e4Browser');
+        this.e4?.debugActFour('end');
         break;
       case 'e4Standby':
         this.setPhase('desktop');

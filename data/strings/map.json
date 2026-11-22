@@ -241,7 +241,7 @@
      "id": "online",
      "label": "Your story, online",
      "done": "testimonyOnline",
-     "hint": "Upload your story from the \u201c1997\u201d folder, watch it on its page, follow Start here to the DVD collection and watch Caleb's teaser, then close.",
+     "hint": "Upload your story from the “1997” folder, watch it on its page, follow Start here to the DVD collection and watch Caleb's teaser, then close.",
      "where": "the monitor"
     },
     {
@@ -466,6 +466,148 @@
      "where": "the monitor"
     },
     {
+     "id": "week",
+     "label": "L reads your week",
+     "done": "e4:a1:hello",
+     "hint": "L has read your week and made you a card. Press an answer: either one goes on.",
+     "where": "the monitor"
+    },
+    {
+     "id": "messages",
+     "label": "Your messages",
+     "done": "e4:a1:messages",
+     "quiet": true,
+     "hint": "L is reading your messages to you. Press ✦ on Dad's if you want to see what he wrote.",
+     "where": "the monitor"
+    },
+    {
+     "id": "mail",
+     "label": "Three doors",
+     "done": "e4:a1:mail",
+     "hint": "L is opening your mail. Mum's email has a link to her course; it is yours to press, or not.",
+     "where": "the monitor"
+    },
+    {
+     "id": "search",
+     "label": "Her search",
+     "done": "beat:search",
+     "hint": "L finishes last night's search for you. Press an answer to its offer.",
+     "where": "the monitor"
+    },
+    {
+     "id": "bot",
+     "label": "Second Thoughts",
+     "done": "beat:bot",
+     "hint": "Under the stories, the yellow card: ✚ Add to L, or Not now.",
+     "where": "the monitor"
+    },
+    {
+     "id": "review",
+     "label": "The risk review",
+     "done": "e4:a2:review",
+     "hint": "Second Thoughts has scored your week. Review each, or Do it for me: either goes on.",
+     "where": "the monitor"
+    },
+    {
+     "id": "takeover",
+     "label": "It uses your computer",
+     "done": "e4:a2:takeover",
+     "quiet": true,
+     "hint": "Second Thoughts is using your computer, one thing at a time. You can scroll its words back while it works.",
+     "where": "the monitor"
+    },
+    {
+     "id": "matchmade",
+     "label": "The console",
+     "done": "matchmadePlayed",
+     "optional": true,
+     "hint": "The console on the bed is lit. Open it, or leave it.",
+     "where": "the bed"
+    },
+    {
+     "id": "video",
+     "label": "Made for her",
+     "done": "e4:a2:video",
+     "hint": "It made you a video. Press play: it runs for a minute.",
+     "where": "the monitor"
+    },
+    {
+     "id": "answer",
+     "label": "Her answer",
+     "done": "e4:a2:booked",
+     "hint": "There is one answer under its words: hers. Press it.",
+     "where": "the monitor"
+    },
+    {
+     "id": "door",
+     "label": "Your session",
+     "done": "e4:a3:door",
+     "hint": "Your session with Shepherd is ready. Join in VR or Join here: either goes on.",
+     "where": "the monitor"
+    },
+    {
+     "id": "headset",
+     "label": "The headset",
+     "done": "e4:a3:session",
+     "hint": "Put the headset on: press it, on the desk in front of you.",
+     "where": "the headset on the desk"
+    },
+    {
+     "id": "shepherd",
+     "label": "Shepherd Live™",
+     "done": "e4:a3:booked",
+     "quiet": true,
+     "hint": "Shepherd is in session. Nothing to press.",
+     "where": "the glass"
+    },
+    {
+     "id": "friends",
+     "label": "Her friends",
+     "done": "e4:a3:restored",
+     "quiet": true,
+     "hint": "Junie and Rae are here. When they ask, press Yes.",
+     "where": "the glass"
+    },
+    {
+     "id": "stream",
+     "label": "transjesus.str",
+     "done": "streamAnswered",
+     "quiet": true,
+     "hint": "Your friends' stream, on your monitor. Dance or stay, as you like.",
+     "where": "the monitor"
+    },
+    {
+     "id": "close",
+     "label": "The shutdown",
+     "done": "terminated",
+     "quiet": true,
+     "hint": "The system comes back for the stream. Nothing to press.",
+     "where": "the monitor"
+    }
+   ],
+   "_docS321": "⚑ S321 — 2026 v3 (DESIGN_2026_V3_PRESSURE_2026-11-07.md, four acts): eighteen, the new you, Mum, Dad, Mum's link, the number, Meridian, left, the search, Second Thoughts, the map, Junie, the original, the headset, the session, the stream, the update failing. `beat:<id>` reads the contract (src/narrative/e4Beats.ts); `e4:<id>` reads a 2026 filing. Felt beats are quiet (no helper, no Lamby, no ring). `tryon` is the screens' (mirror.ts, quiet: nothing to press); the room builder adds `room` (after left, done: beat:room) when it exists. v2's rows (_docS293) are retired.",
+   "_docRetiredS414": "⚑ S414 (UiB job 33 Part C) — 2026's Act III is rebuilt (draft 3, beats 9–10): the headset is one of two doors now (`door`; `headset` is done when the session begins in either), Shepherd Live™'s session is quiet (nothing to press, `shepherd`), and her friends break in (`friends`, quiet: they ask her themselves; the Yes is hers). The as-built rows the session replaced (the try-on, Junie's link) are kept below as they were.",
+   "_retiredS414": [
+    {
+     "id": "tryon",
+     "label": "Try it on",
+     "done": "beat:tryon",
+     "quiet": true,
+     "hint": "The system starts it by itself. Nothing to press.",
+     "where": "the glass"
+    },
+    {
+     "id": "session",
+     "label": "Junie's link",
+     "done": "commonsJoined",
+     "quiet": true,
+     "hint": "Junie's link breaks in. Press it.",
+     "where": "the glass"
+    }
+   ],
+   "_docRetiredS412": "⚑ S412 (UiB job 33 Part A) — 2026's Act I is rebuilt (draft 3, beats 1–4): the beats of the as-built Act I (eighteen, the new you, Mum, Dad, Mum's link, the number, Meridian, left, the room's turn) give way to L's four: the week and the card, the messages, three doors, her search. Kept here as they were.",
+   "_retiredS412": [
+    {
      "id": "eighteen",
      "label": "Eighteen",
      "done": "e4:v3:house",
@@ -532,29 +674,10 @@
      "quiet": true,
      "hint": "The piece turns you to the room. Nothing to press.",
      "where": "the room"
-    },
-    {
-     "id": "search",
-     "label": "The search, finished",
-     "done": "beat:search",
-     "hint": "Press the search. The engine finishes it for you.",
-     "where": "the monitor"
-    },
-    {
-     "id": "bot",
-     "label": "Second Thoughts",
-     "done": "beat:bot",
-     "hint": "The first result is an ad. Press Chat now.",
-     "where": "the monitor"
-    },
-    {
-     "id": "matchmade",
-     "label": "The console",
-     "done": "matchmadePlayed",
-     "optional": true,
-     "hint": "The console on the bed. Pick it up.",
-     "where": "the bed"
-    },
+    }
+   ],
+   "_docRetiredS413": "⚑ S413 (UiB job 33 Part B) — 2026's Act II is rebuilt (draft 3, beats 5–8): the old conversation's map (the mute), Junie's unmute and the Photos original give way to Second Thoughts' four: it adds itself (the yellow card's row, `bot`), the risk review, the takeover (quiet: it presses, she watches; the console's Open it is optional), the video made for her, and her answer, deleted. Kept here as they were:",
+   "_retiredS413": [
     {
      "id": "map",
      "label": "The map",
@@ -576,30 +699,10 @@
      "done": "beat:original",
      "hint": "Photos: press Use original.",
      "where": "the monitor"
-    },
-    {
-     "id": "headset",
-     "label": "The headset",
-     "done": "headsetWorn",
-     "hint": "Put the headset on — press it, on the desk.",
-     "where": "the headset on the desk"
-    },
-    {
-     "id": "tryon",
-     "label": "Try it on",
-     "done": "beat:tryon",
-     "quiet": true,
-     "hint": "The system starts it by itself. Nothing to press.",
-     "where": "the glass"
-    },
-    {
-     "id": "session",
-     "label": "Junie's link",
-     "done": "commonsJoined",
-     "quiet": true,
-     "hint": "Junie's link breaks in. Press it.",
-     "where": "the glass"
-    },
+    }
+   ],
+   "_docRetiredS415": "⚑ S415 (UiB job 33 Part D) — the stream is on her monitor now (beat 11, respite: quiet, nothing waits on her press) and the end is the shutdown and \"coming soon\" there (beats 12–13, quiet: nothing to press). The rows as they stood (the stream on the glass, the screens failing on the desk) are kept below as they were.",
+   "_retiredS415": [
     {
      "id": "stream",
      "label": "transjesus.str",
@@ -616,8 +719,7 @@
      "hint": "Watch the screens.",
      "where": "the desk"
     }
-   ],
-   "_docS321": "⚑ S321 — 2026 v3 (DESIGN_2026_V3_PRESSURE_2026-11-07.md, four acts): eighteen, the new you, Mum, Dad, Mum's link, the number, Meridian, left, the search, Second Thoughts, the map, Junie, the original, the headset, the session, the stream, the update failing. `beat:<id>` reads the contract (src/narrative/e4Beats.ts); `e4:<id>` reads a 2026 filing. Felt beats are quiet (no helper, no Lamby, no ring). `tryon` is the screens' (mirror.ts, quiet: nothing to press); the room builder adds `room` (after left, done: beat:room) when it exists. v2's rows (_docS293) are retired."
+   ]
   }
  ],
  "aheadCount": "ahead: {n}",

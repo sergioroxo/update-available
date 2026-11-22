@@ -30,6 +30,7 @@ import type { CeilingWitness } from './ceilingWitness';
 // ⚑ S79: the ball borrows two colours and adds no palette of its own — the
 // colour law's one home is the theme, and both of these are era1.json's own.
 import { BALL } from '../desktop/theme/era4';
+import { streamLightWant, streamLightVersion } from './streamLight';
 import { mountCommonsFigures } from './commonsFigures';
 import { mountCommonsHost } from './commonsHost';
 import { mountCommonsWorld, WORLD, type CommonsWorld } from './commonsWorld';
@@ -143,6 +144,11 @@ const E3_LIFT = {
  * arrival, the Close's own rig) is never fought.
  */
 const E4_DUSK = { lamp: 1, screenGain: 0.25 };
+/** ⚑ S415 — the stream's light in her room (src/room/streamLight.ts): `mayaGlow` at its full under the stream (the rig's e4 value is
+ *  1.55, ×1.25 by the dusk: the stream is a little brighter than her screen was, and coloured), how much further it reaches, the
+ *  warmth it adds to the ambient, and how fast it comes and goes when it is not stepped. Soft Lo-Fi: a room lit by a screen, never
+ *  a room washed in one colour (the first pass, 3.4 / ×1.6, turned the whole room cyan) */
+const STREAM_LIGHT = { glow: 2.1, reach: 0.25, ambient: [0.035, 0.025, 0.032] as const, fadeSeconds: 2.5 };
 let e4DuskHook: ((k: number) => void) | null = null;
 export function setE4Dusk(k: number): void { e4DuskHook?.(k); }
 
@@ -1216,6 +1222,51 @@ export function buildClusterShell(
   }
   e4DuskHook = (k: number): void => { duskK = Math.max(0, Math.min(1, k)); };
 
+  // ── ⚑ S415 (UiB job 33 Part D) — THE STREAM'S LIGHT, see src/room/streamLight.ts ────────────────────────────────────
+  //   While transjesus.str fills her monitor, the screen's light in her room (`mayaGlow`) takes the stream's colour, grows and
+  //   reaches further, and the ambient warms a little; at the shutdown the act steps it down (snap) and then the screen is
+  //   dark. Applied only over the settled e4 rig (the Close's own rig takes the room back with its crossfade), and given back
+  //   exactly — colour, range, intensity, ambient — the frame the act lets it go.
+  let streamK = 0, streamScreen = 1, streamLive = false, streamSeen = -1;
+  let glowLight: pc.LightComponent | null = null;
+  let glowBase: { color: pc.Color; range: number } | null = null;
+  const streamAmb = new pc.Color(0, 0, 0);
+  function updateStreamLight(dt: number): void {
+    const s = streamLightWant();
+    if (!s && !streamLive) return;
+    if (!glowLight) { const e = app.root.findByName('light-mayaGlow'); glowLight = e instanceof pc.Entity ? e.light ?? null : null; }
+    const l = glowLight;
+    if (!l) return;
+    const own = currentRig === 'e4' && rigT >= 1;
+    if (!glowBase) glowBase = { color: l.color.clone(), range: l.range };
+    const giveBack = (): void => {
+      if (glowBase) { l.color = glowBase.color.clone(); l.range = glowBase.range; }
+      glowBase = null; streamLive = false; streamK = 0; streamScreen = 1; duskApplied = -1;
+      if (!ballLive) app.scene.ambientLight = ambNow;
+    };
+    if (!own) { if (!s || currentRig !== 'e4') giveBack(); return; }
+    const wantK = s ? Math.max(0, Math.min(1, s.level)) : 0, wantScreen = s ? Math.max(0, Math.min(1, s.screen)) : 1;
+    const v = streamLightVersion();
+    if (s?.snap && v !== streamSeen) { streamK = wantK; streamScreen = wantScreen; }
+    else {
+      const r = dt / STREAM_LIGHT.fadeSeconds;
+      streamK += Math.max(-r, Math.min(r, wantK - streamK));
+      streamScreen += Math.max(-r, Math.min(r, wantScreen - streamScreen));
+    }
+    streamSeen = v;
+    if (!s && streamK <= 0 && streamScreen >= 1) { giveBack(); return; }
+    streamLive = true;
+    const rig = (clusterData.rigs as unknown as Record<string, Rig | undefined>).e4;
+    const base = (rig?.lights.mayaGlow?.intensity ?? 0) * (1 + duskK * E4_DUSK.screenGain);
+    l.intensity = base * streamScreen * (1 - streamK) + STREAM_LIGHT.glow * streamK;
+    l.range = glowBase.range * (1 + STREAM_LIGHT.reach * streamK);
+    l.color = streamK > 0 && s ? hex(s.color) : glowBase.color.clone();
+    if (!ballLive) {
+      streamAmb.set(ambNow.r + STREAM_LIGHT.ambient[0] * streamK, ambNow.g + STREAM_LIGHT.ambient[1] * streamK, ambNow.b + STREAM_LIGHT.ambient[2] * streamK);
+      app.scene.ambientLight = streamAmb;
+    }
+  }
+
   // ── ⚑ THE BALL'S LIGHT — see BallLightState at the top of this file ────────
   /** what the beat has asked for; `null` = it is over and the room empties */
   let ballWant: BallLightState | null = null;
@@ -1523,6 +1574,7 @@ export function buildClusterShell(
       // whatever the era's light is doing rather than replacing it, so a
       // crossfade and a ball can run in the same frame without a fight.
       updateDusk();   // S398 (A6): after the rig, before the ball (the ball adds on top of whatever the room is doing)
+      updateStreamLight(dt);   // S415: the stream's light, over the dusk (and under the ball, which is retired from play)
       updateBall(dt);
       commonsFigures.update(dt);
       commonsHost.update(dt);

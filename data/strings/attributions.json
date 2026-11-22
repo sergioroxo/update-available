@@ -290,6 +290,13 @@
       "firstUsed": "S245, 2026-10-14"
     },
     {
+      "asset": "2026's one voice (`l_a1_*.mp3`: L; later Second Thoughts and Shepherd Live™)",
+      "creator": "Kokoro-82M, voice `af_heart` (hexgrad; run locally with mlx-audio from the project lead's MimikaStudio install, `tools/tts/kokoro_lines.py`)",
+      "license": "Apache-2.0",
+      "usedAs": "The 2026 company's few spoken lines: the apparatus, never a person",
+      "firstUsed": "S412, 2026-11-21"
+    },
+    {
       "asset": "Type baked into \"LambyOS — Welcome Home\"",
       "creator": "Inter (SIL OFL), Liberation fonts (SIL OFL), DejaVu fonts (free Bitstream Vera licence), GNU Unifont (SIL OFL / GPL font exception)",
       "license": "free font licences, as listed",

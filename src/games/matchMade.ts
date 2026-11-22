@@ -9,8 +9,9 @@
  *
  * ⚑ S367 (UiB job 15 Part B; his choice "B, a tug of war", 11 Nov) — THE GAME IS A TUG OF WAR OVER HER PICTURE.
  * - THE PICTURE is Maya and Junie at Pride '24 (src/games/pridePicture.ts, one authored function nothing writes to),
- *   with the system's swap filter on MAYA — the same filter, in the same order, as the try-on and the raid
- *   (theme/era4.ts `portraitAt`). Junie is never filtered.
+ *   with the system's filter on MAYA — the same filter, in the same order, as Shepherd's photo (theme/era4.ts
+ *   `portraitAt`; ⚑ S420: by removal — her flag, her pin, her earrings, the pink of her top, the length of her hair,
+ *   lifted out to the checkerboard — never into a man, as S367 drew it). Junie is never filtered.
  * - ONE HANDLE, under the picture, on the filter's intensity bar (the raid's grammar, swapFilter.ts `filterPill`: the
  *   filter's name "✦ Restore", a track filled to the value, a white handle, a name tag on whoever moved it last). Its
  *   word is the chat's ring word ("BECOMING", s4_v3.json bot.heading.ring) and its % is THE CHAT'S RING: one number.
@@ -26,13 +27,13 @@
  *   10th match, and every turn once she has it below 30% — so across a run the handle drifts her way (played
  *   headless from 97%, 24 matches end near 50%) but she can never simply win it. The handle can never pass 99%: at
  *   the wall its pointer leans on the handle and the handle will not go, and the track runs on past it in her pink.
- *   The filter never seats (pridePicture.ts: a strand of her hair, her pin, an unfinished gloss).
- * - THE GRIP. The picture's filter for a handle at v % is (v / 100)^2.5 (`grip`): the try-on's order, spread over the
- *   range a run is played in, so each pull gives a visible piece of her back (the gloss, the grin, her top, her jaw,
- *   her hair beginning to grow back by the end of a run). Its number always claims more than the picture shows.
+ *   The filter never seats (pridePicture.ts: her face, and a strand of her hair, are never cut).
+ * - THE GRIP. The picture's filter for a handle at v % is (v / 100)^2.5 (`grip`): the filter's order, spread over the
+ *   range a run is played in, so each pull gives a visible piece of her back (⚑ S420: from the chat's 94, her hair's
+ *   length, then the pink of her top, her earrings and her pin, by the end of a run). Its number always claims more
+ *   than the picture shows.
  * - NOTHING REWARDS ERASING HER. Her match keeps the free-to-play praise (the burst, the confetti, the chord); its
- *   push has none: no confetti, no burst, no float, a flat slide of a sound. The glitter that grows on Maya as it
- *   pushes is the system's own gloss, its self-presentation — and it collapses.
+ *   push has none: no confetti, no burst, no float, a flat slide of a sound.
  * - THE RECOMMENDATION CARDS ARE GONE (they cost the tug of war its legibility); OLD FILE moved into the header.
  * - JUNIE IS NOT GREYED. `paintPride` can grey her toward "muted" (the chat's mute); built, photographed, and left off:
  *   at the console's size a greyed, dithered Junie reads as the filter working on her too, and a grey face reads as
@@ -421,11 +422,11 @@ function fresh(): Board {
 }
 const tpos = (i: number): { x: number; y: number } => ({ x: BX + (i % COLS) * TS + 2, y: BY + Math.floor(i / COLS) * TS + 2 });
 /**
- * ⚑ the filter's grip on the picture for a handle at `v` %: (v / 100)^2.5. The filter's ORDER is the try-on's (hair,
- * jaw, body, smile, gloss); the curve only spreads its stages over the range a run is played in (from the chat's
- * 94–98 down to about 50), so every pull of hers gives a visible piece of her back — the gloss, the grin, her top,
- * her jaw, and her hair beginning to grow back by the end of a full run. Its number always claims more than the
- * picture shows. Never more than 0.976, and pridePicture.ts keeps it from seating at any value.
+ * ⚑ the filter's grip on the picture for a handle at `v` %: (v / 100)^2.5. The filter's ORDER is Shepherd's (⚑ S420: her
+ * flag, pin, earrings, the pink of her top, the length of her hair, by removal); the curve only spreads its stages over
+ * the range a run is played in (from the chat's 94–98 down to about 50), so every pull of hers gives a visible piece of
+ * her back — her hair's length, her top, her earrings, her pin. Its number always claims more than the picture shows.
+ * Never more than 0.976, and pridePicture.ts keeps it from seating at any value.
  */
 const grip = (v: number): number => Math.pow(Math.max(0, Math.min(99, v)) / 100, 2.5);
 const handleX = (v: number): number => TX0 + (TFULL - TX0) * Math.max(0, Math.min(99, v)) / 100;

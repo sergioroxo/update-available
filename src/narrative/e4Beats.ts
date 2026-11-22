@@ -15,7 +15,8 @@ import { ledger } from '../state/ledger';
 /** Every beat, in story order. Ids are stable; the room keys its changes on them. */
 export const E4_BEATS = [
   'eighteen',      // Act I  — her room, hers; birthday messages (felt)
-  'newyou',        //          the update: "You, restored · 2027" on both screens and the desk frame
+  'newyou',        //          the update: "You, restored · 2027" on both screens and the desk frame (old route, unreached;
+                   //          ⚑ S420: its picture is default.png now, the system's default avatar)
   'mum',           //          Mum's thread opened (felt)
   'dad',           //          Dad's message read
   'link',          //          Mum's link opened; the news tabs open; strips on the wall begin
@@ -28,7 +29,7 @@ export const E4_BEATS = [
   'map',           //          the contagion map; the clip on the ceiling
   'junie',         // Act IV — Junie unmuted (felt)
   'original',      //          her own photo back in the desk frame
-  'tryon',         //          the headset: the mirror shows the man
+  'tryon',         //          Act III's photo altered (e4ActThree.ts) — ⚑ S420: by removal toward default.png, never a man
   'stream',        //          Junie's link: the birthday fundraiser stream
   'terminated',    //          SESSION TERMINATED; the room restored
 ] as const;

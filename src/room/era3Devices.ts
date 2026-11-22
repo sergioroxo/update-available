@@ -53,6 +53,7 @@ import { stampBanned } from './printArt';
 import { buildVeraDesk } from './veraDesk';
 import { GraceQueueLite, MIRROR_W } from './graceQueueLite';
 import { e4Bridge, claimRoomMount } from '../desktop/apps/space';
+import { PICTURE as STREAM_PICTURE } from '../desktop/apps/streamCover';
 import { ERA1_CANVAS } from '../desktop/theme/era1';
 import { px } from '../desktop/theme/chrome';
 import d from '../../data/strings/era3_devices.json';
@@ -359,9 +360,20 @@ const PLACEMENT = {
      * the euler) is preserved exactly, and `e_headset`, `e_headsetStand` and
      * `e_glasses` move with it.
      */
-    pos: { x: 5.075, y: 0.968, z: 0.10 },
+    /**
+     * ⚑ S414 (UiB job 33 Part C) — TO THE DESK IN FRONT OF THE SEAT, translated with its prop again (`e_headset` (5.2, 0.9,
+     * 0.1) → (5.28, 0.84, 1.0), Δ (+0.08, −0.06, +0.90)): Act III's Join in VR lights it and it must be found without a turn
+     * (job 33: "so nobody has to turn to find it"; his 26-21). From the seat its face is ~23° right and ~24° down — inside the
+     * computer's frame at rest and the headset's — and the headset lies on a flat pad so its top stays under the monitor's
+     * bottom edge. The 36.9° above was the periphery he asked for on 7 Sept, for a device that was waiting; this one is
+     * called, and what is called is brought before the eye or put where the eye already is.
+     * ⚑ The headset lies on the desk under the screen (`e_headset` base (5.2, 0.76, 0.9), top 0.895), so its light lies FLAT
+     * ON ITS TOP (euler 0/270/0: facing up, its 0.15 m along the headset's width): the seat sees it 22°–25° down, ~18° right,
+     * under the monitor's glass and inside the computer's frame. Its old face-on pose would sit 34° down, under the frame.
+     */
+    pos: { x: 5.2, y: 0.9, z: 0.9 },
     size: { w: 0.15, h: 0.075 },
-    euler: { x: 90, y: 270, z: 0 }
+    euler: { x: 0, y: 270, z: 0 }
   },
   /**
    * ⚑ THE LAPTOP (2026-09-01) — Era 4's opening surface, and the one that sends
@@ -1198,6 +1210,43 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
     const sh = e4Bridge()?.shell();
     return sh ? 1 + sh.browserVersion : 0;
   } });
+  /**
+   * ⚑ S415 (UiB job 33 Part D) — TRANSJESUS.STR'S MOVING PICTURE, ON ITS OWN SMALL PLANE OVER THE MONITOR. The stream fills her
+   * monitor (beat 11), and its picture moves at the stream's own steps; drawn into the monitor's canvas, each step re-sent the
+   * whole 2130 × 1152 texture (2840 × 1536 in a headset): measured 46–82 MB a second. So the picture is a child plane of the
+   * monitor's glass, exactly over the picture's rect (streamCover.ts `PICTURE`), 4 mm in front of it, with its own 960 × 660
+   * canvas; the monitor is re-sent only when its own parts change (the chat, the count, the fund). It follows the glass
+   * wherever it goes (the headset's ×1.2, the Close switching it off), is never pressed (nothing on the picture is a control;
+   * presses go to the monitor's rects), and is on only while the picture moves: frozen, torn, dark or growing, the monitor
+   * draws the picture itself. One draw call, while it is on.
+   */
+  let streamPic: { canvas: HTMLCanvasElement; ctx: CanvasRenderingContext2D; tex: pc.Texture; entity: pc.Entity; seen: number } | null = null;
+  const STREAM_PIC_SCALE = 2;
+  function driveStreamPicture(): void {
+    const mon = screens.find((sc) => sc.name === 'monitor');
+    const st = e4Bridge()?.shell()?.browser.acts.stream;
+    if (!mon || !st) { if (streamPic) streamPic.entity.enabled = false; return; }
+    st.planeReady = true;
+    if (!streamPic) {
+      const { canvas, ctx } = makeCanvas(STREAM_PICTURE.w, STREAM_PICTURE.h, STREAM_PIC_SCALE);
+      const tex = makeScreenTexture(app, canvas, 'screen');
+      const entity = makeScreenEntity('era4-stream-picture', tex, STREAM_PICTURE.w / LOGICAL.monitor.w, STREAM_PICTURE.h / LOGICAL.monitor.h);
+      // in the glass's own units (the parent's scale is its size): the picture's centre, and 4 mm toward her
+      entity.setLocalPosition((STREAM_PICTURE.x + STREAM_PICTURE.w / 2) / LOGICAL.monitor.w - 0.5, 0.004, (STREAM_PICTURE.y + STREAM_PICTURE.h / 2) / LOGICAL.monitor.h - 0.5);
+      entity.enabled = false;
+      mon.entity.addChild(entity);
+      streamPic = { canvas, ctx, tex, entity, seen: -1 };
+    }
+    const on = eraNow === 'e4' && mon.entity.enabled && st.planeOn;
+    if (streamPic.entity.enabled !== on) streamPic.entity.enabled = on;
+    if (!on) { streamPic.seen = -1; return; }
+    if (st.picVersion !== streamPic.seen) {
+      streamPic.seen = st.picVersion;
+      streamPic.ctx.clearRect(0, 0, STREAM_PICTURE.w, STREAM_PICTURE.h);
+      st.drawPicture(streamPic.ctx, STREAM_PICTURE.w, STREAM_PICTURE.h);
+      streamPic.tex.upload();
+    }
+  }
   add('phone', LOGICAL.phone, (ctx, w, h) => graceQueueLite.drawPhone(ctx, w, h), { versionOf: () => graceQueueLite.phoneVersion });
   // ⚑ 2026-09-12 — the stream: drawn by the ball, on while the Commons is on
   add('stream', LOGICAL.stream, (ctx, w, h) => {
@@ -1313,6 +1362,15 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
    * makes the beat legible rather than merely absolute: Maya's room slides past
    * the borders of a rectangle that does not move.
    */
+  /** ⚑ S414b — the headset's model on the desk (reinterp_deltas `e_headset`), found once */
+  let headsetEntity: pc.Entity | null | undefined;
+  function headsetModel(): pc.Entity | null {
+    if (headsetEntity === undefined || (headsetEntity && !headsetEntity.parent)) {
+      const e = app.root.findByName('e_headset');
+      headsetEntity = e instanceof pc.Entity ? e : null;
+    }
+    return headsetEntity;
+  }
   function driveVisor(dt: number): void {
     const shell = e4Bridge()?.shell();
     if (!visor || !shell) return;
@@ -1335,6 +1393,16 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
     if (visorK !== target) {
       const step = dt / WEAR_SECONDS;
       visorK = target > visorK ? Math.min(1, visorK + step) : Math.max(0, visorK - step);
+    }
+    // ⚑ S414b (UiB job 33; the coordinator's review of S414's stills B09d-host_vr_xr, B10f-break_vr_xr) — THE HEADSET GOES WITH
+    //   ITS GLASS. The glass is the device's picture; the model is the device. While the glass is off the desk (lifting to her eyes,
+    //   on them, or coming back down — or carried in a hand), the model is not lying on the desk under the screen as well: it is
+    //   hidden, and it is there again the frame the glass is back at rest. No fade (the held-device grammar). Its pad stays. The
+    //   model is kept out of the room's batch for this (app.ts `setNeverBatch`), so the toggle costs no rebatch.
+    {
+      const model = headsetModel();
+      const onDesk = visorK === 0 && !visorCarry;
+      if (model && model.enabled !== onDesk) model.enabled = onDesk;
     }
     if (visorK === 0 && visorCarry && cam) {
       // in the hand: held at the carry point, its glass turned to the eyes
@@ -1573,8 +1641,10 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
          */
         if (s.name === 'visor' && eraNow === 'e4') {
           const sh = e4Bridge()?.shell();
+          // ⚑ S414 — and while it is being set back on the desk (Act III's session dies in it): it goes dark and comes down,
+          //   no fade — the glass eases from the eyes to its rest (visorK → 0) and only then is it the model alone
           s.entity.enabled = !!sh && !sh.handedOffToClose
-            && (sh.pinned || sh.deviceReady || sh.deviceReturnable);
+            && (sh.pinned || sh.deviceReady || sh.deviceReturnable || visorK > 0);
         }
         if (s.name === 'backstage') {
           // ⚑ S356 — only while she faces it (one draw call, never while the crowd is up in front of her)
@@ -1620,8 +1690,10 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
          */
         if (s.name === 'visor' && eraNow === 'e4') {
           const sh = e4Bridge()?.shell();
+          // ⚑ S414 — and while it is being set back on the desk (Act III's session dies in it): it goes dark and comes down,
+          //   no fade — the glass eases from the eyes to its rest (visorK → 0) and only then is it the model alone
           s.entity.enabled = !!sh && !sh.handedOffToClose
-            && (sh.pinned || sh.deviceReady || sh.deviceReturnable);
+            && (sh.pinned || sh.deviceReady || sh.deviceReturnable || visorK > 0);
         }
         if (s.name === 'backstage') {
           // ⚑ S356 — only while she faces it (one draw call, never while the crowd is up in front of her)
@@ -1668,6 +1740,7 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
         }
         if (s.dirty) { s.tex.upload(); s.dirty = false; }
       }
+      driveStreamPicture();
     },
     closeForEraJump(): void {
       graceQueueLite.closeForEraJump();

@@ -140,6 +140,33 @@ const REGISTRY: Record<string, string> = {
   //   to prevent: an unregistered name is never requested, and that guarantee
   //   only holds while the registry names real files. Era 4 was silent for
   //   three sessions with every one of these correctly named in the data.
+  // ⚑ S412 (UiB job 33 Part A; T97·H6, his 21 Nov "Yes") — the 2026 company's one voice, Act I (L): Kokoro-82M rendered by
+  //   tools/tts/kokoro_lines.py from data/dialog/s4_acts.json (each line's measured `seconds` beside it there)
+  'l_a1_hello.mp3': `${AUDIO_BASE}l_a1_hello.mp3`,
+  'l_a1_soften.mp3': `${AUDIO_BASE}l_a1_soften.mp3`,
+  'l_a1_truth.mp3': `${AUDIO_BASE}l_a1_truth.mp3`,
+  'l_a1_goodcall.mp3': `${AUDIO_BASE}l_a1_goodcall.mp3`,
+  'l_a1_doors.mp3': `${AUDIO_BASE}l_a1_doors.mp3`,
+  'l_a1_answer.mp3': `${AUDIO_BASE}l_a1_answer.mp3`,
+  // ⚑ S413 (UiB job 33 Part B) — Act II: Second Thoughts in the same voice, slower (speed 0.82), the same switch
+  'l_b5_here.mp3': `${AUDIO_BASE}l_b5_here.mp3`,
+  'l_b7_made.mp3': `${AUDIO_BASE}l_b7_made.mp3`,
+  'l_b8_hear.mp3': `${AUDIO_BASE}l_b8_hear.mp3`,
+  'l_b8_found.mp3': `${AUDIO_BASE}l_b8_found.mp3`,
+  // ⚑ S414 (UiB job 33 Part C) — Act III: Second Thoughts' "ready" (0.82); Shepherd in L's voice with no switch (0.88); L's
+  //   stutter once Second Thoughts is removed (0.95)
+  'l_b9_ready.mp3': `${AUDIO_BASE}l_b9_ready.mp3`,
+  'l_b9_hello.mp3': `${AUDIO_BASE}l_b9_hello.mp3`,
+  'l_b9_explore.mp3': `${AUDIO_BASE}l_b9_explore.mp3`,
+  'l_b9_courage.mp3': `${AUDIO_BASE}l_b9_courage.mp3`,
+  'l_b9_mum.mp3': `${AUDIO_BASE}l_b9_mum.mp3`,
+  'l_b9_show.mp3': `${AUDIO_BASE}l_b9_show.mp3`,
+  'l_b10_stay.mp3': `${AUDIO_BASE}l_b10_stay.mp3`,
+  'l_b10_wait.mp3': `${AUDIO_BASE}l_b10_wait.mp3`,
+  'l_b10_unavailable.mp3': `${AUDIO_BASE}l_b10_unavailable.mp3`,
+  // ⚑ S415 (UiB job 33 Part D, beat 13) — L's last line, its voice slowing and breaking (tools/tts/s415_soon.py: the same Kokoro
+  //   voice, each phrase rendered slower, the last running down); his words (close_message.json laptopLine)
+  'l_b13_soon.mp3': `${AUDIO_BASE}l_b13_soon.mp3`,
   'l_u1a.mp3': `${AUDIO_BASE}l_u1a.mp3`,
   'l_u1b.mp3': `${AUDIO_BASE}l_u1b.mp3`,
   'l_u1r_ok.mp3': `${AUDIO_BASE}l_u1r_ok.mp3`,

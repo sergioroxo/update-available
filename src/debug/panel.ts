@@ -192,6 +192,25 @@ const OS_BEATS: BeatRow[] = [
   // place. Six tabs come back and the last one is not hers.
   { label: '⚑⚑ the browser · "Restoring your session" (REVIEW ONLY — not in play)', id: 'e4Browser' },
   { label: '↳ the search she did not finish — four completions, three of them out', id: 'e4BrowserSearch' },
+  // ⚑ S412 (UiB job 33 Part A) — 2026 rebuilt: the one screen, two panes; Act I (L) from each of its beats
+  { label: '⚑ 2026 Act I · 1 L reads your week — the birthday card', id: 'e4Act1' },
+  { label: '↳ 2 the softened father — Kettle, the ✦', id: 'e4Act1Messages' },
+  { label: '↳ 3 three doors — Larkpost, Mum\'s course', id: 'e4Act1Mail' },
+  { label: '↳ 4 her search — the stories, the yellow card (the seam)', id: 'e4Act1Search' },
+  // ⚑ S413 (UiB job 33 Part B) — Act II (Second Thoughts) from each of its beats (Act I laid into the chat)
+  { label: '⚑ 2026 Act II · 5 it adds itself — L · Second Thoughts', id: 'e4Act2' },
+  { label: '↳ 6 the risk review, then the takeover', id: 'e4Act2Review' },
+  { label: '↳ 7 made for her alone — the video', id: 'e4Act2Video' },
+  { label: '↳ 8 her answer, deleted — Booked ✓ · today', id: 'e4Act2Answer' },
+  { label: '⚑ 2026 Act III · 9 the session — Join in VR · Join here', id: 'e4Act3' },
+  { label: '↳ 9 Shepherd Live™ in the headset (VR door)', id: 'e4Act3VR' },
+  { label: '↳ 9 Shepherd Live™ on the monitor (here door)', id: 'e4Act3Here' },
+  { label: '↳ 9 the photo — me, after.jpg, Becoming 99%', id: 'e4Act3Photo' },
+  { label: '↳ 10 the friends break in — Remove · Yes (monitor)', id: 'e4Act3Friends' },
+  { label: '↳ 10 the friends break in — Remove · Yes (headset)', id: 'e4Act3FriendsVR' },
+  { label: '⚑ 2026 Act IV · 11 the stream — transjesus.str on the monitor', id: 'e4Act4Stream' },
+  { label: '↳ 12 the shutdown — SESSION TERMINATED, the glitch', id: 'e4Act4Shutdown' },
+  { label: '↳ 13 coming soon — "we\'ll still exist.", L, into the Close', id: 'e4Act4End' },
   { label: 'E4 · ⚑ THE PLACE (worn — then turn, and see what happens)', id: 'e4Place' },
 
   { heading: 'E4 · L — the voice, and the room rewrites (S77)' },

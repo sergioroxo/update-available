@@ -62,6 +62,16 @@ import V from '../../../data/dialog/s4_v3.json';
 import closeMessage from '../../../data/strings/close_message.json';
 import tvWords from '../../../data/strings/teaching_tv.json';
 import { voiceHeld, voiceWanted } from '../../state/voiceHold';
+import { E4Acts, type TvNow } from './e4Acts';
+import { actOne, wireActOne, layIn as layInActOne, type ActOneFrom } from './e4ActOne';
+import { actTwo, wireActTwo, type ActTwoFrom } from './e4ActTwo';
+import { actThree, wireActThree, layInActTwo, stopActThreeSound, type ActThreeFrom, type ActThreeHooks } from './e4ActThree';
+import { actFour, wireActFour, layInActThree, type ActFourFrom, type ActFourHooks } from './e4ActFour';
+import { setStreamLight } from '../../room/streamLight';
+import type { Door } from './shepherd';
+import { OS as OS_WORDS } from './lScreen';
+import { MENU_H, DOCK_H, DOCK_FOOT, APPS26, edgeRR, fillRR, softShadow, alpha, type App26 } from './desk26';
+import { OS26 } from '../theme/era4';
 
 export interface Hit { x: number; y: number; w: number; h: number; id: string }
 type Surface = 'monitor' | 'laptop' | 'headset';
@@ -190,7 +200,7 @@ function houseAt(i: number): number {
 /** the clip plays over the whole page for this long when the map beat begins (one loop of its six frames) */
 const CLIP_TAKEOVER_SECONDS = CLIP_LOOP_SECONDS;   // S360: the clip's own loop (its frames' holds); S370: 58 s, ending on its slate
 
-type Step = 'idle' | 'house' | 'newyou' | 'mum' | 'dad' | 'link' | 'news' | 'clinic' | 'meridian' | 'left' | 'pause'
+type Step = 'idle' | 'acts' | 'house' | 'newyou' | 'mum' | 'dad' | 'link' | 'news' | 'clinic' | 'meridian' | 'left' | 'pause'
   | 'mail' | 'mumMail'
   | 'search' | 'typing' | 'results' | 'bot' | 'junie' | 'confirm' | 'photos' | 'ready';
 interface Tab { id: string; kind: 'search' | 'news' | 'clinic' | 'photos' | 'mail'; title: string; address: string }
@@ -203,6 +213,39 @@ export class E4Browser {
   lambyGuidePaint: GuidePaint = { rings: [], balloon: false };
   /** ⚑ the laptop's messenger: the people (see messenger.ts) */
   readonly messenger = new E4Messenger();
+  /**
+   * ⚑ S412 (UiB job 33 Part A; T98) — 2026 REBUILT FROM ITS LOGIC: the one screen with two panes and the director of the
+   * acts (src/desktop/apps/e4Acts.ts, lScreen.ts, e4ActOne.ts). From "Press to wake the screen" the monitor is THAT screen;
+   * Act I (L, beats 1–4) plays on it. ⚑ THE SEAM: Act I's last press (✚ Add to L · Not now) leads into Act II.
+   * ⚑ S413 (Part B) — ACT II (Second Thoughts, beats 5–8: e4ActTwo.ts) follows on the same screen; `fromActs` is retired (the
+   * old conversation never opens). Act II's last line ("Booked ✓ · today.") hands over to the visit as it was after the
+   * screens (`handOver`: the headset, Shepherd Live™'s studio) until Part C's Act III exists.
+   */
+  readonly acts = new E4Acts();
+  private actsSeen = -1;
+  /** Act I has handed over (the old screens carry the rest of the visit until Parts B–D replace them) */
+  private actsDone = false;
+  /** ⚑ S413 — Act II has ended ("Booked ✓ · today."): the screens are done and the headset is the way on (`programDone`) */
+  private actsHanded = false;
+  private handedT = 0;
+  /** ⚑ S413 (beat 6) — app.ts: Open it brings the console off the bed to her (heldDevice's grammar); and whether it is held */
+  onConsole: (() => boolean) | null = null;
+  consoleHeld: (() => boolean) | null = null;
+  /** ⚑ S414 (Act III) — the shell (space.ts): is the headset on her face; the session dies in it (dark, set back on the desk);
+   *  and the acts are over (Junie's "i know. come in."): the stream begins */
+  headsetWorn: (() => boolean) | null = null;
+  onHeadsetDown: (() => void) | null = null;
+  onActsDone: (() => void) | null = null;
+  /** ⚑ S415 (Act IV) — the shell files her leaving for the stream, and the termination (space.ts); LambyVision, if it is playing,
+   *  stops with its picture (app.ts) */
+  onStreamJoined: (() => void) | null = null;
+  onTerminated: (() => void) | null = null;
+  onStopTv: (() => void) | null = null;
+  /** ⚑ S414 — the Join-in-VR door has lit the headset on the desk: it is pressable (space.ts `deviceReady`; the walker's bstate) */
+  headsetOffered = false;
+  /** app.ts: bring the Lamby set off its shelf to the side of the monitor (Mum's link); and how the set is now */
+  onHedge: (() => boolean) | null = null;
+  tvNow: (() => TvNow & { arriving: boolean }) | null = null;
 
   private phase: 'dormant' | 'saver' | 'restoring' | 'open' | 'handed' | 'failed' = 'dormant';
   private saverT = 0;
@@ -284,7 +327,8 @@ export class E4Browser {
   private botT = 0;
   private botSaid: Said[] = [];
   /** ⚑ S356 — the chips she pressed in the bot, in order (memory only): the host's operator view quotes them back */
-  get herWords(): string[] { return this.botSaid.filter((s) => s.who === 'her').map((s) => s.text); }
+  // ⚑ S413 — and the presses she made in the acts (her bubbles on the one screen; her deleted words are not among them)
+  get herWords(): string[] { return [...this.acts.screen.rows.filter((r) => r.who === 'her').map((r) => r.text), ...this.botSaid.filter((s) => s.who === 'her').map((s) => s.text)]; }
   private botDone = new Set<string>();
   private botNextIn = -1;
   /** ⚑ S404 (UiB job 30 C2) — Maya's own line in her message box, never sent (s4_v3.json bot.unsent): seconds since she began
@@ -354,17 +398,23 @@ export class E4Browser {
   get junieReplied(): boolean { return this.messenger.junieReplied; }
   get reversed(): boolean { return this.reversal === 'matched'; }
   /** the conversation is over: the original confirmed, the agent satisfied, the headset is what is left */
-  get programDone(): boolean { return this.step === 'ready' && this.reversal === 'matched' && this.botBeatReady; }
+  get programDone(): boolean { return (this.step === 'ready' && this.reversal === 'matched' && this.botBeatReady) || (this.step === 'acts' && this.actsHanded); }
   /** for the walker's bstate: a choice is on the page and unanswered */
   turnPending(): boolean { const b = this.bot; return !!b && !!b.chips && this.botBeatReady && !this.botDone.has(b.id); }
   get feltUp(): boolean { return this.messenger.felt; }
   get guideSilent(): boolean {
     return this.startMap.active || !this.pressable || this.phase !== 'open' || !!this.idleOrb || this.mode === 'game'
-      || this.messenger.felt || this.enquiryOpen || this.draftLive;
+      || this.messenger.felt || this.enquiryOpen || this.draftLive
+      || (this.step === 'acts' && (this.acts.feltNow || this.acts.screen.originalShown))   // S412: a person's words on the glass
+      || (this.step === 'acts' && (this.acts.respite || this.acts.stream.on));   // S415: the stream (respite) and the dark after it
   }
   // ⚑ S370 — and while the clip owns the page (its narrator is the voice; one voice at a time): its 58 s now outlast the
   //   guide's 50 s tip, which would otherwise pop over the end slate
-  get guideVoice(): boolean { return !!this.nowLine || this.waitNow || this.clipTakeover; }
+  get guideVoice(): boolean {
+    return !!this.nowLine || this.waitNow || this.clipTakeover
+      || (this.step === 'acts' && (this.acts.screen.speaking || this.acts.screen.typing || this.acts.floor))   // S412: L is talking · S413: the film has the floor
+      || (this.step === 'acts' && this.acts.screen.desk.speaking);   // S417: a notification is up (one voice at a time)
+  }
   sayLine(line: string): void { this.nowLine = line; this.version++; }
   /** the laptop's line while the messenger is not up (the restore, the session worn) */
   get consoleLine(): string { return this.phase === 'open' ? '' : V.laptop.restoring; }
@@ -454,6 +504,12 @@ export class E4Browser {
   }
   /** wheel, drag, thumbstick, touch on the monitor: Kettle's open thread scrolls (time by scroll, his ruling) */
   scrollAt(x: number | null, y: number | null, dy: number): boolean {
+    // ⚑ S412 — the AI's conversation scrolls back (26-14: let him scroll the chat)
+    if (this.step === 'acts') {
+      if (x !== null && y !== null && !this.acts.screen.chatAt(x, y, this.actsH)) return false;
+      if (this.acts.screen.scrollChat(dy)) { this.lambyGuide?.activity(); this.version++; }
+      return this.acts.screen.chatScrolls;
+    }
     const L = this.lay;
     if (!L || this.phase !== 'open' && !e4Has('terminated')) return false;
     // ⚑ S363 — which surface: the point's, else the one a drag began on, else (the headset's stick) Kettle's open thread
@@ -476,6 +532,7 @@ export class E4Browser {
   }
   /** is this monitor point on something that scrolls (a drag that starts here scrolls instead of turning) */
   scrollsAt(x: number, y: number): boolean {
+    if (this.step === 'acts') return this.acts.screen.chatAt(x, y, this.actsH) && this.acts.screen.chatScrolls;
     const L = this.lay;
     this.scrollGrab = !L ? null : inside(x, y, L.k) ? (this.messenger.canScroll ? 'kettle' : null) : this.mailScrollsAt(x, y) ? 'mail' : null;
     return this.scrollGrab !== null;
@@ -670,6 +727,7 @@ export class E4Browser {
   private pathIds(): Set<string> {
     const s = new Set<string>();
     if (this.phase !== 'open' || this.messenger.felt) return s;
+    if (this.step === 'acts') { for (const id of this.acts.path) s.add(id); return s; }   // S412: the act's own
     if (this.newyouUp) { s.add('ny-continue'); return s; }
     if (this.enquiry === 'draft') { s.add('enq-send'); return s; }
     if (this.enquiry === 'replied') { s.add('enq-close'); return s; }
@@ -747,8 +805,96 @@ export class E4Browser {
   private wake(): void {
     if (this.phase !== 'saver') return;
     ledger.e4Space.push({ id: 'saver', outcome: 'pressed', witness: PROGRAM.saver.witness });
-    this.phase = 'restoring';
+    // ⚑ S412 — no restore to wait through any more: the screen wakes on L, already reading her week (Act I, beat 1)
+    this.phase = 'open';
     this.t = 0;
+    if (!this.filedSession) { this.filedSession = true; ledger.e4Space.push({ id: 'session', outcome: 'read', witness: W3.session }); }
+    this.beginActs(1);
+    this.version++;
+  }
+  /** ⚑ S412 — Act I begins (from its first beat in play; a review jump may begin later) · ⚑ S413 — then Act II, on the same
+   *  screen, from the seam's press (a review jump may begin inside Act II: `two`) · ⚑ S414 — then Act III (Shepherd Live™,
+   *  beats 9–10; a review jump may begin inside it: `three`), and its last line hands over to the stream */
+  private beginActs(from: ActOneFrom, two?: ActTwoFrom, three?: { from: ActThreeFrom; door: Door }, four?: ActFourFrom): void {
+    const a = this.acts;
+    wireActOne(a);
+    wireActTwo(a);
+    wireActThree(a);
+    stopActThreeSound();
+    // ⚑ S415 — the stream is not up, and its light is not in the room, until Act IV puts them there
+    a.stream.reset(); a.respite = false; a.screen.cover = null; wireActFour(a);
+    setStreamLight(null);
+    a.bringTv = () => this.onHedge?.() ?? false;
+    this.go('acts');
+    this.actsHanded = false;
+    const self = this;
+    const hooks: ActThreeHooks = {
+      offerHeadset: (on) => { self.headsetOffered = on; self.version++; },
+      headsetOn: () => self.headsetWorn?.() ?? false,
+      setDownHeadset: () => self.onHeadsetDown?.()
+    };
+    const hooks4: ActFourHooks = {
+      joined: () => self.onStreamJoined?.(),
+      terminated: () => self.onTerminated?.(),
+      stopTv: () => self.onStopTv?.()
+    };
+    a.start((function* () {
+      let choice: 'add' | 'notnow' = 'add';
+      if (four) {
+        // ⚑ S415 (review only) — Act IV from one of its beats: Acts I–III laid in as beat 10 leaves them
+        layInActOne(a, 5); layInActTwo(a); layInActThree(a);
+        self.actsDone = true;
+        yield* actFour(a, hooks4, four);
+        a.done = true;
+        self.handOver();
+        self.onActsDone?.();
+        return;
+      }
+      if (three) { layInActOne(a, 5); layInActTwo(a); }
+      else {
+        if (!two) choice = yield* actOne(a, { tvBusy: () => { const t = self.tvNow?.(); return !!t && (t.watching || t.arriving); } }, from);
+        else layInActOne(a, 5);
+        self.actsDone = true;
+        yield* actTwo(a, { bringConsole: () => self.onConsole?.() ?? false, consoleHeld: () => self.consoleHeld?.() ?? false }, choice, two ?? 5);
+      }
+      self.actsDone = true;
+      // ⚑ S414 — Act III: "Booked ✓ · today." leads straight into "Your session with Shepherd is ready."
+      yield* actThree(a, hooks, three?.from ?? 'doors', three?.door ?? 'here');
+      // ⚑ S415 — Act IV: Junie's "i know. come in." leads straight into the stream; its last line (the update's own report)
+      //   hands the visit to the Close
+      yield* actFour(a, hooks4);
+      a.done = true;
+      self.handOver();
+      self.onActsDone?.();
+    })());
+  }
+  /**
+   * ⚑ S413 — THE HAND-OVER (S412's `fromActs`, retired: the old Second Thoughts conversation never opens now — its beats are
+   * Act II's, rebuilt). ⚑ S414 — it comes after Act III now: Junie's "i know. come in." has been read, and the visit goes on
+   * into the stream (space.ts `joinStreamFromActs`: the stream as built, until Part D brings it onto the monitor). The headset,
+   * the studio, Junie's link, the raid, the naming and backstage are Act III's or retired (s4_ball.json `_retiredS414`). The old screens that still draw at the failure (the browser's window, Kettle's) are given the day the acts
+   * have shown, as `fromActs` gave them the morning, so nothing in them asks to be done again or reads empty; what Second
+   * Thoughts did is theirs too (Junie and the lot muted).
+   */
+  private handOver(): void {
+    if (this.actsHanded) return;
+    this.actsHanded = true;
+    this.handedT = 0;
+    this.headsetFaced = false;
+    this.acts.screen.stopVoice();
+    this.clinicNumber = CL.start + 3; this.clinicMoved = true;
+    this.enquiry = 'closed';
+    this.mailRows = ['meridian', 'clinic', 'mum']; this.mailOpen = 'mum';
+    this.mailSeen.add('mum'); this.mailSeen.add('meridian'); this.mailSeen.add('clinic');
+    this.tabs = [this.searchTab(), this.mailTab(), this.newsTab()];
+    this.newsOpened = ARTICLES.length; this.newsIndex = 0;
+    this.liveId = 'search';
+    const m = this.messenger;
+    m.houseShown = 3; m.houseOpenedBirthday = true;
+    m.mumToday = 1; m.mumAtToday = true; m.mumOpened = true;
+    m.dadIn = true; m.dadRead = true; m.linkOpened = true;
+    m.junieMuted = true; m.houseMuted = true; this.mapMuted = true;
+    m.want = null; m.view = 'list';
     this.version++;
   }
   /** the monitor sleeps again only once the screens are done and the headset waits (S208's orb) */
@@ -812,12 +958,34 @@ export class E4Browser {
     }
     this.storyClock(dt);
     // the address bar's caret blinks on the search page only (an upload twice a second, nothing more)
-    if (this.pressable && this.liveTab === 'search' && Math.floor(this.t / CURSOR_BLINK) !== Math.floor((this.t - dt) / CURSOR_BLINK)) this.version++;
+    //   ⚑ S412 — never under the acts' one screen (it has no address bar: the blink re-sent the whole monitor twice a second)
+    if (this.pressable && this.step !== 'acts' && this.liveTab === 'search' && Math.floor(this.t / CURSOR_BLINK) !== Math.floor((this.t - dt) / CURSOR_BLINK)) this.version++;
   }
 
   private storyClock(dt: number): void {
     const b4 = this.stepT;
     this.stepT += dt;
+    if (this.step === 'acts') {
+      // ⚑ S417 — THE MENU HOLDS THE STORY. While the Menu (or anything opened from it: the steps, the refusal, the dig) is up,
+      //   the director does not step: a beat waiting on her keeps waiting, the AI's cursor stops where it is, nothing happens
+      //   under the menu that she would miss. A line already being spoken finishes; the next one waits for the menu to close.
+      //   (The Menu cannot be opened over the stream: transjesus.str covers the menu bar; nor in the headset's session.)
+      if (this.startMap.active) { this.stallT = 0; return; }
+      // ⚑ S417 — notifications wait while a person's words, the film or the guide's balloon have the floor
+      this.acts.screen.hush = this.acts.feltNow || this.acts.floor || this.lambyGuidePaint.balloon || !!this.lambyGuide?.active;
+      // ⚑ S412 — the acts run on their own director; the monitor follows its version (dirty only)
+      this.acts.update(dt);
+      if (this.acts.version !== this.actsSeen) { this.actsSeen = this.acts.version; this.version++; }
+      // the just-in-time ring: only while the act waits on a press, and never while the guide itself is up
+      if (this.acts.path.length && !this.lambyGuide?.active) {
+        const s4 = this.stallT; this.stallT += dt;
+        if (s4 < STALL_SECONDS && this.stallT >= STALL_SECONDS) this.version++;
+      } else this.stallT = 0;
+      // ⚑ S414 — retired: S413's turn to the headset once the screens were done. The headset is Act III's now (Join in VR), and it
+      //   sits on the desk in front of the seat: nobody is turned to it, and after the acts the stream follows, not the headset
+      if (this.actsHanded) this.handedT += dt;
+      return;
+    }
     // ⚑ S363 — notifications fade after a while; the news sites' furniture keeps its own clock; the composer's pointer
     if (this.toasts.length) {
       for (const t of this.toasts) t.t += dt;
@@ -1122,7 +1290,8 @@ export class E4Browser {
     this.version++;
   }
   private nextBot(): void {
-    const order = ['hello', 'reasons', 'diagnosis', 'clip', 'game', 'map', 'heading', 'stories', 'explore', 'rest'];   // S364: + the game, explore
+    const order = ['hello', 'reasons', 'diagnosis', 'clip', 'game', 'map', 'heading', 'stories', 'explore', 'rest']   // S364: + the game, explore
+      .filter((id) => !(this.actsDone && id === 'reasons'));   // S412: Act I has said "Three doors closed" (said once in the era)
     const b = this.bot;
     const i = b ? order.indexOf(b.id) : -1;
     if (i >= 0 && i < order.length - 1) this.startBot(order[i + 1]);
@@ -1264,6 +1433,7 @@ export class E4Browser {
   draw(ctx: CanvasRenderingContext2D, W: number, H: number, pressable = true, kettlePressable = pressable): void {
     this.hits = [];
     this.pressable = pressable;
+    if (this.step === 'acts' && this.phase === 'open' && !this.idleOrb) { this.drawActs(ctx, W, H, pressable); return; }
     if (!this.windowed) {
       this.lay = null;
       this.drawPage(ctx, W, H, pressable);
@@ -1318,12 +1488,93 @@ export class E4Browser {
       for (const r of this.hits.filter(h => view.targets.includes(h.id))) drawGuidePointer(ctx, r, { x: W - 24, y: H - 24 }, CHROME.accent, view.frame);
     }
   }
+  /**
+   * ⚑ S412 — THE ONE SCREEN, TWO PANES (job 33 rule 1): the AI on the left, her world on the right, the taskbar under both.
+   * The screen draws itself (lScreen.ts); here only what the browser has always added over it: the guide's tray and balloon
+   * (L is the helper now — the tray still says so), the just-in-time ring on the press the act waits on, and the guide's
+   * pointer. No Memory item in Act I (rule 3: memory belongs to Second Thoughts, from beat 6). No tabs.
+   */
+  private actsH = 384;
+  private drawActs(ctx: CanvasRenderingContext2D, W: number, H: number, pressable: boolean): void {
+    this.lay = null;
+    this.pageTargets = [];
+    this.actsH = H;
+    // ⚑ S417 — the Menu cannot stay open on a screen she cannot press (the headset worn, the screens handed on)
+    if (!pressable && this.startMap.active) this.startMap.close();
+    const scr = this.acts.screen;
+    scr.menuOpen = this.startMap.active;
+    this.hits = scr.draw(ctx, W, H, pressable).slice();
+    const silent = this.guideSilent;
+    if (pressable && !silent) {
+      const asked = !!this.lambyGuide?.active;
+      const stalled = this.stallT >= STALL_SECONDS && ledger.view.highlights !== false;
+      if (asked || stalled) { const path = this.pathIds(); for (const h of this.hits) if (path.has(h.id)) this.ringAround(ctx, h); }
+    }
+    // ⚑ S413 (rule 3) — MEMORY belongs to Second Thoughts: its item from its first note (beat 6), never in Act I; open, its card
+    //   lies over her world (the record of the day, read only); never over a person's words
+    //   ⚑ S417 — it lives in the menu bar's status area now (left of the clock), as a status item
+    // ⚑ S415 — the stream (and the dark after it) has the whole glass: no Memory item, no tray, no ring over it
+    if (this.acts.stream.on) { this.memOpen = false; this.lambyGuidePaint = { rings: [], balloon: false }; if (this.startMap.active) this.startMap.close(); return; }
+    const memory = scr.rows.some((r) => r.who === 'memory');
+    this.memOpen = this.memOpen && memory && !silent;
+    if (memory && !this.acts.feltNow && !scr.originalShown) this.drawMemoryStatus(ctx, scr.statusX, pressable);
+    if (this.memOpen) {
+      const pr = scr.pageRect(W, H);
+      this.drawMemoryCard(ctx, { b: { x: pr.x, w: pr.w, cx: pr.x, cy: pr.y, cw: pr.w, ch: pr.h, s: 1, lw: pr.w, lh: pr.h }, k: { x: 0, w: 0, cx: 0, cy: 0, cw: 0, ch: 0, s: 1, lw: 0, lh: 0 } }, pressable);
+    }
+    // ⚑ S417 — THE GUIDE'S TRAY: "Ask L for help" and L's head, a frosted pill at the dock's level in the bottom-right corner
+    //   (the assistant button of the period's desktops). drawLambyGuide is handed a glass 5 px shorter so its head sits in it.
+    if (pressable && this.lambyGuide?.canRequest && !silent && !this.startMap.active) {
+      setFont(ctx, 11);
+      const ask = V.oneScreen.askL, aw = Math.ceil(ctx.measureText(ask).width);
+      const py = H - DOCK_FOOT - DOCK_H, px0 = W - 118 - aw, pw = W - 8 - px0;
+      softShadow(ctx, { x: px0, y: py, w: pw, h: DOCK_H }, 11, 0.7);
+      fillRR(ctx, px0, py, pw, DOCK_H, 11, alpha(OS26.dock, 0.62));
+      ctx.fillStyle = OS26.winInk; ctx.fillText(ask, W - 112 - aw, py + 8);
+      this.hits.push({ x: px0, y: py, w: pw - 70, h: DOCK_H, id: 'lg-tray' });
+      this.lambyGuidePaint = drawLambyGuide(ctx, 'e4', this.lambyGuide.view, this.hits, { w: W, h: H - 5 }, this.hits.map(h => `press:${h.id}`));
+    } else this.lambyGuidePaint = { rings: [], balloon: false };
+    const view = this.lambyGuide?.view;
+    if (pressable && !silent && view && !view.hidden && (view.rung === 'show' || view.rung === 'file')) {
+      for (const r of this.hits.filter(h => view.targets.includes(h.id))) drawGuidePointer(ctx, r, { x: W - 24, y: H - 24 }, CHROME.accent, view.frame);
+    }
+    // ⚑ S417 — THE MENU (his "It is missing the Menu button btw"): the piece's Start menu, the same model as every era's
+    //   (`buildStartModel(…, 'e4')`), in this OS's skin (StartMenuMap's e4 drawing), under the menu bar's Menu button. Open,
+    //   it owns the presses: its own items and the Menu button; a press anywhere else closes it.
+    if (this.startMap.active) {
+      const programs = APPS26.map((a) => ({ id: `app:${a}`, label: OS_WORDS.apps[a] }));
+      const nav = this.startMap.draw(ctx, W, H, 'e4', this.startModel(), this.startMapSilent, programs, (id) => this.appReachable(id));
+      const menuBtn = this.startMap.rootOpen ? undefined : this.hits.find((h) => h.id === 'start-menu');   // the dig covers the menu bar
+      this.hits = [...nav, ...(menuBtn ? [menuBtn] : [])];
+    }
+  }
+  /** ⚑ S417 — the Menu's app rows dim as the dock's do (an app she cannot reach now) */
+  private appReachable(id: string): boolean {
+    if (!id.startsWith('app:')) return true;
+    return this.acts.screen.dockApps().find((d) => d.app === id.slice(4))?.reachable ?? true;
+  }
+  /** ⚑ S417 — Second Thoughts' Memory in the menu bar's status area: its mark, the word, the count (it counts, quietly) */
+  private drawMemoryStatus(ctx: CanvasRenderingContext2D, right: number, pressable: boolean): void {
+    const M = FILE_ITEM.e4, n = String(this.fileWatch.count);
+    setFont(ctx, 11);
+    const lw = Math.ceil(ctx.measureText(M.label ?? '').width), nw = Math.ceil(ctx.measureText(n).width) + 10;
+    const w = 6 + 12 + 5 + lw + 6 + nw + 4, h = MENU_H - 6, x = right - w, y = 3;
+    // ⚑ S418 — Memory is Second Thoughts': on its yellow bar it is its own black and yellow
+    const st = this.acts.screen.desk.skin === 'secondThoughts' || this.acts.screen.desk.skin === 'shepherd';
+    const fill = st ? OS26.stInk : OS26.win, ink = st ? PLACE.sunHi : OS26.barInk, badge = st ? PLACE.sunHi : V3.primary, badgeInk = st ? OS26.stInk : V3.primaryInk;
+    edgeRR(ctx, x, y, w, h, h / 2, st ? OS26.stInk : OS26.barEdge, fill);
+    assistantMark(ctx, x + 5, y + 2, 12, badge, badgeInk);
+    ctx.fillStyle = ink; ctx.fillText(M.label ?? '', x + 22, y + 2);
+    fillRR(ctx, x + 22 + lw + 5, y + 2, nw, h - 4, (h - 4) / 2, badge);
+    ctx.fillStyle = badgeInk; ctx.fillText(n, x + 27 + lw + 5, y + 2);
+    if (pressable) this.hits.push({ x, y: 0, w, h: MENU_H, id: 'mem-open' });
+  }
   /** ⚑ S401 (job 29 D2) — the taskbar's Memory item: a small mark, the word, the count; inverted while lit */
-  private drawMemoryItem(ctx: CanvasRenderingContext2D, ty: number, pressable: boolean): void {
+  private drawMemoryItem(ctx: CanvasRenderingContext2D, ty: number, pressable: boolean, date = V.oneScreen.taskbarDate): void {
     // ⚑ S410 (his 21 Nov "yes": the file items of 2003–2026 stop lighting too, as 97-6 did for 1997's tray) — it counts, quietly; it never lights
     const M = FILE_ITEM.e4, lit = false, n = String(this.fileWatch.count);
     ctx.font = monoFor(10);
-    const dw = Math.ceil(ctx.measureText(V.oneScreen.taskbarDate).width);
+    const dw = Math.ceil(ctx.measureText(date).width);
     setFont(ctx, 10);
     const lw = Math.ceil(ctx.measureText(M.label ?? '').width), nw = Math.ceil(ctx.measureText(n).width) + 10;
     const x = 8 + dw + 16, w = 8 + 10 + 6 + lw + 6 + nw + 6, y = ty + 2, h = WIN.taskbar - 4;
@@ -1529,11 +1780,22 @@ export class E4Browser {
       if (nav.length) this.pageTargets = [...nav, ...this.pageTargets.filter(r => r.id === 'start-menu' || r.id === 'whattodo')];
     }
   }
+  /** ⚑ S417 — a press on 2026's Menu (or on what it opened): the same answers as every era's Start menu */
+  private pressMenu(id: string): void {
+    const model = this.startModel();
+    if (id.startsWith('sm-prog:app:')) { this.startMap.close(); this.acts.screen.pressApp(id.slice(12) as App26); return; }
+    if (this.startMap.press(id, model, this.startMapSilent)) { playOnce('ui_press.mp3'); return; }
+    if (id === 'sm-shut') { this.startMap.close(); this.startMap.refused = true; playOnce('ui_press.mp3'); return; }
+    if (id === 'sm-leave') { this.startMap.close(); gameMenuBus.openLeave?.(); return; }
+    if (id === 'sm-disabled' || id === 'sm-none') return;
+    this.startMap.close();
+  }
   /** Lamby's "Take me there": press the target for her (navigation only — never an answer) */
   pressGuideTarget(id: string): 'monitor' | null {
     if (this.guideSilent || this.guideVoice) return null;
     const allowed = ['ny-continue', 'clinic-open', 'clinic-support', 'mail-support', 'mail-read', 'tab-mail', 'tab-news', 'news-next', 'sponsor-chat', 'search-go', 'ad-chat', 'tab-photos', 'start-menu', 'row-mum', 'chat-mum', 'row-dad', 'chat-dad', 'row-house', 'chat-house', 'row-junie', 'chat-junie',
-      'mem-open'];   // S401: the file
+      'mem-open',   // S401: the file
+      'video-play'];   // S413 (beat 7): the guide offers once to play the film it made (navigation, not an answer)
     if (!allowed.includes(id)) return null;
     const r = this.hits.find(h => h.id === id);
     if (r) { this.handleClick(r.x + r.w / 2, r.y + r.h / 2); return 'monitor'; }
@@ -2907,6 +3169,29 @@ export class E4Browser {
     if (this.waitNow) { this.waitNow = false; this.version++; }
     if (this.nowLine) { this.nowLine = null; this.version++; }
     if (this.phase === 'handed') return false;
+    // ⚑ S412 — the one screen: its own controls (the act's answers, the pages, the voice switch, the back arrow)
+    if (this.step === 'acts' && this.phase === 'open') {
+      // ⚑ S417 — THE MENU: its button toggles it; open, it owns the press (its own items; anywhere else closes it). Its items do
+      //   what they do in every era (StartMenuMap.press: the steps, the jump, the dig; Shut Down… refused; Leave… the frame's
+      //   door), and her apps do what the dock does. None of it is handed to the script, so no beat moves.
+      const at = (h: Hit): boolean => mx >= h.x && mx <= h.x + h.w && my >= h.y && my <= h.y + h.h;
+      const mh = this.hits.find((h) => (h.id === 'start-menu' || h.id.startsWith('sm-') || /^(?:steps-|jump-|shut-ok|tape-)/.test(h.id)) && at(h));
+      if (mh?.id === 'start-menu') { this.lambyGuide?.press('lg-x'); this.memOpen = false; this.startMap.toggle(); playOnce('ui_press.mp3'); this.version++; return true; }
+      if (this.startMap.active) {
+        if (mh) this.pressMenu(mh.id);
+        else if (this.startMap.menu) this.startMap.close();
+        this.version++;
+        return true;
+      }
+      // ⚑ S413 — Memory (Second Thoughts', from beat 6) on the taskbar: its card over her world; any press closes it
+      if (this.memOpen) { this.memOpen = false; this.version++; return true; }
+      if (this.hits.some(h => h.id === 'mem-open' && mx >= h.x && mx <= h.x + h.w && my >= h.y && my <= h.y + h.h)) {
+        this.memOpen = true; playOnce('ui_press.mp3'); this.version++; return true;
+      }
+      const id = this.acts.screen.press(mx, my);
+      if (id) { this.stallT = 0; this.version++; return true; }
+      return false;
+    }
     // ⚑ S364 / N10 — while the AI uses her computer, her presses do nothing (its banner says so; the frame's Esc still works)
     if (this.act) return true;
     // ⚑ S364 — a page opened larger: any press closes it first (nothing else on the screen takes it)
@@ -3102,6 +3387,44 @@ export class E4Browser {
   openStream(): void { this.streamOpen = true; }
 
   /** review only: land on the settled browser at a tab kind */
+  /** ⚑ S412 (review only) — Act I from one of its beats (1 the week, 2 the messages, 3 the mail, 4 the search) */
+  debugActs(from: ActOneFrom): void {
+    this.settleT = 0;
+    this.phase = 'open';
+    this.t = 0;
+    this.filedSession = true;
+    this.beginActs(from);
+    this.version++;
+  }
+  /** ⚑ S413 (review only) — Act II from one of its beats (5 the arrival, 6 the review, 7 the video, 8 her answer); Act I laid in */
+  debugActTwo(from: ActTwoFrom): void {
+    this.settleT = 0;
+    this.phase = 'open';
+    this.t = 0;
+    this.filedSession = true;
+    this.beginActs(4, from);
+    this.version++;
+  }
+  /** ⚑ S414 (review only) — Act III from one of its points (the doors, the session, the photo, the friends), in a door;
+   *  Acts I and II laid in. In the VR door the shell has put the headset on first (space.ts `debugActThree`). */
+  debugActThree(from: ActThreeFrom, door: Door): void {
+    this.settleT = 0;
+    this.phase = 'open';
+    this.t = 0;
+    this.filedSession = true;
+    this.beginActs(4, undefined, { from, door });
+    this.version++;
+  }
+  /** ⚑ S415 (review only) — Act IV from one of its beats (the stream, the shutdown, the end); Acts I–III laid in as beat 10
+   *  leaves them (in either door: the stream is on the monitor whichever door she took) */
+  debugActFour(from: ActFourFrom): void {
+    this.settleT = 0;
+    this.phase = 'open';
+    this.t = 0;
+    this.filedSession = true;
+    this.beginActs(4, undefined, undefined, from);
+    this.version++;
+  }
   debugJumpTo(where: string): void {
     this.settleT = 0;
     this.phase = 'open';
