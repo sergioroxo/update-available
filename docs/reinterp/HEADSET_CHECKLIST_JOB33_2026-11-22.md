@@ -62,6 +62,40 @@ way in is `?era=4`.*
 - [ ] **T100 · Release Work's debrief (1997).** At the Close, open 1997's site, Sources tab. The card that begins
   "Cohen's book has the client repeat the person's name…" shows both quotes with their pages (p. 153, p. 175).
 
+## The look (job 34, S417–S420, 22 Nov)
+
+*Only the screen changed. The beats, lines and presses are job 33's. The pictures are in
+`research/article-images-2026-11-22/job34/`: the sheets `SHEET_*.png` in `S417/`, `S418/`, `S419/` and `S420/`.*
+
+- [ ] **The desktop, in every act.** A menu bar along the top, with **Menu** at the left and the clock at the right. A
+  dock of her apps at the bottom. Rounded windows with our own two grey buttons. Small notifications at the top right of
+  her window, one line at a time.
+- [ ] **The Menu.** Press **Menu**. Check her apps, "what to do now", Shut Down… (refused) and Leave…. Nothing moves
+  while it is open. Press Menu again to close it.
+- [ ] **The dock.** Press a dimmed app. One line says why; nothing opens and the story does not move.
+- [ ] **Act I · L, glossy.** L looks like a chat app: "L 5 · Premium ✦", the big "Good morning, Maya ✦", rounded
+  answers, "Ask L anything". The menu bar boasts "✦ 1,204 things handled for you this year". The birthday card has
+  confetti and "PERSONALISED FOR YOU". At her search, the yellow ad is the loudest thing on the screen. **Check that the
+  smallest lines read.**
+- [ ] **Act II · Second Thoughts takes over.** After **Add to L** the whole desktop goes yellow and black: "SECOND
+  THOUGHTS™ · is using your computer" on the menu bar, its ST tile first in the dock, her apps dimmed. Its dark window has
+  the score dial (34 ▼), and stickers appear as it mutes Junie and answers Dad. Kettle's muted rows carry "MUTED FOR YOU".
+- [ ] **Act III · Shepherd Live™, a TV show, through both doors.** LIVE, the gold title, "episode 1", the sponsors, stage
+  lights. Her photo becomes the show's graphic, with the gold ring "99% BECOMING" and APPLAUSE. The ticker at the bottom
+  changes phrase every 3 seconds. **Check the fps while Shepherd talks and at the photo**, and that the photo's seams
+  still read.
+- [ ] **Her photo (S420): cut, never made into anyone.** At beat 9, in either door, the filter lifts out her flag, her
+  pin, her earrings, the pink of her top, then her long hair. Each goes under a dashed line and leaves a grey-and-white
+  checkerboard. At 99% her face is still there with the dashed line round it. In the ring: a grey avatar, "default.png"
+  under BECOMING. **No man anywhere. Check the holes read as holes on the glass, not as a white top.**
+- [ ] **The console at beat 6 (S420).** Press **Open it**, then PLAY. In the Pride '24 picture Maya is cut the same way, and
+  Junie is whole.
+- [ ] **The fall.** Press **Yes**: the show goes, then the yellow, then a torn strip of it, then the plain desktop (about
+  a second). **Check that nothing flashes.** Kettle's names stay clear.
+- [ ] **The end.** Unchanged: the stream keeps its own look, then SESSION TERMINATED, then dark.
+- [ ] **At the Close.** At Daniel's desk, 2026's card reads "There's nothing to restore. I'm Maya." with **"Sent to
+  Junie"** in small grey type. The 2026 panel tells the new story. Is it readable from the seat?
+
 ## Your calls (one line each; the details are in the report)
 
 1. L's voice: af_heart at 0.95, on by default. Or British, or off by default?
@@ -82,11 +116,12 @@ way in is `?era=4`.*
 14. If she never presses Yes, her friends press it with her after 40 s.
 15. Junie's and Rae's tiles are faceless shapes in their colours (the piece had no drawings of them).
 16. The pale "studio" colour of the room in Act III: strength and colour.
-17. The photo filter stops at the man in a tie, at "Becoming 99%".
-18. The Close's CRT line shows "There's nothing to restore. I'm Maya." marked "Not sent", but in beat 10 her words are
-    now sent to Junie. Change the mark?
-19. The Close's 2026 panel text (close_network.json) still tells the older story ("ticks off signs", "a friend's
-    link"). It is left as it was.
+17. ~~The photo filter stops at the man in a tie, at "Becoming 99%".~~ **Changed in job 34 (S420), at your "replace" of
+    the male 'maya': it stops at 99% with her face, cut down toward default.png.**
+18. ~~The Close's CRT line shows "There's nothing to restore. I'm Maya." marked "Not sent", but in beat 10 her words
+    are now sent to Junie. Change the mark?~~ **Done in job 34 (S419): it reads "Sent to Junie".**
+19. ~~The Close's 2026 panel text (close_network.json) still tells the older story ("ticks off signs", "a friend's
+    link"). It is left as it was.~~ **Done in job 34 (S419): the panel tells the new story.**
 20. The people's card before the Close (gather, your 11 Nov ask) is retired; "we'll still exist." is the community's
     last word now.
 21. dance · stay: with no press in 25 s, the chat goes on as if she stayed.
@@ -96,3 +131,26 @@ way in is `?era=4`.*
 24. The stream's light: warm pink and gold.
 25. The stream's picture moves at 6 steps a second, like a stream's low frame rate.
 26. If she turned L's voice off, L's last line is only written.
+27. Act I: her apps other than L are dimmed and say "L will open this for you." (the sketch had them bright).
+28. At L's narrow width its chat list is one strip of chats, not a column.
+29. L's voice switch sits beside "Ask L anything".
+30. The Menu holds the story while it is open, and it does not open over the stream.
+31. From beat 5 the menu bar says "is using your computer"; "Take back control" is grey there during the takeover.
+32. "MUTED FOR YOU" goes on both muted rows (Junie's and the lot's).
+33. During BECOMING the host leaves the picture, and her photos are smaller (the seams still show).
+34. The ticker changes phrase every 3 seconds instead of crawling (a crawl would make the headset re-send the whole screen
+    twice a second).
+35. The wellbeing score stays at 34.
+36. The ad's "FREE FROM 18" starburst.
+37. The Close's mark "Sent to Junie" is quiet grey, with no red ring.
+38. The Menu's "More to explore" still lists older extras (the whole session on the headset, the console game on the bed).
+39. Other text at the Close still tells the old 2026: the receipt's list of hands and the search typed for her, and some
+    Lexicon words that only old code marks as met. Left as they are: a later job?
+40. At 99% the dashed line stays round her face (the 1% it cannot take). Or no line at the stop?
+41. Her skin is never greyed (a grey face reads as illness); only her room drains to grey.
+42. default.png sits inside the BECOMING ring, with the number on a gold badge below it.
+43. "Made with AI" moved to the top left of the photo, so it does not hide the flag being cut.
+44. The Pride '24 picture keeps one strand of her hair; only the trans flag's cloth is cut, and the rainbow flag drains.
+45. Two texts still describe the old picture, and they are yours: the dossier card "The filter" (it also shows on the 2026
+    era site) and the dossier's practice line "restored a photograph of you to someone else" (also on that site). What
+    should they say?

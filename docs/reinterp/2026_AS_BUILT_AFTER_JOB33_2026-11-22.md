@@ -110,3 +110,24 @@ end left to run into the Close (`research/…/job33/final-7763b962/drawcalls/`):
 
 The frame rates at the console (26-14) and at the photo (26-18) were measured on a CPU slowed four times (S413, S414).
 Only the Quest can confirm them.
+
+## Job 34 walked (22 Nov): S417–S420 at 9eee6816
+
+The whole visit at **9eee6816** (job34/all: job 33's bfad99bd, the merge of reinterp, S417/S417b, S418/S418b/S418c, S419
+and S420), from the entrance to the Restart page, once through each door of beat 9. Both passed: `isReachabilityProof`
+true, `reachedEra` e4, spine done, console [], the seven Close cards, the Restart page. 284 presses in each door. The
+walker's new step at beat 1 opened the Menu (her six apps, what to do now, Shut down, Leave) and closed it. The walk saw
+"default.png" on the screen; no "You, restored". "daniel-2003 / caleb-2003 NOT MET" is the walker's own census fault
+(fixed on the orchestrator's branch `aa/edges`, 933a1117), not the piece. The reports:
+`research/article-images-2026-11-22/job34/walks/walk-9eee6816-vr/` and `walk-9eee6816-here/`.
+
+**Timing** (seconds from the wake; the beats' lengths are job 33's): the first beat is 6–7 s longer, because the walker
+holds the Menu open there and the story waits for it; the film runs 83–86 s. **The Close's first card at 781.8 s (Join in
+VR) and 777.3 s (Join here): about 13.0 minutes**, against 12.8 at 7763b962. Still for more than 20 s: only in `mail`
+(25.7 s), and something could be pressed.
+
+**Draw calls (budget 75)**, the same sweep as above on 9eee6816 (`research/…/job34/S420/measurements/drawcalls-sweep-9eee6816/`):
+headset mock 48 through the acts (50 in the VR door's session and friends), **60** at worst on the Close's line; computer 29–30
+through the acts (23 in the VR door), **41** at worst during the crossing. **Unchanged by job 34.** At the photo (S420): uploads
+a second on the monitor 1.33 while it alters and 0.67 at 99%, on the glass 1.17 and 0.5; the throttled frame (CPU ×4) held
+60 fps in both doors (`research/…/job34/S420/measurements/`).
