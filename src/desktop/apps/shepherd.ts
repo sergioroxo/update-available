@@ -64,11 +64,13 @@ const PHOTO_STEPS = 14;
 const PW = 120, PH_ = 150;
 const BAR = 26, BAND = 34;
 const BREAK_SECONDS = 0.9;
-/** ⚑ S418 — the ticker along the foot (its height), and the steps it crawls in: ≤ 8 a second (ANIM_HZ's half), still under
- *  reduced motion; the applause marks round the ring change on the same steps */
+/** ⚑ S418 — the ticker along the foot (its height), and the steps it crawls in, still under reduced motion; the applause
+ *  marks round the ring change on the same steps. ⚑ S418b — 2 steps a second (of 14 px), not 4: each step re-sends the
+ *  whole monitor (2840 × 1536 in the headset, ≈ 17 MB) or the glass (2048 × 1536), and job 33's had 0.33 a second here
+ *  (tools: out/s418/uploads-probe.mjs measured 4.3–4.5 a second at 4 Hz) */
 const TICK = 18;
-export const TICK_HZ = 4;
-const TICK_PX = 7;
+export const TICK_HZ = 2;
+const TICK_PX = 14;
 /** the sponsor strip, under the bar, where the bar is too narrow to carry it (the headset's glass) */
 const SPONSOR_H = 16;
 
@@ -116,6 +118,7 @@ export class ShepherdSession {
   private clock = 0;
   /** ⚑ S418 — the ticker's (and the applause marks') step: TICK_HZ a second while the session is on and whole */
   tick = 0;
+  private tickT = 0;
   // ── the pictures, painted once ──
   private her: HTMLCanvasElement | null = null;
   private alt: HTMLCanvasElement | null = null;
@@ -132,7 +135,7 @@ export class ShepherdSession {
     this.on = true; this.door = door; this.t = 0; this.step = -1; this.intro = true; this.hostOn = false;
     this.line = ''; this.photos = 0; this.photoStep = 0; this.notes = []; this.booked = false;
     this.junie = []; this.signins = []; this.tiles = 0; this.settings = false; this.securing = false;
-    this.ask = false; this.yesRing = false; this.breakT = -1; this.dark = false; this.tick = 0;
+    this.ask = false; this.yesRing = false; this.breakT = -1; this.dark = false; this.tick = 0; this.tickT = 0;
     for (const k of Object.keys(this.cur) as CurId[]) this.cur[k] = blank();
     this.version++;
   }
@@ -172,8 +175,14 @@ export class ShepherdSession {
     const tick = Math.floor(before * ANIM_HZ) !== Math.floor(this.clock * ANIM_HZ);
     this.t += dt;
     // ⚑ S418 — the ticker crawls a step at TICK_HZ (and the applause marks change with it); still under reduced motion, and
-    //   still once the picture breaks (the show stops where it is)
-    if (!reducedMotion() && this.breakT < 0) { const k = Math.floor(this.t * TICK_HZ); if (k !== this.tick) { this.tick = k; this.version++; } }
+    //   still once the picture breaks (the show stops where it is). ⚑ S418b — and HELD while the filter is altering her photo
+    //   (26-18, the moment his headset run measured at 13–16 fps): each of its steps re-sends the whole surface, so it waits
+    //   for the ring to stop at 99 and crawls on from where it was
+    const altering = this.photos === 2 && this.photoStep < PHOTO_STEPS;
+    if (!reducedMotion() && this.breakT < 0 && !altering) {
+      this.tickT += dt;
+      const k = Math.floor(this.tickT * TICK_HZ); if (k !== this.tick) { this.tick = k; this.version++; }
+    }
     // the title card: four steps in, then held (the jingle has the floor)
     if (this.intro) { const s = Math.min(4, Math.floor(this.t * 3)); if (s !== this.step) { this.step = s; this.version++; } }
     for (const k of Object.keys(this.cur) as CurId[]) {
@@ -450,7 +459,7 @@ export class ShepherdSession {
         // hers: the photograph itself, small, with its name
         this.ensureHer();
         if (this.her) { const was = ctx.imageSmoothingEnabled; ctx.imageSmoothingEnabled = false; ctx.drawImage(this.her, tx, ty, tw, th); ctx.imageSmoothingEnabled = was; }
-        setFont(ctx, 9); ctx.fillStyle = V3.ink; ctx.fillText(fitIn(ctx, A3.b9.photos.file, tw + 6), tx, ty + th + 4);
+        setFont(ctx, 11); ctx.fillStyle = V3.ink; ctx.fillText(fitIn(ctx, A3.b9.photos.file, tw + 14), tx, ty + th + 3);
         anchor('photo-file', { x: tx, y: ty, w: tw, h: th });
       } else {
         thumb(ctx, tx, ty, tw, th, i % 3, false, 4);   // her other pictures (variant 3 is a portrait like hers: not used here)
@@ -628,7 +637,7 @@ export class ShepherdSession {
     px(ctx, sx + 10, sy + 28, pw - 20, 1, V3.edge);
     assistantMark(ctx, sx + 12, sy + 38, 18, AI.mark, WEB.card);
     setFont(ctx, 11); ctx.fillStyle = V3.ink; ctx.fillText(fitIn(ctx, S.row, pw - 46), sx + 36, sy + 37);
-    setFont(ctx, 9); ctx.fillStyle = V3.ink2; ctx.fillText(fitIn(ctx, S.sub, pw - 46), sx + 36, sy + 52);
+    setFont(ctx, 11); ctx.fillStyle = V3.ink2; ctx.fillText(fitIn(ctx, S.sub, pw - 46), sx + 36, sy + 52);
     setFont(ctx, 11);
     const rw = Math.ceil(ctx.measureText(S.remove).width) + 24, rx = sx + pw - rw - 12, ry = sy + ph - 30;
     roundEdge(ctx, rx, ry, rw, 22, 11, V3.ink, V3.card);
@@ -656,10 +665,10 @@ export class ShepherdSession {
       roundRect(ctx, cx - Math.round(hs * 0.56), hy - Math.round(hs * 0.14), Math.round(hs * 1.12), Math.round(hs * 0.42), Math.round(hs * 0.2), hair);
       roundRect(ctx, cx - Math.round(tw * 0.34), y + Math.round(th * 0.7), Math.round(tw * 0.68), th, 8, cloth);
       // their name, small, in the corner
-      ctx.font = monoFor(8);
+      ctx.font = monoFor(11);
       const name = k === 'junie' ? B10.names.junie : B10.names.rae, nw = Math.ceil(ctx.measureText(name).width) + 8;
-      ctx.save(); ctx.globalAlpha = 0.8; px(ctx, x + 2, y + th - 12, nw, 11, ERA4.field); ctx.restore();
-      ctx.fillStyle = WEB.card; ctx.fillText(name, x + 6, y + th - 11);
+      ctx.save(); ctx.globalAlpha = 0.8; px(ctx, x + 2, y + th - 15, nw, 14, ERA4.field); ctx.restore();
+      ctx.fillStyle = WEB.card; ctx.fillText(name, x + 6, y + th - 14);
     }
   }
 }
@@ -693,10 +702,11 @@ function gearIcon(ctx: CanvasRenderingContext2D, x: number, y: number, ink: stri
 }
 /** a cursor: an arrow in its owner's colour with a dark edge, its owner's name on it, a ring when it presses */
 export function drawCursor(ctx: CanvasRenderingContext2D, x: number, y: number, ink: string, pressing: boolean, label: string, right: number): void {
-  setFont(ctx, 9);
-  const lw = Math.ceil(ctx.measureText(label).width) + 10, lx = x + 14 + lw > right - 2 ? x - lw - 4 : x + 14;
-  pill(ctx, lx, y + 16, lw, 13, ink);
-  ctx.fillStyle = V3.ink; ctx.fillText(label, lx + 5, y + 18);
+  // ⚑ S418b — its name at the reading floor (11 px; job 33's was 9)
+  setFont(ctx, 11);
+  const lw = Math.ceil(ctx.measureText(label).width) + 12, lx = x + 14 + lw > right - 2 ? x - lw - 4 : x + 14;
+  pill(ctx, lx, y + 16, lw, 16, ink);
+  ctx.fillStyle = V3.ink; ctx.fillText(label, lx + 6, y + 18);
   if (pressing) { ctx.strokeStyle = ink; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(x, y, 9, 0, Math.PI * 2); ctx.stroke(); }
   const path = (): void => { ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x, y + 17); ctx.lineTo(x + 4, y + 13); ctx.lineTo(x + 7, y + 19); ctx.lineTo(x + 10, y + 18); ctx.lineTo(x + 7, y + 12); ctx.lineTo(x + 12, y + 12); ctx.closePath(); };
   path(); ctx.fillStyle = V3.ink; ctx.fill();

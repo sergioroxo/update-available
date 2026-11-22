@@ -106,7 +106,6 @@
      "name": "SECOND THOUGHTS™",
      "using": "is using your computer",
      "tile": "ST",
-     "tip": "for when you're not sure",
      "score": "34",
      "scoreLabel": "YOUR WELLBEING SCORE",
      "scoreSub": "3 doors closed this week",
@@ -164,8 +163,9 @@
     "_retiredS418": "`made` is no longer drawn: since S418 (job 34 Part B) the card says screen.os.brand.l.made (\"made for you by L\") and brand.l.personal (\"personalised for you\"), the brief's words for L's gloss"
    },
    "hello": {
+    "_retiredS418b": "text[0] was \"Good morning, Maya. Happy birthday.\" — since S418b (job 34, the orchestrator's review of the stills) the screen's big heading says \"Good morning, Maya ✦\" and the first line says only \"Happy birthday.\", so the greeting is not written twice; the voice (`audio`, `say`) is unchanged and still speaks the whole line: heading plus line show its words in order",
     "text": [
-     "Good morning, Maya. Happy birthday.",
+     "Happy birthday.",
      "I've read everything, so you don't have to. Want me to catch you up?"
     ],
     "audio": "l_a1_hello.mp3",

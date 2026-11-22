@@ -247,6 +247,13 @@ function balloon(ctx: CanvasRenderingContext2D, cx: number, cy: number, r: numbe
   ctx.fillStyle = alpha(OS26.win, 0.55); ctx.beginPath(); ctx.ellipse(cx - r * 0.32, cy - r * 0.4, r * 0.18, r * 0.3, -0.5, 0, Math.PI * 2); ctx.fill();
 }
 
+/** a line that does not fit its room ends in an ellipsis (nothing is drawn past `w`) */
+function fitEnd(ctx: CanvasRenderingContext2D, text: string, w: number): string {
+  if (ctx.measureText(text).width <= w) return text;
+  let n = text.length; while (n > 0 && ctx.measureText(`${text.slice(0, n).trimEnd()}…`).width > w) n--;
+  return n > 0 ? `${text.slice(0, n).trimEnd()}…` : '';
+}
+
 // ── beat 2: Kettle ──────────────────────────────────────────────────────────
 const ROW_H = 54;
 function preview(who: Who): string {
@@ -278,18 +285,22 @@ function drawKettleList(ctx: CanvasRenderingContext2D, pr: Rect, page: Page, api
     const y = pr.y + 8 + i * ROW_H, x = pr.x + 10, w = pr.w - 20;
     roundEdge(ctx, x, y, w, ROW_H - 6, 10, KETTLE.rowEdge, KETTLE.row);
     avatar(ctx, who, x + 10, y + 8, 32);
+    // ⚑ S418b (the orchestrator's review: the names over the times while Kettle is narrow, as Second Thoughts falls) — every
+    //   line of a row fits its own room at any width: the time keeps the right edge (and goes where the room is too small for
+    //   it and a name), the name and the preview end in an ellipsis before the time and the badge; nothing overlaps
+    const tx0 = x + 52, time = timeOf(who);
+    ctx.font = monoFor(10);
+    const tw = Math.ceil(ctx.measureText(time).width);
+    const showTime = w - 52 - tw - 18 >= 40;
+    const nameRoom = w - 52 - (showTime ? tw + 18 : 10), previewRoom = w - 52 - 34;
     setFont(ctx, 13); ctx.fillStyle = KETTLE.ink;
     const name = who === 'lot' ? B2.lot.name : who === 'mum' ? B2.mum.name : who === 'dad' ? B2.dad.name : B2.junie.name;
     const isMuted = muted.includes(who);
-    ctx.fillText(isMuted ? `${name} · ${KETTLE_ST.muted}` : name, x + 52, y + 9);
+    if (nameRoom >= 14) ctx.fillText(fitEnd(ctx, isMuted ? `${name} · ${KETTLE_ST.muted}` : name, nameRoom), tx0, y + 9);
     setFont(ctx, 11); ctx.fillStyle = KETTLE.sub;
     const p = isMuted ? MUTED_BY : who === 'dad' && page.sent ? String(page.sent) : preview(who);
-    let shown = p;
-    while (shown.length > 4 && ctx.measureText(shown).width > w - 120) shown = shown.slice(0, -2);
-    ctx.fillText(shown === p ? p : `${shown.trimEnd()}…`, x + 52, y + 27);
-    ctx.font = monoFor(10); ctx.fillStyle = KETTLE.sub;
-    const tw = Math.ceil(ctx.measureText(timeOf(who)).width);
-    ctx.fillText(timeOf(who), x + w - tw - 10, y + 9);
+    if (previewRoom >= 14) ctx.fillText(fitEnd(ctx, p, Math.min(previewRoom, Math.max(14, w - 120))), tx0, y + 27);
+    if (showTime) { ctx.font = monoFor(10); ctx.fillStyle = KETTLE.sub; ctx.fillText(time, x + w - tw - 10, y + 9); }
     if (!read.includes(who)) { roundRect(ctx, x + w - 26, y + 26, 16, 16, 8, isMuted ? KETTLE.mutedBadge : KETTLE.badge); setFont(ctx, 10); ctx.fillStyle = KETTLE.badgeInk; ctx.fillText('1', x + w - 21, y + 29); }
     if (who === 'dad' && (page.told || api.screen.originalStage !== 'told') && api.screen.originalStage !== 'gone') {
       // ⚑ S413 — locked: the ✦ grey, with a padlock (the original unavailable while Second Thoughts is on)

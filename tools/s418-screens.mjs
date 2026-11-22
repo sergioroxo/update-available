@@ -48,7 +48,7 @@ const BEATS = [
   ['B09s', 'e4Act3Here', [['until', `${A}.shepherd.hostOn && !!${A}.shepherd.line`, 60000], ['wait', 1500]]],
   ['B10h', 'e4Act3Friends', [['until', `${A}.shepherd.ask`, 90000], ['wait', 1800]]],
   ['B10v', 'e4Act3FriendsVR', [['until', `${A}.shepherd.ask`, 90000], ['wait', 1800]]],
-  ['B10f', 'e4Act3Friends', [['until', HIT('a3-yes'), 90000], ['press', 'a3-yes'], ['until', `!!${S}.desk?.peel`, 30000]]],
+  ['B10f', 'e4Act3Friends', [['until', HIT('a3-yes'), 90000], ['press', 'a3-yes'], ['until', `${S}.desk ? !!${S}.desk.peel : !${A}.shepherd.on`, 30000]]],
   ['B10r', 'e4Act3Friends', [['until', HIT('a3-yes'), 90000], ['press', 'a3-yes'], ['until', `${S}.page?.kind === 'junie' && !!${S}.page?.answered`, 60000], ['wait', 1200]]],
   ['B11', 'e4Act4Stream', [['until', `${A}.stream.on`, 60000], ['wait', 6000]]],
   ['B12', 'e4Act4Shutdown', [['until', `${A}.stream.terminated`, 90000], ['wait', 1500]]],

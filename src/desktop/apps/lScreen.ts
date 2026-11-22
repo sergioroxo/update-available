@@ -549,9 +549,15 @@ export class LScreen {
       // a short conversation sits under its head (the greeting at the top, as an empty chat opens); a long one keeps its newest
       //   line at the foot
       let y = this.chatMax > 0 ? chatBottom - 4 - total + this.chatBack : chatTop + 4;
+      // ⚑ S418b (the orchestrator's review: "You're number 4,815 now." cut in half under the chat list) — THE CONVERSATION IS
+      //   CLIPPED AT LINE BOUNDARIES: a line (or a bubble, a pill, a note) is drawn only when the whole of it is inside the
+      //   conversation's area, so nothing is ever cut in half under the chat list, Second Thoughts' head or above the answers
+      const edgeTop = top + 1, edgeBot = chatBottom + 2;
+      const whole = (yy: number, hh: number): boolean => yy >= edgeTop && yy + hh <= edgeBot;
       for (const { row, kind, lines, h } of laid) {
         if (y + h > top - 40 && y < chatBottom + 20) {
           if (kind === 'chip') {
+            if (!whole(y, 19)) { y += h + 8; continue; }
             // ⚑ S418 — the model chip, polished: L's mint into a pale sky, a hairline of light along its top
             setFont(ctx, 11);
             const w = Math.min(cw, Math.ceil(lines[0]?.w ?? 0) + 18);
@@ -563,7 +569,9 @@ export class LScreen {
             } else edgeRR(ctx, cx, y, w, 19, 9.5, P.chipEdge, P.chip);
             if (lines[0]) drawLine(ctx, lines[0], cx + 9, y + 3, 11, P.chipInk);
           } else if (kind === 'hello') {
-            this.drawGreeting(ctx, cx, y, cw, P.spark);
+            if (whole(y, h)) this.drawGreeting(ctx, cx, y, cw, P.spark);
+          } else if (row && row.who !== 'ai' && row.who !== 'note' && !whole(y, h)) {
+            // a bubble, a Memory note, her unsent line or the booked pill that is not wholly in view: not drawn (nor pressable)
           } else if (row && row.who === 'her') {
             const bw = Math.min(cw - 30, Math.max(0, ...lines.map((l) => l.w)) + 22), bx = cx + cw - bw;
             fillRR(ctx, bx, y, bw, h, 12, KETTLE.mine);
@@ -599,9 +607,9 @@ export class LScreen {
             pill(ctx, cx, y, bw, 22, P.booked);
             ctx.fillStyle = P.bookedInk; ctx.fillText(row.text, cx + 11, y + 5);
           } else if (row && row.who === 'note') {
-            lines.forEach((l, i) => drawLine(ctx, l, cx, y + 1 + i * 14, 11, P.ink2));
+            lines.forEach((l, i) => { if (whole(y + 1 + i * 14, 13)) drawLine(ctx, l, cx, y + 1 + i * 14, 11, P.ink2); });
           } else {
-            lines.forEach((l, i) => drawLine(ctx, l, cx, y + i * LINE, 14, P.ink));
+            lines.forEach((l, i) => { if (whole(y + i * LINE, LINE - 2)) drawLine(ctx, l, cx, y + i * LINE, 14, P.ink); });
           }
         }
         y += h + 8;

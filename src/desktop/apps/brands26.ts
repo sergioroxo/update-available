@@ -22,7 +22,7 @@ import ACTS from '../../../data/dialog/s4_acts.json';
 /** the brands' words (s4_acts.json screen.os.brand) */
 export const BRAND = (ACTS as unknown as { screen: { os: { brand: {
   l: { boast: string; personal: string; made: string; free: string };
-  st: { name: string; using: string; tile: string; tip: string; score: string; scoreLabel: string; scoreSub: string;
+  st: { name: string; using: string; tile: string; score: string; scoreLabel: string; scoreSub: string;
     stickers: Record<StickerId, string>; muted: string };
   shepherd: { episode: string; sponsor: string; ticker: string; ring: string; applause: string };
 } } } }).screen.os.brand;

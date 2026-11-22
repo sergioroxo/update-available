@@ -443,9 +443,11 @@ export function appTile(ctx: CanvasRenderingContext2D, app: Tile26, x: number, y
   if (app === 'st') {
     // ⚑ S418 — Second Thoughts' tile: its two letters, black on its yellow, a hazard corner
     hazard(ctx, x, y + d * 0.72, d, d * 0.28, OS26.stInk, 0.9, Math.max(2, d * 0.14));
-    ctx.font = `600 ${Math.round(d * 0.46)}px ${sansFor('e4')}`; ctx.textBaseline = 'top';
+    // its letters at the reading floor's 11 px at least (S418b: text-angle counted a 20-px tile's 9 px letters)
+    const fs = Math.max(11, Math.round(d * 0.46));
+    ctx.font = `600 ${fs}px ${sansFor('e4')}`; ctx.textBaseline = 'top';
     const t = BRAND_TILE, tw = ctx.measureText(t).width;
-    heavyText(ctx, t, Math.round(cx - tw / 2), Math.round(y + d * 0.16), OS26.stInk, 0.8 * k);
+    heavyText(ctx, t, Math.round(cx - tw / 2), Math.round(y + Math.max(1, d * 0.66 - fs)), OS26.stInk, 0.8 * k);
   } else if (app === 'shepherd') {
     // ⚑ S418 — Shepherd Live™'s tile: the studio's halo ring in gold over a red live dot
     ctx.strokeStyle = OS26.shGold; ctx.lineWidth = 2 * k;
