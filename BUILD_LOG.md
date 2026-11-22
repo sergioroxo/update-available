@@ -2389,3 +2389,7 @@ R4-24…R4-32 opened; R4-23 dropped.
   - S419: the Close's call 18 (mark "Sent to Junie") and call 19 (the 2026 panel rewritten, 94 words).
   - Rules: invented marks only, with our own window controls; one new OS26 palette block under his yes; budgets ≤ 75 draws, uploads on dirty only; legible in xr.
   Sent to the builder.
+- 2026-11-22 · S357fp (orchestrator, his "find solutions of the serrated lines") · SERRATED EDGES IN THE BROWSER. Cause found: the canvas has been created with `antialias: false` since the first scaffold (cf257bee), so on a computer, phone or tablet every 3D edge in the room was drawn as stair-steps, worst on a 1× display.
+  - A (on): src/engine/app.ts asks the browser for MSAA (4 samples; `?aa=0` turns it off to compare). In a headset the device's sample count is set to 1 for the session and restored on exit, so the headset path is exactly as before (S292's MSAA layer, no intermediate target).
+  - B (off, his call — the pixel law): `?roommips=1` gives the room's pictures, in the browser, the headset's treatment (S270e): a mip chain when shrunk, NEAREST kept when magnified. It mends the room's text (2003's calendar reads "NOVEMBER", not "DNVEMBER") but is softer.
+  - Proof: tools/aa-stills.mjs (four eras × DPR 1 and 2 × before / A / A+B) and tools/aa-compare.py (magnified crops); tools/aa-xr-check.mjs (emulated headset, two enter/exit cycles: 4 → 1 → 4 samples, no GL or page error). tsc and npm test pass. Not pushed.

@@ -648,8 +648,17 @@ class AudienceApplication extends pc.Application {
 }
 
 function createAppShell(canvasEl: HTMLCanvasElement): AppShell {
+  /**
+   * ⚑ S357fp (his, 22 Nov: "we need to try and find solutions of the serrated lines") — MSAA ON IN THE BROWSER. The
+   * canvas was created with `antialias: false` in the first scaffold (cf257bee) and never revisited, so on a computer,
+   * a phone or a tablet every polygon edge in the room — the monitor's bezel, the desk, the bed, the lamp — was drawn
+   * as hard stair-steps; worst on a 1× display, where nothing else hides them. The headset already asks for MSAA on its
+   * own layer (S292, below). This asks the browser for the same: the GPU's own multisampling of geometry edges. It
+   * touches no texture (the pixel law is about textures and positions), and nothing renders through an intermediate
+   * target except the era change's one-frame capture. `?aa=0` turns it off again to compare.
+   */
   const app = new AudienceApplication(canvasEl, {
-    graphicsDeviceOptions: { antialias: false, alpha: false }
+    graphicsDeviceOptions: { antialias: runtimeQuery().get('aa') !== '0', alpha: false }
   });
   app.setCanvasFillMode(pc.FILLMODE_FILL_WINDOW);
   app.setCanvasResolution(pc.RESOLUTION_AUTO);
@@ -679,6 +688,19 @@ function createAppShell(canvasEl: HTMLCanvasElement): AppShell {
   cameraRig.addChild(camera);
   // ⚑ S374 / J18-B1 — each era's large-text setting is on exactly while a headset is (fonts.ts `largeText`)
   setLargeTextProbe(() => !!app.xr?.active);
+  /**
+   * ⚑ S357fp — THE BROWSER'S MSAA STEPS ASIDE IN A HEADSET. With `antialias` on, PlayCanvas 2.19 draws into its own 4×
+   * multisampled back buffer and resolves it into whatever the default framebuffer is — in a headset, the XR layer's.
+   * That would put an extra full-size MSAA target and a resolve blit into every Quest frame, on top of the layer's own
+   * MSAA (S292, below), and it is exactly the intermediate target S292 relies on not having. So for the session the
+   * device's sample count is 1 (the engine rebuilds its back buffer on the first XR frame, when the default framebuffer
+   * changes to the layer's, and reads the count then); on exit it is put back before the engine drops the layer's
+   * framebuffer, so the browser's back buffer is rebuilt multisampled. 'start' fires before the first XR frame.
+   */
+  const device = app.graphicsDevice as unknown as { samples: number };
+  const browserSamples = device.samples;
+  app.xr?.on('start', () => { device.samples = 1; });
+  app.xr?.on('end', () => { device.samples = browserSamples; });
   app.xr?.on('start', () => {
     const xr = app.xr;
     if (!xr?.session || !(app.graphicsDevice instanceof pc.WebglGraphicsDevice)) return;
