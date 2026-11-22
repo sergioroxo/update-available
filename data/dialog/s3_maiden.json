@@ -315,10 +315,12 @@
    "14 March",
    "14 March",
    "",
-   "6 December · 22:51"
+   "6 December · {t}"
   ],
+  "_docS357frDates": "⚑ S357fr / 16-12 — the last photo (Orla's, with her last message) is dated the minute that message lands on the evening's clock ({t}); the clock no longer leaps to 22:51. Old: \"6 December · 22:51\". The bus sign in the photo (`busText`, a timetable) is unchanged.",
   "busText": "46A · last bus 22:40"
  },
+ "_docS357frNews": "⚑ S357fr / 16-12 — the `time` of `news`, `reply` and `cascade` is no longer shown: each lands at the minute the evening's clock has reached (phoneE3 `landedAt`), so the thread never shows a time ahead of the clock. `before` (the group's morning) keeps its own times.",
  "news": [
   {
    "from": "Bea",
