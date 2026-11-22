@@ -988,6 +988,9 @@ async function main() {
     //   Newest pill, Memory on the taskbar. The walk follows Second Thoughts: Review each or Do it for me, the video's play,
     //   her one answer.
     if (st?.era === 'e4' && /^a2-undo$|^a2-open$|^mem-note:|^chat-newest$|^mem-(?:open|close)$/.test(id)) return false;
+    // ⚑ S417 (UiB job 34 Part A) — 2026's desktop: the dock's six apps are a reader's presses (an open app is already in front;
+    //   another says why it cannot open, in one line), never the way on. The Menu is opened once, by its own step (menuCheck).
+    if (st?.era === 'e4' && /^dock:/.test(id)) return false;
     if (has('channel-joined') && /^web-/.test(id) && id !== 'web-close') return false;
     if (id === 'cancel' && t.surface === 'kit' && !has('went-online')) return false;
     if (/^dm-(?:up|down)$/.test(id) && (seen?.get(id) || 0) >= 1) return false;
@@ -1265,6 +1268,8 @@ async function main() {
   /** consecutive holds spent watching the screen draw itself */
   const TALK_WAIT_MAX = 40;
   let talkWaits = 0;
+  /** ⚑ S417 (UiB job 34 Part A) — 2026's Menu, opened once and closed (his "It is missing the Menu button btw") */
+  const menuCheck = { done: false, opened: false, items: [], beatHeld: null, closed: false, answersBack: false, at: null };
   /**
    * ⚑ HOW LONG TO SIT STILL BEFORE CALLING IT STUCK — AND IT CANNOT BE ONE
    * NUMBER (A-5.3). Fourteen stalls at four seconds is fifty-six seconds, which
@@ -1669,6 +1674,33 @@ async function main() {
     }
     talkWaits = 0;
 
+    /**
+     * ⚑ S417 (UiB job 34 Part A) — THE MENU, ONCE IN 2026. 2026's desktop has the Menu button every era's desktop has
+     * (`start-menu`); the walk refuses it everywhere (the guided policy: a menu is not the way on), so this step opens it ONCE,
+     * at the era's calmest moment — beat 1's two answers, where the story waits on her and nothing is timed — and closes it
+     * with the same button. While it is open the director holds (browser.ts storyClock), so the answers must still be there,
+     * live, when it closes. Recorded in the report (`menuCheck`).
+     */
+    if (!menuCheck.done && s.era === 'e4' && s.bstate?.step === 'acts' && s.bstate?.beat === 'week'
+      && s.targets.some((x) => x.id === 'l-catchup') && s.targets.some((x) => x.id === 'start-menu')) {
+      menuCheck.done = true;
+      menuCheck.at = Date.now();
+      let after = await press(s.targets.find((x) => x.id === 'start-menu'), s);
+      await wait(900); after = await probe();
+      menuCheck.items = after.targets.filter((x) => /^sm-/.test(x.id)).map((x) => x.id);
+      menuCheck.opened = menuCheck.items.includes('sm-shut') && menuCheck.items.includes('sm-leave');
+      menuCheck.beatHeld = after.bstate?.beat ?? null;
+      await wait(1500);
+      const again = after.targets.find((x) => x.id === 'start-menu');
+      if (again) { after = await press(again, after); await wait(800); after = await probe(); }
+      menuCheck.closed = !after.targets.some((x) => /^sm-/.test(x.id));
+      menuCheck.answersBack = after.targets.some((x) => x.id === 'l-catchup');
+      note('menu-check', { what: `2026's Menu: opened ${menuCheck.opened} (${menuCheck.items.length} items), closed ${menuCheck.closed}, answers back ${menuCheck.answersBack}`,
+        era: after.era, phase: after.phase, spine: after.spine });
+      s = after;
+      continue;
+    }
+
     let t = pick(s.targets, sig, seen, dismissWanted);
     /**
      * ⚑ THE GRACE LASTS UNTIL A CHOICE IS MADE, NOT UNTIL THE NEXT ITERATION —
@@ -1988,6 +2020,7 @@ async function main() {
     reviewBoot: formOfferProbe ? 1 : null,
     walkPolicy: GUIDED_WALK ? 'guided' : 'explore',
     door: DOOR,   // ⚑ S414 — Act III's door this walk took (--door vr|here)
+    menuCheck,   // ⚑ S417 — 2026's Menu, opened once at beat 1's answers and closed
     steps: log.length, presses: presses.length, turns,
     reachedEra: final.era, spine: final.spine,
     ledger: final.ledger, console: noise, log
@@ -2052,6 +2085,7 @@ async function main() {
       '> as always, so the eras stay comparable. Read beside the same day\'s exhaustive walk.', ''
     ] : []),
     ...(GUIDED_WALK ? ['*Walk policy: guided. Optional doors are verified separately; use --explore for an exhaustive audit. This differs from older exploratory press counts.*', ''] : []),
+    ...(menuCheck.done ? [`*2026's Menu (S417): opened ${menuCheck.opened} with ${menuCheck.items.length} items, held at beat "${menuCheck.beatHeld}", closed ${menuCheck.closed}, answers back ${menuCheck.answersBack}.*`, ''] : []),
     ...(beatRows.length ? ['## 2026, BEAT BY BEAT (S415)', '',
       '*From "Press to wake the screen" to the Close\'s first card, on the page\'s own clock (the acts\' beat log and the Close\'s',
       'stages). `lasts` runs to the next row.*', '',

@@ -31,14 +31,22 @@
  * on the AI's cursor, every ✦ in the conversation grey with a padlock once the stage is `locked`, and a conversation that
  * stays where the visitor scrolled it while new lines arrive (26-14: "let him scroll the chat"; a Newest pill returns).
  *
+ * ⚑ S417 (UiB job 34 Part A; T101) — THE TWO PANES ARE TWO WINDOWS ON A 2026 DESKTOP (desk26.ts: the wallpaper, the menu bar
+ * with the Menu button, the dock, one notification at a time), in the same places and widening as before; L's window is a modern
+ * AI chat app (its chat list, the model chip, the big greeting, rounded answers, the composer that is never typed into, the
+ * voice switch beside it). `desk.skin` says which product the desktop wears (Part B dresses them). New controls: `start-menu`
+ * (E4Browser opens the Start menu), `dock:<app>` (handled here, never handed to the script).
+ *
  * ⚑ THE CONTROLS ARE PUBLISHED AS `controls` (monitor coordinates). E4Browser copies them into its `hits`, which the walker,
  * the tour, XR and the room's pointer read; the name here is deliberately not one the walker's collector matches, so nothing
  * is counted twice.
  */
 import { setFont, px } from '../theme/chrome';
-import { monoFor } from '../theme/fonts';
-import { PLACE, WEB, V3, KETTLE, CHROME, ERA4, roundRect, roundEdge, pill, assistantMark } from '../theme/era4';
+import { newsFor } from '../theme/fonts';
+import { PLACE, WEB, V3, KETTLE, CHROME, ERA4, OS26, roundRect, roundEdge, pill, assistantMark } from '../theme/era4';
 import { playOnce, stopClip } from '../../audio/tapeAudio';
+import { Desk26, drawWallpaper, drawMenuBar, drawDock, drawWindow, drawNote, aiWindow, worldWindow, contentOf, softShadow, rr, fillRR,
+  edgeRR, fit26, statusLeft, TITLE_H, WIN_RADIUS, APPS26, type App26, type DockApp, type MenuBar26, type SeamApi } from './desk26';
 import ACTS from '../../../data/dialog/s4_acts.json';
 
 export interface Hit { x: number; y: number; w: number; h: number; id: string }
@@ -64,19 +72,32 @@ export type PageRenderer = (ctx: CanvasRenderingContext2D, r: Rect, page: Page, 
 const S = (ACTS as unknown as { screen: { aiWidth: Record<string, number>; date: string; lName: string; lSub: string; voiceOn: string;
   voiceOff: string; voiceLabel: string; back: string; her: string; apps: Record<string, string>; newest: string;
   memory: { updated: string; memory: string; usedFor: string; sharedWith: string };
-  original: { told: string; turnBack: string; originalLabel: string; locked: string; restored: string } } }).screen;
+  original: { told: string; turnBack: string; originalLabel: string; locked: string; restored: string };
+  os: OsWords } }).screen;
+/** ⚑ S417 — the desktop's own words (s4_acts.json screen.os) */
+interface OsWords { menus: string[]; status: string; apps: Record<App26, string>; why: Record<string, string>;
+  chats: { newChat: string; today: string; yesterday: string; todayList: string[]; yesterdayList: string[]; live: string };
+  model: string; greeting: string; composer: string; menu: { apps: string; whatToDo: string };
+  notes: { sorted: { title: string; text: string }; seconds: number } }
+export const OS = S.os;
+/** Shepherd Live™'s own name, for the menu bar while its session has the screen */
+const SHEPHERD_NAME = (ACTS as unknown as { act3: { b9: { studio: { name: string } } } }).act3.b9.studio.name;
 
-/** the monitor's taskbar (the date, the guide), as E4Browser's one screen had it */
+/** ⚑ S417 — the band at the foot where the guide's tray sits (the dock's row; drawLambyGuide puts L's head at H − 20) */
 export const TASKBAR = 20;
-/** the right pane's bar: the back arrow and what is open */
-export const PAGE_BAR = 26;
-/** the AI pane's head: its mark, its name, the voice switch */
-const HEAD = 40;
 /** moving things move in steps of this many a second (dirty-only uploads) */
 export const ANIM_HZ = 8;
 const PAD = 10;
-const LINE = 17;          // the AI's 13 px lines
-const HER_LINE = 15;      // her 12 px bubble lines
+const LINE = 18;          // the AI's 14 px lines (S417: larger, calmer; job 33's were 13/17)
+const HER_LINE = 16;      // her 13 px bubble lines
+/** ⚑ S417 — L's chat list: a column when the window is at least this wide, a strip of chats under the title bar when not */
+const SIDEBAR_MIN = 300;
+const SIDEBAR_W = 96;
+const STRIP_H = 19;
+const CHIP_H = 25;
+const COMPOSER_H = 28;
+/** the big greeting's size (the period's chat apps open on a serif hello) */
+const GREET = 17;
 
 /** ⚑ S413 — the ✦ drawn inside the conversation follows the screen's stage (locked: grey, with a padlock) */
 let iconLocked = false;
@@ -92,6 +113,21 @@ export class LScreen {
   version = 0;
   /** every control on the monitor (monitor coordinates); E4Browser copies these into its `hits` */
   controls: Hit[] = [];
+  /** ⚑ S417 — THE DESKTOP the two windows stand on (desk26.ts): which skin is on (`desk.skin`: the acts set it), the one
+   *  notification at the top right, the dock's one-line reason */
+  readonly desk = new Desk26();
+  /** ⚑ S417 — the Menu (E4Browser's Start menu) is open: the menu bar's button reads pressed in */
+  menuOpen = false;
+  /** ⚑ S417 — where the conversation was drawn at the last draw (beat 1's reading circle stands in it; the wheel scrolls it) */
+  aiStage: Rect = { x: 0, y: 0, w: 0, h: 0 };
+  /** ⚑ S417 — the menu bar's status area begins here (E4Browser lays Second Thoughts' Memory item left of it) */
+  statusX = 0;
+  /** ⚑ S417 — a person's words, the guide's balloon, the film or the AI's voice have the floor: notifications wait */
+  hush = false;
+  /** Shepherd's session had the AI's window (the whole glass) at the last draw */
+  private fullOn = false;
+  /** the stream (or the dark after it) had the whole glass at the last draw */
+  private coverOn = false;
   // ── the panes ──
   private aiW = S.aiWidth.act1;
   private aiFrom = S.aiWidth.act1;
@@ -163,12 +199,10 @@ export class LScreen {
     if (seconds <= 0) { this.aiW = this.aiTo = this.aiFrom = w; this.aiT = 1; this.version++; return; }
     this.aiFrom = this.aiW; this.aiTo = w; this.aiT = 0; this.aiDur = seconds;
   }
-  aiRect(H: number): Rect { return { x: 0, y: 0, w: this.aiW, h: H - TASKBAR }; }
-  /** the page's own area on the right, under its bar */
-  pageRect(W: number, H: number): Rect {
-    const x = Math.min(W, this.aiW + 2);
-    return { x, y: PAGE_BAR, w: Math.max(0, W - x), h: H - TASKBAR - PAGE_BAR };
-  }
+  /** ⚑ S417 — the AI's window on the desktop (L, Second Thoughts; Shepherd's session at the whole width) */
+  aiRect(W: number, H: number): Rect { return aiWindow(this.aiW, W, H); }
+  /** the page's own area on the right: her world's window, under its title bar */
+  pageRect(W: number, H: number): Rect { return contentOf(worldWindow(this.aiW, W, H)); }
 
   // ── her world ──────────────────────────────────────────────────────────────
   get page(): Page | null { return this.stack[this.stack.length - 1] ?? null; }
@@ -284,111 +318,163 @@ export class LScreen {
     }
     if (c.flash > 0) { c.flash = Math.max(0, c.flash - dt); if (c.flash === 0) this.version++; }
     if (this.clip && (this.clip.ended || this.clip.paused) && this.clip.currentTime > 0) this.clip = null;
+    // ⚑ S417 — the desktop's own clock (a notification's slide-in steps at ANIM_HZ; the dock's reason goes after its time)
+    this.desk.hush = this.hush || this.originalShown || this.typing || this.speaking || this.coverOn;
+    const dv = this.desk.version;
+    this.desk.update(dt, ANIM_HZ);
+    if (this.desk.version !== dv) this.version++;
   }
+  /** ⚑ S417 — a notification, at the top right (one at a time; it waits while anything else has the floor) */
+  notify(app: App26, title: string, text: string, seconds = OS.notes.seconds): void { this.desk.notify({ app, title, text, seconds }); }
+  /** ⚑ S417 — which skin the desktop wears (the acts say when a product arrives and falls) */
+  setSkin(skin: Desk26['skin']): void { this.desk.setSkin(skin); this.version++; }
 
   // ── the picture ────────────────────────────────────────────────────────────
+  /**
+   * ⚑ S417 (UiB job 34 Part A) — THE SCREEN IS A DESKTOP NOW (desk26.ts): the wallpaper; her world's window on the right and
+   * the AI's window on the left, in job 33's places and widening as before (aiWidth: 214 → 340 → the whole glass → 240); the
+   * menu bar with the Menu button over them; the dock at the foot; one notification at the top right. Job 33's frame (the V3
+   * desk, the title bars, the thin taskbar) is retired whole; it is kept in git at bfad99bd (lScreen.ts `draw`/`drawAi`).
+   */
   draw(ctx: CanvasRenderingContext2D, W: number, H: number, pressable: boolean): Hit[] {
     this.controls = [];
     this.anchors.clear();
     const push = (h: Hit): void => { if (pressable) this.controls.push(h); };
-    // ⚑ S415 — the stream (and the dark after it) has the whole glass: nothing of the AI's pane, her world or the taskbar under it
-    if (this.cover && this.cover(ctx, W, H, push)) return this.controls;
-    const body = H - TASKBAR;
-    px(ctx, 0, 0, W, H, V3.page);
-    // ── her world (drawn first: the AI's pane is the frame's left edge, and a wide AI pane covers it) ──
-    const pr = this.pageRect(W, H);
-    if (pr.w > 0) {
-      px(ctx, pr.x, 0, pr.w, PAGE_BAR, V3.bar);
-      px(ctx, pr.x, PAGE_BAR - 1, pr.w, 1, V3.barEdge);
-      const page = this.page;
-      let tx = pr.x + 10;
-      if (this.canGoBack) {
-        setFont(ctx, 12);
-        const label = `‹ ${S.back}`, bw = Math.ceil(ctx.measureText(label).width) + 16;
-        roundRect(ctx, pr.x + 6, 4, bw, PAGE_BAR - 8, 8, this.visitorBack ? V3.card : V3.bar);
-        ctx.fillStyle = this.visitorBack ? V3.ink : V3.ink2; ctx.fillText(label, pr.x + 14, 7);
-        this.anchor('page-back', { x: pr.x + 6, y: 4, w: bw, h: PAGE_BAR - 8 });
-        if (this.visitorBack) push({ x: pr.x + 6, y: 2, w: bw, h: PAGE_BAR - 4, id: 'page-back' });
-        tx = pr.x + 14 + bw;
-      }
-      if (page?.title) { setFont(ctx, 12); ctx.fillStyle = V3.ink; ctx.fillText(page.title, tx, 7); }
-      // ⚑ S413 (beat 6) — the AI is using her computer: its banner over her world's bar, her way back there and greyed
-      if (this.banner) {
-        px(ctx, pr.x, 0, pr.w, PAGE_BAR, V3.primary);
-        assistantMark(ctx, pr.x + 8, 5, 16, V3.primaryInk, V3.primary);
-        setFont(ctx, 10);
-        const cw = Math.ceil(ctx.measureText(this.banner.control).width) + 16;
-        pill(ctx, pr.x + pr.w - cw - 6, 5, cw, 16, V3.grey);
-        ctx.fillStyle = V3.ink2; ctx.fillText(this.banner.control, pr.x + pr.w - cw + 2, 7);
-        setFont(ctx, 11); ctx.fillStyle = V3.primaryInk; ctx.fillText(fitTo(ctx, this.banner.text, pr.w - cw - 46), pr.x + 30, 7);
-      }
-      ctx.save(); ctx.beginPath(); ctx.rect(pr.x, pr.y, pr.w, pr.h); ctx.clip();
-      px(ctx, pr.x, pr.y, pr.w, pr.h, V3.page);
-      const draw = page ? PAGES.get(page.kind) : undefined;
-      if (page && draw) draw(ctx, pr, page, { screen: this, control: (h) => { if (this.pagePressable) push(h); }, pressable: pressable && this.pagePressable });
+    // ⚑ S415 — the stream (and the dark after it) has the whole glass: nothing of the desktop under it
+    this.coverOn = !!this.cover && this.cover(ctx, W, H, push);
+    if (this.coverOn) return this.controls;
+    const api: SeamApi = { W, H, desk: this.desk, push };
+    drawWallpaper(ctx, api);
+    // ── her world (drawn first: a wide AI window covers its place) ──
+    const ww = worldWindow(this.aiW, W, H);
+    if (ww.w > 60) this.drawWorld(ctx, ww, pressable, push, api);
+    // ── the AI (⚑ S414: or what has taken its window over: Shepherd's session, at the whole width) ──
+    const aw = aiWindow(this.aiW, W, H);
+    this.fullOn = false;
+    if (this.full) {
+      ctx.save(); rr(ctx, aw.x, aw.y, aw.w, aw.h, WIN_RADIUS); ctx.clip();
+      this.fullOn = this.full(ctx, aw, push);
       ctx.restore();
+      if (this.fullOn) softShadow(ctx, aw, WIN_RADIUS);
     }
-    // ── the AI (⚑ S414: or what has taken its pane over) ──
-    const ar = this.aiRect(H);
-    if (!(this.full && this.full(ctx, ar, push))) this.drawAi(ctx, ar, push);
-    px(ctx, this.aiW, 0, 2, body, AI.edge);
-    // ── the taskbar (the guide's tray is E4Browser's, drawn after) ──
-    const ty = H - TASKBAR;
-    px(ctx, 0, ty, W, TASKBAR, V3.bar); px(ctx, 0, ty, W, 1, V3.barEdge);
-    ctx.font = monoFor(10); ctx.fillStyle = V3.ink2; ctx.textBaseline = 'top'; ctx.fillText(this.date, 8, ty + 5);
+    if (!this.fullOn) this.drawAi(ctx, aw, push, api);
+    // ── the menu bar (the Menu button, the app in front, the clock) and the dock ──
+    const bar: MenuBar26 = { app: this.fullOn ? SHEPHERD_NAME : this.name, menus: OS.menus, status: OS.status, date: this.date, menuOpen: this.menuOpen };
+    drawMenuBar(ctx, bar, api);
+    this.statusX = statusLeft(ctx, W, bar);
+    drawDock(ctx, this.dockApps(), api);
+    // ── the one notification, in her world's title band (never over the words under it) ──
+    if (ww.w > 60) drawNote(ctx, { x: ww.x, y: ww.y, w: ww.w, h: TITLE_H }, this.desk);
     if (this.overlayTop) this.overlayTop(ctx, W, H);
     // ── the AI's cursor, over everything ──
     if (this.cur.on) drawCursor(ctx, this.cur.x, this.cur.y, this.cur.flash > 0, this.cursorLabel, W);
     return this.controls;
   }
 
-  private drawAi(ctx: CanvasRenderingContext2D, r: Rect, push: (h: Hit) => void): void {
-    iconLocked = this.originalStage === 'locked';
-    px(ctx, r.x, r.y, r.w, r.h, AI.ground);
-    // the head: the mark, the name, the line under it; the voice switch at its right
-    assistantMark(ctx, r.x + PAD, 9, 24, AI.mark, WEB.card);
-    setFont(ctx, 15); ctx.fillStyle = AI.ink; ctx.fillText(this.name, r.x + PAD + 32, 7);
-    setFont(ctx, 10); ctx.fillStyle = AI.note; ctx.fillText(this.sub, r.x + PAD + 32, 25);
-    if (this.voiceSwitch) {
-      setFont(ctx, 10);
-      const word = this.voiceOn ? S.voiceOn : S.voiceOff;
-      const sw = 22 + Math.ceil(ctx.measureText(word).width) + 10, sh = 20, sx = r.x + r.w - PAD - sw, sy = 10;
-      roundEdge(ctx, sx, sy, sw, sh, 10, AI.edge, this.voiceOn ? WEB.card : AI.ground);
-      speakerIcon(ctx, sx + 7, sy + 5, this.voiceOn ? AI.ink : AI.note, this.voiceOn);
-      ctx.fillStyle = this.voiceOn ? AI.ink : AI.note; ctx.fillText(word, sx + 22, sy + 5);
-      push({ x: sx - 2, y: sy - 3, w: sw + 4, h: sh + 6, id: 'l-voice' });
-      this.anchor('l-voice', { x: sx, y: sy, w: sw, h: sh });
+  /** her world's window: its title (the back arrow, what is open), the AI's banner over it while it uses her computer, the page */
+  private drawWorld(ctx: CanvasRenderingContext2D, ww: Rect, pressable: boolean, push: (h: Hit) => void, api: SeamApi): void {
+    const page = this.page;
+    let tx = drawWindow(ctx, ww, { title: '' }, api);
+    if (this.canGoBack) {
+      setFont(ctx, 12);
+      const label = `‹ ${S.back}`, bw = Math.ceil(ctx.measureText(label).width) + 16;
+      if (this.visitorBack) edgeRR(ctx, tx, ww.y + 3, bw, TITLE_H - 6, 8, OS26.winEdge, OS26.win);
+      ctx.fillStyle = this.visitorBack ? OS26.winInk : OS26.winInk2; ctx.fillText(label, tx + 8, ww.y + 5);
+      this.anchor('page-back', { x: tx, y: ww.y + 3, w: bw, h: TITLE_H - 6 });
+      if (this.visitorBack) push({ x: tx, y: ww.y + 1, w: bw, h: TITLE_H - 2, id: 'page-back' });
+      tx += bw + 8;
     }
-    px(ctx, r.x + PAD, HEAD - 1, r.w - 2 * PAD, 1, WEB.cardEdge);
-    // the foot: the answers it offers (and the line under them)
-    const cw = r.w - 2 * PAD;
-    let foot = r.y + r.h - 8;
-    const helpLines = this.help ? wrapRich(ctx, this.help, cw, 10) : [];
+    if (page?.title) { setFont(ctx, 12); ctx.fillStyle = OS26.winInk; ctx.fillText(fit26(ctx, page.title, ww.x + ww.w - tx - 10), tx, ww.y + 5); }
+    // ⚑ S413 (beat 6) — the AI is using her computer: its banner over her world's title, her way back there and greyed
+    if (this.banner) {
+      ctx.save(); rr(ctx, ww.x + 1, ww.y + 1, ww.w - 2, ww.h - 2, WIN_RADIUS - 1); ctx.clip();
+      px(ctx, ww.x, ww.y, ww.w, TITLE_H - 1, V3.primary);
+      ctx.restore();
+      assistantMark(ctx, ww.x + 9, ww.y + 4, 15, V3.primaryInk, V3.primary);
+      setFont(ctx, 11);
+      const cw = Math.ceil(ctx.measureText(this.banner.control).width) + 16;
+      pill(ctx, ww.x + ww.w - cw - 7, ww.y + 3, cw, TITLE_H - 7, V3.grey);
+      ctx.fillStyle = V3.ink2; ctx.fillText(this.banner.control, ww.x + ww.w - cw + 1, ww.y + 5);
+      ctx.fillStyle = V3.primaryInk; ctx.fillText(fitTo(ctx, this.banner.text, ww.w - cw - 48), ww.x + 30, ww.y + 5);
+    }
+    const pr = contentOf(ww);
+    ctx.save(); rr(ctx, ww.x + 1, ww.y + 1, ww.w - 2, ww.h - 2, WIN_RADIUS - 1); ctx.clip();
+    ctx.beginPath(); ctx.rect(pr.x, pr.y, pr.w, pr.h); ctx.clip();
+    px(ctx, pr.x, pr.y, pr.w, pr.h, OS26.winSide);
+    const draw = page ? PAGES.get(page.kind) : undefined;
+    if (page && draw) draw(ctx, pr, page, { screen: this, control: (h) => { if (this.pagePressable) push(h); }, pressable: pressable && this.pagePressable });
+    ctx.restore();
+  }
+
+  /**
+   * ⚑ S417 — L AS A MODERN AI CHAT APP, inside its window: the title (its mark, its name and line — job 33's, which change as
+   * the products arrive — and the voice switch); its chat list (a column when the window is wide, a strip of chats under the
+   * title when it is narrow; L's own: gone while Second Thoughts or Shepherd have it); then the conversation, which opens on
+   * the model chip and a big greeting and scrolls; the answers as rounded chips; the line under them; and the composer, "Ask L
+   * anything", which shows her words when they are typed for her and never takes the keyboard.
+   */
+  private drawAi(ctx: CanvasRenderingContext2D, r: Rect, push: (h: Hit) => void, api: SeamApi): void {
+    iconLocked = this.originalStage === 'locked';
+    if (r.w <= 0) return;
+    const tx = drawWindow(ctx, r, { title: '', ai: true }, api);
+    // ── the title: the mark, the name and its line (job 33's: they change as the products arrive and fall) ──
+    const sx = r.x + r.w;
+    assistantMark(ctx, tx, r.y + 4, 15, AI.mark, WEB.card);
+    setFont(ctx, 12);
+    const nameW = sx - 8 - (tx + 20);
+    const name = fitTo(ctx, this.name, nameW);
+    ctx.fillStyle = OS26.winInk; ctx.fillText(name, tx + 20, r.y + 5);
+    const nw = Math.ceil(ctx.measureText(name).width);
+    setFont(ctx, 11);
+    if (nameW - nw - 10 > 40) { ctx.fillStyle = OS26.winInk2; ctx.fillText(fitTo(ctx, this.sub, nameW - nw - 10), tx + 28 + nw, r.y + 6); }
+    // ── the body ──
+    const body = contentOf(r);
+    const own = this.desk.skin === 'l' || this.desk.skin === 'plain';
+    let left = body.x, width = body.w, top = body.y;
+    if (own && body.w >= SIDEBAR_MIN) { this.drawChatColumn(ctx, { x: body.x, y: body.y, w: SIDEBAR_W, h: body.h }); left += SIDEBAR_W; width -= SIDEBAR_W; }
+    else if (own) { this.drawChatStrip(ctx, { x: body.x, y: body.y, w: body.w, h: STRIP_H }); top += STRIP_H; }
+    const cx = left + PAD, cw = width - 2 * PAD;
+    // the foot: the composer; the line under the answers; the answers
+    const composerY = body.y + body.h - 7 - COMPOSER_H;
+    let foot = composerY - 6;
+    const helpLines = this.help ? wrapRich(ctx, this.help, cw, 11) : [];
     foot -= helpLines.length * 13;
     const helpY = foot;
-    // ⚑ S413 (beat 8) — the message box, at the very foot: her words typed into it (no keyboard), a caret while they come
-    const COMPOSER_H = 28;
-    let composerY = -1;
-    if (this.composer !== null) { foot -= COMPOSER_H + 2; composerY = foot; foot -= 6; }
-    const chipH = 28, gap = 6;
-    const chipRects: Hit[] = [];
-    for (let i = this.chips.length - 1; i >= 0; i--) {
-      foot -= chipH;
-      chipRects.unshift({ x: r.x + PAD, y: foot, w: cw, h: chipH, id: this.chips[i].id });
-      foot -= gap;
+    if (helpLines.length) foot -= 5;
+    // the answers: rounded chips, flowed left to right, wrapping (a long answer takes its own row)
+    setFont(ctx, 13);
+    const chipRows: { id: string; w: number }[][] = [];
+    for (const c of this.chips) {
+      const w = Math.min(cw, Math.ceil(ctx.measureText(c.label).width) + 30);
+      const row = chipRows[chipRows.length - 1];
+      const used = row ? row.reduce((a, x) => a + x.w + 6, 0) : 0;
+      if (row && used + w <= cw) row.push({ id: c.id, w }); else chipRows.push([{ id: c.id, w }]);
     }
-    const chatBottom = this.chips.length ? foot - 2 : foot;
-    // the conversation, newest at the foot, older lines rising out of view (scrollable back)
-    ctx.save(); ctx.beginPath(); ctx.rect(r.x, HEAD, r.w, Math.max(0, chatBottom - HEAD)); ctx.clip();
-    if (this.aiOverlay) this.aiOverlay(ctx, { x: r.x, y: HEAD, w: r.w, h: chatBottom - HEAD });
+    const chipRects: Hit[] = [];
+    if (chipRows.length) {
+      foot -= chipRows.length * CHIP_H + (chipRows.length - 1) * 6;
+      chipRows.forEach((row, i) => { let x = cx; for (const c of row) { chipRects.push({ x, y: foot + i * (CHIP_H + 6), w: c.w, h: CHIP_H, id: c.id }); x += c.w + 6; } });
+      foot -= 6;
+    }
+    const chatTop = top + 4, chatBottom = foot;
+    this.aiStage = { x: left, y: top, w: width, h: Math.max(0, chatBottom - top) };
+    // ── the conversation, newest at the foot, older lines rising out of view (scrollable back) ──
+    ctx.save(); ctx.beginPath(); ctx.rect(left, top, width, Math.max(0, chatBottom - top)); ctx.clip();
+    if (this.aiOverlay) this.aiOverlay(ctx, this.aiStage);
     else {
-      const laid: { row: ChatRow; lines: Line[]; h: number }[] = [];
+      const laid: { row: ChatRow | null; kind?: 'chip' | 'hello'; lines: Line[]; h: number }[] = [];
+      // the head of the conversation (L's own): its model chip, and the big greeting
+      if (own) {
+        laid.push({ row: null, kind: 'chip', lines: wrapRich(ctx, OS.model, cw, 11), h: 20 });
+        ctx.font = newsFor(GREET, false);
+        laid.push({ row: null, kind: 'hello', lines: [], h: this.greetingLines(ctx, cw).length * (GREET + 4) + 2 });
+      }
       for (const row of this.rows) {
-        if (row.who === 'memory') { laid.push({ row, lines: [], h: row.open ? 14 + 3 * 13 + 4 : 13 }); continue; }
-        if (row.who === 'booked') { laid.push({ row, lines: [], h: 22 }); continue; }
-        const size = row.who === 'ai' ? 13 : row.who === 'her' ? 12 : 10;
+        if (row.who === 'memory') { laid.push({ row, lines: [], h: row.open ? 16 + 3 * 14 + 4 : 14 }); continue; }
+        if (row.who === 'booked') { laid.push({ row, lines: [], h: 24 }); continue; }
+        const size = row.who === 'ai' ? 14 : row.who === 'her' ? 13 : 11;
         const lines = wrapRich(ctx, row.text, row.who === 'her' ? cw - 34 : row.who === 'unsent' ? cw - 20 : cw, size);
-        const h = row.who === 'her' ? Math.max(1, lines.length) * HER_LINE + 10 : row.who === 'note' || row.who === 'unsent' ? lines.length * 13 + 2 : lines.length * LINE;
+        const h = row.who === 'her' ? Math.max(1, lines.length) * HER_LINE + 10 : row.who === 'note' || row.who === 'unsent' ? lines.length * 14 + 2 : lines.length * LINE;
         laid.push({ row, lines, h });
       }
       const typingH = this.typing ? 20 : 0;
@@ -396,90 +482,202 @@ export class LScreen {
       // ⚑ S413 (26-14) — reading back: what arrived below since the last draw does not move the lines she is reading
       if (this.chatBack > 0 && total > this.chatTotal && this.chatTotal > 0) this.chatBack += total - this.chatTotal;
       this.chatTotal = total;
-      this.chatMax = Math.max(0, total - (chatBottom - HEAD - 8));
+      this.chatMax = Math.max(0, total - (chatBottom - chatTop - 8));
       this.chatBack = Math.min(this.chatBack, this.chatMax);
-      let y = chatBottom - 4 - total + this.chatBack;
-      for (const { row, lines, h } of laid) {
-        if (y + h > HEAD - 40 && y < chatBottom + 20) {
-          if (row.who === 'her') {
-            const bw = Math.min(cw - 30, Math.max(0, ...lines.map((l) => l.w)) + 20), bx = r.x + r.w - PAD - bw;
-            roundRect(ctx, bx, y, bw, h, 9, KETTLE.mine);
-            lines.forEach((l, i) => drawLine(ctx, l, bx + 10, y + 5 + i * HER_LINE, 12, WEB.ink));
-          } else if (row.who === 'memory') {
+      // a short conversation sits under its head (the greeting at the top, as an empty chat opens); a long one keeps its newest
+      //   line at the foot
+      let y = this.chatMax > 0 ? chatBottom - 4 - total + this.chatBack : chatTop + 4;
+      for (const { row, kind, lines, h } of laid) {
+        if (y + h > top - 40 && y < chatBottom + 20) {
+          if (kind === 'chip') {
+            setFont(ctx, 11);
+            const w = Math.min(cw, Math.ceil(lines[0]?.w ?? 0) + 18);
+            edgeRR(ctx, cx, y, w, 19, 9.5, AI.edge, WEB.accentSoft);
+            if (lines[0]) drawLine(ctx, lines[0], cx + 9, y + 3, 11, AI.ink);
+          } else if (kind === 'hello') {
+            this.drawGreeting(ctx, cx, y, cw);
+          } else if (row && row.who === 'her') {
+            const bw = Math.min(cw - 30, Math.max(0, ...lines.map((l) => l.w)) + 22), bx = cx + cw - bw;
+            fillRR(ctx, bx, y, bw, h, 12, KETTLE.mine);
+            lines.forEach((l, i) => drawLine(ctx, l, bx + 11, y + 5 + i * HER_LINE, 13, WEB.ink));
+          } else if (row && row.who === 'memory') {
             // ⚑ S413 (rule 3) — Memory: one small line, its own mark; open, the three lines of what it keeps and for whom
             const M = S.memory, m = row.mem!;
-            assistantMark(ctx, r.x + PAD, y + 1, 10, AI.mark, WEB.card);
-            setFont(ctx, 10); ctx.fillStyle = AI.ink;
+            assistantMark(ctx, cx, y + 1, 11, AI.mark, WEB.card);
+            setFont(ctx, 11); ctx.fillStyle = AI.ink;
             const lab = row.open ? M.updated : `${M.updated} ›`, lw = Math.ceil(ctx.measureText(lab).width);
-            ctx.fillText(lab, r.x + PAD + 14, y);
-            if (row.id) push({ x: r.x + PAD - 2, y: y - 4, w: lw + 22, h: row.open ? h + 4 : 20, id: row.id });
+            ctx.fillText(lab, cx + 15, y);
+            if (row.id) push({ x: cx - 2, y: y - 4, w: lw + 24, h: row.open ? h + 4 : 21, id: row.id });
             if (row.open) {
-              const kx = r.x + PAD + 14, kw = cw - 14;
-              roundEdge(ctx, kx - 6, y + 14, kw + 6, 3 * 13 + 4, 6, AI.chipEdge, WEB.card);
+              const kx = cx + 15, kw = cw - 15;
+              edgeRR(ctx, kx - 6, y + 15, kw + 6, 3 * 14 + 4, 7, AI.chipEdge, WEB.card);
               const line3 = (k: string, v: string, yy: number): void => {
-                setFont(ctx, 10); ctx.fillStyle = AI.note; const kw2 = Math.ceil(ctx.measureText(`${k} · `).width);
+                setFont(ctx, 11); ctx.fillStyle = AI.note; const kw2 = Math.ceil(ctx.measureText(`${k} · `).width);
                 ctx.fillText(`${k} · `, kx, yy);
                 ctx.fillStyle = AI.ink; ctx.fillText(fitTo(ctx, v, kw - kw2 - 6), kx + kw2, yy);
               };
-              line3(M.memory, m.memory, y + 17); line3(M.usedFor, m.usedFor, y + 30); line3(M.sharedWith, m.sharedWith, y + 43);
+              line3(M.memory, m.memory, y + 18); line3(M.usedFor, m.usedFor, y + 32); line3(M.sharedWith, m.sharedWith, y + 46);
             }
-          } else if (row.who === 'unsent') {
+          } else if (row && row.who === 'unsent') {
             // ⚑ S413 (beat 8; 26-15) — where her words were: the system's line, small, on her side, a red ring; it scrolls up
             //   with the conversation (it is never left in the box)
-            const lw = Math.max(0, ...lines.map((l) => l.w)), lx = r.x + r.w - PAD - lw;
+            const lw = Math.max(0, ...lines.map((l) => l.w)), lx = cx + cw - lw;
             roundRect(ctx, lx - 16, y + 1, 11, 11, 5, V3.danger);
             px(ctx, lx - 11, y + 3, 1, 4, WEB.card); px(ctx, lx - 11, y + 8, 1, 2, WEB.card);
-            lines.forEach((l, i) => drawLine(ctx, l, lx + (lw - l.w), y + 1 + i * 13, 10, V3.danger));
-          } else if (row.who === 'booked') {
+            lines.forEach((l, i) => drawLine(ctx, l, lx + (lw - l.w), y + 1 + i * 14, 11, V3.danger));
+          } else if (row && row.who === 'booked') {
             setFont(ctx, 12);
-            const bw = Math.ceil(ctx.measureText(row.text).width) + 20;
-            pill(ctx, r.x + PAD, y, bw, 22, AI.primary);
-            ctx.fillStyle = AI.primaryInk; ctx.fillText(row.text, r.x + PAD + 10, y + 5);
-          } else if (row.who === 'note') {
-            lines.forEach((l, i) => drawLine(ctx, l, r.x + PAD, y + 1 + i * 13, 10, AI.note));
+            const bw = Math.ceil(ctx.measureText(row.text).width) + 22;
+            pill(ctx, cx, y, bw, 22, AI.primary);
+            ctx.fillStyle = AI.primaryInk; ctx.fillText(row.text, cx + 11, y + 5);
+          } else if (row && row.who === 'note') {
+            lines.forEach((l, i) => drawLine(ctx, l, cx, y + 1 + i * 14, 11, OS26.winInk2));
           } else {
-            lines.forEach((l, i) => drawLine(ctx, l, r.x + PAD, y + i * LINE, 13, AI.ink));
+            lines.forEach((l, i) => drawLine(ctx, l, cx, y + i * LINE, 14, AI.ink));
           }
         }
         y += h + 8;
       }
-      if (this.typing) { for (let i = 0; i < 3; i++) roundRect(ctx, r.x + PAD + i * 9, y + 6, 6, 6, 3, AI.mark); }
-      // older lines fade out under the head (a band of the pane's own ground, stepped)
-      if (this.chatMax > this.chatBack) { px(ctx, r.x, HEAD, r.w, 3, AI.ground); }
+      if (this.typing) { for (let i = 0; i < 3; i++) fillRR(ctx, cx + i * 10, y + 6, 7, 7, 3.5, AI.mark); }
     }
     ctx.restore();
     // ⚑ S413 (26-14) — she has scrolled back: a small pill at the conversation's foot returns her to the newest line
     if (!this.aiOverlay && this.chatBack > 0) {
-      setFont(ctx, 10);
-      const lab = `${S.newest} ↓`, nw = Math.ceil(ctx.measureText(lab).width) + 16, nx = r.x + r.w - PAD - nw, ny = chatBottom - 22;
-      pill(ctx, nx, ny, nw, 18, AI.primary); ctx.fillStyle = AI.primaryInk; ctx.fillText(lab, nx + 8, ny + 4);
-      push({ x: nx - 2, y: ny - 3, w: nw + 4, h: 24, id: 'chat-newest' });
+      setFont(ctx, 11);
+      const lab = `${S.newest} ↓`, nw = Math.ceil(ctx.measureText(lab).width) + 18, nx = cx + cw - nw, ny = chatBottom - 23;
+      pill(ctx, nx, ny, nw, 19, AI.primary); ctx.fillStyle = AI.primaryInk; ctx.fillText(lab, nx + 9, ny + 3);
+      push({ x: nx - 2, y: ny - 3, w: nw + 4, h: 25, id: 'chat-newest' });
     }
-    // ⚑ S413 (beat 8) — the message box: its placeholder, or her words as they are typed in (no keyboard: the chip types them)
-    if (composerY >= 0) {
-      roundEdge(ctx, r.x + PAD, composerY, cw, COMPOSER_H, 14, AI.chipEdge, WEB.card);
-      setFont(ctx, 12);
-      const t = this.composerText;
-      if (t) {
-        const shown = fitTo(ctx, t, cw - 26, true);
-        ctx.fillStyle = WEB.ink; ctx.fillText(shown, r.x + PAD + 12, composerY + 7);
-        if (this.composerCaret) px(ctx, r.x + PAD + 13 + Math.ceil(ctx.measureText(shown).width), composerY + 6, 1, 15, WEB.ink);
-      } else { ctx.fillStyle = AI.note; ctx.fillText(this.composer ?? '', r.x + PAD + 12, composerY + 7); }
+    // ⚑ S417 — the composer: "Ask L anything" (or the act's own word for it), her words as they are typed in for her (beat 8:
+    //   the chip types them), and its send button. It is never typed into: it publishes nothing.
+    // ⚑ S417 — the voice switch sits beside the composer (the period's voice button; job 33's `l-voice`, moved on the glass)
+    let fw = cw;
+    if (this.voiceSwitch) {
+      setFont(ctx, 11);
+      const word = this.voiceOn ? S.voiceOn : S.voiceOff;
+      const vw = 22 + Math.ceil(ctx.measureText(word).width) + 10, vx = cx + cw - vw, vy = composerY + 2, vh = COMPOSER_H - 4;
+      edgeRR(ctx, vx, vy, vw, vh, vh / 2, AI.edge, this.voiceOn ? WEB.accentSoft : OS26.win);
+      speakerIcon(ctx, vx + 7, vy + 7, this.voiceOn ? AI.ink : AI.note, this.voiceOn);
+      ctx.fillStyle = this.voiceOn ? AI.ink : OS26.winInk2; ctx.fillText(word, vx + 22, vy + 5);
+      push({ x: vx - 3, y: composerY - 3, w: vw + 6, h: COMPOSER_H + 6, id: 'l-voice' });
+      this.anchor('l-voice', { x: vx, y: vy, w: vw, h: vh });
+      fw = cw - vw - 6;
     }
+    edgeRR(ctx, cx, composerY, fw, COMPOSER_H, COMPOSER_H / 2, OS26.winEdge, OS26.win);
+    const t = this.composerText;
+    setFont(ctx, 12);
+    if (t) {
+      const shown = fitTo(ctx, t, fw - 40, true);
+      ctx.fillStyle = WEB.ink; ctx.fillText(shown, cx + 12, composerY + 7);
+      if (this.composerCaret) px(ctx, cx + 13 + Math.ceil(ctx.measureText(shown).width), composerY + 6, 1, 16, WEB.ink);
+    } else { ctx.fillStyle = OS26.winInk2; ctx.fillText(fitTo(ctx, this.composer ?? OS.composer, fw - 40), cx + 12, composerY + 7); }
+    const bx = cx + fw - COMPOSER_H + 3, by = composerY + 3, bd = COMPOSER_H - 6;
+    fillRR(ctx, bx, by, bd, bd, bd / 2, t ? AI.primary : OS26.winEdge);
+    ctx.strokeStyle = t ? AI.primaryInk : OS26.win; ctx.lineWidth = 1.8; ctx.lineCap = 'round';
+    ctx.beginPath(); ctx.moveTo(bx + bd / 2, by + bd - 6); ctx.lineTo(bx + bd / 2, by + 6); ctx.moveTo(bx + bd / 2 - 4, by + 10); ctx.lineTo(bx + bd / 2, by + 6); ctx.lineTo(bx + bd / 2 + 4, by + 10); ctx.stroke();
+    ctx.lineCap = 'butt';
     // the answers
-    this.chips.forEach((c, i) => {
-      const h = chipRects[i];
+    this.chips.forEach((c) => {
+      const h = chipRects.find((x) => x.id === c.id); if (!h) return;
+      const i = this.chips.indexOf(c);
       const primary = (c.kind ?? (i === 0 ? 'primary' : 'quiet')) === 'primary';
-      if (primary) pill(ctx, h.x, h.y, h.w, h.h, AI.primary);
-      else { pill(ctx, h.x, h.y, h.w, h.h, AI.chipEdge); pill(ctx, h.x + 1, h.y + 1, h.w - 2, h.h - 2, AI.chip); }
+      if (primary) fillRR(ctx, h.x, h.y, h.w, h.h, h.h / 2, AI.primary);
+      else edgeRR(ctx, h.x, h.y, h.w, h.h, h.h / 2, AI.chipEdge, OS26.win);
       setFont(ctx, 13);
-      const tw = Math.ceil(ctx.measureText(c.label).width);
-      ctx.fillStyle = primary ? AI.primaryInk : AI.ink;
-      ctx.fillText(c.label, h.x + Math.round((h.w - tw) / 2), h.y + 7);
+      const label = fitTo(ctx, c.label, h.w - 20);
+      const lines = wrapRich(ctx, label, 9999, 13);
+      const tw = lines[0]?.w ?? 0;
+      if (lines[0]) drawLine(ctx, lines[0], h.x + Math.round((h.w - tw) / 2), h.y + 6, 13, primary ? AI.primaryInk : AI.ink);
       push(h);
       this.anchor(c.id, h);
     });
-    helpLines.forEach((l, i) => drawLine(ctx, l, r.x + PAD, helpY + i * 13, 10, AI.note));
+    helpLines.forEach((l, i) => drawLine(ctx, l, cx, helpY + i * 13, 11, OS26.winInk2));
+  }
+
+  /** the big greeting's lines at this width (the serif of the period's chat apps; its ✦ drawn) */
+  private greetingLines(ctx: CanvasRenderingContext2D, w: number): string[] {
+    const words = OS.greeting.replace('✦', '').trim().split(' ');
+    const out: string[] = []; let line = '';
+    for (const wd of words) { const t = line ? `${line} ${wd}` : wd; if (ctx.measureText(t).width > w - 22 && line) { out.push(line); line = wd; } else line = t; }
+    if (line) out.push(line);
+    return out;
+  }
+  private drawGreeting(ctx: CanvasRenderingContext2D, x: number, y: number, w: number): void {
+    ctx.font = newsFor(GREET, false); ctx.textBaseline = 'top';
+    const lines = this.greetingLines(ctx, w);
+    lines.forEach((l, i) => { ctx.fillStyle = OS26.winInk; ctx.fillText(l, x, y + i * (GREET + 4)); });
+    const last = lines[lines.length - 1] ?? '';
+    const lx = x + Math.ceil(ctx.measureText(last).width) + 5, ly = y + (lines.length - 1) * (GREET + 4) + 1;
+    if (iconLocked) { starIcon(ctx, lx, ly, 15, WEB.faint); padlockIcon(ctx, lx + 8, ly + 7, CHROME.ink); }
+    else starIcon(ctx, lx, ly, 15, AI.mark);
+  }
+  /** ⚑ S417 — L's chat list as a column (a wide window) */
+  private drawChatColumn(ctx: CanvasRenderingContext2D, r: Rect): void {
+    const C = OS.chats;
+    ctx.save(); ctx.beginPath(); ctx.rect(r.x, r.y, r.w, r.h); ctx.clip();
+    px(ctx, r.x, r.y, r.w, r.h, OS26.winSide);
+    px(ctx, r.x + r.w - 1, r.y, 1, r.h, OS26.winRule);
+    let y = r.y + 8;
+    edgeRR(ctx, r.x + 7, y, r.w - 14, 21, 7, OS26.winEdge, OS26.win);
+    setFont(ctx, 11); ctx.fillStyle = OS26.winInk; ctx.fillText(fitTo(ctx, `✎ ${C.newChat}`, r.w - 28), r.x + 14, y + 4);
+    y += 31;
+    const group = (head: string, items: string[]): void => {
+      setFont(ctx, 11); ctx.fillStyle = OS26.menuQuiet; ctx.fillText(head, r.x + 10, y); y += 16;
+      for (const it of items) {
+        const on = it === C.live;
+        if (on) fillRR(ctx, r.x + 5, y - 3, r.w - 10, 19, 6, OS26.winSideOn);
+        setFont(ctx, 11); ctx.fillStyle = on ? OS26.winInk : OS26.winInk2; ctx.fillText(fitTo(ctx, it, r.w - 22), r.x + 11, y);
+        y += 20;
+      }
+      y += 6;
+    };
+    group(C.today, C.todayList);
+    group(C.yesterday, C.yesterdayList);
+    ctx.restore();
+  }
+  /** ⚑ S417 — L's chat list as a strip under the title (a narrow window): the live chat first, the others after it */
+  private drawChatStrip(ctx: CanvasRenderingContext2D, r: Rect): void {
+    const C = OS.chats;
+    px(ctx, r.x, r.y, r.w, r.h, OS26.winSide);
+    px(ctx, r.x, r.y + r.h - 1, r.w, 1, OS26.winRule);
+    // the live chat first, then last night's search, then the rest; only whole names, and a count of those left over
+    const items = [C.live, ...C.yesterdayList, ...C.todayList.filter((x) => x !== C.live)];
+    let x = r.x + 6, shown = 0;
+    setFont(ctx, 11);
+    for (const it of items) {
+      const w = Math.ceil(ctx.measureText(it).width) + 14;
+      const left = items.length - shown - 1;
+      if (x + w > r.x + r.w - 6 - (left ? 24 : 0)) break;
+      const on = it === C.live;
+      if (on) fillRR(ctx, x, r.y + 2, w, r.h - 5, 7, OS26.winSideOn);
+      ctx.fillStyle = on ? OS26.winInk : OS26.winInk2; ctx.fillText(it, x + 7, r.y + 3);
+      x += w + 2; shown++;
+    }
+    if (shown < items.length) { ctx.fillStyle = OS26.menuQuiet; ctx.fillText(`+${items.length - shown}`, x + 4, r.y + 3); }
+  }
+  /** ⚑ S417 — the dock: which of her apps are open (a dot), and which she can reach now (the rest are dimmed and say why) */
+  dockApps(): DockApp[] {
+    const right = appOf(this.page?.kind ?? '');
+    return APPS26.map((app) => ({ app, label: OS.apps[app], open: !this.fullOn && (app === 'l' || app === right), reachable: this.reach(app) }));
+  }
+  /** an app she can reach now: one that is open (a press brings it forward: it is already there), and Search while a story is
+   *  open over it (a press is the back arrow's, which job 33 lets her press). Nothing while the AI uses her computer. */
+  private reach(app: App26): boolean {
+    if (this.fullOn || this.banner || !this.pagePressable) return false;
+    if (app === 'l') return true;
+    const right = appOf(this.page?.kind ?? '');
+    if (app === right) return true;
+    return false;
+  }
+  /** why an app cannot be reached, in the voice of whatever is in front */
+  private whyNot(): string { return OS.why[this.desk.skin] ?? OS.why.l; }
+  /** ⚑ S417 — a dock press (or the Menu's app row): it brings the app forward where she may, says why where she may not, and
+   *  never moves the story (it is not handed to the script) */
+  pressApp(app: App26): void {
+    playOnce('ui_press.mp3');
+    if (!this.reach(app)) { this.desk.showTip(app, this.whyNot()); this.version++; return; }
+    if (app === 'search' && this.page?.kind === 'story' && this.visitorBack && this.stack[0]?.kind === 'search') { this.back(); return; }
+    this.version++;
   }
 
   /** the Original ✦'s tag under a message the AI changed, in this act's stage; returns its height (0: no tag) */
@@ -511,11 +709,22 @@ export class LScreen {
     // ⚑ S413 — a Memory note opens (or folds) in place; Newest returns the conversation to its last line
     if (h.id.startsWith('mem-note:')) { if (this.toggleMemory(h.id)) playOnce('ui_press.mp3'); return h.id; }
     if (h.id === 'chat-newest') { this.newest(); playOnce('ui_press.mp3'); return h.id; }
+    // ⚑ S417 — the dock: a reader's press, handled here and never handed to the script (it cannot move a beat)
+    if (h.id.startsWith('dock:')) { this.pressApp(h.id.slice(5) as App26); return h.id; }
     this.onPress?.(h.id);
     return h.id;
   }
   /** the conversation scrolls under this point */
-  chatAt(x: number, y: number, H: number): boolean { return x >= 0 && x < this.aiW && y >= HEAD && y < H - TASKBAR; }
+  chatAt(x: number, y: number, _H: number): boolean { const r = this.aiStage; return x >= r.x && x < r.x + r.w && y >= r.y && y < r.y + r.h; }
+}
+
+/** ⚑ S417 — which of her apps a page on the right belongs to (the dock's dot; the app she may bring forward) */
+export function appOf(kind: string): App26 | null {
+  if (kind === 'kettle' || kind === 'thread' || kind === 'junie' || kind === 'junieLink') return 'kettle';
+  if (kind === 'inbox' || kind === 'mail') return 'lark';
+  if (kind === 'search' || kind === 'story') return 'search';
+  if (kind === 'card' || kind === 'week' || kind === 'added' || kind === 'review') return 'l';
+  return null;
 }
 
 /** a line that does not fit ends in an ellipsis (or, `tail`, shows its end: a box being typed into keeps the caret in view) */

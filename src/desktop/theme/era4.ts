@@ -2187,3 +2187,79 @@ export const PORTRAIT_FIGURE: {
   goal: { hair: GOAL_HAIR, face: GOAL_FACE, feat: GOAL_FEAT, mouth: GOAL_MOUTH, body: GOAL_BODY },
   key: P_KEY, sparkles: P_SPARKLES, bayer, gloss: glossCell
 };
+
+/**
+ * ⚑ S417 (UiB job 34 Part A; T101) — OS26: 2026'S DESKTOP, an invented operating system of the period, "inspired on" current
+ * Mac and Windows (src/desktop/apps/desk26.ts draws it; lScreen.ts lays the AI's window and her world's window on it).
+ *
+ * THE COLOUR LAW'S YES FOR THIS BLOCK IS HIS. T101, his words on job 33's stills (22 Nov 2026): "Too plain, not over the
+ * top" … "It should be inspired on current software, like either MAC or Windows 12... It is missing the Menu button btw.
+ * Like this has to be aesthically pleasing, it can even look like the inside of a Claude/GPT but yeah it needs much more."
+ * Shown the three sketches (docs/reinterp/refs/2026_os_sketches_2026-11-22.html) he said "Yes, write the job", and the job
+ * (UIB_JOB_34 §"The rules for the whole look") names that yes as the colour law's yes for ONE new block, this one, with
+ * every new hex here and named by its role. Unlike the blocks above, these are NOT lifted from data/room/era1.json: they
+ * are the period's software colours, invented for this OS, and they are the only hexes in the piece that are.
+ *
+ * What does not move: L's mint stays L's (`ERA4.l`, `WEB.accent`; L must still look good, THE_ARGUMENT §4.1: over the top
+ * in polish, never in menace); Second Thoughts' yellow is the sponsored card's (`PLACE.sunHi`, S412), so the ad and the
+ * takeover are one brand; people's words stay in their plain cards (KETTLE). No real OS's colours or marks: no traffic-light
+ * window dots (the window controls are this OS's own grey glyphs), no real logo.
+ *
+ * ROLES, so Part B (S418) can add the brands to this same block: `wall*` the wallpaper's calm shapes per skin, `bar*` the
+ * menu bar, `menu*` the Menu button and its panel, `win*` the windows, `dock*` the dock, `app*` her apps' tiles, `note*`
+ * the notifications, `tip*` the dock's one-line reasons, `shadow` the windows' soft shadow (drawn as translucent layers).
+ */
+export const OS26 = {
+  // the wallpaper, L's skin (Act I): large calm shapes on a pale lilac morning
+  wallGround: '#E9E2F4',
+  wallSky: '#B9CDEF',
+  wallLilac: '#CBBDE9',
+  wallPeach: '#F4C8B6',
+  wallRose: '#EDC3DA',
+  wallMint: '#C6E8DE',
+  // the wallpaper, the plain skin (the OS with nothing in front of it): the same shapes, quieter
+  plainGround: '#E8E7EE',
+  plainSky: '#CBD4E3',
+  plainLilac: '#D7D2E4',
+  plainPeach: '#E6D8D0',
+  // the menu bar: frosted, over the wallpaper
+  bar: '#FBFAFE',
+  barEdge: '#D9D3E6',
+  barInk: '#1E1A2A',
+  barInk2: '#5D5770',
+  // the Menu button (its invented mark: a sunrise) and the Menu's panel
+  menuButton: '#1E1A2A',
+  menuButtonInk: '#FFFFFF',
+  menuPanel: '#FFFFFF',
+  menuEdge: '#D9D3E6',
+  menuHead: '#6B6480',
+  menuRowOn: '#EEEAF7',
+  menuQuiet: '#8C86A0',
+  // the windows: white, rounded, a soft shadow, their own grey controls
+  win: '#FFFFFF',
+  winTitle: '#F7F5FB',
+  winEdge: '#DDD8E8',
+  winRule: '#ECE8F3',
+  winInk: '#1E1A2A',
+  winInk2: '#5D5770',
+  winControl: '#A39DB5',
+  winSide: '#F4F2F9',
+  winSideOn: '#E7E2F3',
+  shadow: '#2B2340',
+  // the dock: a frosted shelf
+  dock: '#FFFFFF',
+  dockEdge: '#E4DEF0',
+  dockDot: '#1E1A2A',
+  // her apps' tiles (L's is L's own mint, `ERA4.lDim`)
+  appKettle: '#E8845C',
+  appLark: '#4A84D6',
+  appSearch: '#7A6AD4',
+  appPhotos: '#F0B13A',
+  appSettings: '#8B869A',
+  appInk: '#FFFFFF',
+  // a notification (one at a time, at the top right) and the dock's one-line reason
+  note: '#FFFFFF',
+  noteEdge: '#DDD8E8',
+  tip: '#1E1A2A',
+  tipInk: '#FFFFFF'
+} as const;

@@ -26,7 +26,7 @@ import { readHold } from '../readHold';
 import { markE4 } from '../../narrative/e4Beats';
 import { meetWord } from '../../room/lexicon';
 import { playOnce } from '../../audio/tapeAudio';
-import { registerPage, drawRich, personBubble, starIcon, padlockIcon, AI, ANIM_HZ, type Page, type PageApi, type Rect } from './lScreen';
+import { registerPage, drawRich, personBubble, starIcon, padlockIcon, AI, ANIM_HZ, OS, type LScreen, type Page, type PageApi, type Rect } from './lScreen';
 import { E4Acts, type Beat, fillIn } from './e4Acts';
 import ACTS from '../../../data/dialog/s4_acts.json';
 import V from '../../../data/dialog/s4_v3.json';
@@ -85,7 +85,8 @@ function weekSlot(i: number, pr: Rect): Rect {
   const cols = 6, cw = Math.floor((pr.w - 20) / cols), ch = 62;
   return { x: pr.x + 10 + (i % cols) * cw + 4, y: pr.y + 24 + Math.floor(i / cols) * ch, w: cw - 8, h: ch - 14 };
 }
-function circleAt(aiW: number): { x: number; y: number; d: number } { return { x: Math.round(aiW / 2), y: 40 + 92, d: 78 }; }
+/** ⚑ S417 — the reading circle stands in the conversation's place in the AI's window (lScreen `aiStage`) */
+function circleIn(r: Rect): { x: number; y: number; d: number } { return { x: Math.round(r.x + r.w / 2), y: r.y + Math.min(84, Math.round(r.h * 0.36)), d: 78 }; }
 function absorbed(t: number): number { return Math.max(0, Math.min(WEEK.length, Math.floor((t - FLY_SECONDS) / FLY_GAP) + 1)); }
 /** ⚑ S413 — exported: beat 7's video pulls her week in with the same small marks */
 export function kindIcon(ctx: CanvasRenderingContext2D, k: Kind, x: number, y: number, ink: string): void {
@@ -120,11 +121,11 @@ function lastCard(ctx: CanvasRenderingContext2D, r: Rect, scale = 1): void {
   setFont(ctx, 10); ctx.fillStyle = V3.ink2; ctx.fillText(B1.lastNight, x + 32, y + 12);
   setFont(ctx, 15); ctx.fillStyle = V3.ink; ctx.fillText(`${SEARCH.typed}|`, x + 12, y + 34);
 }
-/** the flying cards, over both panes */
-function drawFlight(ctx: CanvasRenderingContext2D, W: number, H: number, aiW: number): void {
+/** the flying cards, over both windows */
+function drawFlight(ctx: CanvasRenderingContext2D, W: number, H: number, s: LScreen): void {
   const t = reading.t; if (t < 0) return;
-  const pr = { x: aiW + 2, y: 26, w: W - aiW - 2, h: H - 20 - 26 };
-  const c = circleAt(aiW);
+  const pr = s.pageRect(W, H);
+  const c = circleIn(s.aiStage);
   const ease = (k: number): number => k * k * (3 - 2 * k);
   for (let i = 0; i < WEEK.length; i++) {
     const k = (t - i * FLY_GAP) / FLY_SECONDS;
@@ -143,7 +144,7 @@ function drawFlight(ctx: CanvasRenderingContext2D, W: number, H: number, aiW: nu
 }
 /** the AI's pane while it reads: its circle, large, and the counter under it */
 function drawReadingCircle(ctx: CanvasRenderingContext2D, r: Rect): void {
-  const t = Math.max(0, reading.t), c = circleAt(r.w);
+  const t = Math.max(0, reading.t), c = circleIn(r);
   const f = Math.min(1, absorbed(t) / WEEK.length * 0.97 + (t >= READ_DONE - 0.6 ? 0.03 : 0));
   // the ring fills as it reads (steps: never smooth, never an upload per frame)
   roundRect(ctx, c.x - c.d / 2 - 8, c.y - c.d / 2 - 8, c.d + 16, c.d + 16, Math.floor((c.d + 16) / 2), WEB.cardEdge);
@@ -380,31 +381,32 @@ function drawSearch(ctx: CanvasRenderingContext2D, pr: Rect, page: Page, api: Pa
     }
     return;
   }
-  let y = pr.y + 52;
+  // ⚑ S417 — 17 px tighter (the desktop's menu bar and dock take the old taskbar's place): the yellow card stays whole
+  let y = pr.y + 50;
   // L's answer at the top: the AI's mode of the search (26-7)
   if (page.answer) {
-    roundEdge(ctx, x, y, w, 76, 10, AI.edge, AI.ground);
-    assistantMark(ctx, x + 10, y + 9, 14, AI.mark, WEB.card);
-    setFont(ctx, 10); ctx.fillStyle = AI.ink; ctx.fillText(B4.answerBy, x + 30, y + 10);
-    drawRich(ctx, B4.answer.text.join(' '), x + 10, y + 28, w - 20, 13, AI.ink, 16, 3);
-    y += 86;
+    roundEdge(ctx, x, y, w, 74, 10, AI.edge, AI.ground);
+    assistantMark(ctx, x + 10, y + 8, 14, AI.mark, WEB.card);
+    setFont(ctx, 10); ctx.fillStyle = AI.ink; ctx.fillText(B4.answerBy, x + 30, y + 9);
+    drawRich(ctx, B4.answer.text.join(' '), x + 10, y + 27, w - 20, 13, AI.ink, 16, 3);
+    y += 82;
   }
   if (!page.stories) return;
-  setFont(ctx, 12); ctx.fillStyle = V3.ink; ctx.fillText(B4.topStories, x, y); y += 18;
+  setFont(ctx, 12); ctx.fillStyle = V3.ink; ctx.fillText(B4.topStories, x, y); y += 17;
   const cw = Math.floor((w - 16) / 3);
   ARTICLES.slice(0, 3).forEach((a, i) => {
     const cx = x + i * (cw + 8);
-    roundEdge(ctx, cx, y, cw, 92, 8, V3.edge, V3.card);
-    ctx.font = newsFor(10); ctx.fillStyle = a.look === 'tabloid' ? PLACE.book : V3.ink2; ctx.fillText(a.mast, cx + 8, y + 7);
-    drawRich(ctx, a.head, cx + 8, y + 22, cw - 16, 12, V3.ink, 15, 3);
-    if (a.id === MUM_SHARED) { setFont(ctx, 9); const sw = Math.ceil(ctx.measureText(SHARED_BY).width) + 12; pill(ctx, cx + 8, y + 72, sw, 14, PLACE.textileHi); ctx.fillStyle = WEB.ink; ctx.fillText(SHARED_BY, cx + 14, y + 74); }
-    api.control({ x: cx, y, w: cw, h: 92, id: `story-${i}` });
-    api.screen.anchor(`story-${i}`, { x: cx, y, w: cw, h: 92 });
+    roundEdge(ctx, cx, y, cw, 86, 8, V3.edge, V3.card);
+    ctx.font = newsFor(10); ctx.fillStyle = a.look === 'tabloid' ? PLACE.book : V3.ink2; ctx.fillText(a.mast, cx + 8, y + 6);
+    drawRich(ctx, a.head, cx + 8, y + 21, cw - 16, 12, V3.ink, 15, 3);
+    if (a.id === MUM_SHARED) { setFont(ctx, 9); const sw = Math.ceil(ctx.measureText(SHARED_BY).width) + 12; pill(ctx, cx + 8, y + 67, sw, 14, PLACE.textileHi); ctx.fillStyle = WEB.ink; ctx.fillText(SHARED_BY, cx + 14, y + 69); }
+    api.control({ x: cx, y, w: cw, h: 86, id: `story-${i}` });
+    api.screen.anchor(`story-${i}`, { x: cx, y, w: cw, h: 86 });
   });
-  y += 102;
+  y += 94;
   // ONE SPONSORED CARD, IN ITS OWN LOUD YELLOW (26-8): not a story, not the AI's answer — an ad, and it looks like one
   const sp = B4.sponsored, dismissed = !!page.notNow;
-  roundEdge(ctx, x, y, w, 54, 8, PLACE.ink, dismissed ? PLACE.mug : PLACE.sunHi);
+  roundEdge(ctx, x, y, w, 52, 8, PLACE.ink, dismissed ? PLACE.mug : PLACE.sunHi);
   setFont(ctx, 9); ctx.fillStyle = PLACE.ink; ctx.fillText(sp.label.toUpperCase(), x + 10, y + 6);
   setFont(ctx, 14); ctx.fillStyle = WEB.ink; ctx.fillText(sp.title, x + 10, y + 18);
   setFont(ctx, 11); ctx.fillStyle = PLACE.ink; ctx.fillText(sp.line, x + 10, y + 36);
@@ -508,6 +510,8 @@ export function* actOne(c: E4Acts, hooks: ActOneHooks, from: ActOneFrom = 1): Be
   const s = c.screen;
   s.setAiWidth((ACTS as unknown as { screen: { aiWidth: { act1: number } } }).screen.aiWidth.act1);
   s.originalStage = 'told';
+  s.setSkin('l');   // ⚑ S417 — the desktop wears L's skin in Act I
+  s.desk.clear();
   if (from > 1) layIn(c, from);
   if (from <= 1) yield* beat1(c);
   if (from <= 2) yield* beat2(c);
@@ -522,7 +526,7 @@ function* beat1(c: E4Acts): Beat {
   s.open({ kind: 'week', title: '' });
   reading.t = 0; reading.step = 0;
   s.aiOverlay = drawReadingCircle;
-  s.overlayTop = (ctx, W, H) => drawFlight(ctx, W, H, s.aiWidth);
+  s.overlayTop = (ctx, W, H) => drawFlight(ctx, W, H, s);
   // the reading, in steps (dirty-only): a redraw only when a card has moved on the screen's animation clock
   const t0 = c.t;
   yield () => {
@@ -605,8 +609,11 @@ function* beat2(c: E4Acts): Beat {
     s.back();
     c.feltNow = false;
     if (who !== 'dad') yield* c.say(B2.says[who]);
+    // ⚑ S417 — what L has just told her arrives as the OS's notification too (Mum's email, in its own words)
+    if (who === 'mum') s.notify('lark', SCREEN.apps.mail, `${B3.mum.from}: ${B3.mum.subject}`);
   }
   c.file('a1:messages', 'read', W.messages);
+  s.notify('l', OS.notes.sorted.title, OS.notes.sorted.text);   // ⚑ S417 — L has sorted her messages
   yield* c.say(B2.mail);
 }
 
@@ -682,6 +689,7 @@ function* beat4(c: E4Acts): Beat<'add' | 'notnow'> {
   s.hideCursor();
   page.stories = true; s.touch();
   playOnce('ui_press.mp3');
+  s.notify('l', B4.sponsored.label, B4.sponsored.title);   // ⚑ S417 — the card arrives as a notification too
   c.beat = 'bot';
   c.path = ['st-add', 'st-notnow'];
   c.clearPress();

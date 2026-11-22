@@ -259,6 +259,7 @@ function arrive(c: E4Acts, choice: 'add' | 'notnow'): void {
   c.file('a2:added', 'answered', fillIn(W.added, { how: choice === 'add' ? W.addedBy : W.addedFor }));
   s.name = SCREEN.stName; s.sub = SCREEN.stSub;
   s.originalStage = 'locked';
+  s.setSkin('secondThoughts');   // ⚑ S417 — the desktop's skin is Second Thoughts' from here (Part B dresses it)
 }
 
 function* beat5(c: E4Acts, choice: 'add' | 'notnow'): Beat {

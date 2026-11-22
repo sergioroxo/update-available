@@ -313,6 +313,7 @@ export function layInActThree(c: E4Acts): void {
   s.full = null;
   s.voiceSwitch = true;
   s.name = SCREEN.lName; s.sub = B10.lSub;
+  s.setSkin('plain');   // ⚑ S417
   s.setAiWidth(SCREEN.aiWidth.act3After);
   s.originalStage = 'restored';
   const row = s.rows.find((r) => r.who === 'unsent');

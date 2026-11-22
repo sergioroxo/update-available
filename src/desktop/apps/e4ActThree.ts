@@ -150,6 +150,7 @@ function layInSession(c: E4Acts, door: Door): void {
   s.voiceSwitch = false;
   sh.begin(door);
   sh.intro = false; sh.hostOn = true;
+  s.setSkin('shepherd');   // ⚑ S417
   s.setAiWidth(SCREEN.aiWidth.act3);
   setStudioLight(true);
   themeOn();
@@ -202,6 +203,7 @@ function* session(c: E4Acts, door: Door, jumped: boolean): Beat {
   c.beat = 'session';
   s.voiceSwitch = false;
   sh.begin(door);
+  s.setSkin('shepherd');   // ⚑ S417 — the desktop's skin is Shepherd Live™'s while its session runs (Part B dresses it)
   s.setAiWidth(SCREEN.aiWidth.act3, door === 'here' && !jumped ? 2.2 : 0.6);
   setStudioLight(true);
   themeOn();
@@ -335,6 +337,7 @@ function* beat10(c: E4Acts, hooks: ActThreeHooks, door: Door): Beat {
   s.full = null;
   s.voiceSwitch = true;
   s.name = SCREEN.lName; s.sub = B10.lSub;
+  s.setSkin('plain');   // ⚑ S417 — the products have fallen: the plain OS, L back with some of its features unavailable
   s.setAiWidth(SCREEN.aiWidth.act3After, 1.6);
   s.open({ kind: 'kettle', title: SCREEN.apps.kettle, read: ['lot', 'mum', 'dad', 'junie'], muted: [], told: true, menu: null });
   yield 1.8;
@@ -377,6 +380,7 @@ function* stutter(c: E4Acts, line: Spoken): Beat {
 export function layInActTwo(c: E4Acts): void {
   const s = c.screen;
   s.name = SCREEN.stName; s.sub = SCREEN.stSub;
+  s.setSkin('secondThoughts');   // ⚑ S417
   s.setAiWidth(SCREEN.aiWidth.act2);
   s.originalStage = 'locked';
   s.rows.push({ who: 'unsent', text: A2.unsentLine });

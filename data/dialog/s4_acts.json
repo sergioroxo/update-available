@@ -40,6 +40,60 @@
    "video": "Video",
    "console": "Console"
   },
+  "os": {
+   "_doc": "⚑ S417 (UiB job 34 Part A; T101, his 22 Nov: \"It should be inspired on current software … It is missing the Menu button btw\") — 2026's DESKTOP (src/desktop/apps/desk26.ts): a wallpaper, a menu bar with the Menu button (the piece's Start menu, in this OS's skin), a dock with her six apps, windows, notifications. L lives in its window like a modern AI chat app: its chat list (a strip at Act I's width, a column when the window is wide), its model chip, a big greeting, rounded answers, and a composer that is never typed into. The OS has no name on screen; the Menu button's mark is invented. Job 33's lines are unchanged; these are the desktop's own words.",
+   "menus": [
+    "File",
+    "Edit",
+    "View"
+   ],
+   "status": "82%",
+   "apps": {
+    "l": "L",
+    "kettle": "Kettle",
+    "lark": "Larkpost",
+    "search": "Search",
+    "photos": "Photos",
+    "settings": "Settings"
+   },
+   "why": {
+    "_doc": "An app she cannot reach is dimmed in the dock (and in the Menu); pressed, it says why in one line, in the voice of whatever is in front. Nothing opens and no beat moves: the AI opens things for her (job 33, rule 1).",
+    "l": "L will open this for you.",
+    "secondThoughts": "Second Thoughts is using your computer",
+    "shepherd": "Shepherd Live™ is using your computer",
+    "plain": "Some features of L are unavailable."
+   },
+   "chats": {
+    "_doc": "L's chat list (the sketch's): today's two, and last night's unfinished search. The live one is the birthday.",
+    "newChat": "New chat",
+    "today": "Today",
+    "yesterday": "Yesterday",
+    "todayList": [
+     "Your week",
+     "Birthday"
+    ],
+    "yesterdayList": [
+     "search: am i…"
+    ],
+    "live": "Birthday"
+   },
+   "model": "L 5 · Premium ✦",
+   "greeting": "Good morning, Maya ✦",
+   "composer": "Ask L anything",
+   "menu": {
+    "_doc": "The Menu's own two headings in this OS (the rest are the Start menu's, data/strings/slice.json desktop.startMenu).",
+    "apps": "Apps",
+    "whatToDo": "What to do now"
+   },
+   "notes": {
+    "_doc": "Notifications, one at a time, at the top right, for what job 33 already announces: Mum's email (after L tells her), L sorting her messages (when it has read the four threads), the sponsored card's arrival (with the card). Mum's and the ad's are their own words (act1.b3.mum, act1.b4.sponsored); one line is new.",
+    "sorted": {
+     "title": "L",
+     "text": "4 chats read and summarised for you ✦"
+    },
+    "seconds": 4.6
+   }
+  },
   "stName": "L · Second Thoughts",
   "stSub": "for when you're not sure",
   "_docSt": "⚑ S413 (beat 5) — the name the AI's pane carries once Second Thoughts has added itself (draft 3: \"L's name becomes L · Second Thoughts\"); its line is the ad's own tagline, so the add-on keeps saying what it sold itself as.",

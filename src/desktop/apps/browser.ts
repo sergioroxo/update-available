@@ -69,7 +69,9 @@ import { actThree, wireActThree, layInActTwo, stopActThreeSound, type ActThreeFr
 import { actFour, wireActFour, layInActThree, type ActFourFrom, type ActFourHooks } from './e4ActFour';
 import { setStreamLight } from '../../room/streamLight';
 import type { Door } from './shepherd';
-import { TASKBAR as ACTS_TASKBAR } from './lScreen';
+import { OS as OS_WORDS } from './lScreen';
+import { MENU_H, DOCK_H, DOCK_FOOT, APPS26, edgeRR, fillRR, softShadow, alpha, type App26 } from './desk26';
+import { OS26 } from '../theme/era4';
 
 export interface Hit { x: number; y: number; w: number; h: number; id: string }
 type Surface = 'monitor' | 'laptop' | 'headset';
@@ -410,7 +412,8 @@ export class E4Browser {
   //   guide's 50 s tip, which would otherwise pop over the end slate
   get guideVoice(): boolean {
     return !!this.nowLine || this.waitNow || this.clipTakeover
-      || (this.step === 'acts' && (this.acts.screen.speaking || this.acts.screen.typing || this.acts.floor));   // S412: L is talking · S413: the film has the floor
+      || (this.step === 'acts' && (this.acts.screen.speaking || this.acts.screen.typing || this.acts.floor))   // S412: L is talking · S413: the film has the floor
+      || (this.step === 'acts' && this.acts.screen.desk.speaking);   // S417: a notification is up (one voice at a time)
   }
   sayLine(line: string): void { this.nowLine = line; this.version++; }
   /** the laptop's line while the messenger is not up (the restore, the session worn) */
@@ -963,6 +966,13 @@ export class E4Browser {
     const b4 = this.stepT;
     this.stepT += dt;
     if (this.step === 'acts') {
+      // ⚑ S417 — THE MENU HOLDS THE STORY. While the Menu (or anything opened from it: the steps, the refusal, the dig) is up,
+      //   the director does not step: a beat waiting on her keeps waiting, the AI's cursor stops where it is, nothing happens
+      //   under the menu that she would miss. A line already being spoken finishes; the next one waits for the menu to close.
+      //   (The Menu cannot be opened over the stream: transjesus.str covers the menu bar; nor in the headset's session.)
+      if (this.startMap.active) { this.stallT = 0; return; }
+      // ⚑ S417 — notifications wait while a person's words, the film or the guide's balloon have the floor
+      this.acts.screen.hush = this.acts.feltNow || this.acts.floor || this.lambyGuidePaint.balloon || !!this.lambyGuide?.active;
       // ⚑ S412 — the acts run on their own director; the monitor follows its version (dirty only)
       this.acts.update(dt);
       if (this.acts.version !== this.actsSeen) { this.actsSeen = this.acts.version; this.version++; }
@@ -1489,36 +1499,72 @@ export class E4Browser {
     this.lay = null;
     this.pageTargets = [];
     this.actsH = H;
-    this.hits = this.acts.screen.draw(ctx, W, H, pressable).slice();
+    // ⚑ S417 — the Menu cannot stay open on a screen she cannot press (the headset worn, the screens handed on)
+    if (!pressable && this.startMap.active) this.startMap.close();
+    const scr = this.acts.screen;
+    scr.menuOpen = this.startMap.active;
+    this.hits = scr.draw(ctx, W, H, pressable).slice();
     const silent = this.guideSilent;
     if (pressable && !silent) {
       const asked = !!this.lambyGuide?.active;
       const stalled = this.stallT >= STALL_SECONDS && ledger.view.highlights !== false;
       if (asked || stalled) { const path = this.pathIds(); for (const h of this.hits) if (path.has(h.id)) this.ringAround(ctx, h); }
     }
-    const ty = H - ACTS_TASKBAR;
-    // ⚑ S413 (rule 3) — MEMORY belongs to Second Thoughts: its item on the taskbar from its first note (beat 6), never in
-    //   Act I; open, its card lies over her world (the record of the day, read only); never over a person's words
+    // ⚑ S413 (rule 3) — MEMORY belongs to Second Thoughts: its item from its first note (beat 6), never in Act I; open, its card
+    //   lies over her world (the record of the day, read only); never over a person's words
+    //   ⚑ S417 — it lives in the menu bar's status area now (left of the clock), as a status item
     // ⚑ S415 — the stream (and the dark after it) has the whole glass: no Memory item, no tray, no ring over it
-    if (this.acts.stream.on) { this.memOpen = false; this.lambyGuidePaint = { rings: [], balloon: false }; return; }
-    const memory = this.acts.screen.rows.some((r) => r.who === 'memory');
+    if (this.acts.stream.on) { this.memOpen = false; this.lambyGuidePaint = { rings: [], balloon: false }; if (this.startMap.active) this.startMap.close(); return; }
+    const memory = scr.rows.some((r) => r.who === 'memory');
     this.memOpen = this.memOpen && memory && !silent;
-    if (memory && !this.acts.feltNow && !this.acts.screen.originalShown) this.drawMemoryItem(ctx, ty, pressable, this.acts.screen.date);
+    if (memory && !this.acts.feltNow && !scr.originalShown) this.drawMemoryStatus(ctx, scr.statusX, pressable);
     if (this.memOpen) {
-      const pr = this.acts.screen.pageRect(W, H);
+      const pr = scr.pageRect(W, H);
       this.drawMemoryCard(ctx, { b: { x: pr.x, w: pr.w, cx: pr.x, cy: pr.y, cw: pr.w, ch: pr.h, s: 1, lw: pr.w, lh: pr.h }, k: { x: 0, w: 0, cx: 0, cy: 0, cw: 0, ch: 0, s: 1, lw: 0, lh: 0 } }, pressable);
     }
-    if (pressable && this.lambyGuide?.canRequest && !silent) {
-      setFont(ctx, 10); ctx.fillStyle = V3.ink2;
+    // ⚑ S417 — THE GUIDE'S TRAY: "Ask L for help" and L's head, a frosted pill at the dock's level in the bottom-right corner
+    //   (the assistant button of the period's desktops). drawLambyGuide is handed a glass 5 px shorter so its head sits in it.
+    if (pressable && this.lambyGuide?.canRequest && !silent && !this.startMap.active) {
+      setFont(ctx, 11);
       const ask = V.oneScreen.askL, aw = Math.ceil(ctx.measureText(ask).width);
-      ctx.fillText(ask, W - 112 - aw, ty + 5);
-      this.hits.push({ x: W - 116 - aw, y: ty + 1, w: aw + 8, h: ACTS_TASKBAR - 2, id: 'lg-tray' });
-      this.lambyGuidePaint = drawLambyGuide(ctx, 'e4', this.lambyGuide.view, this.hits, { w: W, h: H }, this.hits.map(h => `press:${h.id}`));
+      const py = H - DOCK_FOOT - DOCK_H, px0 = W - 118 - aw, pw = W - 8 - px0;
+      softShadow(ctx, { x: px0, y: py, w: pw, h: DOCK_H }, 11, 0.7);
+      fillRR(ctx, px0, py, pw, DOCK_H, 11, alpha(OS26.dock, 0.62));
+      ctx.fillStyle = OS26.winInk; ctx.fillText(ask, W - 112 - aw, py + 8);
+      this.hits.push({ x: px0, y: py, w: pw - 70, h: DOCK_H, id: 'lg-tray' });
+      this.lambyGuidePaint = drawLambyGuide(ctx, 'e4', this.lambyGuide.view, this.hits, { w: W, h: H - 5 }, this.hits.map(h => `press:${h.id}`));
     } else this.lambyGuidePaint = { rings: [], balloon: false };
     const view = this.lambyGuide?.view;
     if (pressable && !silent && view && !view.hidden && (view.rung === 'show' || view.rung === 'file')) {
       for (const r of this.hits.filter(h => view.targets.includes(h.id))) drawGuidePointer(ctx, r, { x: W - 24, y: H - 24 }, CHROME.accent, view.frame);
     }
+    // ⚑ S417 — THE MENU (his "It is missing the Menu button btw"): the piece's Start menu, the same model as every era's
+    //   (`buildStartModel(…, 'e4')`), in this OS's skin (StartMenuMap's e4 drawing), under the menu bar's Menu button. Open,
+    //   it owns the presses: its own items and the Menu button; a press anywhere else closes it.
+    if (this.startMap.active) {
+      const programs = APPS26.map((a) => ({ id: `app:${a}`, label: OS_WORDS.apps[a] }));
+      const nav = this.startMap.draw(ctx, W, H, 'e4', this.startModel(), this.startMapSilent, programs, (id) => this.appReachable(id));
+      const menuBtn = this.startMap.rootOpen ? undefined : this.hits.find((h) => h.id === 'start-menu');   // the dig covers the menu bar
+      this.hits = [...nav, ...(menuBtn ? [menuBtn] : [])];
+    }
+  }
+  /** ⚑ S417 — the Menu's app rows dim as the dock's do (an app she cannot reach now) */
+  private appReachable(id: string): boolean {
+    if (!id.startsWith('app:')) return true;
+    return this.acts.screen.dockApps().find((d) => d.app === id.slice(4))?.reachable ?? true;
+  }
+  /** ⚑ S417 — Second Thoughts' Memory in the menu bar's status area: its mark, the word, the count (it counts, quietly) */
+  private drawMemoryStatus(ctx: CanvasRenderingContext2D, right: number, pressable: boolean): void {
+    const M = FILE_ITEM.e4, n = String(this.fileWatch.count);
+    setFont(ctx, 11);
+    const lw = Math.ceil(ctx.measureText(M.label ?? '').width), nw = Math.ceil(ctx.measureText(n).width) + 10;
+    const w = 6 + 12 + 5 + lw + 6 + nw + 4, h = MENU_H - 6, x = right - w, y = 3;
+    edgeRR(ctx, x, y, w, h, h / 2, OS26.barEdge, OS26.win);
+    assistantMark(ctx, x + 5, y + 2, 12, V3.primary, V3.primaryInk);
+    ctx.fillStyle = OS26.barInk; ctx.fillText(M.label ?? '', x + 22, y + 2);
+    fillRR(ctx, x + 22 + lw + 5, y + 2, nw, h - 4, (h - 4) / 2, V3.primary);
+    ctx.fillStyle = V3.primaryInk; ctx.fillText(n, x + 27 + lw + 5, y + 2);
+    if (pressable) this.hits.push({ x, y: 0, w, h: MENU_H, id: 'mem-open' });
   }
   /** ⚑ S401 (job 29 D2) — the taskbar's Memory item: a small mark, the word, the count; inverted while lit */
   private drawMemoryItem(ctx: CanvasRenderingContext2D, ty: number, pressable: boolean, date = V.oneScreen.taskbarDate): void {
@@ -1730,6 +1776,16 @@ export class E4Browser {
       const nav = this.startMap.draw(ctx, W, H, 'e4', this.startModel(), this.startMapSilent);
       if (nav.length) this.pageTargets = [...nav, ...this.pageTargets.filter(r => r.id === 'start-menu' || r.id === 'whattodo')];
     }
+  }
+  /** ⚑ S417 — a press on 2026's Menu (or on what it opened): the same answers as every era's Start menu */
+  private pressMenu(id: string): void {
+    const model = this.startModel();
+    if (id.startsWith('sm-prog:app:')) { this.startMap.close(); this.acts.screen.pressApp(id.slice(12) as App26); return; }
+    if (this.startMap.press(id, model, this.startMapSilent)) { playOnce('ui_press.mp3'); return; }
+    if (id === 'sm-shut') { this.startMap.close(); this.startMap.refused = true; playOnce('ui_press.mp3'); return; }
+    if (id === 'sm-leave') { this.startMap.close(); gameMenuBus.openLeave?.(); return; }
+    if (id === 'sm-disabled' || id === 'sm-none') return;
+    this.startMap.close();
   }
   /** Lamby's "Take me there": press the target for her (navigation only — never an answer) */
   pressGuideTarget(id: string): 'monitor' | null {
@@ -3112,6 +3168,18 @@ export class E4Browser {
     if (this.phase === 'handed') return false;
     // ⚑ S412 — the one screen: its own controls (the act's answers, the pages, the voice switch, the back arrow)
     if (this.step === 'acts' && this.phase === 'open') {
+      // ⚑ S417 — THE MENU: its button toggles it; open, it owns the press (its own items; anywhere else closes it). Its items do
+      //   what they do in every era (StartMenuMap.press: the steps, the jump, the dig; Shut Down… refused; Leave… the frame's
+      //   door), and her apps do what the dock does. None of it is handed to the script, so no beat moves.
+      const at = (h: Hit): boolean => mx >= h.x && mx <= h.x + h.w && my >= h.y && my <= h.y + h.h;
+      const mh = this.hits.find((h) => (h.id === 'start-menu' || h.id.startsWith('sm-') || /^(?:steps-|jump-|shut-ok|tape-)/.test(h.id)) && at(h));
+      if (mh?.id === 'start-menu') { this.lambyGuide?.press('lg-x'); this.memOpen = false; this.startMap.toggle(); playOnce('ui_press.mp3'); this.version++; return true; }
+      if (this.startMap.active) {
+        if (mh) this.pressMenu(mh.id);
+        else if (this.startMap.menu) this.startMap.close();
+        this.version++;
+        return true;
+      }
       // ⚑ S413 — Memory (Second Thoughts', from beat 6) on the taskbar: its card over her world; any press closes it
       if (this.memOpen) { this.memOpen = false; this.version++; return true; }
       if (this.hits.some(h => h.id === 'mem-open' && mx >= h.x && mx <= h.x + h.w && my >= h.y && my <= h.y + h.h)) {

@@ -2,6 +2,13 @@ STATUS: live
 
 # 2026 as built after job 33 (S412–S415, walked at 7763b962)
 
+⚑ **S417 (job 34 Part A, 22 Nov): the screen is a desktop now.** The two panes are two windows on an invented 2026 operating
+system (`src/desktop/apps/desk26.ts`: a wallpaper, a menu bar with **the Menu button** — the piece's Start menu in this OS's
+skin —, a dock with her six apps, rounded windows, one notification at a time), and L lives in its window like a modern AI
+chat app (its chat list, the model chip, a big greeting, rounded answers, the composer "Ask L anything"; the voice switch
+beside the composer). The beats, lines, timings and presses below are unchanged. Job 33's frame (the V3 desk, the title bars,
+the thin taskbar) is kept in git: `src/desktop/apps/lScreen.ts` `draw`/`drawAi` at **bfad99bd** (walked at 7763b962).
+
 One monitor, two panes (the AI on the left, her world on the right); thirteen beats in three acts and an end. Code:
 `src/desktop/apps/e4Acts.ts` (the director), `lScreen.ts` (the screen), `e4ActOne.ts`, `e4ActTwo.ts`, `e4ActThree.ts`
 (+ `shepherd.ts`), `e4ActFour.ts` (+ `streamCover.ts`); words in `data/dialog/s4_acts.json`.
