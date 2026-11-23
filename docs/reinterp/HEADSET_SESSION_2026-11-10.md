@@ -4,7 +4,7 @@ STATUS: live
 
 Observed by Claude (Sonnet 5.5) through Meta's browser casting view. Observation only: no edits to src/, data/ or public/, no walk, no dev server, no commits. Frames are whole-screen captures, so they also show the Claude app and other windows on the Mac. Everything below is what was seen in the cast or said by Sérgio (dictated, so some lines are unclear; unclear ones are marked). Times are Mac clock, 20:12 to 21:36.
 
-Frame folder: `out/cast-2026-11-10/frames/` (1182 frames). Working log: `out/cast-2026-11-10/notes.txt` (79 lines). Marked folder: `out/cast-2026-11-10/marked/` (1 file, see §5). The `out/` folder is git-ignored.
+Frame folder: `out/cast-2026-11-10/frames/` (1182 frames; ⚑ deleted 23 Nov on his word to free space, except 10 kept for the article, cropped, in `research/article-images-2026-11-10/headset-session-frames/`, and the one in `marked/`). Working log: `out/cast-2026-11-10/notes.txt` (79 lines). Marked folder: `out/cast-2026-11-10/marked/` (1 file, see §5). The `out/` folder is git-ignored.
 
 ---
 

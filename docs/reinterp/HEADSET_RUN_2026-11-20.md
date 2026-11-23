@@ -4,7 +4,7 @@ STATUS: live
 
 *Build 4d822208, Quest 3, 21:24–22:50. He recorded his voice for 86 minutes (`~/Pc_Simulation/Audio from HEadset/`),
 transcribed offline on the Mac Studio (mlx-whisper). The headset view was cast to this Mac and saved every 4 seconds
-(`out/cast-2026-11-20/frames/`, 1,452 frames). Two readers matched each remark to its pictures
+(`out/cast-2026-11-20/frames/`, 1,452 frames; ⚑ deleted 23 Nov on his word to free space, except 10 kept for the article, cropped, in `research/article-images-2026-11-20/headset-run-frames/`; frame times below still date each remark, and the contact sheets remain). Two readers matched each remark to its pictures
 (`out/cast-2026-11-20/VISUAL_A.md`, `VISUAL_B.md`; contact sheets in `sheets/`). This list is sorted from those.*
 
 **How to read it**
