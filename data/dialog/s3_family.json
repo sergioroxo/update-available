@@ -4,6 +4,9 @@
   "_docS403": "⚑ S403 (UiB job 30 B1; his 17 Nov: \"I do like the return the Family calls, maybe we can make it more clear and direct of what it is, and that way less text\"; then \"Yes let's build the changes for 2016\"). The job comes back into the default visit as ANSWER THE MOTHERS (they are messages, not calls): one line at the top says what it is, two mothers, three suggested replies and the refusal. Text written by the orchestrator (UIB_JOB_30 B1). The old text, kept here: `app.title` was \"GracePlatform · Family\"; the board tile was \"Return the family calls\" (s3_queue.json); `app.sub` was \"Three parents waiting. Send a reply, or don't.\" and `app.roleLine` \"You are answering as Parents & Family Ministry.\" (both replaced by `app.intro`); RUTH left: `p_ruth`, meta \"second message · nine days\", \"She hasn't answered since Easter. Her birthday card came back marked gone away, so either she moved or she had it sent back, and I don't know which I'd rather. I'm not asking you to make her call me. Should I keep writing, or is the writing what keeps her away?\" (witness \"family: opened — Ruth, second message\"); MAUREEN's message was \"We did the house rules the way the booklet sets them out: no sharing a room, no bringing her to the table as a couple, said kindly. She hasn't been back since March. My husband says we did the right thing and I think he's right. I still turn it over at night: the right thing shouldn't mean five months without your daughter.\"; ANNETTE's was \"I'm not asking for advice this time. Do you know where she is? She put your address on a form in 2014 — she left the copy at ours. It's the latest I have for my daughter, and it's yours. Please tell me if she still comes there.\"; the fourth reply left: `r_group` \"Invite her to the parents' circle\" — \"You are not the only mother writing to us this week. Thursdays, and nobody has to speak.\" (witness \"family: replied — parents' circle offered\"); `lambient.onOpen` left (it said `teach` again): \"Four replies cover almost everything. Warmth first, then the truth.\" Unchanged: Annette has no matching template and never gets one; the S332 refusal ladder; Mam's phone message and Vera's unsent note come with the job (e3_mirror.json `decision`). The job now opens on Maureen, the one the templates do answer (his S362/H42a \"so we can see the system\", which opened it on Ruth).",
   "app": {
     "title": "GracePlatform · Answer the mothers",
+    "lessonHeading": "Lesson 3 · Answer the mothers",
+    "sentByLesson": "sent by Lambient · lesson",
+    "_docS424": "⚑ S424 (UiB job 35 Part D, Act I beat 7; storyboard 2016_SECOND_HALF §3): the job is Lesson 3. `lessonHeading` stands over its intro; Lambient answers Maureen itself to show how (the reply `lambient.lessonReply`, tagged `sentByLesson`, filed with `lambient.lessonWitness`), then it is her turn with Annette.",
     "heading": "FAMILY LINE",
     "intro": "Mothers write when a daughter stops coming home. You answer for the ministry.",
     "queueLabel": "WAITING",
@@ -65,7 +68,10 @@
   },
   "lambient": {
     "onQuiet": "That one's outside what we send. Mark it handled.",
-    "teach": "Families need words. We give them gentle ones: warmth first, then the truth."
+    "teach": "Watch: warmth first, then the truth.",
+    "lessonReply": "r_patience",
+    "lessonWitness": "family: replied by Lambient as the lesson's example — Maureen, patience encouraged",
+    "_retiredS424teach": "⚑ S424 (Act I beat 7; storyboard §3b) — was \"Families need words. We give them gentle ones: warmth first, then the truth.\""
   },
   "forcedReply": "r_boundaries",
   "_docS332": "⚑ S332 — comply or refuse (his 8 Nov): a suggested reply is complying; \"Don't send a script\" is refusing, and it climbs the shift's one ladder (s3_queue.json `refusal`): Lambient asks again, then reprimands, then sends \"Affirm the boundaries\" itself, then an administrator does. Annette, who asked where her daughter is, can be sent \"grace and truth\" by the system after Vera refused to send her anything. `lambient.teach` is drawn in the list column, never on a mother's message."

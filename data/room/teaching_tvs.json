@@ -7,6 +7,8 @@
   },
   "2016": {
    "era": "e3", "place": { "pos": [-4.45, 0.45, 2.23], "yaw": 180 }, "style": "dvd", "seat": [-4.4, 1.16, 0.7],
+   "offer": true, "beside": "era3-device-workstation", "xrFitDeg": 43,
+   "_docS424": "⚑ S424 (UiB job 35 Part D, Act I beat 5; his 23 Nov call 7: \"Yes, but not mandatory\") — 2016's moment is an OFFER (`offer`): after Lesson 1 and the Mentor's message the set lights by the door and Lambient asks once, in view; nothing comes or plays unasked. Brought (Bring it, or a press on the lit set at any time after), it stands BESIDE the monitor named `beside` (src/room/teachingTv.ts takeBeside, S412's grammar), never in front of it, and arrives stopped on its label, ▶ lit: nothing plays until her ▶. In a headset the whole set is kept inside `xrFitDeg` of the line of sight to the monitor (the mock's view is ±45°; its frame and keys in view, the monitor uncovered); on a phone held upright, where there is no room at the side, it stands above the monitor.",
    "_docPlace": "on wallTvUnit (top y 0.45), facing the seat (north); the wall TV, its DVD player, tray, light and the course's case are gone from r3"
   },
   "2026": {
@@ -28,6 +30,7 @@
  },
  "moment": {
   "_doc": "The moment's clock (no turns, no fades): `callHold` = the longest Lamby's line is given to be read before the set comes anyway (its yes sends it at once); `dismissBreath` = after × the set comes this long after; `noCall` = a call that never showed (the era's cap) lets the set come after this; `afterHold` = the end card held, the set in the hand, before the floor is free again; `afterDad` = the seconds Dad's two lines are given before his link; `noPlayRelease` = a tape that will not start lets the moment go after this.",
-  "callHold": 7, "dismissBreath": 1.2, "noCall": 2.5, "afterHold": 6, "afterDad": 4.5, "noPlayRelease": 8
+  "callHold": 7, "dismissBreath": 1.2, "noCall": 2.5, "afterHold": 6, "afterDad": 4.5, "noPlayRelease": 8, "offerHold": 16,
+  "_docS424": "⚑ S424 — `offerHold`: an OFFER (2016, `offer` above) left unanswered this long is let go — the same as Not now (its line, 12 words, reads in 6.8 s by the reading rule; this is twice that and a little). Nothing comes; the set stays lit by the door."
  }
 }

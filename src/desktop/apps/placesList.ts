@@ -65,7 +65,10 @@ export class PlacesListApp implements TaskSurface {
     ctx.restore();
   }
 
-  draw(ctx: CanvasRenderingContext2D, a: TaskArea, hit: (r: TaskHit) => void): void {
+  draw(ctx: CanvasRenderingContext2D, a0: TaskArea, hit: (r: TaskHit) => void): void {
+    // ⚑ S424 (UiB job 35 Part D, Act I beat 6) — the lesson's heading ("Lesson 2 · The places list") over the job
+    setFont(ctx, 12); ctx.fillStyle = ERA3.accent; ctx.fillText(P.lessonHeading, a0.x, a0.y);
+    const a = { ...a0, y: a0.y + 18, h: a0.h - 18 };
     const GAP = 16;
     const leftW = Math.floor(a.w * 0.56), rx = a.x + leftW + GAP, rw = a.x + a.w - rx;
     // ── the member's post (felt: bare) ─────────────────────────────────────────
@@ -79,6 +82,23 @@ export class PlacesListApp implements TaskSurface {
     setFont(ctx, 14); ctx.fillStyle = ERA3.ink; ctx.fillText(P.post.who, a.x + 16, cardY + 9);
     setFont(ctx, 9); ctx.fillStyle = ERA3.grey; ctx.fillText(P.post.when, a.x + 16, cardY + 26);
     setFont(ctx, 12);
+    // ⚑ S424 (storyboard beat 6: "The platform marks 'The Wick, upstairs on Fenn Street' in it") — while the place is only
+    //   proposed, the platform's selection lies under its words in her sentence (the editor's in/out grammar, S386): a band and a
+    //   red rule under the place. Her words are untouched; once listed, the place is the platform's grey bracket, as before.
+    if (!this.by) {
+      const full = lines.join(' '), at0 = full.indexOf(P.post.place), at1 = at0 + P.post.place.length;
+      let off = 0;
+      lines.forEach((ln, i) => {
+        const s0 = Math.max(at0, off), s1 = Math.min(at1, off + ln.length);
+        if (at0 >= 0 && s1 > s0) {
+          const lx = a.x + 16 + ctx.measureText(ln.slice(0, s0 - off)).width, lw = ctx.measureText(ln.slice(s0 - off, s1 - off)).width;
+          const ly = cardY + 40 + i * 17;
+          px(ctx, Math.round(lx) - 1, ly - 2, Math.ceil(lw) + 2, 16, ERA3.lambBand);
+          px(ctx, Math.round(lx) - 1, ly + 14, Math.ceil(lw) + 2, 1, ERA3.alarm);
+        }
+        off += ln.length + 1;
+      });
+    }
     lines.forEach((ln, i) => {
       const ly = cardY + 40 + i * 17;
       // the place, once removed, is the platform's grey bracket inside her sentence

@@ -1071,7 +1071,9 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
         //   before the fellowship path and went behind the CRT. 1997's "Did you know" names it and brings it (os.onPauseTv →
         //   TeachingTvs.bring); `arm` (?debug=1) still runs the old moment for the probes.
         if (tape === '1997') return false;
-        if (tape === '2016') return os.era === 'e3' && ledger.records.includes('e3-job:testimony');
+        // ⚑ S424 (UiB job 35 Part D, Act I beat 5) — 2016's OFFER is due once Lesson 1 is done and the Mentor's message (its
+        //   answer) has landed; `quiet` then waits for that message's reading time and a board at rest
+        if (tape === '2016') return os.era === 'e3' && ledger.records.includes('e3-job:testimony') && !!era3Devices?.debugQueue().phone.delivered('mentor');
         // ⚑ S412 (UiB job 33 Part A; 26-4, 26-5) — 2026's set has no moment of its own any more: the parents' course comes
         //   through Mum's email, and only if Maya presses its link (os.e4.browser.onHedge → TeachingTvs.bringBeside). Dad's read
         //   no longer sends it (his: "a course for parents, so it doesn't make sense that the father would send it").
@@ -5360,6 +5362,8 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
         viewer: viewerFilm.state() === 'playing' ? `film:${viewerFilm.file()}` : viewerAudio.playing() ?? ''
       };
       teachingTvs.update(dt, closeStage ? 'close' : os.era, voices, os.updateArmed);
+      // ⚑ S424 — Lesson 2 waits for Heartwood's offer (after Lesson 1) to be answered or let go (graceQueueLite.lessonState)
+      if (q3) q3.heartwoodSettled = teachingTvs.offerSettled('2016');
       // ⚑ S394 — Lamby's call and his later offer, in view (the card), from the guide's own view
       teachingTvs.guide(os.lambyGuide.view, os.lambyGuide.active);
       setFilmAudible(teachingTvs.audible);

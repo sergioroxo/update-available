@@ -167,6 +167,12 @@ const GUIDED_WALK = CUT === 'speedrun' && !process.argv.includes('--explore');
  *  `here`: Join here, the session over the whole monitor and its Yes there. The other door is refused, never both. The door
  *  not walked is proved by tools/s414-act3-probe.mjs. */
 const DOOR = flag('door', 'vr') === 'here' ? 'here' : 'vr';
+/** ⚑ S424 (UiB job 35 Part D, Act I beat 5; his 23 Nov call 7: "The Heartwood disc is offered after Lesson 1. — Yes, but not
+ *  mandatory") — `--heartwood bring|notnow`: Lambient's one offer of Heartwood in 2016 ("Shall I bring the set?"). `bring` (the
+ *  default): Bring it, then ▶ on the set once it stands beside the monitor (it arrives stopped: nothing plays until ▶), the
+ *  tape watched to its end, then its body to set it back by the door. `notnow`: Not now, and the set is never touched (it
+ *  stays lit by the door; the walk proves 2016 runs whole without it). */
+const HEARTWOOD = flag('heartwood', 'bring') === 'notnow' ? 'notnow' : 'bring';
 const MAX_STEPS = Number(flag('max', 320));
 /** ⚑ S332 — `--refuse`: in 2016 the walker refuses every job (Skip, Leave it off, Don't send a script, Not this week,
  *  the kit left unapproved) and never presses a comply control, to prove the system carries the day without her. */
@@ -1022,6 +1028,8 @@ async function main() {
       // her one reply to Bea is the only press on the phone the walk makes (it is optional: Malta runs on without it)
       if ((t.surface === 'phone' || id.startsWith('mirror:')) && !(id === 'mirror:reply-bea' && !REFUSE)) return false;
       if (/^win-min$|^task-restore$/.test(id)) return false;
+      // ⚑ S424 — the board's This week button reopens the card she has read: a reader's press, never the way on (Begin is)
+      if (id === 'week-open') return false;
       // ⚑ S332 — the four jobs, in the board's order, each once (each finished job files `e3-job:<id>`)
       const JOBS = ['testimony', 'places', 'family', 'group'];
       const tm = /^task-(\d+)$/.exec(id);
@@ -1303,6 +1311,7 @@ async function main() {
   const stallCap = (st) => (st.era === 'e4' ? 160 : st.phase === 'setup:advert' ? 60 : 14);   // S245: the opening film is ~96 s (60 × 4 s)
   /** ⚑ S396 — each Lamby tape's furthest second while held, its length, whether it played to its end (the notes' `tape`) */
   const tvWatch = {};
+  let heartwoodNoted = false;
   const pressed = new Map();
   /**
    * ⚑ KEYED ON THE COARSE STATE, NOT ON THE FULL CONTROL SET, and run 22 is why.
@@ -1549,10 +1558,17 @@ async function main() {
           note('tape', { tape: s.tvSet.tape, furthest: +w.furthest.toFixed(1), duration: w.duration, ended: w.ended, state: s.tvSet.state, era: s.era });
         }
       }
-      const yes = s.tvSet.card ? s.targets.find((t) => t.surface === 'tvcall' && t.id === 'lg-take@call') : null;
-      const body = !s.tvSet.card && s.tvSet.held && !s.tvSet.playing && !s.tvSet.lifting
+      // ⚑ S424 — 2016's offer has two answers (Bring it · Not now): `--heartwood` picks; a call (one answer) is answered yes
+      const offer = s.tvSet.card && s.targets.some((t) => t.surface === 'tvcall' && t.id === 'lg-later@call');
+      const answer = offer && HEARTWOOD === 'notnow' ? 'lg-later@call' : 'lg-take@call';
+      const yes = s.tvSet.card ? s.targets.find((t) => t.surface === 'tvcall' && t.id === answer) : null;
+      if (yes && offer && !heartwoodNoted) { heartwoodNoted = true; note('heartwood', { what: `Lambient's offer of Heartwood answered: ${HEARTWOOD === 'notnow' ? 'Not now' : 'Bring it'}`, era: s.era }); }
+      // ⚑ S424 — 2016's set arrives beside the monitor STOPPED on its label (▶ lit): the walker presses ▶ once (bring)
+      const play = !s.tvSet.card && s.tvSet.held && !s.tvSet.playing && !s.tvSet.lifting && s.tvSet.state === 'leader' && HEARTWOOD === 'bring'
+        ? s.targets.find((t) => t.surface === 'tvset' && t.id.startsWith('tv-play@')) : null;
+      const body = !play && !s.tvSet.card && s.tvSet.held && !s.tvSet.playing && !s.tvSet.lifting
         ? s.targets.find((t) => t.surface === 'tvset' && t.id.startsWith('tv-body@')) : null;
-      const t = yes || body;
+      const t = yes || play || body;
       if (t && (pressed.get(keyOf(sig, t)) || 0) < PRESS_CAP) {
         pressed.set(keyOf(sig, t), (pressed.get(keyOf(sig, t)) || 0) + 1);
         stalls = 0;
@@ -2034,6 +2050,7 @@ async function main() {
     reviewBoot: formOfferProbe ? 1 : null,
     walkPolicy: GUIDED_WALK ? 'guided' : 'explore',
     door: DOOR,   // ⚑ S414 — Act III's door this walk took (--door vr|here)
+    heartwood: HEARTWOOD,   // ⚑ S424 — 2016's offer of Heartwood, as this walk answered it (--heartwood bring|notnow)
     menuCheck,   // ⚑ S417 — 2026's Menu, opened once at beat 1's answers and closed
     steps: log.length, presses: presses.length, turns,
     reachedEra: final.era, spine: final.spine,

@@ -190,7 +190,9 @@ function drawDecal(c: CanvasRenderingContext2D, lit: SetKey | null, deck: DeckSt
     c.fillStyle = k.id === 'power' ? (k.id === lit ? HOME.lambFace : ERA1.paper) : ERA1.black;
     mark(c, k.id, Math.round(cx), Math.round(cy) - 1, Math.round(kh * 0.42));
     // ⚑ S396 — the key that is ON carries its lamp: ▶ green while it plays, ❚❚ amber while it is paused, ⏻ green while it is lit
-    const on = (k.id === 'play' && (deck.mode === 'play' || deck.mode === 'load')) || (k.id === 'pause' && deck.mode === 'pause') || (k.id === 'power' && deck.mode !== 'off');
+    // ⚑ S424 (16-7; storyboard beat 5: the set "arrives stopped on its first picture, ▶ lit") — and ▶ is lit while the tape waits
+    //   at its label (`ready`): the one key that starts it, the deck's own invitation; nothing plays until it is pressed
+    const on = (k.id === 'play' && (deck.mode === 'play' || deck.mode === 'load' || deck.mode === 'ready')) || (k.id === 'pause' && deck.mode === 'pause') || (k.id === 'power' && deck.mode !== 'off');
     if (on) { c.fillStyle = ERA1.black; c.fillRect(x + 7, y + 9, 26, 26); c.fillStyle = k.id === 'pause' ? WALL.accent : INSTITUTION.terminalGlow; c.fillRect(x + 10, y + 12, 20, 20); }
   }
   // ⚑ S396 — the display under the keys: a VCR's own window, its state and its counter (nothing is drawn on the glass)

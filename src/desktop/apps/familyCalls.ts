@@ -49,6 +49,8 @@ import { familyCheckinId } from '../../witness/record';
 import type { TaskSurface, TaskArea, TaskHit } from './taskSurface';
 import f from '../../../data/dialog/s3_family.json';
 import { refuse, drawLambientNote, measureLambientNote, noteBand, type DeskNote, type Voice } from './lambientDesk';
+import { readHold } from '../readHold';
+import { playOnce } from '../../audio/tapeAudio';
 
 type ParentDef = { id: string; from: string; meta: string; body: string; witnessOpened: string };
 type ReplyDef = { id: string; label: string; preview: string; witness: string };
@@ -79,6 +81,49 @@ export class FamilyCallsApp implements TaskSurface {
   /** ⚑ S332 — who sent the reply when she refused (Lambient, or an administrator), and Lambient's last line */
   private forcedBy = new Map<string, Voice>();
   private note: DeskNote | null = null;
+  /**
+   * ⚑ S424 (UiB job 35 Part D, Act I beat 7; 16-11, his 20 Nov: the Grace Platform as a tutorial for Vera) — LESSON 3 · WATCH.
+   * The job opens on Maureen, and Lambient answers her itself, to show how: its line ("Watch: warmth first, then the truth.")
+   * is read, the reply it chooses lights, and it is sent ("sent by Lambient · lesson"); then the screen takes her to Annette —
+   * her turn — for whom no reply here fits. The clock runs only while Maureen's message is the one on the screen, and nothing
+   * on Maureen's row is hers to press while it runs. `lessonT` < 0: not started; `lessonSent` once Lambient has sent it.
+   */
+  private lessonT = -1;
+  private lessonSent = false;
+  private lessonMoved = false;
+  private lessonBy = new Set<string>();
+  private get lessonReply(): ReplyDef | undefined { return REPLIES.find((r) => r.id === f.lambient.lessonReply); }
+  /** the seconds Lambient's line is read before the chosen reply lights, and before it is sent; then the step to Annette */
+  private static readonly LIGHT_AT = Math.max(3, readHold(f.lambient.teach));
+  private static readonly SEND_AT = FamilyCallsApp.LIGHT_AT + 1.6;
+  private static readonly MOVE_AT = FamilyCallsApp.SEND_AT + 2.4;
+  tick(dt: number): void {
+    if (this.lessonMoved) return;
+    const maureen = PARENTS.find((p) => p.id === 'p_maureen');
+    if (!maureen) { this.lessonMoved = true; return; }
+    // she answered Maureen herself before the lesson could (or a review jump did): the lesson is over
+    if (this.outcomes.has(maureen.id) && !this.lessonSent) { this.lessonMoved = true; return; }
+    if (this.current().id !== maureen.id) return;
+    if (this.lessonT < 0) { this.lessonT = 0; this.markOpened(maureen); }
+    const before = this.lessonT;
+    this.lessonT += dt;
+    const crossed = (at: number): boolean => before < at && this.lessonT >= at;
+    if (crossed(FamilyCallsApp.LIGHT_AT)) this.bump();
+    if (crossed(FamilyCallsApp.SEND_AT) && !this.lessonSent) {
+      const r = this.lessonReply, p = maureen;
+      if (r) {
+        this.outcomes.set(p.id, 'replied'); this.sent.set(p.id, r.label); this.lessonBy.add(p.id);
+        ledger.checkins.push({ id: familyCheckinId(p.id), witness: f.lambient.lessonWitness });
+        playOnce('tick_task.mp3');
+      }
+      this.lessonSent = true; this.bump();
+    }
+    if (crossed(FamilyCallsApp.MOVE_AT) && this.lessonSent) {
+      this.lessonMoved = true;
+      const ann = PARENTS.findIndex((p) => p.id === QUIET.id);
+      if (ann >= 0 && !this.outcomes.has(QUIET.id)) this.select(ann); else this.bump();
+    }
+  }
 
   version(): number { return this.v; }
   private bump(): void { this.v++; }
@@ -206,10 +251,13 @@ export class FamilyCallsApp implements TaskSurface {
     // ⚑ S403 (job 30 B1) — ONE LINE AT THE TOP says what the job is, across the whole window: "Mothers write when a
     //   daughter stops coming home. You answer for the ministry." It replaces the role line under the list (and the unused
     //   `sub`), so the screen says what it is before the first name is read. Everything under it moves down by its height.
+    // ⚑ S424 — the lesson's heading over it ("Lesson 3 · Answer the mothers")
+    setFont(ctx, 12); ctx.fillStyle = ERA3.accent;
+    ctx.fillText(f.app.lessonHeading, area0.x, area0.y);
     setFont(ctx, 11); ctx.fillStyle = ERA3.titleText;
     const introLines = wrapText(ctx, f.app.intro, area0.w).slice(0, 2);
-    introLines.forEach((ln, i) => ctx.fillText(ln, area0.x, area0.y + i * 14));
-    const introH = introLines.length * 14 + 8;
+    introLines.forEach((ln, i) => ctx.fillText(ln, area0.x, area0.y + 16 + i * 14));
+    const introH = 16 + introLines.length * 14 + 8;
     const area = { ...area0, y: area0.y + introH, h: area0.h - introH };
     const listW = 170;
     const gap = 14;
@@ -237,7 +285,8 @@ export class FamilyCallsApp implements TaskSurface {
       if (done) {
         setFont(ctx, 9); ctx.fillStyle = ERA3.greyDk;
         const fb = this.forcedBy.get(p.id);
-        const tag = fb ? (fb === 'admin' ? f.app.sentByAdmin : f.app.sentByLambient) : this.outcomes.get(p.id) === 'replied' ? f.app.sentTag : f.app.handledTag;
+        const tag = this.lessonBy.has(p.id) ? f.app.sentByLesson
+          : fb ? (fb === 'admin' ? f.app.sentByAdmin : f.app.sentByLambient) : this.outcomes.get(p.id) === 'replied' ? f.app.sentTag : f.app.handledTag;
         ctx.fillText(tag, area.x + 10, ry + 33);
       }
       hit({ x: area.x, y: ry, w: listW, h: rowH, id: 'family-sel-' + i });
@@ -290,20 +339,25 @@ export class FamilyCallsApp implements TaskSurface {
 
     const bw = Math.floor((readW - 10) / 2);
     const bh = 32;
+    // ⚑ S424 — while Lambient answers Maureen (the lesson's example) nothing on her row is hers to press; the reply it chooses
+    //   lights a moment before it is sent, and stays lit on her row as the one that was sent
+    const watching = p.id === 'p_maureen' && !this.lessonSent && !this.lessonMoved && !this.outcomes.has(p.id);
+    const chosen = (watching && this.lessonT >= FamilyCallsApp.LIGHT_AT) || this.lessonBy.has(p.id) ? this.lessonReply?.id : undefined;
     REPLIES.forEach((r, i) => {
       const bx = readX + (i % 2) * (bw + 10);
       const by = verbsY + 22 + Math.floor(i / 2) * (bh + 6);
-      aero.button(ctx, bx, by, bw, bh, '', { disabled: done, size: 10 });
-      setFont(ctx, 10); ctx.fillStyle = done ? ERA3.grey : ERA3.ink;
+      const lit = r.id === chosen;
+      aero.button(ctx, bx, by, bw, bh, '', { disabled: done && !lit, primary: lit, size: 10 });
+      setFont(ctx, 10); ctx.fillStyle = lit ? ERA3.white : done ? ERA3.grey : ERA3.ink;
       wrapText(ctx, r.label, bw - 12).forEach((line, n) => ctx.fillText(line, bx + 6, by + 4 + n * 12));
-      if (!done) hit({ x: bx, y: by, w: bw, h: bh, id: 'family-reply-' + r.id });
+      if (!done && !watching) hit({ x: bx, y: by, w: bw, h: bh, id: 'family-reply-' + r.id });
     });
 
     // ⚑ and the row that is always available and never labelled as a refusal:
     //   marking a mother handled without a word. It files. Nothing objects.
     const hy = verbsY + 22 + Math.ceil(REPLIES.length / 2) * (bh + 6) + 4;
-    if (!this.complete()) aero.button(ctx, readX, hy, readW, bh, f.app.noReplyLabel, { disabled: done, size: 10 });
-    if (!done) hit({ x: readX, y: hy, w: readW, h: bh, id: 'family-refuse' });
+    if (!this.complete()) aero.button(ctx, readX, hy, readW, bh, f.app.noReplyLabel, { disabled: done || watching, size: 10 });
+    if (!done && !watching) hit({ x: readX, y: hy, w: readW, h: bh, id: 'family-refuse' });
 
     if (this.complete()) {
       setFont(ctx, 12); ctx.fillStyle = ERA3.titleText;

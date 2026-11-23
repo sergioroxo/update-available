@@ -313,6 +313,31 @@ const SCENES = {
     out.errors = errors; await page.close();
     return out;
   },
+  /** ⚑ S424 (UiB job 35 D, Act I beat 5) — 2016's Lamby set brought and playing: the era-3 page, the board, the 2016 moment
+   *  armed (a review aid: the walk proves the beat), Lambient's yes pressed (the guide's own press), then — where the set
+   *  arrives stopped (the training) — ▶ pressed on it; measured while it stands brought (e3tvheld) and while it plays
+   *  (e3tvplay). Today's build brings it before the eye and plays it by itself: the same two windows are its "before". */
+  async e3tv(mode, want) {
+    const out = {};
+    const { page, cdp, errors } = await open('?reinterp=1&kiosk=0&era=3&debug=1&home=0', mode);
+    await ready(page, mode);
+    await page.waitForFunction(() => window.__camPose && window.__graceQueue?.() && window.__teachingTv?.() && window.__xrComfort, { timeout: 180000 });
+    await settle(page); await wait(2500);
+    if (mode === 'xr') await calibrate(page);
+    await page.evaluate(() => { const q = window.__graceQueue(); q.debugBeat('board'); q.pauseOpen = false; q.lambPriority = false; q.lambLines = null; window.__teachingTv.arm('2016'); });
+    await page.waitForFunction(() => window.__teachingTv().call.shown, { timeout: 60000 }).catch(() => {});
+    await wait(1200);
+    await page.evaluate(() => window.__os.lambyGuide.press('lg-take'));
+    await page.waitForFunction(() => window.__teachingTv().tvs.find((t) => t.tape === '2016')?.pose === 'held', { timeout: 30000 }).catch(() => {});
+    await wait(1500);
+    out.tvState = await page.evaluate(() => { const t = window.__teachingTv().tvs.find((x) => x.tape === '2016'); return { pose: t.pose, state: t.state, beside: t.beside, fitted: t.fitted ?? null }; });
+    if (want.has('e3tvheld')) { await throttle(cdp, true); out.e3tvheld = await measure(page, cdp, SECONDS); await throttle(cdp, false); }
+    if (out.tvState.state === 'leader') await page.evaluate(() => window.__teachingTv.press('2016', 'tv-play'));
+    await wait(2500);
+    if (want.has('e3tvplay')) { await throttle(cdp, true); out.e3tvplay = await measure(page, cdp, SECONDS); await throttle(cdp, false); }
+    out.errors = errors; await page.close();
+    return out;
+  },
   async e2(mode, want) {
     const out = {};
     const { page, cdp, errors } = await open('?reinterp=1&kiosk=0&era=2&debug=1&home=0', mode);
@@ -363,7 +388,10 @@ const ROWS = [
   // S423: 2016 → 2026 (only when asked: --only flight34turn,flight34cascade,flight34cross)
   { key: 'flight34turn', scene: 'flight34', where: '2016 → 2026: the rise and the turn', optIn: true },
   { key: 'flight34cascade', scene: 'flight34', where: '2016 → 2026: the room changing (the cascade)', optIn: true },
-  { key: 'flight34cross', scene: 'flight34', where: '2016 → 2026: the crossing (the draw peak\'s leg)', optIn: true }
+  { key: 'flight34cross', scene: 'flight34', where: '2016 → 2026: the crossing (the draw peak\'s leg)', optIn: true },
+  // S424: 2016's Lamby set, brought and playing (only when asked: --only e3tvheld,e3tvplay)
+  { key: 'e3tvheld', scene: 'e3tv', where: '2016: the Lamby set brought (the training: beside the monitor, stopped)', optIn: true },
+  { key: 'e3tvplay', scene: 'e3tv', where: '2016: the Lamby set playing (brought)', optIn: true }
 ].filter((r) => (!ONLY && !r.optIn) || ONLY.split(',').includes(r.key));
 
 const report = { label: LABEL, port: PORT, throttle: THROTTLE, seconds: SECONDS, at: new Date().toISOString(), rows: [] };

@@ -206,10 +206,12 @@
         "act": "focus:consent-allow"
       },
       "work": {
-        "tip": "Pick a card on the board and work it through to the end.",
-        "here": "Any card will do. Start with the first.",
-        "again": "One card at a time. The first one is fine.",
+        "tip": "Your training is on the board. Lesson 1 is lit: begin there.",
+        "here": "Lesson 1 starts here.",
+        "again": "One lesson at a time. Lesson 1 comes first.",
+        "_retiredS424": "⚑ S424 (UiB job 35 Part D, Act I: the board is the training, lessons in order) — was `tip` \"Pick a card on the board and work it through to the end.\", `here` \"Any card will do. Start with the first.\", `again` \"One card at a time. The first one is fine.\" (any card no longer opens: the next lesson is lit). `week-begin` (This week's Begin) is the first target now.",
         "target": [
+          "week-begin",
           "task-0",
           "apply",
           "skip",
@@ -278,8 +280,9 @@
         "act": "focus:vera-kit-close"
       },
       "places": {
-        "tip": "Next on the board: the places list. Either answer is recorded.",
-        "here": "The places list is the second card.",
+        "tip": "Lesson 2 is lit on the board: the places list.",
+        "here": "Lesson 2 is the second card.",
+        "_retiredS424": "⚑ S424 — was `tip` \"Next on the board: the places list. Either answer is recorded.\", `here` \"The places list is the second card.\"",
         "again": "Add the place, or leave it off.",
         "target": [
           "task-1",
@@ -290,8 +293,9 @@
         "act": "focus:task-1"
       },
       "family": {
-        "tip": "Next: the mothers. Two are waiting.",
-        "here": "Answer the mothers is the third card.",
+        "tip": "Lesson 3 is lit: answer the mothers.",
+        "here": "Lesson 3 is the third card.",
+        "_retiredS424": "⚑ S424 — was `tip` \"Next: the mothers. Two are waiting.\", `here` \"Answer the mothers is the third card.\"",
         "again": "Send a reply, or don’t send a script.",
         "_docS403": "⚑ S403 (UiB job 30 B1): `tip` was \"Next: the family calls. Three parents are waiting.\", `here` \"The family calls are the third card.\"; Ruth and the parents' circle reply left, so `family-sel-2` and `family-reply-r_group` are no longer targets.",
         "target": [

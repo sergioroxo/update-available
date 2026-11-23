@@ -118,7 +118,6 @@ import { refuse, drawLambientNote, measureLambientNote, resetRefusals, REFUSAL, 
  * `era3Devices.ts` is 3D plumbing that should not learn what a comment is.
  */
 import { meetWord } from './lexicon';
-import lexStrings from '../../data/strings/lexicon.json';
 import { px, setFont, wrapText } from '../desktop/theme/chrome';
 import * as aero from '../desktop/theme/era3';
 import { PHONE } from '../desktop/theme/phone';
@@ -141,7 +140,7 @@ import d from '../../data/strings/era3_devices.json';
 import maiden from '../../data/dialog/s3_maiden.json';
 import { playOnce, playLoop, anythingPlaying, stopClip } from '../audio/tapeAudio';
 import { Screensaver, SAVER_SECONDS } from '../desktop/apps/screensaver';
-import { pauseItems, pauseWords, wayBackLine } from '../narrative/pauses';
+import { pauseWords, wayBackLine } from '../narrative/pauses';
 import pauseCopy from '../../data/strings/pauses.json';
 import { isSpeedrun, extraOn, markExtraPassed } from '../state/cut';
 import { buildStartModel } from '../witness/startModel';
@@ -189,6 +188,15 @@ interface CorrectionDef {
   figure?: { preset: string; note: string };
   /** ⚑ S386 — what this correction cuts in Renata's FILM, in order, in front of the visitor (s3_queue video `_docS386`) */
   film?: CutKind[];
+  /** ⚑ S424 — Lesson 1's first rule: Lambient's line before it makes the cut itself (`watch`), the tag its cut wears
+   *  (`lessonTag`) and what the record files for it (`lessonWitness`) */
+  watch?: string;
+  lessonTag?: string;
+  lessonWitness?: string;
+  /** ⚑ S424 — the rule's own line in the platform's voice, untagged (the lesson's last rule: no help) */
+  line?: string;
+  /** ⚑ S424 — the Lexicon word this rule teaches, met when it is applied (the board's old word of the day) */
+  lexicon?: string;
   witnessApplied: string;
   witnessSkipped: string;
 }
@@ -279,6 +287,20 @@ function maltaAfter(): number { return isSpeedrun() && !extraOn('work') ? 1 : MA
 const JOB_EVENTS: [string, string][] = [['places', 'arrival'], ['family', 'decision'], ['group', 'job']];
 /** the four jobs before her own record (the board's order) */
 const FOUR_JOBS = ['testimony', 'places', 'family', 'group'];
+/**
+ * ⚑ S424 (UiB job 35 Part D, Act I; 16-11, his 20 Nov: the Grace Platform as a tutorial for Vera — "a language that is …
+ * less fixated on her being already part of the system"; his 23 Nov call 1: "The lessons come in order, and the next one
+ * lights up. — Yes!") — THE TRAINING. The board's three jobs are three lessons, in this order: the next one is lit, the
+ * others wait and open when the one before is done (Lesson 2 also waits for Heartwood's offer after Lesson 1 to be
+ * answered or let go: `heartwoodSettled`). A press on a waiting lesson points at the lit one (the guide's pointer), and
+ * opens nothing. Storyboard: docs/reinterp/STORYBOARD_2016_SECOND_HALF_2026-11-23.md §3, ACT I.
+ */
+const LESSONS = ['testimony', 'places', 'family'];
+/** ⚑ S424 — Lesson 1's first rule (Soften the term): Lambient makes this cut itself, in front of her ("Watch") */
+const LESSON_FIRST = 1;
+/** ⚑ S424 — if Heartwood's offer has not settled this long after Lesson 1, on a quiet board, Lesson 2 lights anyway: the
+ *  disc is not mandatory, and nothing may hold the training on it (the offer normally comes within ~10 s) */
+const HEARTWOOD_FAILSAFE = 30;
 
 type Outcome = 'applied' | 'skipped';
 /** ⚑ S386 — the five cuts Renata's film takes: the subtitle's word, the other hand, the second cup, the photograph, the
@@ -455,9 +477,22 @@ export class GraceQueueLite {
    *  the teaching TV's conducted moment may take the floor (app.ts). The phone delivers anything it holds first. */
   get tvMomentFree(): boolean {
     return this.mode === 'board' && !this.veraPage && !this.openSurface && !this.lambPriority && !this.personalQuiet
-      && !this.pauseOpen && !this.saver && !this.startMap.active && !this.minimised && !this.focusOpen && !this._systemModal
+      && !this.pauseOpen && !this.saver && !this.startMap.active && !this.minimised && !this._systemModal
       && !this.kitPopin && !this.phone.voiceBusy && this.phone.queued === 0 && !this.floppy.open && !this.lambyGuide?.active;
   }
+  /** ⚑ S424 — set each frame by app.ts: 2016's Heartwood offer (after Lesson 1) has been answered, let go, or will not be
+   *  made. Lesson 2 lights once it has (or after HEARTWOOD_FAILSAFE on a quiet board). True where there is no Lamby set. */
+  heartwoodSettled = true;
+  private heartwoodWaitT = 0;
+  private heartwoodForced = false;
+  /** ⚑ S424 — review aids (?debug=1 jumps) open any lesson; the visit never sets this */
+  private lessonsFree = false;
+  /** ⚑ S424 — Lesson 1's "Watch": Lambient's line (`intro`), its own cut being made (`cut`), its teaching line held for its
+   *  reading time (`teach`); null when not running. `watchDone` once the first cut is made and taught. */
+  private watch: { phase: 'intro' | 'cut' | 'teach'; t: number; teachT: number } | null = null;
+  private watchDone = false;
+  /** ⚑ S424 — the first cut was Lambient's (the cut log carries its tag) */
+  private lessonApplied = false;
   private _callPending = false;
   set callPending(value: boolean) { if (value !== this._callPending) { this._callPending = value; this.bump(); } }
   /** bumped on every state-changing action — era3Devices compares this to
@@ -658,7 +693,6 @@ export class GraceQueueLite {
   private consent: 'allowed' | 'declined' | null = null;
   private wakeWord = false;
   private seenBoard = false;
-  private seenTask = false;
   private afterSaid = false;
   private arrivalT = -1;   // < 0 = not running
   private lastTick = -1;
@@ -705,7 +739,6 @@ export class GraceQueueLite {
   private saver: Screensaver | null = null;
   /** S208 / A2·A7 — the work count when the phone lit; one more finished job after that, link unopened, is "ignored" */
   private maltaWork = -1;
-  private wotdSaid = false;   // S209 / P7-47
   /** ⚑ S227 — the jobs on the board, in the order they arrived (starters, then each installed update). Seeded on first
    *  use, which is after the front door has chosen the cut. */
   private unlocked: string[] | null = null;
@@ -812,11 +845,9 @@ export class GraceQueueLite {
    *  phone in her hand, Bea's thread may be on it, and no Lambient line may sit on the workstation beside a person's
    *  words. The board's quiet does not count while she holds it, and starts again when she puts it down. */
   phoneInHand = false;
-  private waitSaid = false;
-  /** ⚑ S324 — Focus mode CUT (his 8 Nov: it removes the felt part). Born true so the offer never fires; the copy
-   *  stays in data/strings/e3_mirror.json `focus` only as a record. */
-  private focusOffered = true;
-  private focusOpen = false;
+  // ⚑ S424 — the Focus mode offer (cut in S324: born spent, never shown), the first job's two lines (`firstTask1/2`), the
+  //   waiting lines and the board's word of the day are gone from here (s3_queue.json lambient `_retiredS424`; the word of
+  //   the day, DEPENDENCY, is met in Lesson 1 now, where the rule teaches it). The last code that said them: 0b3d81ce.
   /** ⚑ S229 / W1-A6 — GracePlatform's "getting started" card: once, on the sign-in screen and then the board while it
    *  is still a short board; under the pause card, away on a job / the consent question / the phone in her hand */
   private readonly startPanel = new StartPanel('e3');
@@ -838,11 +869,9 @@ export class GraceQueueLite {
     const r = this.startPanelRect(c);
     for (const b of this.startPanel.draw(ctx, r.x, r.y, r.w)) this.rects.push({ ...b, id: 'startpanel-close' });
   }
-  /** ⚑ S207 — 2016's pause ("This week", pauses.json): open now, shown once; FloppySheep opened at least once */
+  /** ⚑ S207 — 2016's pause ("This week", pauses.json). ⚑ S424: it is the first thing after her answer to Lambient now
+   *  (`openWeek`), and the board's This week button opens it again */
   private pauseOpen = false;
-  private pauseShown = false;
-  private pauseLines: string[] = [];
-  private floppyOpened = false;
 
   update(dt: number): void {
     // ⚑ S401 (UiB job 29 D2) — her file on the taskbar changes when something is filed (count up, lit a moment): two redraws
@@ -864,7 +893,7 @@ export class GraceQueueLite {
     // ⚑ S332 — and not in the one frame between Renata's last rule and the send page the platform is about to open
     this.phone.atRest = (this.mode === 'signin' || ((this.mode === 'board' || this.mode === 'done') && !this.veraPage && !this.openSurface
       && !(this.subComplete(SUBMISSIONS[0]) && !veraDay.distributed)))
-      && !this.lambPriority && !this.pauseOpen && !this.saver && !this.startMap.active && !this.minimised && !this.focusOpen
+      && !this.lambPriority && !this.pauseOpen && !this.saver && !this.startMap.active && !this.minimised
       && !this.wickConducting && !this.deskConducting && !this.cascadeConduct && !this._systemModal
       && !voiceHeld();   // ⚑ S390 — and not while the teaching TV's conducted tape holds the floor (the phone waits, then delivers)
     // ⚑ S336 — the guide no longer holds the phone back. The full entrance walk deadlocked here: the guide balloon came
@@ -898,37 +927,13 @@ export class GraceQueueLite {
     if (this.personalQuiet || this.veraPage || this.phoneInHand || this.startMap.active) this.boardQuietT = 0;
     else if (this.mode === 'board' && !this.openSurface) {
       this.boardQuietT += dt;
-      if (!this.focusOffered && !this.lambPriority && !this.phoneInHand && this.guideReady('focus') && this.boardQuietT > 3) {
-        this.focusOffered = true; this.focusOpen = true; this.lambSay(mirrorCopy.focus, 'focus');
-      }
-      // ⚑ S207 — THE PAUSE, 2016: after her first job, back on the board, a quiet moment — the platform's own
-      //   "This week" card lists what else is open to her (only what is left); once
-      if (!this.seenTask && this.consent && !this.lambPriority && this.guideReady('first-task')) {
-        this.seenTask = true; this.lambSay([LAMBIENT.firstTask1, LAMBIENT.firstTask2], 'first-task');
-      }
-      // ⚑ S368 / F11 — and never over one of the platform's pop-ins (the kit's URGENT card, Kindredraft's offer): one card at a time
-      if (!this.pauseShown && !this.minimised && !this.phone.voiceBusy && !this.maltaArrived && !this.kitPopin && !this.storyOffer && !this.maltaPending
-        && ledger.records.includes('e3-job-done') && this.boardQuietT > 6 && this.guideReady('pause')) {
-        this.pauseShown = true;
-        this.pauseLines = pauseItems('e3', this.floppyOpened ? ['floppy'] : []);
-        if (this.pauseLines.length) { this.pauseOpen = true; this.waitSaid = true; this.bump(); }
-      }
-      // ⚑ S209 / P7-47 — GracePlatform's Today's language: once, after the "This week" card, on a quiet board
-      // ⚑ S219 / W1-B14 — no longer behind the pause (it never came for a busy player); a quiet board is enough
-      if (!this.wotdSaid && !this.pauseOpen && !this.phone.voiceBusy && !this.maltaArrived && this.boardQuietT > 12 && this.guideReady('wotd')) {
-        const app = lexStrings.wotdApps.e3;
-        const t = (lexStrings.terms as { id: string; word: string | null; line: string | null }[]).find((x) => x.id === app.word);
-        if (t?.word) { this.wotdSaid = true; meetWord(t.id, 'e3-wotd'); this.lambSay([`${app.title}: ${t.word}.`, t.line ?? ''], 'wotd'); this.bump(); }
-      }
-      if (!this.waitSaid && !this.phone.voiceBusy && !this.maltaArrived && this.boardQuietT > 25 && this.guideReady('waiting')) {
-        // ⚑ S227 (VERA_OPTIONS §4c.2) — only a job that is ON the board and unfinished is named: mounted is not enough
-        //   now that most of the day arrives by update
-        const waiting = ([['places', LAMBIENT.waitPlaces], ['group', LAMBIENT.waitLine1], ['family', LAMBIENT.waitFamily], ['recommend', LAMBIENT.waitLine2]] as const)
-          .filter(([id]) => { const s = this.surfaces.get(id); return this.isUnlocked(id) && !!s && !s.complete(); })
-          .map(([, line]) => line).slice(0, 2);
-        if (waiting.length) { this.waitSaid = true; this.lambSay(waiting, 'waiting'); this.bump(); }
-      }
+      // ⚑ S424 — the board's own lines after the first job (the Focus offer, "Apply what fits…", the "This week" card after a
+      //   first job and six quiet seconds, the word of the day, the waiting lines) are retired: This week opens with the
+      //   training (`openWeek`), each lesson teaches in its own band, and the next lesson is lit on the board. Removed at
+      //   S424; 0b3d81ce holds the last code that said them.
     }
+    this.updateWatch(dt);
+    this.updateHeartwood(dt);
     if (this.mode === 'dark') {
       const before = this.idleT;
       this.idleT += dt;
@@ -939,13 +944,13 @@ export class GraceQueueLite {
     //   only once no card, job, pop-in or Lambient line has been up for MALTA_CLEAR_SECONDS. A card left open for 40 s is
     //   put away first (read by then), so nothing can hold the era forever and nothing opens on top of it.
     if (this.maltaPending) {
-      const cardUp = this.pauseOpen || this.lambPriority || this.kitPopin || this.storyOffer || this.startPanel.open || this.startMap.active || this.focusOpen;
+      const cardUp = this.pauseOpen || this.lambPriority || this.kitPopin || this.storyOffer || this.startPanel.open || this.startMap.active;
       // S369 (the after-run: a lock-screen message replaced by the thread 2.3 s after it landed) — and the phone's own last
       //   message has had its reading time
       const clear = (this.mode === 'board' || this.mode === 'done') && !this.veraPage && !this.openSurface && !this.saver && !cardUp && !this.phone.voiceBusy;
       this.maltaClearT = clear ? this.maltaClearT + dt : 0;
       this.maltaWaitT += dt;
-      if (this.maltaWaitT > 40 && cardUp && !this.veraPage && !this.openSurface) { this.pauseOpen = false; this.lambPriority = false; this.lambLines = null; this.startPanel.close(); this.startMap.close(); this.focusOpen = false; this.bump(); }
+      if (this.maltaWaitT > 40 && cardUp && !this.veraPage && !this.openSurface) { this.pauseOpen = false; this.lambPriority = false; this.lambLines = null; this.startPanel.close(); this.startMap.close(); this.bump(); }
       if (this.maltaClearT >= MALTA_CLEAR_SECONDS) { this.maltaPending = false; this.beginMaltaConduct(); }
     }
     // ⚑ S332 (the S329 entrance walk: kit → another job → Malta never came, 0 rects) — MALTA WAITS FOR THE BOARD. Its
@@ -1036,7 +1041,9 @@ export class GraceQueueLite {
     // moment the sheep does. Neither can ever re-upload the workstation.
     this.comments.update(dt);
     this.floppy.update(dt);
-    if (this.openSurface?.tick && this.mode === 'list') this.openSurface.tick(dt);   // S157: the open job's own clock
+    // S157: the open job's own clock. ⚑ S424 — Lesson 3's (Lambient answering Maureen) waits while a message on her phone is
+    //   still being read: one voice at a time (Orla's invite, landing on the way back from Lesson 2, is read first)
+    if (this.openSurface?.tick && this.mode === 'list' && !(this.openSurface.id === 'family' && this.phone.voiceBusy)) this.openSurface.tick(dt);
   }
 
   /** 0 → 1: how far the workstation's grade has warmed. Never resets once lit. */
@@ -1044,6 +1051,96 @@ export class GraceQueueLite {
     if (!this.liftFired) return 0;
     if (this.liftT < 0) return 1;
     return Math.min(1, (this.liftT - LIFT_DELAY_SECONDS) / LIFT_SECONDS);
+  }
+
+  // ── ⚑ S424: the training ─────────────────────────────────────────────────
+  /** a lesson's place in the training: lit (the next one, open), waiting (locked until the one before is done), done;
+   *  'free' for a job that is not a lesson (the group's check-in, behind "The other jobs") */
+  private lessonState(id: string): 'lit' | 'locked' | 'done' | 'free' {
+    const i = LESSONS.indexOf(id);
+    if (i < 0) return 'free';
+    if (this.jobDone(id)) return 'done';
+    if (i === 0 || this.lessonsFree) return 'lit';
+    if (!this.jobDone(LESSONS[i - 1])) return 'locked';
+    // Lesson 2 also waits for Heartwood's offer (Lesson 1's reading) to be answered or let go
+    if (i === 1 && !this.heartwoodSettled && !this.heartwoodForced) return 'locked';
+    return 'lit';
+  }
+  /** the board's index of the lesson that is lit now (-1: none) */
+  private litLessonIndex(): number {
+    return this.tasks().findIndex((t) => this.lessonState(t.id) === 'lit');
+  }
+  private get trainingDone(): boolean { return LESSONS.every((id) => this.jobDone(id)); }
+  /** THIS WEEK, opened: first after her answer to Lambient, or again from the board's button */
+  private openWeek(): void { this.pauseOpen = true; this.bump(); }
+  /** This week's Begin: the card goes and the lit lesson opens (if none is lit, the card only closes) */
+  private beginLesson(): void {
+    this.pauseOpen = false;
+    const i = this.litLessonIndex();
+    if (i >= 0) this.openTask(i); else this.bump();
+  }
+  /** ⚑ S424 — the failsafe on Heartwood's offer: Lesson 1 done, the offer not settled, a quiet board, for
+   *  HEARTWOOD_FAILSAFE seconds — Lesson 2 lights anyway (written to the console once, for diagnosis) */
+  private updateHeartwood(dt: number): void {
+    if (this.heartwoodSettled || this.heartwoodForced || !this.jobDone('testimony')) { this.heartwoodWaitT = 0; return; }
+    const quiet = this.mode === 'board' && !this.veraPage && !this.openSurface && !this.pauseOpen && !this.phone.voiceBusy && this.phone.queued === 0 && !this.lambyGuide?.active;
+    this.heartwoodWaitT = quiet ? this.heartwoodWaitT + dt : 0;
+    if (this.heartwoodWaitT >= HEARTWOOD_FAILSAFE) {
+      this.heartwoodForced = true; this.bump();
+      console.warn('[e3] heartwood failsafe: Lesson 2 lit without the offer settling');
+    }
+  }
+  /**
+   * ⚑ S424 (16-6, his 20 Nov: "instead of just us playing, the system is the Lambian teaching us how to correct the
+   * content"; storyboard beat 2) — LESSON 1 · WATCH. Renata's editor opens on the first rule, Soften the term, and Lambient
+   * says "Watch. I'll do the first one." (its reading time; it waits while she plays the film, if she does); then it makes
+   * the cut itself, in front of her — the word selected, struck, "same-sex attracted" typed in (S386's cut) — and while the
+   * word changes its band says the rule's teaching line, held for its reading time. Then the band moves to the next rule,
+   * hers ("Your turn"). The cut is tagged "applied by Lambient · lesson" in the film's list and filed as Lambient's.
+   * Nothing is pressed by her for any of it; leaving the editor before the cut puts the lesson back to its start.
+   */
+  private updateWatch(dt: number): void {
+    const editorUp = this.mode === 'list' && !this.openSurface && !this.veraPage && this.renataOpen() && !this.storyDone;
+    if (!this.watch) {
+      if (editorUp && !this.watchDone && !this.decisions.has(LESSON_FIRST)) { this.watch = { phase: 'intro', t: 0, teachT: 0 }; this.bump(); }
+      return;
+    }
+    if (!editorUp) {
+      if (this.decisions.has(LESSON_FIRST)) this.watchDone = true;
+      this.watch = null; this.bump(); return;
+    }
+    if (this.pauseOpen || this.minimised) return;
+    const w = this.watch, first = CORRECTIONS.get(LESSON_FIRST)!;
+    if (w.phase === 'intro') {
+      if (this.playing) return;   // her film first: the lesson waits for it
+      w.t += dt;
+      if (w.t >= Math.max(3, readHold(first.watch ?? ''))) this.lambientFirstCut();
+      return;
+    }
+    if (w.phase === 'cut') {
+      if (this.cutNow()?.phase !== 'mark') w.teachT += dt;   // the teaching line is up from the change on
+      if (!this.cutQueue.length) { w.phase = 'teach'; this.bump(); }
+      return;
+    }
+    w.teachT += dt;
+    if (w.teachT >= Math.max(4, readHold(first.teach ?? ''))) { this.watch = null; this.watchDone = true; this.bump(); }
+  }
+  /** Lambient applies the lesson's first rule itself (the cut is made in front of her; the record files it as Lambient's) */
+  private lambientFirstCut(): void {
+    const item = CORRECTIONS.get(LESSON_FIRST);
+    if (!item || this.decisions.has(item.id)) return;
+    playOnce('tick_task.mp3');
+    this.decisions.set(item.id, 'applied');
+    this.lessonApplied = true;
+    this.startCuts(item);
+    ledger.graceQueue.push({ cardId: item.id, outcome: 'applied', witness: item.lessonWitness ?? item.witnessApplied });
+    if (this.watch) { this.watch.phase = 'cut'; this.watch.teachT = 0; }
+    this.bump();
+  }
+  /** review aids: the lesson's first cut made at once (the debug jumps that apply rules in a loop) */
+  private finishWatch(): void {
+    if (!this.decisions.has(LESSON_FIRST)) this.lambientFirstCut();
+    this.snapCuts(); this.watch = null; this.watchDone = true;
   }
 
   // ── the list ─────────────────────────────────────────────────────────────
@@ -1578,9 +1675,14 @@ export class GraceQueueLite {
     // ⚑ S227 — and the second line is the ORDER of the day's three (his: "the order of the three is Lambient's");
     //   in the Speedrun Version it sends her straight to Annette
     // ⚑ S399 (job 29 B1) — the line names the jobs ON the board, and "The other jobs" (`jobs`) is what decides the board
-    this.lambSay([allow ? LAMBIENT.acceptReply : LAMBIENT.declineReply, isSpeedrun() && !extraOn('jobs') ? LAMBIENT.firstOrderSpeedrun : LAMBIENT.firstOrder]);
+    // ⚑ S424 (UiB job 35 Part D, Act I beat 1; 16-8, his 20 Nov: "This week" should come first, right after accepting
+    //   Lambient — it explains the jobs and the phone) — the reply is said ALONE ("Lovely. I'll show you as we go."; the order
+    //   line after it is retired: the lessons teach the order), and THIS WEEK is the first thing over the board: the three
+    //   lessons, Heartwood, the phone, and Begin. Lambient's line is in its lane under the card.
+    this.lambSay([allow ? LAMBIENT.acceptReply : LAMBIENT.declineReply]);
     this.seenBoard = true;
     this.mode = 'board';
+    this.openWeek();
     this.bump();
   }
 
@@ -1696,17 +1798,20 @@ export class GraceQueueLite {
     if (this.mode !== 'board' && this.mode !== 'done') return;
     const t = this.tasks()[index];
     if (!t) return;
-    // ⚑ S327 (his 8 Nov: "I pressed correct… there was an error") — the first press on a job used to open NOTHING and
-    //   only say Lambient's two lines, which reads as a press that failed. A press now always opens the job; Lambient
-    //   says how the two verbs work on the board beforehand (update(), once the consent beat has been read).
-    this.seenTask = true;
+    // ⚑ S424 — a lesson still waiting opens nothing: the guide's pointer goes from it to the lesson that is lit (a press that
+    //   visibly answers, without a word added to Lambient's)
+    if (this.lessonState(t.id) === 'locked') {
+      const lit = this.litLessonIndex();
+      if (lit >= 0) { this.guideFocus = { id: 'task-' + lit, t: 0 }; this.bump(); }
+      return;
+    }
+    this.pauseOpen = false;
     const mounted = this.surfaces.get(t.id);
     this.chipReturn = null;
     if (mounted) {
       if (t.id === 'recommend') meetWord('brokenness', 'e3-keywords');   // S209 / P7-47 — the house keywords
       this.openSurface = mounted;
       this.mode = 'list';
-      if (!this.seenTask) { this.seenTask = true; this.lambSay([LAMBIENT.firstTask1, LAMBIENT.firstTask2]); }
       this.bump();
       return;
     }
@@ -1719,13 +1824,8 @@ export class GraceQueueLite {
     // ⚑ S386 — her film is what the job is: it fills the window as her job opens. ⚑ S357fr / 16-5 (his headset, 20 Nov:
     //   "the video should play when I want to") — it no longer starts by itself: it waits on its first frame for her Play
     if (this.renataOpen()) { if (this.playT >= this.filmSeconds()) this.playT = 0; this.playing = false; }
-    // ⚑ the second conduction beat, once only: what the two verbs are, and
-    //   what happens either way. "Either way it's recorded, so you can't get
-    //   it wrong" is meant as reassurance and is the surveillance clause.
-    if (!this.seenTask) {
-      this.seenTask = true;
-      this.lambSay([LAMBIENT.firstTask1, LAMBIENT.firstTask2]);
-    }
+    // (⚑ S424 — the first job's two lines, "Apply what fits. Skip what doesn't." / "Either way it's recorded, so you can't get
+    //   it wrong.", are retired: Lesson 1 opens on Lambient's own first cut, `updateWatch`)
     this.bump();
   }
 
@@ -1776,7 +1876,7 @@ export class GraceQueueLite {
   }
   /** ⚑ S382 — what the platform has up or is about to bring forward; a change while minimised brings the window back */
   private platformWants(): string {
-    return [this.mode, this.veraPage ?? '', this.kitPopin, this.storyOffer, this.maltaPending, this.cascadeConduct, this.pauseOpen, this.focusOpen, this.subComplete(SUBMISSIONS[0]) && !veraDay.distributed].join('|');
+    return [this.mode, this.veraPage ?? '', this.kitPopin, this.storyOffer, this.maltaPending, this.cascadeConduct, this.pauseOpen, this.subComplete(SUBMISSIONS[0]) && !veraDay.distributed].join('|');
   }
   private minimisedT = 0;
   private minimisedWant = '';
@@ -1788,6 +1888,7 @@ export class GraceQueueLite {
     let outcome = choice;
     const sub = this.submission();
     if (this.mode !== 'list' || !sub || !this.current()) return;
+    if (this.watch) return;   // ⚑ S424 — Lambient is showing the first rule: there is nothing of hers to press yet
     this.snapCuts();   // ⚑ S386 — a cut still being made is finished before another decision (the verbs are hidden meanwhile)
     const item = this.current();
     if (!item) return;
@@ -1807,6 +1908,8 @@ export class GraceQueueLite {
     } else this.deskNote = null;
     this.decisions.set(item.id, outcome);
     if (outcome === 'applied' && sub.id === 1) this.startCuts(item);   // ⚑ S386 — the film is cut in front of her
+    // ⚑ S424 (storyboard beat 3) — the rule's word enters her Lexicon as it is applied (DEPENDENCY was the board's word of the day)
+    if (outcome === 'applied' && item.lexicon) meetWord(item.lexicon, 'e3-lesson');
     this.lambLines = null; // the beat is over the moment she uses either verb
     ledger.graceQueue.push({
       cardId: item.id,
@@ -1829,7 +1932,9 @@ export class GraceQueueLite {
     this.bump();
   }
 
-  apply(): void { this.decide('applied'); }
+  /** ⚑ S424 — during Lesson 1's watch there is no Apply to press (none is drawn); a review aid's apply() lets Lambient make
+   *  its cut at once instead, so the tools that apply Renata's three rules in a row still land where they did */
+  apply(): void { if (this.watch) { this.finishWatch(); this.bump(); return; } this.decide('applied'); }
   skip(): void { this.decide('skipped'); }
 
   /** ⚑ a task FINISHES — it no longer loads the next one. Under the board there
@@ -2432,12 +2537,19 @@ export class GraceQueueLite {
   private alertChimed = false;
 
   private drawBoard(ctx: CanvasRenderingContext2D, c: aero.AeroContent): void {
+    // ⚑ S424 (16-8 + 16-11; storyboard beat 1) — TRAINING, and under it her role ("story caretender · in training"); "Choose
+    //   any job." is retired (the lessons come in order). Right of it, a small This week button opens the card again.
     setFont(ctx, 10); ctx.fillStyle = ERA3.greyDk;
     ctx.fillText(q.app.boardHeading, c.x, c.y + 2);
     setFont(ctx, 11); ctx.fillStyle = ERA3.grey;
-    ctx.fillText(q.app.boardSub, c.x, c.y + 18);
+    ctx.fillText(q.app.roleBadge, c.x, c.y + 18);
     px(ctx, c.x, c.y + 36, c.w, 1, ERA3.glassEdge);
     if (!this.storyOffer && this.offer) this.drawOffer(ctx, c, this.offer);
+    else if (!this.pauseOpen) {
+      setFont(ctx, 11); const wbw = Math.ceil(ctx.measureText(q.app.weekButton).width) + 24, wbx = c.x + c.w - wbw, wby = c.y + 4;
+      aero.button(ctx, wbx, wby, wbw, 24, q.app.weekButton, { size: 11 });
+      this.rects.push({ x: wbx, y: wby, w: wbw, h: 24, id: 'week-open' });
+    }
 
     const tasks = this.tasks();
     const GAP = 14;
@@ -2472,12 +2584,12 @@ export class GraceQueueLite {
     // tasks are "still there, still working, still greyable" — a screen that
     // clears itself cannot carry that, and the version of this that wiped the
     // work away also wiped away the only evidence of what she had done.
-    if (this.mode === 'done') {
+    // ⚑ S424 (storyboard beat 7) — the three lessons done: "Training done · 3 of 3" (was "You're caught up." / "No new stories
+    //   waiting.", kept in s3_queue.json as the record)
+    if (this.trainingDone) {
       const by = top + rows * (tileH + GAP);
       setFont(ctx, 14); ctx.fillStyle = ERA3.titleText;
-      ctx.fillText(q.app.doneHeading, c.x, by);
-      setFont(ctx, 11); ctx.fillStyle = ERA3.grey;
-      ctx.fillText(q.app.doneSub, c.x, by + 18);
+      ctx.fillText(q.app.trainingDone.replace('{n}', String(LESSONS.length)).replace('{m}', String(LESSONS.length)), c.x, by);
     }
     // ⚑ THE CONDUCTION, and it obeys the R28 cap: ≤2 lines per beat, and it is
     //   the SYSTEM's lane, never a character standing in the room. The first
@@ -2492,12 +2604,6 @@ export class GraceQueueLite {
     //   phone, the wait line, the way back, the cascade's "Everything on your board is still there…") was being
     //   wiped here before it was ever drawn; they now stay until she acts.
     //   The first-task beat itself closes on her next press on the board (handleClick).
-    if (this.focusOpen && !this.personalQuiet) {
-      const by = c.y + c.h - 82;
-      aero.button(ctx, c.x, by, 90, 24, mirrorCopy.on, { size: 11 });
-      aero.button(ctx, c.x + 100, by, 90, 24, mirrorCopy.later, { size: 11 });
-      this.rects.push({ x: c.x, y: by, w: 90, h: 24, id: 'focus-on' }, { x: c.x + 100, y: by, w: 90, h: 24, id: 'focus-later' });
-    }
     if (this.lambLines && (this.lambPriority || !this.lambyGuide?.active)) this.drawLambientLane(ctx, c, this.lambLines);
     if (!this.personalQuiet) drawLambMark(ctx, c.x + 8, c.y + c.h - 10, 1.2);
     // ⚑ S229 / W1-A6 — on the board the card becomes a strip UNDER the day's tiles (never over one), and only where
@@ -2539,34 +2645,41 @@ export class GraceQueueLite {
     this.rects.push({ x: bx, y: by, w: bw, h: bh, id: 'update-accept' });
   }
 
-  /** ⚑ S207 — "This week": the platform's own card over the board, in its glass; the only thing pressable while up */
+  /** ⚑ S207 — "This week": the platform's own card over the board, in its glass; the only thing pressable while up.
+   *  ⚑ S424 (16-8; storyboard beat 1) — it is the training's welcome now, the first thing after her answer to Lambient: THIS
+   *  WEEK, "Your training starts today.", the three lessons, Heartwood on the set by the door, the phone, and Begin (which
+   *  opens the lesson that is lit). It sits above Lambient's lane, so its one line is read under it. Reopened from the board
+   *  once the training is done, its button is Close. (S207's list read from the map and its outro are retired.) */
   private drawPauseCard(ctx: CanvasRenderingContext2D, c: aero.AeroContent): void {
-    const P = pauseWords('e3');
-    // Preserve the board's task hit targets below this quiet note.
-    const cw = Math.min(520, c.w - 80);
+    const P = pauseWords('e3') as unknown as { title: string; weekLead: string; begin: string; close: string };
+    const lines = (pauseCopy.pause.e3 as unknown as { week: string[] }).week;
+    const cw = Math.min(520, c.w - 40);
     setFont(ctx, 12);
-    const rows = this.pauseLines.map((l) => wrapText(ctx, l, cw - 64));
-    const ch = 120 + rows.reduce((n, r) => n + r.length, 0) * 18 + rows.length * 6;
-    const cx = c.x + Math.round((c.w - cw) / 2), cy = c.y + Math.round((c.h - ch) / 2);
+    const rows = lines.map((l) => wrapText(ctx, l, cw - 64));
+    const ch = 104 + rows.reduce((n, r) => n + r.length, 0) * 17 + rows.length * 5;
+    // above Lambient's lane (its one line, read under the card), never over it
+    const laneH = this.lambLines && !this.personalQuiet ? 12 + 15 * Math.max(1, this.lambLines.length) : 0;
+    const room = c.h - laneH - 6;
+    const cx = c.x + Math.round((c.w - cw) / 2), cy = c.y + Math.max(2, Math.round((room - ch) / 2));
     // ⚑ S406 / H2 (his 22:08:24: the cards "can be pressed" behind "This week") — the card takes a press anywhere on it; its
-    //   Close is the one thing on it that answers (the board below stays as it was, and is pressable again once it closes)
+    //   button is the one thing on it that answers (the board below stays as it was, and is pressable again once it closes)
     this.cover('this-week', cx - 2, cy - 2, cw + 4, ch + 4);
     px(ctx, cx - 2, cy - 2, cw + 4, ch + 4, ERA3.glassEdge);
     px(ctx, cx, cy, cw, ch, ERA3.white);
     px(ctx, cx, cy, cw, 4, ERA3.accent);
-    setFont(ctx, 11); ctx.fillStyle = ERA3.grey; ctx.fillText(P.title.toUpperCase(), cx + 22, cy + 18);
-    setFont(ctx, 16); ctx.fillStyle = ERA3.titleText; ctx.fillText(P.lead, cx + 22, cy + 36);
-    let y = cy + 66;
+    setFont(ctx, 11); ctx.fillStyle = ERA3.grey; ctx.fillText(P.title.toUpperCase(), cx + 22, cy + 16);
+    setFont(ctx, 16); ctx.fillStyle = ERA3.titleText; ctx.fillText(P.weekLead, cx + 22, cy + 33);
+    let y = cy + 60;
     setFont(ctx, 12);
     rows.forEach((rs) => {
-      px(ctx, cx + 26, y + 6, 6, 6, ERA3.accent);
-      rs.forEach((r) => { ctx.fillStyle = ERA3.titleText; ctx.fillText(r, cx + 42, y); y += 18; });
-      y += 6;
+      px(ctx, cx + 26, y + 5, 6, 6, ERA3.accent);
+      rs.forEach((r) => { ctx.fillStyle = ERA3.titleText; ctx.fillText(r, cx + 42, y); y += 17; });
+      y += 5;
     });
-    setFont(ctx, 11); ctx.fillStyle = ERA3.grey; ctx.fillText(P.outro, cx + 22, y + 4);
-    const bw = 110, bh = 30, bx = cx + cw - bw - 18, by = cy + ch - bh - 14;
-    aero.button(ctx, bx, by, bw, bh, P.close, { primary: true });
-    this.rects.push({ x: bx, y: by, w: bw, h: bh, id: 'pause-close' });
+    const begin = this.litLessonIndex() >= 0;
+    const bw = 110, bh = 30, bx = cx + cw - bw - 18, by = cy + ch - bh - 12;
+    aero.button(ctx, bx, by, bw, bh, begin ? P.begin : P.close, { primary: true });
+    this.rects.push({ x: bx, y: by, w: bw, h: bh, id: begin ? 'week-begin' : 'pause-close' });
   }
 
   /**
@@ -2644,9 +2757,20 @@ export class GraceQueueLite {
     setFont(ctx, 9); const doneW = done ? Math.ceil(ctx.measureText(q.app.boardDoneTag).width) + 6 : 0;
     setFont(ctx, 11); ctx.fillStyle = ERA3.titleText;
     wrapText(ctx, t.label, w - padX * 2 - doneW).slice(0, 2).forEach((line, i) => ctx.fillText(line, x + padX, y + thumbH + 3 + i * 12));
-    setFont(ctx, 10); ctx.fillStyle = ERA3.grey;
-    ctx.fillText(t.id === 'testimony' ? polish.queueWaiting.replace('{n}', String(SUBMISSIONS.filter(sb => !this.subComplete(sb)).length)) : t.note, x + padX, y + thumbH + 29);
+    // ⚑ S424 (call 1) — a lesson's note says where it is in the training: the lit one "Start here", a waiting one "after
+    //   Lesson n", a finished one nothing (its "done" tag); a job that is not a lesson keeps its own note
+    const lesson = this.lessonState(t.id), li = LESSONS.indexOf(t.id);
+    const note = lesson === 'lit' ? q.app.lessonLit : lesson === 'locked' ? q.app.lessonAfter.replace('{n}', String(li))
+      : lesson === 'done' ? '' : t.id === 'testimony' ? polish.queueWaiting.replace('{n}', String(SUBMISSIONS.filter(sb => !this.subComplete(sb)).length)) : t.note;
+    setFont(ctx, 10); ctx.fillStyle = lesson === 'lit' ? ERA3.accent : ERA3.grey;
+    ctx.fillText(note, x + padX, y + thumbH + 29);
     ctx.restore();
+    // the lit lesson wears the platform's blue edge; a waiting one is veiled (its picture still shows what it holds)
+    if (lesson === 'lit' && LESSONS.length) {
+      px(ctx, x, y, w, 2, ERA3.accent); px(ctx, x, y + h - 2, w, 2, ERA3.accent); px(ctx, x, y, 2, h, ERA3.accent); px(ctx, x + w - 2, y, 2, h, ERA3.accent);
+    } else if (lesson === 'locked') {
+      ctx.save(); ctx.globalAlpha = 0.5; px(ctx, x + 1, y + 1, w - 2, thumbH - 2, ERA3.glass); ctx.restore();
+    }
 
     if (done) {
       // ⚑ THE GREYING, and it is the whole visual argument of the era: the
@@ -2818,12 +2942,20 @@ export class GraceQueueLite {
   private studioBand(ctx: CanvasRenderingContext2D, c: aero.AeroContent): { need: number; copyW: number; note: DeskNote | null; refs: string[] } {
     const current = this.bandItem(), copyW = c.w - 190;
     if (!current) return { need: 80, copyW, note: null, refs: [] };
-    const note: DeskNote | null = this.deskNote ?? (current.teach ? { line: current.teach, voice: 'lambient' } : null);
+    const note: DeskNote | null = this.lessonNote(current) ?? this.deskNote ?? (current.teach ? { line: current.teach, voice: 'lambient' } : null);
     studioFont(ctx, 11);
-    const noteH = note ? measureLambientNote(ctx, copyW, note) : wrapText(ctx, current.why, copyW).length * 14;
-    studioFont(ctx, 10);
-    const refs = wrapText(ctx, `${current.manual} · ${current.verse}`, copyW);
+    const noteH = note ? measureLambientNote(ctx, copyW, note) : wrapText(ctx, current.line ?? current.why, copyW).length * 14;
+    // ⚑ S424 (his 23 Nov call 6: "The scripture and manual lines under each rule are cut. — yes") — no manual line and no
+    //   verse under any rule: the lesson carries the platform's authority now (the lines stay in s3_queue.json)
+    const refs: string[] = [];
     return { need: Math.max(80, 32 + noteH + refs.length * REFS_LEAD + 4), copyW, note, refs };
+  }
+  /** ⚑ S424 — Lambient's line while it shows the first rule: "Watch. I'll do the first one." until the word starts to change,
+   *  then the rule's teaching line (null when the lesson's watch is not running) */
+  private lessonNote(item: CorrectionDef): DeskNote | null {
+    if (!this.watch || item.id !== LESSON_FIRST) return null;
+    const early = this.watch.phase === 'intro' || (this.watch.phase === 'cut' && this.cutNow()?.phase === 'mark');
+    return { line: (early ? item.watch : item.teach) ?? item.why, voice: 'lambient' };
   }
   /** ⚑ S357fr / 16-4 (his headset, 20 Nov: "the image changed sizes … the zooms don't work for me. This needs to be
    *  stable") — Renata's film was sized against the band of the rule on screen, so every Apply (a new rule, a longer
@@ -2833,17 +2965,16 @@ export class GraceQueueLite {
   private studioBandMax(ctx: CanvasRenderingContext2D, c: aero.AeroContent, sub: SubmissionDef): number {
     const copyW = c.w - 190, items = this.items(sub);
     if (!items.length) return 80;
-    let noteH = 0, refsN = 0;
+    let noteH = 0;
+    const refsN = 0;   // ⚑ S424 (call 6): no manual line, no verse
     for (const item of items) {
       studioFont(ctx, 11);
-      if (item.teach) noteH = Math.max(noteH, measureLambientNote(ctx, copyW, { line: item.teach, voice: 'lambient' }));
-      else noteH = Math.max(noteH, wrapText(ctx, item.why, copyW).length * 14);
+      for (const l of [item.teach, item.watch]) if (l) noteH = Math.max(noteH, measureLambientNote(ctx, copyW, { line: l, voice: 'lambient' }));
+      if (!item.teach) noteH = Math.max(noteH, wrapText(ctx, item.line ?? item.why, copyW).length * 14);
       REFUSAL.lines.forEach((line, i) => {
         const voice = i >= 3 ? 'admin' as const : 'lambient' as const;
         for (const l of [line, `${item.rule}: ${line}`]) noteH = Math.max(noteH, measureLambientNote(ctx, copyW, { line: l, voice }));
       });
-      studioFont(ctx, 10);
-      refsN = Math.max(refsN, wrapText(ctx, `${item.manual} · ${item.verse}`, copyW).length);
     }
     return Math.max(80, 32 + noteH + refsN * REFS_LEAD + 4);
   }
@@ -2946,9 +3077,9 @@ export class GraceQueueLite {
       studioFont(ctx, 11);
       let noteH = 0;
       if (note) noteH = drawLambientNote(ctx, c.x + 10, by + 26, copyW, note);
-      else {   // a rule Lambient does not teach keeps the platform's own rationale, untagged
+      else {   // a rule Lambient does not teach keeps the platform's own line (⚑ S424: `line`), or its rationale, untagged
         ctx.fillStyle = ERA3.greyDk;
-        const why = wrapText(ctx, current.why, copyW);
+        const why = wrapText(ctx, current.line ?? current.why, copyW);
         why.forEach((ln, i) => ctx.fillText(ln, c.x + 10, by + 26 + i * 14)); noteH = why.length * 14;
       }
       const refsY = by + 32 + noteH;
@@ -2960,6 +3091,8 @@ export class GraceQueueLite {
         // the platform at work: no verb to press until the cut has been made and seen
         px(ctx, bx, by + 12, 160, 29, ERA3.sysBand); px(ctx, bx, by + 12, 3, 29, ERA3.alarm);
         studioFont(ctx, 12, true); ctx.fillStyle = ERA3.alarm; ctx.fillText(this.renataVideo().cutting ?? '', bx + 12, by + 19);
+      } else if (this.watch) {
+        // ⚑ S424 — Lambient is showing the first rule (before its cut, and while its teaching line is read): nothing to press
       } else {
         aero.button(ctx, bx, by + 12, 76, 29, q.verbs.apply, { primary: true, size: 12 });
         aero.button(ctx, bx + 84, by + 12, 76, 29, q.verbs.skip, { size: 12 });
@@ -2968,7 +3101,8 @@ export class GraceQueueLite {
       studioFont(ctx, 9); ctx.fillStyle = ERA3.greyDk;
       wrapText(ctx, vera.provenance, 158).forEach((ln, i) => ctx.fillText(ln, bx, by + 52 + i * 11));
     } else {
-      studioFont(ctx, 15, true); ctx.fillStyle = ERA3.titleText; ctx.fillText(q.app.storyDone, c.x + 12, by + 12);
+      // ⚑ S424 (storyboard beat 4) — sent, the lesson is done: "Lesson 1 done." (up to the send: "This story is done.")
+      studioFont(ctx, 15, true); ctx.fillStyle = ERA3.titleText; ctx.fillText(this.editorReceipt ? q.app.lessonDone : q.app.storyDone, c.x + 12, by + 12);
       const bw = 143, bx = c.x + c.w - bw - 10;
       // ⚑ S403 — the default visit: "Send to all four" is the editor's way on until it is pressed, then its receipt
       const send = this.editorSendPending;
@@ -2984,7 +3118,7 @@ export class GraceQueueLite {
   }
 
   /** ⚑ S386 — the correction the band shows: the one whose cut is being made, else the next undecided */
-  private bandItem(): CorrectionDef | undefined { return this.cutNow()?.item ?? this.current(); }
+  private bandItem(): CorrectionDef | undefined { return this.cutNow()?.item ?? (this.watch ? CORRECTIONS.get(LESSON_FIRST) : this.current()); }
 
   /** ⚑ S386 — the subtitle on screen now: her words, word for word, as the cue holds them — with the 'term' cut made
    *  in front of the visitor (the word selected, struck, the platform's word typed in), and clean once it is made */
@@ -3173,7 +3307,15 @@ export class GraceQueueLite {
       if (yy + small * 2 > y + h) break;
       if (live) px(ctx, x - 4, yy - 2, w + 4, small * 2 + 3, ERA3.alarmBand);
       studioFont(ctx, 10, true); ctx.fillStyle = ERA3.alarm; ctx.fillText(what, x, yy); yy += small;
-      studioFont(ctx, 10); ctx.fillStyle = ERA3.greyDk; if (made) ctx.fillText(how, x, yy); yy += small + 4;
+      studioFont(ctx, 10); ctx.fillStyle = ERA3.greyDk; if (made) ctx.fillText(how, x, yy); yy += small;
+      // ⚑ S424 (storyboard beat 2) — the first cut was Lambient's, the lesson's example: its tag, in Lambient's own colour
+      const tag = k === 'term' && this.lessonApplied && made ? CORRECTIONS.get(LESSON_FIRST)?.lessonTag : undefined;
+      if (tag) {
+        studioFont(ctx, 9); ctx.fillStyle = ERA3.lambTag;
+        const tl = Math.round(textPx(9, 'e3')) + 2;
+        for (const ln of wrapText(ctx, tag, w)) { if (yy + tl > y + h) break; ctx.fillText(ln, x, yy); yy += tl; }
+      }
+      yy += 4;
     }
   }
 
@@ -3622,7 +3764,6 @@ export class GraceQueueLite {
       this.mirrorReading = true; this.bump(); return;
     }
     this.mirrorReading = false;
-    if (mh?.id === 'focus-on' || mh?.id === 'focus-later') { this.focusOpen = false; this.lambPriority = false; this.lambLines = null; this.bump(); return; }
     const lg = this.rects.find(h => h.id.startsWith('lg-') && x >= h.x && x <= h.x + h.w && y >= h.y && y <= h.y + h.h);
     if (this.lambPriority) { this.lambPriority = false; if (this.mode === 'board') this.lambLines = null; this.bump(); }
     this.lambyGuide?.activity();
@@ -3667,12 +3808,10 @@ export class GraceQueueLite {
     }
     this.boardQuietT = 0;
     if (this.saver) { this.saver = null; this.bump(); return; }   // S208 — a press wakes it, and does nothing else
-    // S208 / A3 — the first-task beat, once seen on the board, closes when she acts there
-    if (this.mode === 'board' && this.lambLines?.[0] === LAMBIENT.firstTask1) { this.lambLines = null; this.bump(); }
     // ⚑ S403 — the "This week" card's Close is drawn ON TOP of the board, but its rect is pushed after the tiles', so a
     //   press on Close found the tile under it first and OPENED THAT JOB (the walk: Close → the finished mothers' job →
     //   Back). With a third tile on the default board, "Answer the mothers" sits under Close. The visible button wins.
-    const r = (this.pauseOpen ? this.rects.find(rr => rr.id === 'pause-close' && hit(rr, x, y)) : undefined) ?? this.rects.find(rr => hit(rr, x, y));
+    const r = (this.pauseOpen ? this.rects.find(rr => (rr.id === 'pause-close' || rr.id === 'week-begin') && hit(rr, x, y)) : undefined) ?? this.rects.find(rr => hit(rr, x, y));
     if (!r) { if (this.startMap.menu) { this.startMap.close(); this.bump(); } return; }
     const model = buildStartModel(undefined, 'e3');
     if (r.id === 'account-activity') { this.startMap.close(); this.openRecordFromChip(); return; }
@@ -3691,6 +3830,8 @@ export class GraceQueueLite {
     if (r.id === 'task-restore') { this.toggleMinimised(); return; }
     if (this.minimised) return;
     if (this.pauseOpen) { this.pauseOpen = false; this.bump(); if (r.id === 'pause-close') return; }   // S207
+    if (r.id === 'week-begin') { this.beginLesson(); return; }   // ⚑ S424 — This week's Begin: the lit lesson opens
+    if (r.id === 'week-open') { this.openWeek(); return; }       // ⚑ S424 — the board's This week button: the card again
     if (r.id === 'startpanel-close') { this.startPanel.close(); this.bump(); return; }   // S229 / W1-A6
     if (r.id === 'win-min') { this.toggleMinimised(); return; }
     if (r.id === 'signin') { this.beginList(); return; }
@@ -3723,7 +3864,7 @@ export class GraceQueueLite {
     }
     // ⚑ the game is still the era's, not the phone's — the phone reports the
     //   press and this class opens it, so FloppySheep keeps one owner.
-    if (this.phone.isFloppyPress(x, y)) { this.floppy.openGame(); this.floppyOpened = true; return true; }
+    if (this.phone.isFloppyPress(x, y)) { this.floppy.openGame(); return true; }
     return this.phone.press(x, y);
   }
 
@@ -3753,6 +3894,7 @@ export class GraceQueueLite {
       const job = this.surfaces.get(jobId);
       if (!job) return;
       if (jobId !== 'record' && !this.isUnlocked(jobId)) this.unlockedIds().push(jobId);   // S227: a review jump installs it
+      this.lessonsFree = true;   // ⚑ S424: a review jump opens any lesson
       // ⚑ PUT DOWN WHATEVER IS OPEN FIRST. Without this a review jump from one
       //   job to another silently did nothing: `debugBeat('board')` routes
       //   through `beginList()`, which only fires from `signin`, so the mode
@@ -3796,7 +3938,7 @@ export class GraceQueueLite {
       case 'backToBoard': this.debugBeat('list'); this.backToBoard(); break;
       case 'minimise': this.debugBeat('board'); if (!this.minimised) this.toggleMinimised(); break;   // S382: through the one path, so the guard knows
       case 'boardDone': // every tile grey — the day finished, and still there
-        this.debugBeat('board');
+        this.debugBeat('board'); this.lessonsFree = true; this.pauseOpen = false;
         for (const u of this.pendingTools()) this.unlockedIds().push(u.id);   // S227: every update installed first
         this.offer = null;
         for (let i = 0; i < this.tasks().length; i++) {
@@ -3827,7 +3969,7 @@ export class GraceQueueLite {
       case 'gradeApply': this.debugBeat('noa'); this.apply(); break;
       case 'gradeSkip': this.debugBeat('noa'); this.skip(); break;
       case 'maltaArrive': // ⚑ two tiles grey, which is what actually arms it now
-        this.debugBeat('board');
+        this.debugBeat('board'); this.lessonsFree = true; this.pauseOpen = false;
         for (let i = 0; i < this.tasks().length && this.completedCount() < maltaAfter(); i++) {
           this.openTask(i);
           applyUntil(() => !this.current());

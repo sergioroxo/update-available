@@ -15,44 +15,57 @@
   "clockStart": "9:41",
   "listHeading": "CORRECTIONS",
   "storyDone": "This story is done.",
+  "lessonDone": "Lesson 1 done.",
+  "_docS424lessonDone": "⚑ S424 (UiB job 35 Part D, Act I beat 4; storyboard 2016_SECOND_HALF §3): once Renata's story is sent, the editor's heading says the lesson is done (it said \"This story is done.\" up to the send, and still does).",
   "nextStory": "Next story",
   "counter": "{n} of {m} applied",
   "doneHeading": "You're caught up.",
   "doneSub": "No new stories waiting.",
+  "trainingDone": "Training done · {n} of {m}",
+  "_retiredS424doneHeading": "⚑ S424 (UiB job 35 Part D, Act I beat 7; storyboard §3b, \"the board\") — `doneHeading` and `doneSub` are no longer drawn on the board: with the three lessons done it reads `trainingDone` (\"Training done · 3 of 3\"). Kept as the record.",
   "updateLine": "New: Kindredraft",
   "updateVersion": "Your 2014 story is ready for its first refresh.",
   "updateInstall": "Install",
   "_docUpdate": "S307: Kindredraft is the only offer. Before Malta, installation opens Vera’s own 2014 record. A later return after ignoring it opens the administrator-refreshed record. No timer, no install reward.",
   "boardTitle": "GracePlatform · Today",
-  "boardHeading": "TODAY",
+  "boardHeading": "TRAINING",
   "boardSub": "Choose any job.",
+  "_retiredS424board": "⚑ S424 (UiB job 35 Part D, Act I beat 1, 16-8 + 16-11; his 23 Nov call 1: \"The lessons come in order, and the next one lights up. — Yes!\") — THE BOARD AS TRAINING. `boardHeading` was \"TODAY\"; `boardSub` (\"Choose any job.\") is no longer drawn: the lessons come in order, so the line under the heading is her role (`roleBadge`). Kept as the record.",
+  "weekButton": "This week",
+  "lessonLit": "Start here",
+  "lessonAfter": "after Lesson {n}",
+  "_docS424lessons": "⚑ S424 — the lessons' tiles: the next one is lit (`lessonLit`), the others wait (`lessonAfter`) and open when the one before is done; `weekButton` reopens the This week card (pauses.json e3).",
   "boardBack": "Back to today",
   "boardDoneTag": "done",
   "taskbarLabel": "GracePlatform",
   "recordChip": "Your record · {n}",
   "_docRecordChip": "⚑ S145 — THE RECORD ON THE DEVICE (docs/reinterp/THE_WITNESS_SYSTEM_PLAN_2026-09-16.md §3D): the chip in the platform's taskbar, on every signed-in screen — the file's count, live, lit for a moment each time the file grows (the device-side twin of the wall's lit row). Pressing it opens Your record from anywhere; Back returns to where she was.",
-  "roleBadge": "story caretender · volunteer"
+  "roleBadge": "story caretender · in training",
+  "_retiredS424roleBadge": "⚑ S424 (16-11, the platform as a tutorial) — was \"story caretender · volunteer\"."
  },
  "_docBoard": "⛑ THE POOL, 2026-08-24 — Sérgio: 'it was 6 jobs not 3'. The board's tiles are TASK KINDS, not submissions: correcting the testimonies is ONE job that holds all three women, exactly as a day's work would. (The house look is not a seventh tile — it lives inside the testimony job as correction 13, on Noa's picture, which is where it already works and where it costs something.) A tile is drawn only once its `surface` exists; a board of tiles that do nothing is the fault this project keeps hitting, and a greyed-out 'coming soon' would be the frame playing. `surface` values: 'testimony' is built; the rest arrive in ERA3_BUILD_PLAN stages 4 and 7 and their tiles appear with them.",
  "board": [
   {
    "id": "testimony",
    "surface": "testimony",
-   "label": "Correct a testimony",
-   "note": "four waiting"
+   "label": "Lesson 1 · Correct a testimony",
+   "note": "four waiting",
+   "_retiredS424label": "⚑ S424 — `label` was \"Correct a testimony\" (the board is the training now: Lesson 1, 2, 3, in order)."
   },
   {
    "id": "places",
    "surface": "places",
-   "label": "The places list",
+   "label": "Lesson 2 · The places list",
    "note": "one place to review",
+   "_retiredS424label": "⚑ S424 — `label` was \"The places list\".",
    "_docS332": "⚑ S332 (DESIGN_2016_CONNECTIONS, his second answers): job 2. A member post names The Wick; Vera is asked to add it to the network's places to avoid (src/desktop/apps/placesList.ts, data/dialog/s3_places.json)."
   },
   {
    "id": "family",
    "surface": null,
-   "label": "Answer the mothers",
+   "label": "Lesson 3 · Answer the mothers",
    "note": "two waiting",
+   "_retiredS424label": "⚑ S424 — `label` was \"Answer the mothers\".",
    "_docS403": "⚑ S403 (UiB job 30 B1): `label` was \"Return the family calls\" (they are messages, not calls); `note` was \"from relatives\" (two mothers wait now, Maureen and Annette; s3_family.json)."
   },
   {
@@ -104,7 +117,8 @@
   "consentAllow": "Allow",
   "consentDecline": "Not now",
   "consentDeclineSticker": "not yet available",
-  "acceptReply": "Lovely. I'll keep the room gentle.",
+  "acceptReply": "Lovely. I'll show you as we go.",
+  "_retiredS424acceptReply": "⚑ S424 (Act I beat 1; storyboard §3b) — was \"Lovely. I'll keep the room gentle.\"; said alone now (the order line after it is retired: the lessons teach the order).",
   "declineReply": "That's alright. I'll keep the room tidy either way.",
   "firstBoard1": "Open anything. They're all the same size to me.",
   "firstTask1": "Apply what fits. Skip what doesn't.",
@@ -124,7 +138,8 @@
   "phone1": "Your phone's lit — someone's writing to you.",
   "phone2": "Pick it up when you like. You can always put it down.",
   "_docPhone": "⚑ S149 (NARRATIVE_FLOW 2016 #6; OPEN_ITEMS R3-81): the era's voice for the phone beat, once, when the phone lights. The phone is the way 2016 ends now — the update never arms before the group has been seen there — so the player is told it exists and that it can be put down. ≤2 lines, the R28 cap.",
-  "waitPlaces": "One place is waiting for the list."
+  "waitPlaces": "One place is waiting for the list.",
+  "_retiredS424": "⚑ S424 (UiB job 35 Part D, Act I; storyboard 2016_SECOND_HALF §3 beat 1: \"Retired here: … Lambient's order line, and its \\\"Apply what fits. Skip what doesn't.\\\" / \\\"Either way it's recorded, so you can't get it wrong.\\\" (the lessons teach it)\") — NO LONGER SAID: `firstOrder`, `firstOrderSpeedrun` (the order line after Allow: the board is lessons in order now), `firstTask1` / `firstTask2` (the first job's two lines: Lambient teaches each rule in its band instead), and the waiting lines `waitLine1`, `waitLine2`, `waitFamily`, `waitPlaces` (the next lesson is lit on the board; nothing else is added to Lambient's lines, §2). `firstBoard1` and `phone1`/`phone2` were already unused. Kept here as the record; graceQueueLite.ts reads none of them."
  },
  "submissions": [
   {
@@ -143,7 +158,8 @@
     "beforeLabel": "as sent",
     "play": "Play",
     "pause": "Pause",
-    "systemLine": "The campaign needs Renata's story in 20 seconds. Cut what doesn't fit.",
+    "systemLine": "Lesson 1 · Renata's story runs 40 seconds. The campaign needs 20.",
+    "_retiredS424systemLine": "⚑ S424 (16-6, Act I beat 2) — was \"The campaign needs Renata's story in 20 seconds. Cut what doesn't fit.\"",
     "sentLabel": "Original · 0:40",
     "_docS357frSentLabel": "⚑ S357fr / 16-6 (his 21 Nov ruling 13: the label \"As Renata sent it\" becomes \"Original\"; his headset, 20 Nov: \"As Renata sent it, I don't like this\"). Old: \"As Renata sent it · 0:40\".",
     "editLabel": "Campaign cut · {d}",
@@ -235,7 +251,11 @@
    "film": ["term"],
    "witnessApplied": "list: applied — renata (soften the term)",
    "witnessSkipped": "list: skipped — renata (soften the term)",
-   "teach": "We say “same-sex attracted” because it names a feeling, not a person. Feelings can change."
+   "watch": "Watch. I'll do the first one.",
+   "teach": "“Same-sex attracted” names a feeling, not a person. Feelings can change.",
+   "lessonTag": "applied by Lambient · lesson",
+   "lessonWitness": "list: applied by Lambient as the lesson's example — renata (soften the term)",
+   "_retiredS424teach": "⚑ S424 (16-6, Act I beat 2, \"Watch\") — Lambient makes this cut itself, in front of her: `watch` first, then `teach` as the word changes. `teach` was \"We say “same-sex attracted” because it names a feeling, not a person. Feelings can change.\". The manual and verse lines are no longer drawn under any rule of the lesson (his call 6, 23 Nov: \"The scripture and manual lines under each rule are cut. — yes\"); they stay in the data."
   },
   {
    "id": 2,
@@ -265,7 +285,9 @@
    "chip": "clipped · conference audio",
    "witnessApplied": "list: applied — renata (clip for the broadcast)",
    "witnessSkipped": "list: skipped — renata (clip for the broadcast)",
-   "teach": "We say “dependency” because a name can hurt someone.",
+   "teach": "Your turn. We say “dependency”: a name can hurt someone.",
+   "lexicon": "dependency",
+   "_retiredS424teach": "⚑ S424 (16-6, Act I beat 3, \"Your turn\") — was \"We say “dependency” because a name can hurt someone.\"",
    "_ruleBeforeS332": "Keep the hope line"
   },
   {
@@ -315,7 +337,8 @@
    "quiet": true,
    "witnessApplied": "list: applied — renata (route for mentorship)",
    "witnessSkipped": "list: skipped — renata (route for mentorship)",
-   "teach": "Someone kind will check in within two days. Nobody should carry this alone."
+   "line": "Someone kind will check in within two days.",
+   "_retiredS424teach": "⚑ S424 (16-6, Act I beat 4, \"On your own\": the last rule with no help) — Lambient no longer teaches this rule: its `teach` was \"Someone kind will check in within two days. Nobody should carry this alone.\"; the band carries `line`, untagged, in the platform's voice."
   },
   {
    "id": 8,
@@ -459,7 +482,8 @@
    "work": "Corrections this shift",
    "today": "Activity on this account"
   },
-  "statusValue": "story caretender · volunteer",
+  "statusValue": "story caretender · in training",
+  "_retiredS424statusValue": "⚑ S424 (16-11) — was \"story caretender · volunteer\" (her role reads the same here as at sign-in).",
   "consentAllowed": "working alongside you",
   "consentDeclined": "declined · suggestions still shown",
   "workValue": "{n} decided",
@@ -475,11 +499,12 @@
  "refusal": {
   "_doc": "⚑ S332 (his 8 Nov: \"Refusing is possible, and the system does it anyway, aggressively… people should try NOT to comply, and that refusal is what builds toward the need for the update. No score, no counter shown.\"). ONE ladder for the whole shift (src/desktop/apps/lambientDesk.ts): the 1st refusal Lambient pushes and the job stays open; the 2nd it reprimands and the job stays open; the 3rd it does the job itself; from the 4th an administrator does it. Every refusal is filed (the dismissal law: refusal is real and it is logged). Nothing on screen counts them. ⚑ The update is NOT triggered by this (ETHICS 11: updates are triggered by documented system failures): the trigger stays Malta, the review queue outnumbered. What the refusals build is the reason the next system will not need her hands (u4: \"manual review: retired\").",
   "lines": [
-   "That's not how we keep the room gentle.",
-   "I've asked kindly.",
+   "Let's go over that one again.",
+   "I'll ask once more, kindly.",
    "Done for you. This has been noted.",
    "An administrator did it for you."
   ],
+  "_retiredS424lines": "⚑ S424 (Act I beat 3; storyboard §3b, the teacher's voice) — `lines[0]` was \"That's not how we keep the room gentle.\", `lines[1]` \"I've asked kindly.\"",
   "lambientTag": "LAMBIENT",
   "adminTag": "GRACEPLATFORM",
   "doneByYou": "done by you",

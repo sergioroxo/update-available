@@ -48,11 +48,14 @@
   "call": {
    "e1": "The fellowship sent a tape with your kit. I'll bring the TV to you.",
   "_docS407e1": "⚑ S407 (UiB job 32, 97-7; his headset 20 Nov, frame 213103: the line said \"before step 2\" over a kit whose step 2 was already ticked done — the line was fixed, chosen by era only). Was: \"Your Un-Walk kit says: watch the fellowship's tape before step 2. I'll bring the TV to you.\" 1997's call is now heard only when a probe arms the old moment (`__teachingTv.arm`): in the visit the set is offered on \"Did you know\" (pauses.json e1 `tv`).",
-   "e3": "GracePlatform has assigned you Heartwood, Session Two. I'll bring the disc to you.",
+   "e3": "Session Two of Heartwood goes with this lesson. Shall I bring the set?",
+   "_retiredS424e3": "⚑ S424 (UiB job 35 Part D, Act I beat 5; 16-7, his 20 Nov: \"The Heartwood disc should not be forced … I think we need to rethink how to introduce this\"; his 23 Nov call 7: \"The Heartwood disc is offered after Lesson 1. — Yes, but not mandatory\") — was \"GracePlatform has assigned you Heartwood, Session Two. I'll bring the disc to you.\" (and the set came before her eyes and played by itself). 2016's call is an OFFER now (src/room/teachingTv.ts TvMoment, `offer` in data/room/teaching_tvs.json): its two answers are `offer.yes` / `offer.no`; Bring it brings the set beside the monitor, stopped, ▶ lit; Not now (or ×, or letting it go) leaves the set lit by the door, to bring any time with a press on it. Asked once.",
    "e4": "Your dad has sent you a course. I'll bring it to you."
   },
   "e1": "The fellowship's tape has more on it. Shall I bring the TV to you?",
   "e3": "Your Heartwood session has more chapters. Shall I bring the disc to you?",
+  "_retiredS424e3": "⚑ S424 — 2016's later offer (`e3`) is no longer made: Lambient offers Heartwood once, after Lesson 1 (`call.e3`); after Not now the set stays lit by the door for her to bring (TeachingTvs.offerDue is false in 2016). Kept as the record.",
+  "offer": { "yes": "Bring it", "no": "Not now" },
   "e4": "Your dad's course has more on it. Shall I bring it to you?",
   "yes": "Bring it here",
   "no": "No thanks"
