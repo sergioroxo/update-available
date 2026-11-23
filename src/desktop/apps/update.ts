@@ -9,8 +9,8 @@
  *
  * The FINAL restart (`close` ritual) is deliberately bare: no terms, no
  * changelog — "Restart as you are." The person's restart, not the system's.
- * Click/tap only (no scroll wheel): the EULA advances by pages via Read on;
- * I Agree goes live only on the last page.
+ * Click/tap only (no scroll wheel): the EULA advances by pages via Read on
+ * (u4: "Next page", on a plate — S423); I Agree goes live only on the last page.
  */
 import { ERA1, ERA1_CANVAS } from '../theme/era1';
 import { ERA4 } from '../theme/era4';
@@ -582,7 +582,11 @@ export class UpdateApp {
         }
       }
       // progress + the glitch: the bar stutters near the end (soft, no strobe)
-      const bw = 220; const bx = Math.round((W - bw) / 2); const by = H - 70;
+      // ⚑ S423 — the bar sits under the last line, never on it: u4's eighteen lines and its report ran to y 409 on a 384
+      //   canvas and the bar at H − 70 lay across "Root Cause — migrated" (his headset, 222155). Where the text ends above
+      //   H − 78 (u3, and u4 now) nothing moves.
+      const textEnd = 62 + this.s.changelog.length * 16 + (trailer ? 14 + trailer.length * 15 : 0);
+      const bw = 220; const bx = Math.round((W - bw) / 2); const by = Math.min(H - 22, Math.max(H - 70, textEnd + 8));
       ui.px(ctx, bx - 1, by - 1, bw + 2, 12, ERA1.greyDark);
       ui.px(ctx, bx, by, bw, 10, ERA1.black);
       let k = Math.min(1, this.t / this.installTotal);
@@ -735,38 +739,43 @@ export class UpdateApp {
     const { readOn, agree, last } = this.arrivingEulaHits(W, H);
     ui.setFont(ctx, 9);
     ctx.fillStyle = ERA4.dim;
-    ctx.fillText(`${this.page + 1} / ${pages.length}`, M, H - 42);
+    ctx.fillText(`${this.page + 1} / ${pages.length}`, M, readOn.y + 10);
 
-    // ⚑ no bevels, no plates: a word, and a rule under the one that is live.
-    //   The dead one is still legible — foreclosed, never removed, the same law
-    //   the era's own chips follow.
-    const word = (r: { x: number; y: number; w: number }, label: string, live: boolean): void => {
+    // ⚑ S423 / 16-19 (his headset, 20 Nov: "The read on button area is very bad") — TWO PLATES, NOT TWO WORDS. Until now
+    //   each control was a word with a rule under the live one ("no bevels, no plates"), and in the headset "Read on"
+    //   read as a small underlined link with no edge to aim at (VISUAL_B 222104). Now each is a flat plate in the era's
+    //   own field colours, its label centred, the whole plate the press: the live one lit in L's mint with the field's
+    //   dark type, the dead one an unlit plate whose label stays legible — foreclosed, never removed, the law the
+    //   era's own chips follow. Still flat, still no bevel: 2026's skin, not 2016's glass. One live control at a time,
+    //   as before (`Next page` until the last page, then `I Agree`). The old words-and-rule draw is in git at 0ee79d30.
+    const plate = (r: { x: number; y: number; w: number; h: number }, label: string, live: boolean): void => {
+      ui.px(ctx, r.x, r.y, r.w, r.h, live ? ERA4.lDim : ERA4.panelEdge);
+      ui.px(ctx, r.x + 1, r.y + 1, r.w - 2, r.h - 2, live ? ERA4.l : ERA4.panel);
       ui.setFont(ctx, 12);
-      ctx.fillStyle = live ? ERA4.textHi : ERA4.rule;
-      const tw = ctx.measureText(label).width;
-      ctx.fillText(label, r.x + r.w - tw, r.y);
-      ui.px(ctx, r.x + r.w - tw, r.y + 17, tw, 1, live ? ERA4.l : ERA4.panelEdge);
+      ctx.fillStyle = live ? ERA4.field : ERA4.chipGone;
+      const tw = Math.ceil(ctx.measureText(label).width);
+      ctx.fillText(label, r.x + Math.round((r.w - tw) / 2), r.y + Math.round((r.h - 12) / 2));
     };
-    word(readOn, this.s.readOn ?? 'Read on', !last);
-    word(agree, this.s.agree ?? 'I Agree', last);
+    plate(readOn, this.s.readOn ?? 'Read on', !last);
+    plate(agree, this.s.agree ?? 'I Agree', last);
     // the live word registers; the foreclosed one stays legible and dead
     this.hits.push(last
       ? { ...agree, id: 'eula-agree' }
       : { ...readOn, id: 'eula-readon' });
   }
 
-  /** the arriving EULA's two word-controls, in one place */
+  /** the arriving EULA's two plate-controls, in one place (S423: plates 120 × 30, were words 96 × 22) */
   private arrivingEulaHits(W: number, H: number): {
     readOn: { x: number; y: number; w: number; h: number };
     agree: { x: number; y: number; w: number; h: number };
     last: boolean;
   } {
     const M = 46;
-    const y = H - 46;
-    const w = 96;
+    const w = 120, h = 30, gap = 14;
+    const y = H - 28 - h;
     return {
-      readOn: { x: W - M - w * 2 - 24, y, w, h: 22 },
-      agree: { x: W - M - w, y, w, h: 22 },
+      readOn: { x: W - M - w * 2 - gap, y, w, h },
+      agree: { x: W - M - w, y, w, h },
       last: this.page === (this.s.eula?.length ?? 1) - 1
     };
   }

@@ -155,6 +155,8 @@ interface Plan {
   done?: boolean;
   /** S398: from and to are the same (it only flickers as the wave passes): its moment ends with the glitch */
   still?: boolean;
+  /** ⚑ S423: a SURFACE or a STRIP (its longest edge, at its larger size, is ≥ SURFACE_EDGE): its flash is a third */
+  surface: boolean;
   fromColor: pc.Color; toColor: pc.Color;
   fromPos: pc.Vec3; toPos: pc.Vec3;
   fromScale: pc.Vec3; toScale: pc.Vec3;
@@ -163,6 +165,25 @@ interface Plan {
 
 const ease = (k: number): number => k * k * (3 - 2 * k);
 const lerp = (a: number, b: number, t: number): number => a + (b - a) * t;
+/**
+ * ⚑ S423 (UiB job 35 Part C, 16-23: "a white void through the wall during the move", his headset, 20 Nov, 222224) — WHAT
+ * DREW WHITE. Not a missing face, a clear colour or a gap in the sky (the clear colour is the room's near-black, ROOM_SKY):
+ * the cascade's own glitch. Its flash is the surface's colour + up to 0.7 as emissive, which on the room's light paints
+ * sums past 1 and renders PURE WHITE; on a book that reads as a sparkle, on anything that fills the view as a hole in
+ * the room. S348 dimmed it to a third for "a wall-sized surface", in a headset only, and measured wall-sized as
+ * max(width, depth) × height > 1 m² — so the CEILING and the FLOOR (4.4 m × 2 cm slabs: 0.09) and every door jamb, wall
+ * stub and curtain (strips: < 1) still flashed at full, and the computer flashed everything at full. Photographed at
+ * 0ee79d30 (tools/s423-flight-probe.mjs): in the headset mock the ceiling and the floor over Vera's room went white with
+ * a white strip down the left (33 % of the view white, the frame his reader called the void); on the computer and the
+ * phone Room 1's east wall — the one the 2026 fold opens — went white as a whole rectangle before it opened onto Maya's
+ * room (22–26 %). So the test is now the prop's LONGEST EDGE at its larger size: anything ≥ 0.8 m long (a wall, the
+ * ceiling, the floor, a door, a jamb, a curtain, the desk, the bed) is a surface or a strip and flashes at a third, in
+ * every look (as the Close's sweep already did on the computer, S361's photosensitivity finding); the small things (a
+ * book, a lamp, a box, a mug) keep the full sparkle that makes the glob effect. The jitter, the order and the timing
+ * are untouched.
+ */
+const SURFACE_EDGE = 0.8;
+const SURFACE_FLASH = 0.3;
 
 export class ClusterMorph {
   private active = false;
@@ -485,7 +506,10 @@ export class ClusterMorph {
         fromScale, toScale,
         startT: 0,
         // S398: nothing to change but the flicker (the lerps return it exactly to itself once the glitch is over)
-        still: fromColor.equals(toColor) && fromPos.equals(toPos) && fromScale.equals(toScale)
+        still: fromColor.equals(toColor) && fromPos.equals(toPos) && fromScale.equals(toScale),
+        // ⚑ S423 — a surface or a strip, at the larger of its two sizes (one that appears or goes is judged whole)
+        surface: Math.max(Math.abs(fromScale.x), Math.abs(fromScale.y), Math.abs(fromScale.z),
+          Math.abs(toScale.x), Math.abs(toScale.y), Math.abs(toScale.z)) >= SURFACE_EDGE
       });
     }
 
@@ -539,9 +563,12 @@ export class ClusterMorph {
         //   view (photographed: 2003 → 2016 and 2016 → 2026, a white wall filling the view). Small things keep the full
         //   flicker, the jitter is untouched, and the computer is exactly as it was (his: restore it as before job 5).
         //   (the flash is the surface's OWN colour + f as emissive, so it is the whole glow that is scaled, not just f)
-        const wide = Math.max(sx, sz) * sy > 1.0 && !!pc.AppBase.getApplication()?.xr?.active;
+        // ⚑ S423 (16-23, the white void) — "wall-sized" missed the ceiling, the floor and every strip, and the computer
+        //   was left at full: now any surface or strip (`pl.surface`, its longest edge ≥ SURFACE_EDGE) flashes at a
+        //   third in EVERY look; small things keep the full sparkle. See SURFACE_EDGE above. S348's test was
+        //   `Math.max(sx, sz) * sy > 1.0 && xr.active` (in git at 0ee79d30).
         const f = (1 - k / GLITCH_FRAC) * 0.7;
-        const g = wide ? 0.3 : 1;
+        const g = pl.surface ? SURFACE_FLASH : 1;
         pl.h.material.emissive.set((col.r + f) * g, (col.g + f) * g, (col.b + f) * g);
         const j = 1 + (Math.random() * 0.14 - 0.07) * (1 - k / GLITCH_FRAC);
         sx *= j; sy *= j; sz *= j;

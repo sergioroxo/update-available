@@ -2755,7 +2755,44 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     // the space starts changing as the (longer) turn ends, as it does on the computer (cluster.ts 'e3-e4')
     return { ...plan, turnSeconds, morphDelaySeconds: plan.morphDelaySeconds !== undefined ? turnSeconds : undefined };
   }
-  function flightYaw(): number { return flightYaw0 + (flightYaw1 - flightYaw0) * flyEase(Math.min(1, flightT / flightTurnTotal)); }
+  /**
+   * ⚑ S423 / 16-21 (his headset, 20 Nov: "Why are we turning face to the wall when we could face to the room? … as the
+   * camera is going up, it should already be able to do the turn slowly") — 2016 → 2026's FACING CURVE, in every look:
+   *   · it turns THROUGH THE ROOM (cluster.ts 'e3-e4' `turnDirection` −1: Vera's desk → her bed and posters → the doorway
+   *     into Daniel's room → Maya's), never the shorter way past the bare south wall the headset used to take;
+   *   · it STARTS WITH THE RISE. In a headset (and reduced motion) that was already so, but it turned the wall's way; on
+   *     the computer and the phone the facing held still for the 7 s rise and then swung 180° in the 6 s turn leg
+   *     (smoothstep, ~45 °/s at its peak). Now on the computer and the phone one smoothstep runs from the rise's first
+   *     frame to the turn leg's end (13 s: ~21 °/s at its peak, ~100° turned by the top of the rise), the legs' places
+   *     and seconds unchanged (`facingLead`, read by the camera update while the leg is the rise or the turn).
+   *   · in a headset the same 24 s as before (the music is rendered to it), on a trapezoid with a 15 % ramp: the way
+   *     through the room is 183°, not 177°, and 183° × 1/0.85 / 24 s = 8.97 °/s at its peak, inside the comfort law's 9.1
+   *     (the flight's 18 % ramp would be 9.3). The world turns under the head, as before; the head is never written.
+   */
+  const TURN_RAMP = 0.15;
+  const turnEase = (k: number): number => {
+    const r = TURN_RAMP, v = 1 / (1 - r);
+    if (k <= 0) return 0;
+    if (k >= 1) return 1;
+    if (k < r) return (v / (2 * r)) * k * k;
+    if (k > 1 - r) return 1 - (v / (2 * r)) * (1 - k) * (1 - k);
+    return v * (k - r / 2);
+  };
+  /** S423: the facing curve's shape: 'fly' (the flight's trapezoid: other changes in a headset), 'turn' (2016 → 2026 in a
+   *  headset: the 15 % trapezoid), 'smooth' (2016 → 2026 on the computer and the phone: one smoothstep) */
+  let flightEase: 'fly' | 'turn' | 'smooth' = 'fly';
+  /** S423: on the computer and the phone, 2016 → 2026's facing follows the curve while the leg is the rise or the turn */
+  let facingLead = false;
+  function flightYaw(): number {
+    const k = Math.min(1, flightT / flightTurnTotal);
+    const e = flightEase === 'smooth' ? k * k * (3 - 2 * k) : flightEase === 'turn' ? turnEase(k) : flyEase(k);
+    return flightYaw0 + (flightYaw1 - flightYaw0) * e;
+  }
+  /** S423: the signed turn from one facing to another, the shorter way unless the plan names a direction */
+  function turnDelta(from: number, to: number, dir?: 1 | -1): number {
+    const short = ((((to - from) % 360) + 540) % 360) - 180;
+    return dir && short !== 0 && Math.sign(short) !== dir ? short + dir * 360 : short;
+  }
   /** set when an era lands mid-flight; consumed by `endRelocation` */
   let pendingBed: string | null | undefined;
 
@@ -2795,9 +2832,17 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     stopMorphLayer(0);
     flightT = 0;
     flightTotal = Math.max(1, plan.riseSeconds + (plan.turnSeconds ?? 0) + (plan.watchSeconds ?? 0) + plan.buildSeconds + plan.descendSeconds);
-    flightTurnTotal = key === 'e3-e4' ? Math.min(flightTotal, E3E4_FACING_TURN_SECONDS) : flightTotal;   // S359 / H22
+    // ⚑ S423 — 2016 → 2026: through the room, from the rise (see `flightYaw`). Where the flight flies (a headset,
+    //   reduced motion) the facing turns over its first 24 s, as S359 had it; on the computer and the phone over the
+    //   rise and the turn leg together. Every other change keeps the whole flight's turn, the shorter way.
+    const slowFacing = !!xr?.active || reducedMotion();
+    flightTurnTotal = key === 'e3-e4'
+      ? (slowFacing ? Math.min(flightTotal, E3E4_FACING_TURN_SECONDS) : Math.max(1, plan.riseSeconds + (plan.turnSeconds ?? 0)))
+      : flightTotal;   // S359 / H22
+    flightEase = key === 'e3-e4' ? (slowFacing ? 'turn' : 'smooth') : 'fly';
+    facingLead = key === 'e3-e4' && !slowFacing;
     flightYaw0 = camYaw;
-    flightYaw1 = camYaw + ((((seatPose(plan.seat).yaw - camYaw) % 360) + 540) % 360 - 180);
+    flightYaw1 = camYaw + turnDelta(camYaw, seatPose(plan.seat).yaw, plan.turnDirection);
     const poses = RELOC_POSES[key];
     if (!poses) return;
     // ⚑ A relocation owns the camera outright, so the front door cannot still
@@ -4852,7 +4897,9 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
           camPos.z = camMove.fz + (camMove.tz - camMove.fz) * s;
         }
         camPitch = camMove.fp + (camMove.tp - camMove.fp) * s;
-        camYaw = camMove.fyaw + (camMove.tyaw - camMove.fyaw) * s;
+        // ⚑ S423 / 16-21 — 2016 → 2026 on the computer and the phone: the facing turns from the rise's first frame,
+        //   through the room, across the rise and the turn leg (`flightYaw`); the place still follows the leg
+        camYaw = facingLead && (relocLeg === 'rise' || relocLeg === 'turn') ? flightYaw() : camMove.fyaw + (camMove.tyaw - camMove.fyaw) * s;
         if (k >= 1) camMove = null;
       }
       // the front door landed (the arc above just resolved on the seat) — hand
