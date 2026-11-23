@@ -19,6 +19,7 @@ import { playOnce } from '../../audio/tapeAudio';
 import vera from '../../../data/dialog/s3_vera.json';
 import { readHold } from '../readHold';
 import { ledger } from '../../state/ledger';
+import { reducedMotion } from '../../state/motion';
 
 type Msg = { from: string; time: string; text?: string; kind?: string };
 type Rect = { x: number; y: number; w: number; h: number; id: string };
@@ -83,21 +84,20 @@ function newsWait(i: number): number {
   const text = prev.kind === 'link2' ? [LINK_VOTE.masthead, LINK_VOTE.headline] : prev.kind === 'link' ? [m.link.headline] : [prev.text ?? ''];
   return Math.max(NEWS_MIN, readHold(text));
 }
-/** ⚑ S362 / H28 + H42 — Mam's unfinished reply is TYPED in (it was a block that appeared), then held: seconds in all
- *  ⚑ S368 / F08 — the held part is the reading rule's, counted from the last letter (it was 8 s in all, 3 s after typing) */
-const NOTES_TYPE_CPS = 9;
+/** ⚑ S362 / H28 + H42 — a note the piece shows her write is TYPED in (it was a block that appeared), then held: seconds in all
+ *  ⚑ S368 / F08 — the held part is the reading rule's, counted from the last letter (it was 8 s in all, 3 s after typing)
+ *  ⚑ S425 — 9 → 7 letters a second: the glass changes at most 7 times a second while it types (≤ 8 Hz; the caret is solid while
+ *  letters come, as a phone's is, and blinks only before the first and after the last) */
+const NOTES_TYPE_CPS = 7;
 type NoteEntry = { id?: string; title?: string; text: string };
 const NOTE_ENTRIES = m.notes.entries as NoteEntry[];
-/** Mam's unfinished reply (the draft the piece shows her typing after Mam's message) */
-const MAM_NOTE = NOTE_ENTRIES.find((e) => e.id === 'mam') ?? NOTE_ENTRIES[0];
+/* Mam's unfinished reply (notes.entries `mam`) — ⚑ S425 (his call 2, 23 Nov: "Mam's unfinished note is already in Vera's Notes,
+ *  under her new line. — Yes"): already in her Notes when they open, under the new note; no longer typed after Mam's message
+ *  (its MAM_NOTE handle went with that typing; 76d0671d holds it) */
 /** ⚑ S404 (UiB job 30 C2) — her newest note, above Mam's, no title: "It wasn't dependency. I was in love with her." */
 const REFUSAL_NOTE = NOTE_ENTRIES.find((e) => e.id === 'refusal') ?? null;
-/** ⚑ S404 — the breath between Mam's unfinished reply and the new note opening above it */
+/** ⚑ S404 / S425 — the breath, the new note open and empty with its caret, before her first letter */
 const REFUSAL_BREATH = 1.2;
-function typedSeconds(e: NoteEntry): number { return e.text.length / NOTES_TYPE_CPS + readHold([e.title ?? '', e.text]); }
-function notesSeconds(): number { return typedSeconds(MAM_NOTE); }
-/** ⚑ S404 — the system's word is met first: Renata's testimony is done (graceQueueLite files `e3-job:testimony`) */
-const testimonyDone = (): boolean => ledger.records.includes('e3-job:testimony');
 /** ⚑ S362 / H43 — the platform's "intervene immediately" alert holds this long before its first removal.
  *  ⚑ S368 / F04 — by the reading rule (was 4.5 s for 18 words), or until its OK (`endTakeoverAlert`) */
 const TAKEOVER_ALERT = Math.max(9, readHold([vera.removals.alertTag, vera.removals.takeoverLine, vera.removals.takeoverSub]));
@@ -173,9 +173,6 @@ export class PhoneE3 {
   private holdFor = READ_HOLD;
   /** ⚑ S327 — set every frame by the platform: nothing is open there and no other voice is speaking */
   atRest = false;
-  /** ⚑ S327 — Mam's message has landed; her unfinished reply (Notes) is shown once it has been read */
-  private notesPending = false;
-  private notesReturn: Screen = 'home';
   private articleVote = false;
   /** ⚑ S332 — MALTA, conducted: Bea's news begins landing in the group thread (graceQueueLite brings the window forward) */
   startNews(): void {
@@ -227,36 +224,52 @@ export class PhoneE3 {
     }));
   }
   get unreviewed(): number { return this.liveMsgs().filter(x => x.from !== 'system' && !this.removed.has(x.key)).length; }
-  private notesT = -1;
-  private notesDone = false;
-  /** ⚑ S404 (UiB job 30 C2) — her newest note: seconds into its typing (−1 when not being written), whether it is written
-   *  (then it is in the Notes for good, and filed once), and whether it waits for the testimony to be done */
+  /** ⚑ S404 (UiB job 30 C2) — her newest note: seconds into its conduct (−1 when not being written), and whether it is written
+   *  (then it is in the Notes for good, and filed once) */
   private refusalT = -1;
   private refusalWritten = false;
-  private refusalPending = false;
-  get conductingNotes(): boolean { return this.notesT >= 0 || this.refusalT >= 0; }
-  /** ⚑ S404 — the probes' handle: which note the piece is showing her write ('mam', 'refusal', or null) and the new one's state */
+  get conductingNotes(): boolean { return this.refusalT >= 0; }
+  /** ⚑ S404 — the probes' handle: which note the piece is showing her write ('refusal', or null) and the new one's state
+   *  (⚑ S425: Mam's unfinished reply is no longer typed — `writing` is never 'mam' — and nothing waits: `refusalPending` false) */
   get notesNow(): { writing: 'mam' | 'refusal' | null; refusalWritten: boolean; refusalPending: boolean } {
-    return { writing: this.notesT >= 0 ? 'mam' : this.refusalT >= 0 ? 'refusal' : null, refusalWritten: this.refusalWritten, refusalPending: this.refusalPending };
+    return { writing: this.refusalT >= 0 ? 'refusal' : null, refusalWritten: this.refusalWritten, refusalPending: false };
   }
-  conductNotes(): void {
-    if (this.notesDone) return;
-    this.notesDone = true; this.notesT = 0; this.notesReturn = this.screen === 'notes' ? 'home' : this.screen; this.screen = 'notes'; this.bump();
-  }
-  /** ⚑ S404 — the new note: a breath after Mam's (`chained`, the Notes already up), or the Notes brought back for it */
-  private conductRefusal(chained: boolean): void {
-    if (!REFUSAL_NOTE || this.refusalWritten || this.refusalT >= 0) return;
-    this.refusalPending = false;
-    if (!chained) { this.notesReturn = this.screen === 'notes' ? 'home' : this.screen; this.screen = 'notes'; }
-    this.refusalT = 0; this.refusalLead = chained ? REFUSAL_BREATH : 0;
+  /**
+   * ⚑ S425 (UiB job 35 Part D, Act II, storyboard beat 10, ⟨felt⟩; his 20 Nov 16-13/16-14; his call 2) — HER NOTES, ONCE. The
+   * platform has brought the Handset Window in over Kindredraft's page, beside her own struck-through 2014 words; the phone opens
+   * her Notes and the newest note is typed at the top, letter by letter (`refusal`, word for word), Mam's unfinished reply and
+   * the shopping line already under it. Nothing speaks, no sound, nothing to press (its Back is withheld while it is written).
+   * The record files it once, as a gap (witness.residue), as built. Written and held its reading time, the phone goes back to its
+   * lock screen, and after a breath the next message may land there (Nuala's). Under reduced motion the note is there whole.
+   * (S327/S362/S404's two typings after Mam's message — her unfinished reply typed by itself, then this note — are retired;
+   * 76d0671d holds them.) False if there is nothing to write (already written, or the phone is gone).
+   */
+  conductMemoryNotes(): boolean {
+    if (!REFUSAL_NOTE || this.refusalWritten || this.refusalT >= 0 || this.disconnected) return false;
+    this.screen = 'notes'; this.openMessage = null; this.banner = null;
+    this.refusalT = 0; this.refusalLead = reducedMotion() ? 0 : REFUSAL_BREATH;
     this.bump();
+    return true;
   }
-  /** ⚑ S404 — seconds of the new note's conduct before its first letter (the breath after Mam's) */
+  /** ⚑ S404 — seconds of the new note's conduct before its first letter (the breath, its caret blinking in the empty note) */
   private refusalLead = 0;
-  /** ⚑ S404 — how many of the new note's letters are written (Infinity once it is) */
+  /** ⚑ S404 — how many of the new note's letters are written (Infinity once it is; whole at once under reduced motion) */
   private refusalLetters(): number {
-    if (this.refusalWritten) return Infinity;
+    if (this.refusalWritten || (this.refusalT >= 0 && reducedMotion())) return Infinity;
     return this.refusalT < 0 ? 0 : Math.max(0, Math.floor((this.refusalT - this.refusalLead) * NOTES_TYPE_CPS));
+  }
+  /** ⚑ S425 — what the glass shows of the note being written: its letters, and the caret (solid while letters come; blinking at
+   *  2 Hz before the first and after the last; none under reduced motion). The glass is redrawn only when this changes. */
+  private notesFrame(): string {
+    if (this.refusalT < 0 || !REFUSAL_NOTE) return '';
+    const n = Math.min(this.refusalLetters(), REFUSAL_NOTE.text.length);
+    return n + '|' + (this.caretShown() ? 1 : 0);
+  }
+  private caretShown(): boolean {
+    if (this.refusalT < 0 || !REFUSAL_NOTE || reducedMotion()) return false;
+    const n = this.refusalLetters();
+    if (n > 0 && n < REFUSAL_NOTE.text.length) return true;
+    return Math.floor(this.refusalT * 2) % 2 === 0;
   }
   /** ⚑ S327 — the cascade, conducted: the group thread is put on the glass while it fills (the piece takes her there) */
   showGroup(): void {
@@ -295,18 +308,18 @@ export class PhoneE3 {
     this.eventQueue.push(e); this.deliverEvent();
   }
   /** ⚑ S327 — a message is waiting, or the last one is still being read: the platform's other voices wait for it */
-  get voiceBusy(): boolean { return this.bannerAge < this.holdFor || (this.atRest && this.eventQueue.length > 0) || this.notesPending || this.conductingNotes; }
+  get voiceBusy(): boolean { return this.bannerAge < this.holdFor || (this.atRest && this.eventQueue.length > 0) || this.conductingNotes; }
   get queued(): number { return this.eventQueue.length; }
   /** S336 — diagnosis only: why a queued message is not being delivered */
   debugState(): Record<string, unknown> {
     return { queue: this.eventQueue.map(e => e.id), bannerAge: Math.round(this.bannerAge * 10) / 10, bannersHidden: this.bannersHidden,
-      atRest: this.atRest, disconnected: this.disconnected, notesPending: this.notesPending, conductingNotes: this.conductingNotes,
+      atRest: this.atRest, disconnected: this.disconnected, conductingNotes: this.conductingNotes,
       screen: this.screen, stage: this.stage, delivered: this.evening.map(e => e.id), clock: this.clockShown,
       times: this.evening.map(e => `${e.id} ${e.time}`) };
   }
   delivered(id: string): boolean { return this.evening.some(e => e.id === id); }
   private deliverEvent(): void {
-    if (!this.eventQueue.length || this.bannerAge < this.holdFor || this.bannersHidden || !this.atRest || this.disconnected || this.notesPending || this.conductingNotes) return;
+    if (!this.eventQueue.length || this.bannerAge < this.holdFor || this.bannersHidden || !this.atRest || this.disconnected || this.conductingNotes) return;
     const raw = this.eventQueue.shift()!;
     // ⚑ S357fr / 16-12 — each message lands at the clock's own minute (it used to take the evening's next authored slot and
     //   roll the clock up to it). Orla's quiz and her stamp line came at one minute: "should be like one minute less" — the
@@ -318,7 +331,7 @@ export class PhoneE3 {
     // ⚑ S327 / T04 (his 8 Nov: "two different messages from Orla, which doesn't make a lot of sense") — ONE banner for
     //   Orla's evening: the stamp line lands in the same thread, quietly, under the quiz message
     if (e.id === 'arrival') { const st = mirrorCopy.events.find(x => x.id === 'stamp'); if (st && !this.delivered('stamp')) this.evening.push({ ...st, time: now }); }
-    if (e.id === 'decision') this.notesPending = true;
+    // (⚑ S425 — Mam's message no longer opens her Notes by itself: her one Notes moment is the memory's, beat 10)
     playOnce('phone_ping_2016.mp3'); this.bump();
   }
 
@@ -331,7 +344,7 @@ export class PhoneE3 {
   }
   get eveningClock(): string { return this.clockShown; }
   disconnected = false;
-  disconnect(): void { this.disconnected = true; this.evening = []; this.eventQueue = []; this.readMessages.clear(); veraDay.personalMessageSeen = false; this.banner = null; this.openMessage = null; this.notesT = -1; this.refusalT = -1; this.refusalPending = false; this.screen = 'lock'; this.bump(); }
+  disconnect(): void { this.disconnected = true; this.evening = []; this.eventQueue = []; this.readMessages.clear(); veraDay.personalMessageSeen = false; this.banner = null; this.openMessage = null; this.refusalT = -1; this.screen = 'lock'; this.bump(); }
   get hitRects(): Rect[] { return this.rects; }
   get unreadCount(): number { return this.inboxBadge; }   // ⚑ S357fr / 16-9: one count, the list's
   private bump(): void { this.version++; }
@@ -364,36 +377,20 @@ export class PhoneE3 {
   tick(dt: number, visible = true): void {
     this.tickClock(dt);
     if (!this.bannersHidden) { this.bannerAge += dt; this.deliverEvent(); }
-    // Mam's message read, then — at rest — her unsent reply to it, once
-    if (this.notesPending && this.atRest && this.bannerAge >= this.holdFor && !this.bannersHidden) { this.notesPending = false; this.conductNotes(); }
-    if (this.notesT >= 0) {
-      // ⚑ S362 / H28 + H42 — the draft types itself in (NOTES_TYPE_CPS) and is then held; the hand-back waits a beat
-      const old = Math.floor(this.notesT * 10); this.notesT += dt;
-      if (this.notesT >= notesSeconds()) {
-        this.notesT = -1;
-        // ⚑ S404 — then, if the testimony has been met, a new note opens above Mam's and she writes it; else it waits
-        if (REFUSAL_NOTE && !this.refusalWritten) {
-          if (testimonyDone() && !this.disconnected) this.conductRefusal(true);
-          else this.refusalPending = true;
-        }
-        if (this.refusalT < 0) { this.screen = this.notesReturn; this.bannerAge = 0; this.holdFor = 5; }
-        this.bump();
-      }
-      else if (old !== Math.floor(this.notesT * 10)) this.bump();
-    }
-    // ⚑ S404 — the new note, waiting for the testimony: the Notes come back for it at the platform's next rest
-    if (this.refusalPending && !this.disconnected && testimonyDone() && this.atRest && this.bannerAge >= this.holdFor && !this.bannersHidden
-      && !this.notesPending && this.eventQueue.length === 0) this.conductRefusal(false);
+    // ⚑ S425 — her newest note, conducted (conductMemoryNotes): typed at ≤ 7 letters a second, the glass redrawn only when what it
+    //   shows changes; written, it is filed once (as a gap); held its reading time, the phone goes to its lock screen
     if (this.refusalT >= 0 && REFUSAL_NOTE) {
-      const old = Math.floor(this.refusalT * 10); this.refusalT += dt;
+      const before = this.notesFrame(); this.refusalT += dt;
       if (!this.refusalWritten && this.refusalLetters() >= REFUSAL_NOTE.text.length) {
         // written: it stays in her Notes, and the record files the gap, once (s3_maiden.json witness.residue)
         this.refusalWritten = true;
         if (!ledger.era3Jobs.some((j) => j.id === 'residue')) ledger.era3Jobs.push({ id: 'residue', witness: m.witness.residue });
       }
-      if (this.refusalT >= this.refusalLead + typedSeconds(REFUSAL_NOTE)) {
-        this.refusalT = -1; this.screen = this.notesReturn; this.bannerAge = 0; this.holdFor = 5; this.bump();
-      } else if (old !== Math.floor(this.refusalT * 10)) this.bump();
+      const typing = reducedMotion() ? 0 : REFUSAL_NOTE.text.length / NOTES_TYPE_CPS;
+      if (this.refusalT >= this.refusalLead + typing + readHold([REFUSAL_NOTE.title ?? '', REFUSAL_NOTE.text])) {
+        // "after its reading time the phone goes back to its lock screen" — a breath there before the next message may land
+        this.refusalT = -1; this.screen = 'lock'; this.banner = null; this.bannerAge = 0; this.holdFor = 2; this.bump();
+      } else if (this.notesFrame() !== before) this.bump();
     }
     // ⚑ S332 — MALTA, the era's own beat (conducted: the platform holds every other voice while it runs).
     //   news: Bea's messages land one at a time; then her one reply is offered (never required).
@@ -552,8 +549,6 @@ export class PhoneE3 {
   private openEvening(from: string): void {
     this.scrollBack = 0;
     this.eveningFrom = from; this.screen = from === m.group.name ? 'group' : 'evening';
-    // ⚑ S362 / H28 — she opened Mam's message: the Notes draft waits the whole hold again from now (it took the screen at 4 s)
-    if (from === 'Mam' && this.notesPending) this.bannerAge = 0;
     if (this.banner?.from === from) this.banner = null;   // S327: opened, the notification has done its job
     for (const e of this.evening.filter(e => e.from === from)) this.readMessages.add('evening:' + e.id);
     // ⚑ S357fr / 16-9 — her older messages from them are in the same thread (drawEvening): on the glass now, so read
@@ -722,16 +717,14 @@ export class PhoneE3 {
     let y = appBar(ctx, W, y0, HOME.fNotes);
     this.pushBack(y0, y);
     // which notes are on the glass, newest first, and how much of each is written:
-    //   · while the piece shows Mam's unfinished reply, that note alone, typing (S362);
-    //   · ⚑ S404 (UiB job 30 C2) — while it shows her new note, the new note above Mam's (written), opened empty with the
-    //     caret for a breath, then typing; nothing else;
+    //   · ⚑ S425 (beat 10; his call 2) — while the piece shows her new note, the new note at the top, opened empty with the caret
+    //     for a breath, then typing; under it, already there, Mam's unfinished reply and the shopping line (the whole list);
     //   · otherwise the Notes as she keeps them: the new note only once she has written it.
-    const caretOn = (t: number): boolean => Math.floor(t * 2) % 2 === 0;
+    //   (S362's Mam's reply typed alone after Mam's message, and S404's two-note conduct, are retired at S425.)
     const shown: { entry: NoteEntry; letters: number; caret: boolean }[] =
-      this.notesT >= 0 ? [{ entry: MAM_NOTE, letters: Math.floor(this.notesT * NOTES_TYPE_CPS), caret: caretOn(this.notesT) }]
-        : this.refusalT >= 0 && REFUSAL_NOTE ? [{ entry: REFUSAL_NOTE, letters: this.refusalLetters(), caret: caretOn(this.refusalT) },
-          { entry: MAM_NOTE, letters: Infinity, caret: false }]
-          : NOTE_ENTRIES.filter((e) => e !== REFUSAL_NOTE || this.refusalWritten).map((entry) => ({ entry, letters: Infinity, caret: false }));
+      this.refusalT >= 0 && REFUSAL_NOTE ? [{ entry: REFUSAL_NOTE, letters: this.refusalLetters(), caret: this.caretShown() },
+        ...NOTE_ENTRIES.filter((e) => e !== REFUSAL_NOTE).map((entry) => ({ entry, letters: Infinity, caret: false }))]
+        : NOTE_ENTRIES.filter((e) => e !== REFUSAL_NOTE || this.refusalWritten).map((entry) => ({ entry, letters: Infinity, caret: false }));
     for (const { entry, letters, caret } of shown) {
       y += 12;
       if (entry.title) {

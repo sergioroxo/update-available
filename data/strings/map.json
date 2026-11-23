@@ -391,18 +391,20 @@
     },
     {
      "id": "vera-install",
-     "label": "Kindredraft",
+     "label": "A memory from 2014",
      "done": "veraRecordOpened",
-     "hint": "When the board’s jobs are done, install Kindredraft. It opens Vera’s own 2014 story.",
-     "where": "the workstation"
+     "hint": "When the training is done, Kindredraft shows a memory from 2014. Look back opens Vera’s own story.",
+     "where": "the workstation",
+     "_retiredS425": "⚑ S425 (UiB job 35 Part D, Act II: Kindredraft as a memory, no Install) — `label` was \"Kindredraft\", `hint` \"When the board’s jobs are done, install Kindredraft. It opens Vera’s own 2014 story.\""
     },
     {
      "id": "vera-story",
      "label": "Vera · 2014",
      "done": "veraRecordClosed",
      "quiet": true,
-     "hint": "As sent shows her earlier account. Close record returns to the day.",
-     "where": "the workstation"
+     "hint": "Her story as it was published, then her own words. Her Notes follow. Close returns to the board.",
+     "where": "the workstation",
+     "_retiredS425": "⚑ S425 — `hint` was \"As sent shows her earlier account. Close record returns to the day.\" (As sent and Close record are retired: See what you wrote and Close)."
     },
     {
      "id": "vera-kit",

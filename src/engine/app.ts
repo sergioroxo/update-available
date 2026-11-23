@@ -1101,7 +1101,12 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       //   guide's balloon for the call (and the later offer) is drawn IN VIEW by the set's card, not on the glass
       call: (_tape, text) => { tvCallText = text ?? undefined; os.dirty = true; },
       callOpen: () => os.lambyGuide.view.rung === 'tvcall' && os.lambyGuide.active,
-      guidePress: (id) => { os.lambyGuide.press(id); os.dirty = true; }
+      guidePress: (id) => { os.lambyGuide.press(id); os.dirty = true; },
+      // ⚑ S425 — on a computer, 2016's set brought beside the monitor turns the look (as little as it takes) so the set can stand
+      //   large enough to read at the monitor's left, the monitor whole; it gives the look back when she puts the set back. A free
+      //   move (her drag takes it at any time); never in a headset (no conducted turns there), never under the gyro
+      look: (yaw, pitch) => { if (xr?.active || motionState === 'live') return; startCamMove({ x: camPos.x, y: camPos.y, z: camPos.z, pitch, yaw }, 1.0, false); },
+      facing: () => (xr?.active ? null : { yaw: camYaw + lookOffYaw, pitch: camPitch + lookOffPitch })
     });
   }
   // (the in-room cork board that used to be built here is RETIRED — decision
@@ -1149,6 +1154,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       putBack: (tape: '1997' | '2016' | '2026') => teachingTvs?.tvs[tape].putBack(null, 'visitor'),
       // ⚑ S412 — review aid: Mum's link's own bring (beside the monitor), without the press (a probe that proves the link presses it)
       beside: () => teachingTvs?.bringBeside(app.root.findByName('era3-device-monitor') as pc.Entity | null) ?? false,
+      bringTo: (tape: '1997' | '2016' | '2026') => teachingTvs?.bringTo(tape) ?? false,   // ⚑ S425: as Bring it brings it (tools/s425-set-measure.mjs)
       fitAll: () => teachingTvs?.fitAll() ?? null,   // S394 fix: every caption and margin line drawn into the bar, measured
       inst: (tape: '1997' | '2016' | '2026') => teachingTvs?.tvs[tape] ?? null,   // S394 fix: the set itself (review aid)
       canvases: () => teachingTvs?.canvases() ?? {},

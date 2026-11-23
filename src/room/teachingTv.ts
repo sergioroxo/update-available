@@ -52,7 +52,7 @@ import * as aero from '../desktop/theme/era3';
 import { drawLambyChar } from '../desktop/apps/lambyChar';
 import decisions from '../../data/strings/cx3b.json';
 import { holdVoice, releaseVoice, voiceHolder, setVoiceWanted } from '../state/voiceHold';
-import { buildLambySet, toLocal, hitBounds, keyAt, glassAt, GLASS, FACE, KEY_POINTS, KEY_ROW, DISPLAY, SET_NAME, deckPixels, BOUNDS, type LambySet, type SetKey, type DeckState } from './lambyVision';
+import { buildLambySet, toLocal, hitBounds, keyAt, glassAt, GLASS, FACE, KEY_POINTS, KEY_ROW, DISPLAY, SET_NAME, deckPixels, BOUNDS, BODY_HALF_W, type LambySet, type SetKey, type DeckState } from './lambyVision';
 
 type Style = 'vcr' | 'dvd' | 'hedge';
 /** ⚑ S424 — `offer`: the era's moment is Lambient's offer, not a call (2016: asked once, nothing comes or plays unasked);
@@ -60,7 +60,7 @@ type Style = 'vcr' | 'dvd' | 'hedge';
  *  inside this many degrees of the line of sight (data/room/teaching_tvs.json) */
 interface TvSpec { era: string; place: { pos: number[]; yaw: number }; style: Style; seat: number[]; offer?: boolean; beside?: string; xrFitDeg?: number }
 const SPECS = (tvData as unknown as { tvs: Record<TapeId, TvSpec> }).tvs;
-const HELD = (tvData as unknown as { held: { xrDist: number; pictureDeg: number; flatFill: number; phoneFill: number; flatMaxW: number; liftBase: number; liftPerMetre: number; liftMax: number; clearance: number; glowRest: number; glowHeld: number; xrKey: number } }).held;
+const HELD = (tvData as unknown as { held: { xrDist: number; pictureDeg: number; flatFill: number; phoneFill: number; flatMaxW: number; liftBase: number; liftPerMetre: number; liftMax: number; clearance: number; glowRest: number; glowHeld: number; xrKey: number; besideGlassOfMonitor: number; besideTurnMaxDeg: number } }).held;
 const BAR = (tvData as unknown as { bar: { captionCap: number; marginCap: number; floorDeg: number; floorPxComputer: number; floorPxPhone: number; baseH: number; maxH: number; pad: number; gap: number; lineK: number } }).bar;
 const CALL = (tvData as unknown as { call: { w: number; xrDist: number; flatDist: number; drop: number; followDeg: number; follow: number } }).call;
 const MOMENT = (tvData as unknown as { moment: { callHold: number; dismissBreath: number; noCall: number; afterHold: number; afterDad: number; noPlayRelease: number; offerHold: number } }).moment;
@@ -115,7 +115,11 @@ const MARGIN_FACE = `"${VENDORED.ui2026}", ${FACES.e4.family}`;
 
 export interface Hit { id: string; x: number; y: number; w: number; h: number }
 /** ⚑ S424 — a place beside the monitor for the brought set: its pose, its scale, which band, from which eye */
-type BesidePlan = { root: pc.Vec3; rot: pc.Quat; k: number; band: string; dist: number; eye: pc.Vec3 };
+type BesidePlan = { root: pc.Vec3; rot: pc.Quat; k: number; band: string; dist: number; eye: pc.Vec3;
+  /** ⚑ S425 — the set's glass across, as a share of the monitor's across, in the view it was planned in */
+  ratio: number;
+  /** ⚑ S425 — on a computer: degrees the view was turned left for it (0: the view she has), and that view's yaw and pitch */
+  turn: number; look: { yaw: number; pitch: number } | null };
 /** `ended` = at the tape's own end. ⚑ S396 — his 16 Nov "Play it all": there is no Part 1 stop any more (the `partOne` state
  *  is gone); the tape plays to its end unless the visitor pauses it, sets it down or the story moves on */
 export type TvState = 'off' | 'leader' | 'loading' | 'playing' | 'paused' | 'ended' | 'stopped' | 'error';
@@ -559,7 +563,7 @@ export class TeachingTv {
   /** ⚑ S424 — the monitor this set is brought beside (its spec's `beside`), resolved when it is needed; null: before the eye */
   besideMonitor: (() => pc.Entity | null) | null = null;
   /** ⚑ S424 — where it was last brought: which band of the view (for the probes and the stills) */
-  fitted: { band: string; k: number } | null = null;
+  fitted: { band: string; k: number; turn?: number; glassOfMonitor?: number } | null = null;
   /**
    * ⚑ S424 (UiB job 35 Part D, Act I beat 5; 16-7, his 20 Nov: LambyVision "came to the eyes and played by itself, too close to
    * fit in view"; his 23 Nov call 7: "Yes, but not mandatory") — 2016'S SET, BROUGHT BESIDE THE MONITOR, WHOLE AND IN VIEW.
@@ -573,7 +577,7 @@ export class TeachingTv {
    * place planned when it was offered (she may press it later while facing the door: it still comes beside the monitor), else
    * in a view turned to the monitor; false only when none holds it (the caller then brings it before the eye).
    */
-  private fitBeside(eye: pc.Entity, xr: boolean, cam: pc.CameraComponent | null | undefined, monitor: pc.Entity, fitDeg: number, facing: 'view' | 'monitor'): BesidePlan | null {
+  private fitBeside(eye: pc.Entity, xr: boolean, cam: pc.CameraComponent | null | undefined, monitor: pc.Entity, fitDeg: number, facing: 'view' | 'monitor', turnDeg = 0, earOut = false): BesidePlan | null {
     const E = eye.getPosition().clone();
     let hx: number, hy: number, hyTop: number;
     if (xr) { hx = hy = hyTop = Math.tan(fitDeg * D2R); }
@@ -581,9 +585,13 @@ export class TeachingTv {
       const gd = pc.Application.getApplication()?.graphicsDevice;
       const aspect = gd && gd.height > 0 ? gd.width / gd.height : 16 / 9;
       const halfV = ((cam?.fov ?? 42) / 2) * D2R, halfH = Math.atan(Math.tan(halfV) * aspect);
-      hx = Math.tan(halfH - 2 * D2R); hy = Math.tan(halfV - 2 * D2R);
+      // ⚑ S425 — a view turned for the set keeps a narrower side margin (the monitor and the set share the whole width)
+      hx = Math.tan(halfH - (turnDeg ? 0.3 : 2) * D2R); hy = Math.tan(halfV - 2 * D2R);
       // a phone keeps the frame's own row at the top of the screen ("Look with your device") clear of the set
-      hyTop = isPhone() ? Math.tan(halfV - 6.5 * D2R) : hy;
+      // ⚑ S425 — 4.5° (was S424's 6.5°): the row's foot is ~3.3° under the view's top at the phone's own field of view, so the set
+      //   still clears it, and on a phone held upright stands large enough above the monitor for its captions to read as large as
+      //   the monitor's text (tools/s425-set-measure.mjs)
+      hyTop = isPhone() ? Math.tan(halfV - 4.5 * D2R) : hy;
     }
     const wt = monitor.getWorldTransform();
     const Cw = new pc.Vec3(); wt.transformPoint(new pc.Vec3(0, 0, 0), Cw);
@@ -597,15 +605,26 @@ export class TeachingTv {
         up = new pc.Vec3(0, 1, 0).sub(fwd.clone().mulScalar(fwd.y)).normalize();
       }
     }
+    if (turnDeg) {   // ⚑ S425 — the same frame turned left about the vertical by turnDeg (a turn of the seat's look; no roll)
+      const r = turnDeg * D2R, c = Math.cos(r), sn = Math.sin(r);
+      fwd = new pc.Vec3(fwd.x * c + fwd.z * sn, fwd.y, -fwd.x * sn + fwd.z * c).normalize();
+      up = new pc.Vec3(0, 1, 0).sub(fwd.clone().mulScalar(fwd.y)).normalize();
+    }
     const right = new pc.Vec3().cross(fwd, up).normalize();
     const tanOf = (p: pc.Vec3): { x: number; y: number; z: number } => { const v = p.clone().sub(E); const z = v.dot(fwd); return { x: v.dot(right) / z, y: v.dot(up) / z, z }; };
     const corner = (x: number, z: number): { x: number; y: number; z: number } => { const o = new pc.Vec3(); wt.transformPoint(new pc.Vec3(x, 0, z), o); return tanOf(o); };
     const mc = [corner(-0.5, -0.5), corner(0.5, -0.5), corner(0.5, 0.5), corner(-0.5, 0.5)], C = corner(0, 0);
     if (mc.some((c) => c.z <= 0.1)) return null;
+    // ⚑ S425 — a turned view must keep the whole monitor in it (she goes on working beside the set)
+    if (turnDeg && mc.some((c) => Math.abs(c.x) > hx || c.y > hyTop || c.y < -hy)) return null;
     const mL = Math.min(...mc.map((c) => c.x)), mR = Math.max(...mc.map((c) => c.x)), mT = Math.max(...mc.map((c) => c.y));
-    const gap = Math.tan(1.5 * D2R), d = C.z * (xr ? 0.9 : 0.62);
+    // ⚑ S425: in a turned view its inner ear may lie over the monitor's frame, never over its glass (the working area)
+    const gap = Math.tan((turnDeg ? 0 : 1.5) * D2R), d = C.z * (xr ? 0.9 : 0.62);
     const B = BOUNDS, mid = new pc.Vec3((B.min[0] + B.max[0]) / 2, (B.min[1] + B.max[1]) / 2, B.max[2]);
-    const visW = B.max[0] - B.min[0], visH = B.max[1] - B.min[1];
+    const visH = B.max[1] - B.min[1];
+    // ⚑ S425 — `earOut` (a computer's turned view only): the set's outer ear may run past the view's edge; its body, glass and keys
+    //   stay whole in view, and its inner ear never crosses to the monitor
+    const visW = earOut ? B.max[0] + BODY_HALF_W : B.max[0] - B.min[0];
     /** the set at scale k with its middle at view-tan (tx, ty), depth d along the line of sight: its pose and its view extent */
     const place = (k: number, tx: number, ty: number) => {
       const G = E.clone().add(fwd.clone().mulScalar(d)).add(right.clone().mulScalar(d * tx)).add(up.clone().mulScalar(d * ty));
@@ -613,12 +632,18 @@ export class TeachingTv {
       const root = G.clone().sub(rot.transformVector(mid.clone().mulScalar(k)));
       const pts = [[B.min[0], B.min[1]], [B.max[0], B.min[1]], [B.max[0], B.max[1]], [B.min[0], B.max[1]]]
         .map(([x, y]) => tanOf(root.clone().add(rot.transformVector(new pc.Vec3(x * k, y * k, B.max[2] * k)))));
-      return { root, rot, G, x0: Math.min(...pts.map((p) => p.x)), x1: Math.max(...pts.map((p) => p.x)), y0: Math.min(...pts.map((p) => p.y)), y1: Math.max(...pts.map((p) => p.y)) };
+      // ⚑ S425 — and its glass's across in the view (the picture, and the captions burned into it)
+      const gl = [[GLASS.cx - GLASS.w / 2, GLASS.cy], [GLASS.cx + GLASS.w / 2, GLASS.cy]]
+        .map(([x, y]) => tanOf(root.clone().add(rot.transformVector(new pc.Vec3(x * k, y * k, GLASS.z * k)))));
+      const core = [[-BODY_HALF_W, B.min[1]], [BODY_HALF_W, B.min[1]], [BODY_HALF_W, B.max[1]], [-BODY_HALF_W, B.max[1]]]
+        .map(([x, y]) => tanOf(root.clone().add(rot.transformVector(new pc.Vec3(x * k, y * k, B.max[2] * k)))));
+      return { root, rot, G, x0: Math.min(...pts.map((p) => p.x)), x1: Math.max(...pts.map((p) => p.x)), y0: Math.min(...pts.map((p) => p.y)), y1: Math.max(...pts.map((p) => p.y)),
+        glassW: Math.abs(gl[1].x - gl[0].x), cx0: Math.min(...core.map((p) => p.x)), cx1: Math.max(...core.map((p) => p.x)) };
     };
     const bands = [
       { band: 'right', x0: mR + gap, x1: hx, y0: -hy, y1: hyTop },
       { band: 'left', x0: -hx, x1: mL - gap, y0: -hy, y1: hyTop },
-      { band: 'above', x0: -hx, x1: hx, y0: mT + gap, y1: hyTop }
+      { band: 'above', x0: -hx, x1: hx, y0: mT + (!xr && isPhone() ? 0 : gap), y1: hyTop }   // ⚑ S425: on a phone it may stand on the monitor's frame (never its glass)
     ];
     let best: { band: string; k: number; P: ReturnType<typeof place> } | null = null;
     for (const b of bands) {
@@ -636,15 +661,49 @@ export class TeachingTv {
           P = place(k, tx, ty);
         }
         const eps = 1e-3;
-        if (P.x0 >= b.x0 - eps && P.x1 <= b.x1 + eps && P.y0 >= b.y0 - eps && P.y1 <= b.y1 + eps) {
+        const outerL = earOut && b.band === 'left' ? P.cx0 : P.x0, outerR = earOut && b.band === 'right' ? P.cx1 : P.x1;
+        if (outerL >= b.x0 - eps && outerR <= b.x1 + eps && P.y0 >= b.y0 - eps && P.y1 <= b.y1 + eps) {
           if (!best || k > best.k) best = { band: b.band, k, P };
           break;
         }
       }
     }
     if (!best) return null;
-    return { root: best.P.root.clone(), rot: best.P.rot.clone(), k: best.k, band: best.band, dist: best.P.G.distance(E), eye: E };
+    return { root: best.P.root.clone(), rot: best.P.rot.clone(), k: best.k, band: best.band, dist: best.P.G.distance(E), eye: E,
+      ratio: best.P.glassW / Math.max(1e-6, mR - mL), turn: turnDeg,
+      look: xr ? null : { yaw: Math.atan2(-fwd.x, -fwd.z) / D2R, pitch: Math.asin(Math.max(-1, Math.min(1, fwd.y))) / D2R } };
   }
+  /**
+   * ⚑ S425 (UiB job 35 Part D, the coordinator's S424 follow-up) — ON A COMPUTER THE BROUGHT SET MUST BE READABLE FROM THE SEAT.
+   * Beside the monitor in the seat's own view (S424) it stood at the left at about a quarter of the monitor's width, and the
+   * tape's captions (burned into its picture, v6) were a third the height of the monitor's own body text. The set's glass must
+   * be at least `held.besideGlassOfMonitor` of the monitor's width (then its caption letters are at least as tall as the
+   * monitor's body text: tools/s425-set-measure.mjs measures both) — and on a 16:10 screen there is no room for that beside a
+   * whole monitor in the seat's view. So on a computer (never in a headset, never on a phone held upright: there the set stands
+   * above the monitor, large enough, as S424 built it) the view is turned left, as little as it takes (up to
+   * `held.besideTurnMaxDeg`), keeping the whole monitor in it: the set stands large at its left, the monitor whole at its right,
+   * and the look comes back when the set is put back. The largest the screen allows, if none reaches it.
+   */
+  private planBesideFor(eye: pc.Entity, xr: boolean, cam: pc.CameraComponent | null | undefined, monitor: pc.Entity, fitDeg: number, facing: 'view' | 'monitor'): BesidePlan | null {
+    const plan = this.fitBeside(eye, xr, cam, monitor, fitDeg, facing);
+    if (!plan || xr || isPhone() || plan.ratio >= HELD.besideGlassOfMonitor) return plan;
+    let best = plan;
+    // the whole set first; then, if no turn that keeps the monitor whole makes it large enough, its outer ear may leave the view
+    for (const earOut of [false, true]) {
+      for (let d = 0.5; d <= HELD.besideTurnMaxDeg; d += 0.5) {
+        const p = this.fitBeside(eye, xr, cam, monitor, fitDeg, facing, d, earOut);
+        if (!p) continue;
+        if (p.ratio > best.ratio + 1e-4) best = p;
+        if (p.ratio >= HELD.besideGlassOfMonitor) return p;
+      }
+    }
+    return best;
+  }
+  /** ⚑ S425 — on a computer, turn the look (the caller's camera, `lookTo`) and say where it was (`lookNow`); null in a headset */
+  lookTo: ((yaw: number, pitch: number) => void) | null = null;
+  lookNow: (() => { yaw: number; pitch: number } | null) | null = null;
+  /** ⚑ S425 — the look she had before the set turned it, given back when she puts the set back */
+  private lookBack: { yaw: number; pitch: number } | null = null;
   /** ⚑ S424 — where the set would stand beside its monitor in the view she had when it was offered (planBeside): a press on the
    *  set later, from wherever she is facing (the door), brings it to that same place — "the same way" */
   private besidePlan: BesidePlan | null = null;
@@ -652,7 +711,7 @@ export class TeachingTv {
   planBeside(eye: pc.Entity, xr: boolean, cam?: pc.CameraComponent | null): void {
     const m = this.besideMonitor?.() ?? null;
     if (!m) return;
-    const plan = this.fitBeside(eye, xr, cam, m, this.spec.xrFitDeg ?? 43, 'view');
+    const plan = this.planBesideFor(eye, xr, cam, m, this.spec.xrFitDeg ?? 43, 'view');
     if (plan) this.besidePlan = plan;
   }
   takeFitted(eye: pc.Entity, xr: boolean, cam: pc.CameraComponent | null | undefined, monitor: pc.Entity, fitDeg: number): boolean {
@@ -661,8 +720,15 @@ export class TeachingTv {
     // in this view if the monitor is in it; else where it stood (or was planned) from this seat; else in a view turned to the
     //   monitor. She may be facing the set by the door when she presses it (after Not now): it still comes beside the monitor.
     const kept = this.besidePlan && this.besidePlan.eye.distance(E) < 0.45 ? this.besidePlan : null;
-    const plan = this.fitBeside(eye, xr, cam, monitor, fitDeg, 'view') ?? kept ?? this.fitBeside(eye, xr, cam, monitor, fitDeg, 'monitor');
+    const plan = this.planBesideFor(eye, xr, cam, monitor, fitDeg, 'view') ?? kept ?? this.planBesideFor(eye, xr, cam, monitor, fitDeg, 'monitor');
     if (!plan) return false;
+    // ⚑ S425 — on a computer, the look goes where the place was planned (turned for a readable set, or turned back to the monitor
+    //   when she pressed the set from the door), and comes back when she puts it back
+    if (!xr && plan.look && this.lookTo) {
+      const now = this.lookNow?.() ?? null;
+      const off = now ? Math.abs(((plan.look.yaw - now.yaw + 540) % 360) - 180) + Math.abs(plan.look.pitch - now.pitch) : 0;
+      if (plan.turn || off > 1) { if (plan.turn && now && !this.lookBack) this.lookBack = now; this.lookTo(plan.look.yaw, plan.look.pitch); }
+    }
     this.besidePlan = plan;
     this.takenAt.copy(E);
     this.to.pos.copy(plan.root); this.to.rot.copy(plan.rot); this.to.k = plan.k;
@@ -670,7 +736,7 @@ export class TeachingTv {
     this.path(E.clone());
     this.heldScale = plan.k; this.heldDist = plan.dist;
     this.pose = 'lifting'; this.liftT = 0; this.setDown = false;
-    this.beside = true; this.fitted = { band: plan.band, k: Math.round(plan.k * 1000) / 1000 };
+    this.beside = true; this.fitted = { band: plan.band, k: Math.round(plan.k * 1000) / 1000, turn: plan.turn, glassOfMonitor: Math.round(plan.ratio * 1000) / 1000 };
     this.set.glow(HELD.glowHeld);
     liftToHeldLayer(this.set.root, xr);
     return true;
@@ -691,10 +757,14 @@ export class TeachingTv {
     this.path(eye ?? this.from.pos.clone().add(new pc.Vec3(0, 0.3, 0)));
     this.pose = 'returning'; this.liftT = 0; this.beside = false;
     liftToHeldLayer(this.set.root, false);   // S407: back among the room's things on its way home
+    // ⚑ S425 — the look the set turned (a computer) comes back with it: her body press, or the story's (a voice arriving, the update's
+    //   notice — both while she is seated at the desk; leaving the era snaps it home without touching the camera)
+    if (this.lookBack) this.lookTo?.(this.lookBack.yaw, this.lookBack.pitch);
+    this.lookBack = null;
   }
   /** at once, no travel (the era left, a wipe) */
   snapHome(): void {
-    this.pose = 'rest'; this.liftT = 1;
+    this.pose = 'rest'; this.liftT = 1; this.lookBack = null;
     liftToHeldLayer(this.set.root, false);
     this.set.root.setPosition(this.restPos); this.set.root.setRotation(this.restRot); this.set.root.setLocalScale(1, 1, 1);
     this.set.glow(HELD.glowRest);
@@ -1250,6 +1320,9 @@ export interface TvHost {
   callOpen(): boolean;
   /** a press on the in-view card's button, handed to the guide ('lg-take', 'lg-later', 'lg-x') */
   guidePress(id: string): void;
+  /** ⚑ S425 — a computer's look, turned (over about a second; her drag stays free) to this yaw and pitch, and where it is now */
+  look?(yaw: number, pitch: number): void;
+  facing?(): { yaw: number; pitch: number } | null;
 }
 
 export type MomentStage = 'idle' | 'call' | 'bring' | 'play' | 'after' | 'done';
@@ -1387,6 +1460,9 @@ export class TeachingTvs {
     for (const id of TAPE_IDS) {
       const name = this.tvs[id].spec.beside;
       if (name) this.tvs[id].besideMonitor = () => app.root.findByName(name) as pc.Entity | null;
+      // ⚑ S425 — the computer's look, for a set brought beside its monitor large enough to read
+      this.tvs[id].lookTo = (yaw, pitch) => host.look?.(yaw, pitch);
+      this.tvs[id].lookNow = () => host.facing?.() ?? null;
     }
     const moment = (id: TapeId): TvMoment => new TvMoment(this.tvs[id], host, !!this.tvs[id].spec.offer, () => this.bringTo(id));
     this.moments = { '1997': moment('1997'), '2016': moment('2016'), '2026': moment('2026') };

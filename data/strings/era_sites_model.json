@@ -4097,15 +4097,15 @@
         "where": "Where: the workstation."
        },
        {
-        "label": "Kindredraft",
+        "label": "A memory from 2014",
         "opt": "",
-        "hint": "When the board’s jobs are done, install Kindredraft. It opens Vera’s own 2014 story.",
+        "hint": "When the training is done, Kindredraft shows a memory from 2014. Look back opens Vera’s own story.",
         "where": "Where: the workstation."
        },
        {
         "label": "Vera · 2014",
         "opt": "",
-        "hint": "As sent shows her earlier account. Close record returns to the day.",
+        "hint": "Her story as it was published, then her own words. Her Notes follow. Close returns to the board.",
         "where": "Where: the workstation."
        },
        {

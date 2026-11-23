@@ -1,14 +1,28 @@
 {
  "_doc": "S307. Invented people and platform practices, not survivor testimony. Research and limits: RESEARCH_2016_VERA_APPARATUS_2026-11-01.md. No trans engagement row. No trigger-safe mode. Story Record renamed Kindredraft after mark check. Felt reading files nothing.",
  "offer": {
-  "title": "New: Kindredraft",
-  "sub": "Your 2014 story is ready for its first refresh.",
-  "install": "Install",
-  "admin": "An administrator has refreshed it for you.",
-  "draftTag": "DRAFT",
-  "draftBy": "A suggestion. Not yet approved.",
-  "draft": "I came to my first night with a heart that was looking for home in the wrong place.",
+  "_retiredS425": {
+   "title": "New: Kindredraft",
+   "sub": "Your 2014 story is ready for its first refresh.",
+   "install": "Install",
+   "admin": "An administrator has refreshed it for you.",
+   "draftTag": "DRAFT",
+   "draftBy": "A suggestion. Not yet approved.",
+   "draft": "I came to my first night with a heart that was looking for home in the wrong place."
+  },
+  "_retiredS425Why": "⚑ S425 (UiB job 35 Part D, Act II; his 20 Nov 16-13/16-14 and his 23 Nov yes to the storyboard: \"Kindredraft as a memory, no text box, no Install\") — Kindredraft's offer is a memory now (`memory` below). Retired, word for word above: the card's title \"New: Kindredraft\", its line \"Your 2014 story is ready for its first refresh.\", Install, the DRAFT box and its typed draft (it typed only on a working board, so in every run it stood empty with a caret: a field that looked typeable), \"A suggestion. Not yet approved.\", and the administrator's line (the old record opened itself if she went back to the board with the card up). The drawing that used them (graceQueueLite drawStoryOffer, veraSurfaces drawVeraArchive) is kept at 76d0671d.",
   "_docS362": "⚑ S362 / H42b (his headset, 10 Nov, 21:13: the \"Kindred Heart\" draft \"should appear differently\" — read as Kindredraft, whose offer was a bare strip): the offer arrives as a pop-in card that shows the system's DRAFT of her story typing itself in (graceQueueLite `drawStoryOffer`), marked as a suggestion that is not yet approved. `draft` is the first sentence of `record.publishedText` (the system's version, unchanged); no new testimony."
+ },
+ "memory": {
+  "_docS425": "⚑ S425 (UiB job 35 Part D, Act II, storyboard 2016_SECOND_HALF beats 8–10; his 23 Nov yes) — KINDREDRAFT AS A MEMORY. Beat 8: when the training is done and Mam's message has had its reading time, a small card over the board (`card`, `line`, `ask`; `look` · `notNow`). No text box, no typing, no Install. Not now works once: the card goes and comes back at the next quiet moment with `look` alone. Beat 9: Look back opens Kindredraft's page, \"Vera · 2014\" (visual.archiveTitle): her story as GracePlatform published it (record.publishedText, as built), under it `editedWith` (Lesson 1's rule); `see` · `close`. `see` turns the page to her own words as she sent them, the cuts struck through (ownCut.runs, as built: S386's own cut, moved here from the end of Lesson 1); if she does not press it, the page turns by itself once the published story has had its reading time. Beat 10 (felt, bare): with her words on the page for their reading time, the Handset Window comes in over the page's right half and her Notes type the newest note (s3_maiden.json notes.entries `refusal`); nothing speaks; then the lock screen and Nuala's message. `card` is also the page's window title (was record.title, \"GracePlatform · Kindredraft · Vera\"). All new words here are the storyboard's (§3b), written by Claude, for his review.",
+  "card": "Kindredraft · Memories",
+  "line": "You have a memory from 2014.",
+  "ask": "Look back at your story?",
+  "look": "Look back",
+  "notNow": "Not now",
+  "editedWith": "Edited with: Name the dependency, not the person.",
+  "see": "See what you wrote",
+  "close": "Close"
  },
  "send": {
   "title": "Ready to share · Renata",
@@ -30,16 +44,19 @@
   "back": "Back to today"
  },
  "record": {
-  "title": "GracePlatform · Kindredraft · Vera",
-  "meta": "Vera · 2014 · Published",
-  "tag": "Filed as: emotional dependency",
-  "reviewer": "Volunteer mentor: Name the dependency, not the person. Close on hope.",
-  "published": "As published",
-  "sent": "As sent",
+  "_retiredS425": {
+   "title": "GracePlatform · Kindredraft · Vera",
+   "meta": "Vera · 2014 · Published",
+   "tag": "Filed as: emotional dependency",
+   "reviewer": "Volunteer mentor: Name the dependency, not the person. Close on hope.",
+   "published": "As published",
+   "sent": "As sent",
+   "close": "Close record",
+   "footer": "2014 · source retained · restricted to administrators"
+  },
+  "_retiredS425Why": "⚑ S425 (storyboard beat 9, §3b \"her record\"): the record's other lines are retired from the visit, word for word above: the window title \"GracePlatform · Kindredraft · Vera\" (now memory.card), \"Vera · 2014 · Published\", \"Filed as: emotional dependency\", the volunteer mentor's note, \"As published\" / \"As sent\", \"Close record\" and \"2014 · source retained · restricted to administrators\" (and visual.publishedOnly, \"Published only\", and the page's Next/Previous). Kept and still read: `publishedText` (her story as published, on the memory page) and `sentText` (her notebook's page, veraDesk.ts; the retained original's card).",
   "publishedText": "I came to my first night with a heart that was looking for home in the wrong place. A dependency had taken the place of God in my life. Today I am walking in wholeness, and I want the same for you.",
-  "sentText": "I came to the first night because of Nuala, and because the quiet at home had got too loud. We had lived together. I think what I had with her is what the leaflet calls dependency. I don't have a word for the part that wasn't. I do pray. That part is true.",
-  "close": "Close record",
-  "footer": "2014 · source retained · restricted to administrators"
+  "sentText": "I came to the first night because of Nuala, and because the quiet at home had got too loud. We had lived together. I think what I had with her is what the leaflet calls dependency. I don't have a word for the part that wasn't. I do pray. That part is true."
  },
  "kit": {
   "title": "Campaign kit · Chosen Course Compact",
@@ -90,7 +107,7 @@
  "visual": {
   "archiveBrand": "Kindredraft",
   "archiveTitle": "Vera · 2014",
-  "publishedOnly": "Published only",
+  "_retiredS425publishedOnly": "Published only",
   "groupHeader": "gather · private group",
   "storyBy": "Renata",
   "emailHeader": "GracePlatform · Weekly email",
@@ -127,8 +144,11 @@
  },
  "ownCut": {
   "_doc": "⚑ S332 (his second answers: \"Renata's edit is frontal, not subtle\"): when the house rule \"Name the dependency, not the person\" is applied to Renata (by Vera, by Lambient or by an administrator), the platform shows Vera's OWN 2014 story beside it with the same cut in the same red (ERA3.alarm). The words are her record's \"as sent\" (below, `record.sentText`); the cut is what the rule took. The full record is still met later, felt, in Kindredraft.",
-  "heading": "Your story was edited with this rule too (2014)",
-  "meta": "Vera · as sent · 2014",
+  "_docS425": "⚑ S425 (storyboard beat 9; 16-6 \"Lesson 1 done.\"): her own cut no longer comes at the end of Lesson 1 (the editor's own screen after the send, \"Your story was edited with this rule too (2014)\", and its second Back are gone). `runs` are drawn on Kindredraft's memory page when it turns to her own words (See what you wrote), the cuts struck through in the same red; `rule` is kept as data (the page says memory.editedWith). Retired: `heading` and `meta` (word for word in `_retiredS425`).",
+  "_retiredS425": {
+   "heading": "Your story was edited with this rule too (2014)",
+   "meta": "Vera · as sent · 2014"
+  },
   "runs": [
    {
     "t": "I came to the first night "

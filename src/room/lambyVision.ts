@@ -55,6 +55,8 @@ const BADGE = { cx: 0, cy: 0.553, w: 0.17, h: 0.05, z: FRONT + 0.0062 };
 export const FACE = { top: GLASS.cy + GLASS.h / 2, bottom: KEY_Y - KEY_H / 2, cx: 0, width: 0.46 } as const;
 /** the whole set, for a press at rest and the body's press in the hand (ears and tuft included) */
 export const BOUNDS = { min: [-0.4, 0, -D / 2] as V3, max: [0.4, 0.665, FRONT + 0.012] as V3 };
+/** ⚑ S425 — the body's half-width (its glass and keys inside it; the ears outside), for a place where only an ear may leave the view */
+export const BODY_HALF_W = W / 2;
 export const KEY_POINTS: { id: SetKey; at: V3; r: number }[] = KEYS.map((k) => ({ id: k.id, at: [k.x, KEY_Y, STRIP.z] as V3, r: 0.031 }));
 
 const col = (hex: string): [number, number, number] => {

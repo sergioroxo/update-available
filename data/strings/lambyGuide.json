@@ -264,12 +264,12 @@
         "act": "focus:vera-send"
       },
       "vera-install": {
-        "tip": "Return to Today, then install Kindredraft to open your 2014 story.",
+        "tip": "Kindredraft has a memory for you. Look back opens your 2014 story.",
+        "_retiredS425": "⚑ S425 (UiB job 35 Part D, Act II, storyboard beat 8: Kindredraft as a memory, no Install) — was `tip` \"Return to Today, then install Kindredraft to open your 2014 story.\", `target` [\"vera-send-close\", \"update-accept\"], `act` \"focus:update-accept\". Visitor help only: it answers a stall on the memory card, on the board; the guide is silent on the memory page and while her Notes are up (graceQueueLite guideSilent: the record page, personalQuiet).",
         "target": [
-          "vera-send-close",
-          "update-accept"
+          "memory-look"
         ],
-        "act": "focus:update-accept"
+        "act": "focus:memory-look"
       },
       "vera-kit": {
         "tip": "The campaign kit is on the platform. Either answer continues.",

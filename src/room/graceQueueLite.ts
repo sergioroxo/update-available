@@ -2,7 +2,7 @@ import mirrorCopy from '../../data/strings/e3_mirror.json';
 import { FileWatch } from '../witness/fileItem';
 import { voiceHeld, filmAudible } from '../state/voiceHold';
 import { GuideWait } from '../narrative/guideWait';
-import { drawVeraArchive, drawVeraDistribution, drawRetainedCopies, studioFont } from '../desktop/apps/veraSurfaces';
+import { drawVeraDistribution, drawRetainedCopies, studioFont } from '../desktop/apps/veraSurfaces';
 import { drawRenataFilm, filmToCanvas, FILM_TARGETS, PUBLISHED_FRAME, SENT_FRAME, type FilmFrame } from '../desktop/theme/renataFilm';
 import vera from '../../data/dialog/s3_vera.json';
 import { veraDay, resetVeraDay } from '../state/veraDay';
@@ -122,6 +122,7 @@ import { px, setFont, wrapText } from '../desktop/theme/chrome';
 import * as aero from '../desktop/theme/era3';
 import { PHONE } from '../desktop/theme/phone';
 import { readHold } from '../desktop/readHold';
+import { reducedMotion } from '../state/motion';
 import { textPx } from '../desktop/theme/fonts';
 /** S358 / H08 — the references' leading (10 px type): 11 read as lines laid on each other from the seat */
 const REFS_LEAD = 13;   // S349: the Handset Window's bar is the phone's idiom
@@ -275,8 +276,15 @@ const DISCONNECT_SECONDS = Math.max(3, readHold(mirrorCopy.disconnected) + 0.6);
 const MALTA_CLEAR_SECONDS = 1.5;
 /** ⚑ S368 / F05 — after the cascade, the group thread holds this long before the phone goes to sleep (the block settles, readable) */
 const TAIL_HOLD_SECONDS = 8;
-/** ⚑ S362 / H42b — characters a second at which Kindredraft's draft types itself in */
-const STORY_DRAFT_CPS = 28;
+/** ⚑ S425 (storyboard beat 8) — after Not now, the memory card comes back (Look back alone) once the board has been this quiet */
+const MEMORY_AGAIN_SECONDS = 6;
+/** ⚑ S425 (beat 10) — the breath on the board before the Notes come, when she closed the page before they did */
+const MEMORY_CLOSED_BREATH = 2;
+/** ⚑ S425 — the Handset Window comes in over the page's right half (and goes back) in this many steps, this many a second (≤ 8 Hz;
+ *  under reduced motion, one step) */
+const MIRROR_SLIDE_STEPS = 4, MIRROR_SLIDE_HZ = 8;
+/** ⚑ S425 — her own words as she sent them (ownCut.runs), read by the reading rule before the Notes come in beside them */
+const OWN_WORDS = vera.ownCut.runs.map((r) => r.t).join('');
 /** ⚑ S227 — the Speedrun Version (src/state/cut.ts): Lambient sends her straight to Annette, and ONE finished job lights
  *  the phone (his 2026-10-10: "to speed up the narrative"). Read when asked, never at module load: the front door may
  *  choose the cut after this file is imported. */
@@ -512,7 +520,7 @@ export class GraceQueueLite {
   /** ⚑ S327 — a press on the Handset Window keeps the platform quiet only while that window is showing a person's
    *  words (a thread, the inbox, the group). It used to stay quiet after ANY press there until the next press on the
    *  platform, which is most of why "where is our guide?" (T25) had no answer: the tray was simply not drawn. */
-  get personalQuiet(): boolean { return this.wickConducting || this.deskConducting || this.phone.conductingNotes || (this.mirrorReading && this.phone.quietReading) || this.phone.personalOpen || this.phoneInHand || this.cascadeConduct; }
+  get personalQuiet(): boolean { return this.wickConducting || this.deskConducting || this.phone.conductingNotes || this.memoryForward || (this.mirrorReading && this.phone.quietReading) || this.phone.personalOpen || this.phoneInHand || this.cascadeConduct; }
   private armPersonalNotice(): void {
     if (this.personalArmed) return;
     // ⚑ S327 / T32 — the Wick card rises once at sign-in (era3Devices, four seconds). ⚑ S332: Orla's message no longer
@@ -539,7 +547,7 @@ export class GraceQueueLite {
   //   news, the game, the pause menu, the screensaver and the install, and resumes where it stopped).
   private syncGraceLoop(): void {
     const signedIn = this.mode === 'board' || this.mode === 'list' || this.mode === 'done';
-    const want = signedIn && !this.pauseOpen && !this.saver && this.veraPage !== 'record' && !this.cascadeConduct
+    const want = signedIn && !this.pauseOpen && !this.saver && this.veraPage !== 'record' && !this.cascadeConduct && !this.memoryForward   // ⚑ S425: her Notes, no sound
       && !this.floppy.open && !this.mirrorDisconnected
       && !filmAudible();   // ⚑ S390 — and it yields to the course on the laptop (one music at a time); it resumes where it stopped
     if (want && !this.graceLoop) {
@@ -645,11 +653,25 @@ export class GraceQueueLite {
   private idleT = 0;
   private mode: Mode = 'dark';
   private veraPage: 'send' | 'record' | 'kit' | 'removals' | null = null;
+  /** ⚑ S425 — the memory page has turned to her own words (See what you wrote, or the piece's turn) */
   private recordSent = false;
-  private recordPage = 0;
-  private storyOffer = false;
-  /** ⚑ S362 / H42b — seconds the Kindredraft pop-in has been up (its draft types in over this) */
-  private storyOfferT = 0;
+  /** ⚑ S425 (UiB job 35 Part D, Act II, storyboard beat 8; 16-13/16-14) — KINDREDRAFT'S MEMORY CARD over the board: 'offer'
+   *  (Look back · Not now), 'again' (after Not now, Look back alone), or null. (Was `storyOffer`, the Install card with its typed
+   *  DRAFT box: retired, 76d0671d holds it.) */
+  private memoryCard: 'offer' | 'again' | null = null;
+  /** she said Not now (it works once); the quiet board seconds since, toward the card's return */
+  private memoryDeclined = false;
+  private memoryQuietT = 0;
+  /** ⚑ S425 (beat 9) — seconds the memory page has shown its current face (the published story, or her own words: `recordSent`) */
+  private memoryT = 0;
+  /** ⚑ S425 (beat 10, felt) — her Notes: 'idle' (not yet due), 'wait' (her words have their reading time, or the page was closed:
+   *  a breath), 'notes' (the Handset Window over the page's right half, the note typing and held), 'lock' (the phone's lock screen,
+   *  Nuala's message landing and read), 'done' (the window back in its column). */
+  private memoryStage: 'idle' | 'wait' | 'notes' | 'lock' | 'done' = 'idle';
+  private memoryStageT = 0;
+  /** ⚑ S425 — where the Handset Window stands: 0 in its column, 1 over the page's right half (the middle of the monitor); stepped */
+  private mirrorSlide = 0;
+  private mirrorSlideT = 0;
   /** ⚑ S362 / H41 — the campaign kit's URGENT pop-in is up (it opens the kit; if left, the platform opens it after KIT_POPIN_AUTO) */
   private kitPopin = false;
   private kitPopinT = 0;
@@ -660,7 +682,6 @@ export class GraceQueueLite {
   private maltaPending = false;
   private maltaClearT = 0;
   private maltaWaitT = 0;
-  private recordAdmin = false;
   private kitApproved = false;
   private takenDown = false;
   private sendReceipt = false;
@@ -754,11 +775,10 @@ export class GraceQueueLite {
   // Nobody is asked to press this and nothing files when they do.
   private playT = 0;
   private playing = false;
-  /** ⚑ S386 — Renata's film: the cuts still to be made in front of the visitor (the first is being made, `cutT` into it),
-   *  and whether Vera's own 2014 cut has been shown on its own screen (after the published version) */
+  /** ⚑ S386 — Renata's film: the cuts still to be made in front of the visitor (the first is being made, `cutT` into it).
+   *  (Whether Vera's own 2014 cut had been shown on its own screen, `ownCutShown`, went with that screen at S425.) */
   private cutQueue: { kind: CutKind; item: CorrectionDef }[] = [];
   private cutT = 0;
-  private ownCutShown = false;
   /** ⚑ S403 (UiB job 30 B2; his 17 Nov: "the "one story, four places" … could go?", then "Yes let's build the changes for
    *  2016") — IN THE DEFAULT VISIT THE SEND IS IN THE EDITOR. The "Ready to share" page (drawVeraDistribution) leaves it:
    *  when Renata's last rule is applied, her editor's own way on is "Send to all four" (`vera-send`, Vera's press, the same
@@ -891,7 +911,8 @@ export class GraceQueueLite {
     // ⚑ S327 / T06 — ONE VOICE AT A TIME. The phone may deliver only while the platform is at rest: nothing open on it,
     //   no Lambient line, no card, no guide balloon, no conducted beat, no system notice.
     // ⚑ S332 — and not in the one frame between Renata's last rule and the send page the platform is about to open
-    this.phone.atRest = (this.mode === 'signin' || ((this.mode === 'board' || this.mode === 'done') && !this.veraPage && !this.openSurface
+    // ⚑ S425 — and her memory page, once it is still (her Notes have come): Nuala's message lands on it, the kit may come over it
+    this.phone.atRest = (this.mode === 'signin' || ((this.mode === 'board' || this.mode === 'done') && (!this.veraPage || this.memoryPageStill) && !this.openSurface
       && !(this.subComplete(SUBMISSIONS[0]) && !veraDay.distributed)))
       && !this.lambPriority && !this.pauseOpen && !this.saver && !this.startMap.active && !this.minimised
       && !this.wickConducting && !this.deskConducting && !this.cascadeConduct && !this._systemModal
@@ -934,6 +955,7 @@ export class GraceQueueLite {
     }
     this.updateWatch(dt);
     this.updateHeartwood(dt);
+    this.updateMemory(dt);   // ⚑ S425 — Act II: the memory card, the page, her Notes
     if (this.mode === 'dark') {
       const before = this.idleT;
       this.idleT += dt;
@@ -944,7 +966,7 @@ export class GraceQueueLite {
     //   only once no card, job, pop-in or Lambient line has been up for MALTA_CLEAR_SECONDS. A card left open for 40 s is
     //   put away first (read by then), so nothing can hold the era forever and nothing opens on top of it.
     if (this.maltaPending) {
-      const cardUp = this.pauseOpen || this.lambPriority || this.kitPopin || this.storyOffer || this.startPanel.open || this.startMap.active;
+      const cardUp = this.pauseOpen || this.lambPriority || this.kitPopin || !!this.memoryCard || this.startPanel.open || this.startMap.active;
       // S369 (the after-run: a lock-screen message replaced by the thread 2.3 s after it landed) — and the phone's own last
       //   message has had its reading time
       const clear = (this.mode === 'board' || this.mode === 'done') && !this.veraPage && !this.openSurface && !this.saver && !cardUp && !this.phone.voiceBusy;
@@ -1008,8 +1030,7 @@ export class GraceQueueLite {
       this.playT += dt;
       if (this.playT >= this.filmSeconds()) {
         this.playT = this.filmSeconds(); this.playing = false; stopClip(this.roomTone); this.roomTone = null;
-        // ⚑ S386 — the published version has played to its end: Vera's own 2014 cut comes, on its own screen
-        if (this.renataOpen() && this.storyDone && this.mode === 'list' && !this.openSurface) this.ownCutShown = true;
+        // (⚑ S386's own cut at the film's end is retired at S425: it is met on Kindredraft's memory page, Act II)
         this.bump();
       }
       else if (Math.floor(this.playT / TICK) !== before) this.bump();
@@ -1184,15 +1205,12 @@ export class GraceQueueLite {
   /** ⚑ S362 / H41 + H42b — the board's two pop-ins keep their own clocks: the kit's URGENT card (flashes twice a second; the
    *  platform opens the kit itself if it is left) and Kindredraft's draft (types itself in). Both redraw only when they change. */
   private updatePopins(dt: number): void {
-    const onBoard = this.mode === 'board' && !this.openSurface && !this.veraPage && !this.minimised;
+    // ⚑ S425 — the kit's pop-in may also come over her memory page, once that page is still (beat 10 done: "the evening still comes")
+    const onBoard = this.mode === 'board' && !this.openSurface && (!this.veraPage || this.memoryPageStill) && !this.minimised;
     if (this.kitPopin && onBoard) {
       const b = Math.floor(this.kitPopinT * 2); this.kitPopinT += dt;
       if (this.kitPopinT >= KIT_POPIN_AUTO) this.openKit(); else if (b !== Math.floor(this.kitPopinT * 2)) this.bump();
     }
-    if (this.storyOffer && onBoard) {
-      const b = Math.floor(this.storyOfferT * 12); this.storyOfferT += dt;
-      if (b !== Math.floor(this.storyOfferT * 12) && this.storyOfferT * STORY_DRAFT_CPS < vera.offer.draft.length + 12) this.bump();
-    } else if (!this.storyOffer) this.storyOfferT = 0;
   }
   /** ⚑ S362 / H43 (his headset, 10 Nov, 21:13: GracePlatform jumps in "when the Malta message appears") — the alert fires the moment
    *  Bea's FIRST Malta message lands, as a pop-in over whatever is on the desk (the Handset Window included), with the platform's
@@ -1203,7 +1221,7 @@ export class GraceQueueLite {
     //   beat. It answers the law again as S64 had it, on the news link (Bea's second message), whichever way she reads
     //   it: the beat holds LIFT_DELAY_SECONDS, then the room's light lifts, before the platform's alert.
     if (!this.liftFired && this.liftT < 0 && this.phone.newsLanded >= MALTA_LIFT_AFTER) { this.liftT = 0; this.bump(); }
-    if (this.maltaAlertT < 0 && !this.maltaAlertDone && this.phone.newsLanded >= MALTA_ALERT_AFTER && !this.kitPopin && !this.storyOffer && !this.pauseOpen) {
+    if (this.maltaAlertT < 0 && !this.maltaAlertDone && this.phone.newsLanded >= MALTA_ALERT_AFTER && !this.kitPopin && !this.memoryCard && !this.pauseOpen) {
       this.maltaAlertT = 0; this.phone.newsPaused = true; playOnce('lambient_chime.mp3'); this.bump();
     }
     if (this.maltaAlertT >= 0) {
@@ -1245,7 +1263,11 @@ export class GraceQueueLite {
     aero.button(ctx, bx, by, bw, bh, R.alertOk, { primary: true, size: 11 });
     this.rects.unshift({ x: bx, y: by, w: bw, h: bh, id: 'malta-alert-ok' });
   }
-  private openKit(): void { this.kitPopin = false; this.veraPage = 'kit'; this.bump(); }
+  private openKit(): void {
+    // ⚑ S425 — opened over her still memory page: that page is closed by it (the evening came while she was there)
+    if (this.veraPage === 'record') { veraDay.recordClosed = true; veraDay.quiet = false; this.phone.bannersHidden = false; }
+    this.kitPopin = false; this.veraPage = 'kit'; this.bump();
+  }
 
   /** ⚑ S332 — the connections, watched each frame (cheap: four booleans): a finished job earns its message; the places
    *  list also arms the Wick card's BANNED stamp; all four finished open the offer of her own record (once the phone
@@ -1261,20 +1283,23 @@ export class GraceQueueLite {
       this.bump();
     }
     if (this.fourJobsDone && !ledger.records.includes('e3-jobs-done')) ledger.records.push('e3-jobs-done');
-    if (this.fourJobsDone && !veraDay.recordOpened && !this.storyOffer && this.phone.queued === 0 && !this.phone.voiceBusy
-      && !this.wickBanPending && !this.wickConducting && !this.deskConducting) { this.storyOffer = true; this.bump(); }
+    // ⚑ S425 (storyboard beat 8) — the training done and Mam's message read (its reading time held by the phone's voice): Kindredraft's
+    //   memory card, over the board. Once only; after Not now it comes back by itself (`updateMemory`), Look back alone.
+    if (this.fourJobsDone && !veraDay.recordOpened && !this.memoryCard && !this.memoryDeclined && this.phone.delivered('decision')
+      && this.phone.queued === 0 && !this.phone.voiceBusy
+      && !this.wickBanPending && !this.wickConducting && !this.deskConducting) { this.memoryCard = 'offer'; this.bump(); }
     // ⚑ S336 — A FAILSAFE, because the full entrance walk stalled here twice (four jobs done, the board in 'done', the
     //   offer of her own record never armed): if the day has been sitting still with every job done for 8 s, the offer
     //   comes anyway. Whatever was holding it (a queued message that never got its quiet moment, a ban that never got its
     //   cue) must not be able to end the era. The blockers are written to the console once, for diagnosis.
-    if (this.fourJobsDone && !veraDay.recordOpened && !this.storyOffer && !this.jobOpen && !this.veraPage
+    if (this.fourJobsDone && !veraDay.recordOpened && !this.memoryCard && !this.memoryDeclined && !this.jobOpen && !this.veraPage
       && !this.phone.voiceBusy && this.phone.queued === 0 && !this.wickConducting && !this.deskConducting) {
       // only truly idle time counts: messages still arriving, or the card still rising, are the day moving on
       this.offerWaitT += this.lastDt;
       if (this.offerWaitT > 12) {
         console.warn('[e3] offer failsafe ' + JSON.stringify({ voiceBusy: this.phone.voiceBusy, wickBanPending: this.wickBanPending,
           wickConducting: this.wickConducting, mode: this.mode, phone: this.phone.debugState() }));
-        this.wickBanPending = false; this.storyOffer = true; this.offerWaitT = 0; this.bump();
+        this.wickBanPending = false; this.memoryCard = 'offer'; this.offerWaitT = 0; this.bump();
       }
     } else this.offerWaitT = 0;
     if (this.kitPending) { this.kitWaitT += this.lastDt; if (this.kitWaitT > 10 && !this.kitWarned) { this.kitWarned = true;
@@ -1348,7 +1373,6 @@ export class GraceQueueLite {
 
   /** she pressed Install: the tile is appended to the board (nothing already there moves) and that is all */
   private installOffer(): void {
-    if (this.storyOffer) { this.openVeraRecord(); return; }
     if (!this.offer) return;
     this.guideWait.cancel('tool-offer');
     this.unlockedIds().push(this.offer.id);
@@ -1618,7 +1642,7 @@ export class GraceQueueLite {
     if (!this.renataOpen() || this.mode !== 'list' || this.openSurface || this.veraPage) return null;
     const now = this.cutNow(), sentT = this.filmSentT();
     const cue = (this.renataVideo().cues ?? []).find(c => sentT >= c.from && sentT < c.to) ?? null;
-    const view = this.storyDone ? (this.ownCutShown ? 'own' : 'published') : now ? 'cutting' : (['term', 'hand', 'mug', 'photo', 'minute'] as CutKind[]).some(k => this.cutValue(k) > 0) ? 'edited' : 'sent';
+    const view = this.storyDone ? 'published' : now ? 'cutting' : (['term', 'hand', 'mug', 'photo', 'minute'] as CutKind[]).some(k => this.cutValue(k) > 0) ? 'edited' : 'sent';
     return {
       view, cutting: now ? { kind: now.kind, phase: now.phase, p: now.p } : null, queue: this.cutQueue.map(q => q.kind),
       cuts: Object.fromEntries((['term', 'hand', 'mug', 'photo', 'minute'] as CutKind[]).map(k => [k, this.cutValue(k)])),
@@ -1834,7 +1858,7 @@ export class GraceQueueLite {
   private reopenRenataDone(): void {
     this.openSurface = null; this.chipReturn = null;
     this.subIdx = 0; this.submissionPage = 0;   // SUBMISSIONS[0] is Renata's
-    this.storyDone = true; this.ownCutShown = true; this.playing = false;
+    this.storyDone = true; this.playing = false;
     this.mode = 'list';
     this.bump();
   }
@@ -1857,7 +1881,6 @@ export class GraceQueueLite {
     }
     this.openSurface = null;
     this.mode = this.caughtUp() ? 'done' : 'board';
-    if (this.storyOffer && !veraDay.recordOpened) { this.recordAdmin = true; this.openVeraRecord(); }
 
     this.bump();
   }
@@ -1876,7 +1899,7 @@ export class GraceQueueLite {
   }
   /** ⚑ S382 — what the platform has up or is about to bring forward; a change while minimised brings the window back */
   private platformWants(): string {
-    return [this.mode, this.veraPage ?? '', this.kitPopin, this.storyOffer, this.maltaPending, this.cascadeConduct, this.pauseOpen, this.subComplete(SUBMISSIONS[0]) && !veraDay.distributed].join('|');
+    return [this.mode, this.veraPage ?? '', this.kitPopin, this.memoryCard, this.maltaPending, this.cascadeConduct, this.pauseOpen, this.subComplete(SUBMISSIONS[0]) && !veraDay.distributed].join('|');
   }
   private minimisedT = 0;
   private minimisedWant = '';
@@ -1924,7 +1947,7 @@ export class GraceQueueLite {
       this.storyDone = true;
       // ⚑ S386 — the story done, the published version is on the screen (after any cut still being made). ⚑ S357fr / 16-5:
       //   it waits for her Play like the film before it (her own 2014 cut still comes on its end, or on the first Back)
-      if (this.renataOpen()) { this.ownCutShown = false; if (!this.cutQueue.length) { this.playT = 0; this.playing = false; } }
+      if (this.renataOpen() && !this.cutQueue.length) { this.playT = 0; this.playing = false; }
       if (!ledger.records.includes('e3-job-done')) ledger.records.push('e3-job-done');
       if (this.workDone() >= maltaAfter()) this.armMalta();
       if (this.rosterComplete() && !ledger.records.includes('e3-day-done')) ledger.records.push('e3-day-done');
@@ -2107,7 +2130,7 @@ export class GraceQueueLite {
       if (this.mode === 'list' && !this.openSurface && this.current()) ids.delete('board-back');
       if (this.veraPage === 'send') ids.add(this.sendReceipt ? 'vera-send-close' : 'vera-send');
       if (this.editorSendPending) ids.add('vera-send');   // ⚑ S403 — the editor's own send (default visit)
-      if (this.storyOffer) ids.add('update-accept');
+      if (this.memoryCard) ids.add('memory-look');   // ⚑ S425 — the memory's Look back (was Kindredraft's Install)
       if (this.kitPopin) ids.add('kit-popin-open');
       if (this.veraPage === 'kit') ids.add(this.kitApproved ? 'vera-kit-close' : 'vera-kit-approve');   // S283: a finished job's one way on
       // ⚑ S406 / H2 — and never through a panel: a ring on something a panel lies over is not drawn
@@ -2169,8 +2192,16 @@ export class GraceQueueLite {
     //   to jump to the middle of the board and leave its own strip as bare wallpaper. It now grows IN PLACE: docked to
     //   the right edge as always, wider to the left over the board, so it reads as the same window, larger.
     // ⚑ S368 / F01·F02 — and since job 16 it never grows at all: ONE fixed width in its own reserved column (MIRROR_W)
-    const w = MIRROR_W, x = W - w;
+    // ⚑ S425 (storyboard beat 10) — …except for her Notes: the same window, the same size, comes in over the memory page's right
+    //   half, to the middle of the monitor (in view on a phone held upright too, where the column is cut at the screen's edge),
+    //   in MIRROR_SLIDE_STEPS steps; its column shows the desktop behind it meanwhile; it goes back the same way after Nuala's message
+    const w = MIRROR_W, home = W - w, mid = Math.round((W - w) / 2);
+    const x = Math.round(home + (mid - home) * this.mirrorSlide);
     const h = H - 30;
+    if (this.mirrorSlide > 0) {
+      ctx.save(); ctx.beginPath(); ctx.rect(home - MIRROR_GAP, 0, w + MIRROR_GAP, h); ctx.clip(); aero.wallpaper(ctx, W, H); ctx.restore();
+      px(ctx, x + 3, 3, w, h, ERA3.glassEdge);   // the window's shadow on what it lies over
+    }
     // ⚑ S349 / T44 — her phone's window wears the PHONE's idiom, not her employer's: the light bar and hairline of a 2016
     //   phone (iOS 7's flat grammar), dark title, the grouped grey ground — a different maker's software on the same desk
     px(ctx, x, 0, w, h, PHONE.bg); px(ctx, x, 0, w, 25, PHONE.bar); px(ctx, x, 24, w, 1, PHONE.hairline);
@@ -2238,7 +2269,7 @@ export class GraceQueueLite {
     //   the whole picture, and it is worth the beat: the machine has a life
     //   that is not the shift, and she has put the shift down to look at it.
     if (this.minimised) { this.drawTaskButton(ctx, H, false); return; }
-    const title = this.veraPage === 'removals' ? vera.removals.title : this.veraPage === 'record' ? vera.record.title : this.veraPage === 'kit' ? vera.kit.title : this.veraPage === 'send' ? vera.send.title : this.mode === 'signin' || this.mode === 'consent' ? q.app.shellTitle
+    const title = this.veraPage === 'removals' ? vera.removals.title : this.veraPage === 'record' ? vera.memory.card : this.veraPage === 'kit' ? vera.kit.title : this.veraPage === 'send' ? vera.send.title : this.mode === 'signin' || this.mode === 'consent' ? q.app.shellTitle
       : this.mode === 'board' || this.mode === 'done' ? q.app.boardTitle
         : this.openSurface ? this.openSurface.windowTitle
           : q.app.title;
@@ -2372,42 +2403,193 @@ export class GraceQueueLite {
    * variable that does not matter. Everything the board can be arranged into
    * ends the same way.
    */
-  private openVeraRecord(): void {
-    this.storyOffer = false; this.veraPage = 'record'; this.recordSent = false;
+  /** ⚑ S425 (storyboard beat 9) — Look back: Kindredraft's page opens on her story as GracePlatform published it. The record is
+   *  quiet while it is up (no guide, glow or music), and the phone holds its messages (her Notes come here, beat 10). */
+  private openMemory(): void {
+    this.memoryCard = null; this.veraPage = 'record'; this.recordSent = false; this.memoryT = 0;
     this.phone.bannersHidden = true;
     veraDay.recordOpened = true; veraDay.quiet = true;
     this.lambyGuide?.press('lg-x'); this.startPanel.close(); this.pauseOpen = false;
     this.bump();
   }
+  /** ⚑ S425 — the page turns to her own words as she sent them, the cuts struck through (her press, or the piece's once the published
+   *  story has had its reading time); her Notes are due once those words have had theirs */
+  private turnMemory(): void {
+    if (this.veraPage !== 'record' || this.recordSent) return;
+    this.recordSent = true; this.memoryT = 0;
+    if (this.memoryStage === 'idle') { this.memoryStage = 'wait'; this.memoryStageT = 0; }
+    this.bump();
+  }
+  /** ⚑ S425 — Close on the memory page: back to the board. If her Notes have not come yet they still come, over the board. */
+  private closeMemory(): void {
+    if (this.veraPage !== 'record') return;
+    this.veraPage = null; this.mode = 'board';
+    veraDay.recordClosed = true; veraDay.quiet = false;
+    if (this.memoryStage === 'idle') { this.memoryStage = 'wait'; this.memoryStageT = 0; }
+    this.phone.bannersHidden = false;
+    this.bump();
+  }
+  /** ⚑ S425 — the memory page is open and still: her Notes have come and gone (or are on the lock screen). The phone may deliver to it
+   *  and the kit's pop-in may come over it ("if she leaves it open, the evening still comes"). */
+  private get memoryPageStill(): boolean { return this.veraPage === 'record' && (this.memoryStage === 'lock' || this.memoryStage === 'done'); }
+  /** ⚑ S425 — the Handset Window is out of its column, or her Notes are on it: a felt beat (nothing speaks, glows or plays) */
+  private get memoryForward(): boolean { return this.memoryStage === 'notes' || this.memoryStage === 'lock' || this.mirrorSlide > 0; }
+  /** ⚑ S425 — the memory's clock (Act II, beats 8–10), each step on the one before it, nothing on a timer she must beat */
+  private updateMemory(dt: number): void {
+    // beat 8 — Not now works once: the card comes back with Look back alone at the board's next quiet moment
+    if (this.memoryDeclined && !this.memoryCard && !veraDay.recordOpened) {
+      const quiet = (this.mode === 'board' || this.mode === 'done') && !this.veraPage && !this.openSurface && !this.pauseOpen && !this.saver
+        && !this.startMap.active && !this.minimised && !this.lambPriority && !this.kitPopin && !this.phone.voiceBusy && this.phone.queued === 0;
+      this.memoryQuietT = quiet ? this.memoryQuietT + dt : 0;
+      if (this.memoryQuietT >= MEMORY_AGAIN_SECONDS) { this.memoryCard = 'again'; this.memoryQuietT = 0; this.bump(); }
+    }
+    // beat 9 — the published story read, the page turns by itself to her own words (the piece takes her there)
+    if (this.veraPage === 'record') {
+      this.memoryT += dt;
+      if (!this.recordSent && this.memoryT >= readHold([vera.record.publishedText])) this.turnMemory();
+    }
+    // beat 10 — her Notes, once her own words have had their reading time on the page (or a breath on the board, if she closed it)
+    if (this.memoryStage === 'wait') {
+      this.memoryStageT += dt;
+      const onPage = this.veraPage === 'record' && this.recordSent;
+      const breath = onPage ? readHold([OWN_WORDS]) : MEMORY_CLOSED_BREATH;
+      const clear = (onPage || ((this.mode === 'board' || this.mode === 'done') && !this.veraPage && !this.openSurface))
+        && !this.pauseOpen && !this.saver && !this.startMap.active && !this.minimised && !this._systemModal && !this.kitPopin
+        && !this.phone.voiceBusy && this.phone.queued === 0 && !this.floppy.open && !voiceHeld();
+      if (!clear && !onPage) this.memoryStageT = Math.min(this.memoryStageT, breath - 0.5);
+      if (clear && this.memoryStageT >= breath) {
+        // the window comes in over the page's right half and opens her Notes; the newest note types at the top (phoneE3)
+        this.memoryStage = 'notes'; this.memoryStageT = 0; this.mirrorMin = false; this.mirrorReading = false;
+        this.lambPriority = false; this.lambLines = null; this.lambyGuide?.press('lg-x'); this.startPanel.close();
+        this.phone.bannersHidden = false;
+        if (!this.phone.conductMemoryNotes()) { this.memoryStage = 'lock'; this.phone.sleep(); this.earn('nuala'); }
+        this.bump();
+      }
+    } else if (this.memoryStage === 'notes') {
+      // written and held, the phone goes back to its lock screen (phoneE3); then Nuala's message lands there, as built
+      if (!this.phone.conductingNotes) { this.memoryStage = 'lock'; this.memoryStageT = 0; this.earn('nuala'); this.bump(); }
+    } else if (this.memoryStage === 'lock') {
+      this.memoryStageT += dt;
+      if (this.phone.delivered('nuala') && !this.phone.voiceBusy) {
+        // Nuala's message read: the window goes back to its column; then the campaign kit is brought to her (Act III, as built)
+        this.memoryStage = 'done'; this.kitPending = true;
+        this.bump();
+      }
+    }
+    // the window's place, stepped (≤ 8 Hz; under reduced motion in one step)
+    const want = this.memoryStage === 'notes' || this.memoryStage === 'lock' ? 1 : 0;
+    if (this.mirrorSlide !== want) {
+      if (reducedMotion()) { this.mirrorSlide = want; this.mirrorSlideT = 0; this.bump(); }
+      else {
+        this.mirrorSlideT += dt;
+        if (this.mirrorSlideT >= 1 / MIRROR_SLIDE_HZ) {
+          this.mirrorSlideT = 0;
+          const step = 1 / MIRROR_SLIDE_STEPS;
+          this.mirrorSlide = want > this.mirrorSlide ? Math.min(1, this.mirrorSlide + step) : Math.max(0, this.mirrorSlide - step);
+          this.bump();
+        }
+      }
+    } else this.mirrorSlideT = 0;
+  }
+  /** ⚑ S425 — the probes' handle on Act II (read-only) */
+  get memoryState(): Record<string, unknown> {
+    return { card: this.memoryCard, declined: this.memoryDeclined, page: this.veraPage === 'record' ? (this.recordSent ? 'own' : 'published') : null,
+      pageT: Math.round(this.memoryT * 10) / 10, stage: this.memoryStage, slide: this.mirrorSlide, notes: this.phone.notesNow };
+  }
 
-  /** ⚑ S362 / H42b (his headset, 10 Nov, 21:13: the "Kindred Heart" draft "should appear differently") — Kindredraft's offer was a
-   *  bare 36 px strip. It is now a pop-in over the board that shows the system's DRAFT of her 2014 story typing itself in, tagged
-   *  as a suggestion that has not been approved (operable register: the platform's own voice, a little proud of itself). The
-   *  whole card is the press (`update-accept`); it does not wait for the typing to finish. */
-  private drawStoryOffer(ctx: CanvasRenderingContext2D, c: aero.AeroContent): void {
-    const O = vera.offer;
-    const w = Math.min(380, c.w - 32), h = 138, x = c.x + Math.floor((c.w - w) / 2), y = c.y + 58;
-    this.cover('kindredraft', x, y, w + 3, h + 4);   // S406 / H2: its whole card is its press (below); nothing under it is offered
+  /** ⚑ S425 (UiB job 35 Part D, Act II, storyboard beat 8; his 20 Nov 16-13/16-14: "Kindredraft as a memory, like Facebook's") —
+   *  Kindredraft's small card over the board, in the page's own colours: "Kindredraft · Memories", "You have a memory from 2014.",
+   *  "Look back at your story?", Look back · Not now (Look back alone when it comes back). No text box, no typing, no Install.
+   *  (S362's Install card with its DRAFT box, `drawStoryOffer`, is retired; 76d0671d holds it.) Its body takes a press and
+   *  nothing under it is offered (S406 / H2). */
+  private drawMemoryCard(ctx: CanvasRenderingContext2D, c: aero.AeroContent): void {
+    const M = vera.memory, again = this.memoryCard === 'again';
+    const w = Math.min(340, c.w - 32), h = 120, x = c.x + Math.floor((c.w - w) / 2), y = c.y + 62;
+    this.cover('kindredraft', x, y, w + 3, h + 4);
     px(ctx, x + 3, y + 4, w, h, ERA3.glassEdge); px(ctx, x, y, w, h, ERA3.white);
-    px(ctx, x, y, w, 26, ERA3.lambBand); px(ctx, x, y + 25, w, 1, ERA3.glassEdge);
-    studioFont(ctx, 13, true); ctx.fillStyle = ERA3.titleText; ctx.fillText(O.title, x + 10, y + 6);
-    const tag = O.draftTag; studioFont(ctx, 10, true); const tw = Math.ceil(ctx.measureText(tag).width) + 12;
-    px(ctx, x + w - tw - 8, y + 5, tw, 16, ERA3.amber); ctx.fillStyle = ERA3.white; ctx.fillText(tag, x + w - tw - 2, y + 8);
-    studioFont(ctx, 12); ctx.fillStyle = ERA3.ink; ctx.fillText(O.sub, x + 10, y + 32);
-    // the draft, typed in
-    px(ctx, x + 10, y + 52, w - 20, 46, ERA3.sysBand); px(ctx, x + 10, y + 52, 3, 46, ERA3.amber);
-    const chars = Math.max(0, Math.floor((this.storyOfferT - 0.6) * STORY_DRAFT_CPS));
-    studioFont(ctx, 12); ctx.fillStyle = ERA3.ink;
-    let left = chars, tail = '', ty = y + 58;
-    wrapText(ctx, O.draft, w - 40).forEach((ln, i) => {
-      const seg = ln.slice(0, Math.max(0, left)); left -= ln.length + 1;
-      if (seg) { ctx.fillText(seg, x + 20, y + 58 + i * 16); tail = seg; ty = y + 58 + i * 16; }
-    });
-    if (Math.floor(this.storyOfferT * 2) % 2 === 0 && chars < O.draft.length + 10) px(ctx, x + 21 + Math.ceil(ctx.measureText(tail).width), ty, 1, 13, ERA3.ink);
-    studioFont(ctx, 10); ctx.fillStyle = ERA3.greyDk;
-    wrapText(ctx, O.draftBy, w - 108).slice(0, 3).forEach((ln, i) => ctx.fillText(ln, x + 10, y + 104 + i * 11));
-    aero.button(ctx, x + w - 88, y + h - 34, 78, 26, O.install, { primary: true, size: 12 });
-    this.rects.unshift({ x, y, w, h, id: 'update-accept' });
+    px(ctx, x, y, w, 28, ERA3.titleA); px(ctx, x, y + 27, w, 1, ERA3.glassEdge);
+    studioFont(ctx, 13, true); ctx.fillStyle = ERA3.titleText; ctx.fillText(M.card, x + 12, y + 7);
+    studioFont(ctx, 14); ctx.fillStyle = ERA3.ink; ctx.fillText(M.line, x + 12, y + 40);
+    studioFont(ctx, 12); ctx.fillStyle = ERA3.greyDk; ctx.fillText(M.ask, x + 12, y + 62);
+    const bh = 26, by = y + h - bh - 10;
+    studioFont(ctx, 12);
+    const lw = Math.ceil(ctx.measureText(M.look).width) + 30, nw = Math.ceil(ctx.measureText(M.notNow).width) + 26;
+    const lx = x + w - 12 - lw;
+    aero.button(ctx, lx, by, lw, bh, M.look, { primary: true, size: 12 });
+    if (!again) aero.button(ctx, lx - 8 - nw, by, nw, bh, M.notNow, { size: 12 });
+    // its own buttons first (above the cover), then nothing else under it
+    if (!again) this.rects.unshift({ x: lx - 8 - nw, y: by, w: nw, h: bh, id: 'memory-notnow' });
+    this.rects.unshift({ x: lx, y: by, w: lw, h: bh, id: 'memory-look' });
+  }
+
+  /** ⚑ S425 (storyboard beat 9; 16-14) — KINDREDRAFT'S MEMORY PAGE, "Vera · 2014". First her story as GracePlatform published it (as
+   *  built), on its paper, and under it, small, the rule it was edited with (Lesson 1's); See what you wrote · Close. Turned, her
+   *  own words as she sent them, the cuts struck through in the same red as Renata's (S386's own cut, moved here from the end of
+   *  Lesson 1), on the page's LEFT half: the right half is where the Handset Window comes in with her Notes (beat 10), beside
+   *  them; then Close alone. The buttons sit at the left, never under the window. Felt reading: no guide, glow, audio or filing.
+   *  (S307's record — As published / As sent, the filed tag, the mentor's note, the footer, Next, Close record — is retired:
+   *  veraSurfaces `drawVeraArchive` at 76d0671d.) */
+  private drawMemoryPage(ctx: CanvasRenderingContext2D, a: aero.AeroContent): void {
+    const M = vera.memory, x = a.x + 12, w = a.w - 24;
+    px(ctx, a.x, a.y, a.w, a.h, ERA3.sysBand);
+    px(ctx, a.x, a.y, a.w, 39, ERA3.titleA);
+    studioFont(ctx, 18, true); ctx.fillStyle = ERA3.titleText; ctx.fillText(vera.visual.archiveBrand, x, a.y + 7);
+    studioFont(ctx, 13); const tw = Math.ceil(ctx.measureText(vera.visual.archiveTitle).width);
+    ctx.fillText(vera.visual.archiveTitle, a.x + a.w - 12 - tw, a.y + 11);
+    const top = a.y + 54, bh = 28, by = a.y + a.h - bh - 4;
+    const paper = (px0: number, py0: number, pw: number, ph: number): void => {
+      px(ctx, px0 + 2, py0 + 2, pw, ph, ERA3.glassEdge); px(ctx, px0, py0, pw, ph, ERA3.white); px(ctx, px0, py0, pw, 1, ERA3.glassEdge);
+    };
+    let pw: number, px0: number, bottom: number;
+    if (!this.recordSent) {
+      // her story as it was published: one paper, in the middle, at a reading size
+      pw = Math.min(430, w - 16); px0 = a.x + Math.floor((a.w - pw) / 2);
+      studioFont(ctx, 14); const lines = wrapText(ctx, vera.record.publishedText, pw - 32);
+      const ph = 26 + lines.length * 21;
+      paper(px0, top, pw, ph);
+      ctx.fillStyle = ERA3.ink; lines.forEach((ln, i) => ctx.fillText(ln, px0 + 16, top + 14 + i * 21));
+      bottom = top + ph;
+    } else {
+      // her own words as she sent them, on the page's left half, the cuts struck through
+      pw = Math.floor((w - 16) / 2); px0 = x;
+      const runs: TextRun[] = vera.ownCut.runs.map(r => ({ text: r.t, state: r.cut ? 'cut' : 'kept' }));
+      const room = by - 30 - top - 28;
+      let size = 15, lines: TextRun[][] = [];
+      for (; size >= 11; size--) { studioFont(ctx, size); lines = this.wrapRuns(ctx, runs, pw - 36); if (lines.length * (size + 6) <= room) break; }
+      const ph = 28 + lines.length * (size + 6);
+      paper(px0, top, pw, ph);
+      px(ctx, px0 + 12, top + 12, 3, ph - 24, ERA3.memberSpine);
+      lines.forEach((line, i) => {
+        let lx = px0 + 24; const ly = top + 14 + i * (size + 6);
+        for (const part of line) {
+          const tw2 = ctx.measureText(part.text).width;
+          ctx.fillStyle = part.state === 'cut' ? ERA3.alarm : ERA3.ink;
+          ctx.fillText(part.text, lx, ly);
+          if (part.state === 'cut') {   // the strike starts at the word, not at the space before it
+            const lead = ctx.measureText(part.text.match(/^\s*/)?.[0] ?? '').width;
+            px(ctx, Math.round(lx + lead), ly + Math.round(size / 2), Math.round(tw2 - lead), 1, ERA3.alarm);
+          }
+          lx += tw2;
+        }
+      });
+      bottom = top + ph;
+    }
+    studioFont(ctx, 11); ctx.fillStyle = ERA3.greyDk;
+    wrapText(ctx, M.editedWith, pw).forEach((ln, i) => ctx.fillText(ln, px0, bottom + 10 + i * 15));
+    // her two presses (See what you wrote, until the page has turned; Close), at the page's left
+    studioFont(ctx, 12);
+    let bx = x;
+    if (!this.recordSent) {
+      const sw = Math.ceil(ctx.measureText(M.see).width) + 30;
+      aero.button(ctx, bx, by, sw, bh, M.see, { primary: true, size: 12 });
+      this.rects.push({ x: bx, y: by, w: sw, h: bh, id: 'memory-see' });
+      bx += sw + 10;
+    }
+    const cw = Math.ceil(ctx.measureText(M.close).width) + 34;
+    aero.button(ctx, bx, by, cw, bh, M.close, { primary: this.recordSent, size: 12 });
+    this.rects.push({ x: bx, y: by, w: cw, h: bh, id: 'memory-close' });
+    // the evening still comes: the campaign kit's pop-in, over the still page (Act III's first beat, as built)
+    if (this.kitPopin) this.drawKitPopin(ctx, a);
   }
 
   /** ⚑ S362 / H41 (his headset, 10 Nov, 21:11: the campaign kit "should arrive as a pop-in marked urgent") — the kit's arrival: a
@@ -2434,7 +2616,7 @@ export class GraceQueueLite {
   /** All copy is data. Reading her record is felt: no guide, glow, audio, or witness entry. */
   private drawVeraPage(ctx: CanvasRenderingContext2D, c: aero.AeroContent): void {
     const hit = (r: Rect): void => { this.rects.push(r); };
-    if (this.veraPage === 'record') { drawVeraArchive(ctx, c, this.recordSent, this.recordAdmin, this.recordPage, hit); return; }
+    if (this.veraPage === 'record') { this.drawMemoryPage(ctx, c); return; }   // ⚑ S425 — Kindredraft's memory page
     if (this.veraPage === 'removals') { this.drawRemovals(ctx, c); return; }
     if (this.veraPage === 'send') {
       drawVeraDistribution(ctx, c, this.runs(SUBMISSIONS[0], false).map(r => r.text).join(''), this.sendReceipt, hit); return;
@@ -2544,7 +2726,7 @@ export class GraceQueueLite {
     setFont(ctx, 11); ctx.fillStyle = ERA3.grey;
     ctx.fillText(q.app.roleBadge, c.x, c.y + 18);
     px(ctx, c.x, c.y + 36, c.w, 1, ERA3.glassEdge);
-    if (!this.storyOffer && this.offer) this.drawOffer(ctx, c, this.offer);
+    if (!this.memoryCard && this.offer) this.drawOffer(ctx, c, this.offer);
     else if (!this.pauseOpen) {
       setFont(ctx, 11); const wbw = Math.ceil(ctx.measureText(q.app.weekButton).width) + 24, wbx = c.x + c.w - wbw, wby = c.y + 4;
       aero.button(ctx, wbx, wby, wbw, 24, q.app.weekButton, { size: 11 });
@@ -2616,7 +2798,7 @@ export class GraceQueueLite {
     }
     if (this.pauseOpen) this.drawPauseCard(ctx, c);
     // ⚑ S362 / H41 + H42b — the two pop-ins sit over the board, last, so nothing is drawn across them
-    if (this.storyOffer) this.drawStoryOffer(ctx, c);
+    if (this.memoryCard) this.drawMemoryCard(ctx, c);
     if (this.kitPopin) this.drawKitPopin(ctx, c);
   }
 
@@ -3149,24 +3331,14 @@ export class GraceQueueLite {
    * the platform draws nothing on her film but its own red selections while it cuts); a timeline under it; beside it the
    * film's label and the platform's own list of what it took; the rule's band under all of it. Each Apply cuts the film
    * in front of the visitor (`startCuts`), one cut at a time. Story done, the published version plays — "As GracePlatform
-   * publishes it · 0:20", one mug, one pair of hands, "Free from dependency" on it — and when it ends, Vera's own 2014 cut
-   * comes on its own screen (his: "after, on its own screen, not beside the film"). Every moment of it follows a press on
+   * publishes it · 0:20", one mug, one pair of hands, "Free from dependency" on it. (Until S425, when it ended Vera's own 2014
+   * cut came on its own screen; it is met on Kindredraft's memory page now, Act II.) Every moment of it follows a press on
    * this same screen, so the visitor is already facing it: nothing here waits on, or is set off by, a look.
    */
   private drawRenataStudio(ctx: CanvasRenderingContext2D, c: aero.AeroContent, sub: SubmissionDef): void {
     const video = sub.video!;
-    if (this.storyDone && this.ownCutShown) {
-      // Vera's own 2014 cut, on its own screen, and the one way on
-      const bh = 34;
-      this.drawOwnCut(ctx, c.x + 1, c.y + 1, c.w - 2, c.h - bh - 10, true);
-      const bw = 143, bx = c.x + c.w - bw - 2, by = c.y + c.h - bh;
-      // ⚑ S403 — the default visit: the send is offered here too (the film may end before she presses it), then its receipt
-      const send = this.editorSendPending;
-      if (this.editorReceipt) this.drawSendLine(ctx, c.x + 4, by, bx - c.x - 16, 2);
-      aero.button(ctx, bx, by, bw, 28, send ? vera.send.editorPress : this.boardBackLabel(), { primary: true, size: 11 });   // ⚑ S403b
-      this.rects.push({ x: bx, y: by, w: bw, h: 28, id: send ? 'vera-send' : 'board-back' });
-      return;
-    }
+    // (⚑ S386's own-cut screen after the published version — "Your story was edited with this rule too (2014)" and its Back — is
+    //  retired at S425: her own cut is met on Kindredraft's memory page, Act II; 76d0671d holds it)
     // the way back, and the system's one line
     let sysX = c.x;
     if (!this.storyDone) {
@@ -3319,32 +3491,8 @@ export class GraceQueueLite {
     }
   }
 
-  /** ⚑ S332 — Vera's own 2014 sentence, as sent, with the cut her mentor's rule made in it, in the same red as Renata's */
-  private drawOwnCut(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, big = false): void {
-    const O = vera.ownCut, head = big ? 17 : 13, top = big ? 18 : 13;   // ⚑ S386: on its own screen it reads larger
-    px(ctx, x - 1, y - 1, w + 2, h + 2, ERA3.alarm);
-    px(ctx, x, y, w, h, ERA3.white);
-    px(ctx, x, y, w, 4, ERA3.alarm);
-    studioFont(ctx, head, true); ctx.fillStyle = ERA3.alarm;
-    let yy = y + 12;
-    for (const ln of wrapText(ctx, O.heading, w - 20)) { ctx.fillText(ln, x + 10, yy); yy += head + 4; }
-    studioFont(ctx, 10); ctx.fillStyle = ERA3.greyDk; ctx.fillText(O.meta, x + 10, yy + 2); yy += 20;
-    px(ctx, x + 10, yy, 3, h - (yy - y) - 32, ERA3.memberSpine);
-    const runs: TextRun[] = O.runs.map(r => ({ text: r.t, state: r.cut ? 'cut' : 'kept' }));
-    let size = top, lines: TextRun[][] = [];
-    for (; size >= 10; size--) { studioFont(ctx, size); lines = this.wrapRuns(ctx, runs, w - 34); if (lines.length * (size + 5) <= h - (yy - y) - 36) break; }
-    lines.forEach((line, i) => {
-      let lx = x + 22; const ly = yy + 2 + i * (size + 5);
-      for (const part of line) {
-        const pw = ctx.measureText(part.text).width;
-        ctx.fillStyle = part.state === 'cut' ? ERA3.alarm : ERA3.ink;
-        ctx.fillText(part.text, lx, ly);
-        if (part.state === 'cut') px(ctx, lx, ly + Math.round(size / 2), pw, 1, ERA3.alarm);
-        lx += pw;
-      }
-    });
-    studioFont(ctx, 10, true); ctx.fillStyle = ERA3.greyDk; ctx.fillText(O.rule, x + 10, y + h - 20);
-  }
+  // (⚑ S332's drawOwnCut — her own 2014 sentence with the rule's cut, on the editor — is retired at S425; drawMemoryPage draws
+  //  ownCut.runs on Kindredraft's page. 76d0671d holds it.)
 
   private drawList(ctx: CanvasRenderingContext2D, c: aero.AeroContent): void {
     /* eslint-disable-next-line no-param-reassign */
@@ -3771,19 +3919,19 @@ export class GraceQueueLite {
 
     const vh = this.rects.find(rr => hit(rr, x, y));
     if (vh?.id === 'testimony-prev' || vh?.id === 'testimony-next') { this.submissionPage += vh.id === 'testimony-next' ? 1 : -1; this.bump(); return; }
-    if (vh?.id === 'vera-as-sent' || vh?.id === 'vera-as-published') {
-      this.recordPage = 0; this.recordSent = vh.id === 'vera-as-sent'; this.bump(); return;
+    // ⚑ S425 (Act II) — the memory: Look back, Not now (once; logged), See what you wrote, Close
+    if (vh?.id === 'memory-look') { this.openMemory(); return; }
+    if (vh?.id === 'memory-notnow') {
+      this.memoryCard = null; this.memoryDeclined = true; this.memoryQuietT = 0;
+      if (!ledger.records.includes('e3-memory-notnow')) ledger.records.push('e3-memory-notnow');
+      this.bump(); return;
     }
-    if (vh?.id === 'vera-record-next' || vh?.id === 'vera-record-prev') { this.recordPage += vh.id === 'vera-record-next' ? 1 : -1; this.bump(); return; }
+    if (vh?.id === 'memory-see') { this.turnMemory(); return; }
+    if (vh?.id === 'memory-close') { this.closeMemory(); return; }
     if (vh?.id === 'kit-popin-open') { this.openKit(); return; }
     if (vh?.id === 'removals-back') { if (this.veraPage === 'removals') this.veraPage = null; this.bump(); return; }
-    if (vh?.id === 'vera-record-close') {
-      // ⚑ S332 — Nuala's message arrives, at rest; once it is read the campaign kit is brought to her (updateConnections)
-      this.phone.bannersHidden = false; this.earn('nuala'); this.kitPending = true;
-      veraDay.recordClosed = true; veraDay.quiet = false;
-      this.veraPage = null; this.mode = 'board';
-      this.bump(); return;   // S327: the phone is not turned to its inbox by itself
-    }
+    // (S332's Close record — Nuala earned on it, the kit pending — is retired at S425: Nuala's message lands after her Notes,
+    //  `updateMemory`; 76d0671d holds it)
     if (vh?.id === 'vera-send') {
       veraDay.distributed = true; this.sendReceipt = true;
       // ⚑ S403b — the record files the receipt the screen showed: the editor's in the default visit, the page's in ?cut=full
@@ -3840,13 +3988,11 @@ export class GraceQueueLite {
     if (r.id === 'consent-decline') { this.decideConsent(false); return; }
     // R4-04 (S171): Back FROM THE RECORD returns to the job she had open — a finished story
     // keeps its "done" row; only Back to today from the story itself clears it
-    // ⚑ S386 — Renata's story done: the first Back shows Vera's own 2014 cut, on its own screen, before the day goes on
-    if (r.id === 'board-back' && !this.chipReturn && this.storyDone && this.renataOpen() && !this.ownCutShown && this.mode === 'list' && !this.openSurface) {
-      this.ownCutShown = true; this.playing = false; this.bump(); return;
-    }
+    // (S386's first Back to Vera's own 2014 cut, on its own screen, is retired at S425: her own cut is met on Kindredraft's memory
+    //  page, Act II; 76d0671d holds it)
     if (r.id === 'board-back') { if (!this.chipReturn) this.storyDone = false; this.backToBoard(); return; }
     if (r.id === 'next-story') { this.nextSubmission(); this.bump(); return; }
-    if (r.id === 'update-accept') { this.installOffer(); return; }   // S227 — she confirms the platform's update
+    if (r.id === 'update-accept') { this.installOffer(); return; }   // S227 — she confirms the platform's tool update (S425: no longer Kindredraft's)
     if (r.id.startsWith('task-')) { this.openTask(Number(r.id.slice(5))); return; }
     if (this.openSurface && this.openSurface.press(r.id)) { this.bump(); return; }
     if (r.id === 'apply') { this.apply(); return; }

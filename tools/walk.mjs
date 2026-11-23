@@ -218,8 +218,10 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
  * the piece in its first ten seconds, which is what the first run did.
  */
 const PREFER = [
-  /^vera-send$|^vera-as-sent$|^vera-kit-approve$|^vera-take-down$/i,
-  /^vera-send-close$|^vera-record-close$|^vera-kit-close$/i,
+  // ⚑ S425 (UiB job 35 Part D, Act II) — 2016's memory: Look back (never its Not now), See what you wrote, then Close (Kindredraft's
+  //   Install, As sent and Close record are retired; her Notes come with her own words on the page, or over the board after Close)
+  /^vera-send$|^memory-look$|^memory-see$|^vera-kit-approve$|^vera-take-down$/i,
+  /^vera-send-close$|^memory-close$|^vera-kit-close$/i,
   // ⚑ S245 — the opening film (96 s) is MANDATORY and has no Skip: Show me is the only way on, and the walker sits
   //   the whole film out (stallCap below; the scripted entrance waits for the step after it).
   /^setup-choice-0$|^setup-advert-play-0$|^setup-sound-on$|^setup-close$/i,
@@ -1041,7 +1043,8 @@ async function main() {
       if (REFUSE && /^apply$|^places-add$|^family-reply-|^group-post$|^vera-kit-approve$/.test(id)) return false;
       if (id === 'next-story') return false;
     }
-    if (st?.era === 'e3' && id === 'vera-as-published') return false;
+    // ⚑ S425 — the memory card's Not now is a reader's refusal, never the way on (Look back is)
+    if (st?.era === 'e3' && id === 'memory-notnow') return false;
     if (st?.era === 'e3' && has('e3-two-jobs') && (/^task-\d+$/.test(id) || id === 'update-accept')) return false;
     return true;
   };
