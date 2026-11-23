@@ -291,14 +291,16 @@
  },
  "pointCloud": {
   "_note": "S92 — THE TWO VISUAL TIERS (REINTERP_THE_CLOSE_TREATMENT_2026-08-17.md §3, the piece's aesthetic law made literal: the witness side is the sharp side, surveillance is high-definition, life is soft). TWO populations, not one: APPARATUS nodes (data/strings/close_network.json's labels, one node per label, exactly) render COOL/#8899BB — already the piece's own witness-blue (witnessCold/moonlight), no new hue — sharp, full-opacity, LABELLED, and linked ONLY to each other in a guaranteed-connected chain (+ a few cross-links): traceable end to end, by construction. PERSON nodes (the dense core+satellite population, unchanged in count from the old single-tier build) render WARM (the lamp pool) at a capped, softer opacity, carry NO label and NO link to anything — not to the apparatus, not to each other. The system documents people; the piece refuses to: there is no line a player can follow from one soft node to another, and no line from a soft node to a labelled one. Backdrop stays night-blue (Round 18: never black).",
+  "_docS422": "⚑ S422 (UiB job 35 Part B; his headset run of 20 Nov at the Close: C-2 \"the stars should be down from the ceiling … they should be floating around us so we can read this\", C-7 \"why are the panels so high and lopsided? … it should be in front of me, on my eye level\", C-6 \"the stars in front\"). The sky is laid out FROM THE EYE: `center` is the seat's eye (app.ts EYE), so the constellation comes down from the stickers on the ceiling (`ceilingAnchor`, `openFromScale`, unchanged) to sit round him. The four panels in a front arc at eye height, level (`eraBearingDeg` left to right, `panel.y` 0); Daniel's machine in front of him, under the panels and nearer, square (`machinePanel` `dist`, `downDeg`, `yawDeg` 0); each year's labelled stars in a column above its panel at reading distance (`labels`), the project's own documents higher, over the front; the warm stars round him, never on anything that is read. The sky no longer drifts (`driftDegPerSec` 0): the panels stay where they are. The S101–S380 numbers are kept in `_retiredS422`. Code: src/room/pointCloud.ts (the S101 layout is in 0ee79d30).",
+  "_retiredS422": { "center": [0, 1.45, 0.7], "innerClear": 0.7, "coreRadius": 1.45, "outerRadius": 3.2, "eraBearingDeg": [0, 90, 180, 270], "panelY": 0.46, "machinePanel": { "bearingDeg": 315, "scale": 2.5, "yawDeg": -16 }, "driftDegPerSec": 0.9, "_why": "the ring of four bearings 90° apart around a centre 0.29 m over the eye, the panels 0.75 m above the eye leaning down to it, the machine at 315° turned 16°, the whole sky drifting 0.9°/s: 'too high and lopsided' (C-7), labels at 2.2–3 m (C-2)" },
   "center": [
    0,
-   1.45,
+   1.16,
    0.7
   ],
-  "innerClear": 0.7,
-  "coreRadius": 1.45,
-  "outerRadius": 3.2,
+  "innerClear": 0.85,
+  "coreRadius": 1.6,
+  "outerRadius": 3.4,
   "coreCount": 230,
   "satelliteCount": 90,
   "nodeSize": 0.016,
@@ -341,11 +343,20 @@
   },
   "_docTheArcs": "⚑ S101 — ONE ARC PER ERA, AT ONE BEARING PER ERA. The apparatus nodes were a golden-angle spread, which is to say the network's shape said nothing at all; each anchor in data/strings/close_network.json now carries the era of the piece it grounds, and the geometry follows. Era 0 (the project's own frame) stays overhead where the ceiling was — the piece is looking at itself from underneath. Eras 1-4 hang at four bearings 90° apart, so reading the ending is the piece's one bodily gesture, the turn, spent one last time.",
   "eraBearingDeg": [
-   0,
-   90,
-   180,
-   270
+   -66,
+   -22,
+   22,
+   66
   ],
+  "labels": {
+   "_doc": "⚑ S422 (C-2) — the labelled stars at reading distance. `dist` metres from the eye (a label's 26 px letter in its 36 px row of `labelHeight` is 4.2 cm: 1.27° at 1.9 m, over the 0.8° floor with room); each year's stars in a column `columnOffsetDeg` from its panel's bearing, one a line at `eraElevDeg`, its label to its right (`gap` m after the star); the project's own documents (era 0) in the columns `frameColumnsDeg`, at `frameElevDeg`.",
+   "dist": 1.9,
+   "columnOffsetDeg": -18,
+   "eraElevDeg": [16, 20.5, 25, 29.5, 34],
+   "frameColumnsDeg": [-44, 6],
+   "frameElevDeg": [40, 44.5, 49, 53.5],
+   "gap": 0.02
+  },
   "arcSpreadDeg": 26,
   "_docCluster": "⚑ 2026-09-12 (Phase D): each era's anchors hang BESIDE its panel now, not under it — Sérgio: 'next to it is the cluster with the connected stars with the data used.' `clusterOffsetDeg` is how far round from the panel's bearing the arc is centred (to the right, in reading order: panel, its cluster, the next panel); `clusterY` its centre height and `clusterYSpread` its scatter, both metres relative to the seat's eye — BELOW the card's bottom edge on purpose, so the three hand-over links between eras (straight chords) pass under the next card rather than across its text.",
   "clusterOffsetDeg": 37,
@@ -355,20 +366,23 @@
   "panel": {
    "_doc": "The four information panels, one per era, hanging over each era's own arc — one atlas, one mesh, one draw call. They face the centre and do NOT billboard: the panel is where it is, and you turn to read it. Sizes are metres at `radius` from the seat; a 2.2 m card at 3.05 m is about 40° of the frame — wide, because since 2026-09-12 it carries the era's room plate on its left and a paragraph on its right (pointCloud.ts).",
    "radius": 3.05,
-   "y": 0.46,
+   "y": 0,
    "w": 2.2,
    "h": 1.1
   },
   "machinePanel": {
    "_doc": "⚑ S378 (UiB job 20 Part A, his 12 Nov: 'should we make one of the panels the computer') — the fifth place in the row: Daniel's machine, with the four rooms (same radius, same height, leaning to the eye like them), at the bearing between 2026 (270°) and 1997 (0°/360°), so the ring of the four years closes on the machine that carried them. A press anywhere on it opens the machine's page in the site viewer (src/frame/siteViewer/machine.ts). ⚑ S380 (UiB job 21 Part A, his 12 Nov: 'more retro and Low-poly'; 'just the CRT no desk') — it is Daniel's CRT itself now, the room's own boxes and a tapered back (src/room/closeCrt.ts), no desk; the flat card (`crt`/`plate` faces) and the far machine in the sky are retired. `scale` is the CRT's size against the room's: ×2.5 makes its case's front 1.35 × 1.1 m (a panel's height) and its glass 1.0 × 0.75 m, the foot hanging under the row.",
-   "bearingDeg": 315,
-   "scale": 2.5,
-   "yawDeg": -16,
+   "_docS422": "⚑ S422 (C-7) — in front of him, under the panels' row and nearer, like a monitor on a table: its glass centre `dist` m from the eye and `downDeg` under the eye line, upright and square (`yawDeg` 0). At ×`scale` its glass's 32 px letters are 2.4 cm at 1.6 m (0.86°; at ×2.5 and 3.05 m they were 4 cm, 0.75°), and the case's top stays under the panels' foot (−10°). Was bearing 315, ×2.5, turned −16°, in the ring (`_retiredS422`).",
+   "bearingDeg": 0,
+   "scale": 1.5,
+   "dist": 1.6,
+   "downDeg": 27,
+   "yawDeg": 0,
    "_docYaw": "⚑ S380 — the CRT turned 16° on its upright, its face toward the 2026 panel, so its right side and the tube's depth show from the seat (a CRT met dead ahead reads as a cut-out, S174 / R4-14). 0 faces the seat square."
   },
   "panelMineLabel": "IN THIS ROOM, YOU",
   "_docPanelMine": "⚑ S144: the label over the player's own lines on each era's panel at the Close (THE_RECORD_PLAN §3E) — two or three of the entries the record holds for that era, in the web's blue. Every player reads a different Close.",
-  "driftDegPerSec": 0.9,
+  "driftDegPerSec": 0,
   "fadeSeconds": 2.2
  }
 }

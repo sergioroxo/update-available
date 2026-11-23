@@ -256,6 +256,8 @@ export function mountXrFrame(app: pc.Application, head: pc.Entity, opts: {
     cardTex.upload();
   };
   let cardKey: string | null = null;
+  /** ⚑ S422 — the cards' plate has been hung for this run of cards (it stays there until the last one goes) */
+  let cardHung = false;
 
   // ── S345 / T29 — the pointer's name tag ──
   const tagCanvas = document.createElement('canvas');
@@ -556,7 +558,7 @@ export function mountXrFrame(app: pc.Application, head: pc.Entity, opts: {
     close(): void {
       open = false; suspended = false;
       plane.enabled = false;
-      if (cardKey) { hang(cardPlane, CARD_DIST, CARD_DROP); cardPlane.enabled = true; }
+      if (cardKey) cardPlane.enabled = true;   // S422 (C-6): the card comes back where it was, not where the eyes are
       closedAt = performance.now();
     },
     touches(ray: Ray): boolean {
@@ -602,9 +604,13 @@ export function mountXrFrame(app: pc.Application, head: pc.Entity, opts: {
       const key = card ? `${card.text}|${card.by ?? ''}|${card.foot ?? ''}` : null;
       if (key === cardKey) return;
       cardKey = key;
-      if (!card) { cardPlane.enabled = false; return; }
+      if (!card) { cardPlane.enabled = false; cardHung = false; return; }
       drawCard(card);
-      hang(cardPlane, CARD_DIST, CARD_DROP);   // each card hangs where the eyes are when it comes
+      // ⚑ S422 (UiB job 35 Part B, C-6; his headset run of 20 Nov: "I keep pressing play and then it jumps the message to the
+      //   other side") — the FIRST card hangs where the eyes are; every card after it is drawn on the same plate, where it is.
+      //   Until S422 each card was hung again wherever the head pointed at the press, so a press made while looking at the
+      //   stars threw the next card to that side. (The plate is on the frame's layer, over the sky: no star draws on it.)
+      if (!cardHung) { hang(cardPlane, CARD_DIST, CARD_DROP); cardHung = true; }
       cardPlane.enabled = true;
     },
     setHint(text: string | null): void {

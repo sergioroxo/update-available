@@ -35,9 +35,16 @@
  * `glassMinPx` CSS pixels (a phone), closer, until the glass is that wide or fills `glassFill` of the view (the case may
  * then run past the frame's sides: the four lines must be read). Timings (data/strings/close_line.json): the residue's
  * own `arriveSeconds` of dark, then the lift; the cards at `cardAt` seconds after the lift began, each drawn in over
- * `reveal`; the last held `holdLast`; then it goes back to the desk and the room becomes the Close as it always has. The
- * engine hides it when the lights go (`hide`). Two draw calls (the body, the glass), for these seconds only; the glass is
- * drawn about twenty times (each card's few reveal steps), never per frame.
+ * `reveal`; the last held `holdLast`; then the room becomes the Close as it always has. The engine hides it when the lights
+ * go (`hide`). Two draw calls (the body, the glass), for these seconds only; the glass is drawn about twenty times (each
+ * card's few reveal steps), never per frame.
+ *
+ * ⚑ S422 (UiB job 35 Part B, C-1; his headset run of 20 Nov, reading Maya's line: "No, why this is moving? … Just leave it
+ * in the table … you don't need to put it in one side") — IT STAYS WHERE IT WAS BROUGHT. Until S422, once Caleb's answer had
+ * been held the monitor went back to the desk, and the desk was 90° to his side (the crossing lands facing west, the desk
+ * faces north): the four lines slid away to one side while he read them. Now nothing moves it after the lift: it stands
+ * before him, the lines on it, while the room's lights go; its glass goes dark with them (`off`) and it goes with the room
+ * (`hide`). The return to the desk is in 0ee79d30 (phase 'return').
  */
 import * as pc from 'playcanvas';
 import { buildCloseCrt, type GlassRect } from './closeCrt';
@@ -291,12 +298,13 @@ function faceRot(fwd: pc.Vec3, up: pc.Vec3): pc.Quat {
   return new pc.Quat().setFromMat4(m);
 }
 
-export type LinePhase = 'off' | 'dark' | 'lift' | 'held' | 'return' | 'rest';
+/** ⚑ S422 — 'rest' is now "read, and left where it is" (no 'return' to the desk any more: C-1) */
+export type LinePhase = 'off' | 'dark' | 'lift' | 'held' | 'rest';
 
 export interface DanielLine {
   readonly entity: pc.Entity;
   readonly phase: LinePhase;
-  /** the lines have been read and the monitor is back on the desk */
+  /** the lines have been read (⚑ S422: the monitor stays where it was brought) */
   readonly done: boolean;
   /** the monitor on the desk, dark; then the lines, brought before `eye` (the pose fixed now). `inPlace`: the room's
    *  own CRT already stands on the desk (the review route `?close=1` begins in 1997's room) — then the lines are on ITS
@@ -305,6 +313,8 @@ export interface DanielLine {
   tick(dt: number): void;
   /** gone, at once (the lights are out, or the Close was left) */
   hide(): void;
+  /** ⚑ S422 — its glass goes dark (the room's lights are going); the case stays until `hide` */
+  off(): void;
   /** the probes' handle: how many of the four cards are on the glass (0 dark … 4 Caleb's answer), and whether the newest
    *  is fully drawn */
   readonly shown: number;
@@ -347,7 +357,7 @@ export function buildDanielLine(app: pc.AppBase): DanielLine {
       u * u * a.z + 2 * u * s * via.z + s * s * b.z);
     const q = new pc.Quat().slerp(back ? to.rot : restRot, back ? restRot : to.rot, s);
     entity.setRotation(q);
-  };
+  };   // (S422: only ever called forward now — the lift)
   return {
     entity,
     get phase() { return phase; },
@@ -407,12 +417,11 @@ export function buildDanielLine(app: pc.AppBase): DanielLine {
         if (!still) placeAt(Math.min(1, t / S.liftSeconds), false);
         if (still || t >= S.liftSeconds) { phase = 'held'; t = 0; }
       } else if (phase === 'held') {
-        if (tl >= lastAt()) { phase = 'return'; t = 0; }
-      } else if (phase === 'return') {
-        if (!still) placeAt(Math.min(1, t / S.liftSeconds), true);
-        if (still || t >= S.liftSeconds) { phase = 'rest'; t = 0; }
+        // ⚑ S422 (C-1) — read; it stays before him (no return to the desk at his side)
+        if (tl >= lastAt()) { phase = 'rest'; t = 0; }
       }
     },
-    hide() { entity.enabled = false; phase = 'off'; show(0, 1); if (body) body.enabled = true; }
+    hide() { entity.enabled = false; phase = 'off'; show(0, 1); if (body) body.enabled = true; },
+    off() { if (entity.enabled) show(0, 1); }
   };
 }

@@ -109,6 +109,9 @@ export function mountXrInput(app: pc.Application, opts: {
   mat.useLighting = false;
   mat.diffuse = new pc.Color(0, 0, 0);
   mat.emissive = opts.wandColor;
+  // ⚑ S422 (C-8) — the wand's mesh carries a colour a vertex (the emissive × it): its own grey, and black for the mark's dark
+  //   edge, so the mark reads on a white page as well as on the dark (one mesh, one draw call, as before)
+  mat.emissiveVertexColor = true;
   mat.update();
 
   const rayOf = (src: pc.XrInputSource): Ray | null => {
@@ -258,13 +261,15 @@ export function mountXrInput(app: pc.Application, opts: {
   const ends = new Map<pc.XrInputSource, { point: pc.Vec3; normal: pc.Vec3 | null; landed: boolean }>();
   /** One mesh per source: ray, pixel cursor and all hand joints share a draw call. */
   function drawSource(src: pc.XrInputSource, ray: Ray, length: number, cursor: Landing | null, swell = false): void {
-    const vertices: number[] = [], indices: number[] = [];
-    function box(at: pc.Vec3, size: pc.Vec3, rotation?: pc.Quat): void {
+    const vertices: number[] = [], indices: number[] = [], colors: number[] = [];
+    function box(at: pc.Vec3, size: pc.Vec3, rotation?: pc.Quat, dark = false): void {
       const base = vertices.length / 3;
+      const k = dark ? 0 : 1;
       for (let i = 0; i < 8; i++) {
         const p = new pc.Vec3(i & 1 ? size.x : -size.x, i & 2 ? size.y : -size.y, i & 4 ? size.z : -size.z);
         if (rotation) rotation.transformVector(p, p);
         vertices.push(at.x + p.x, at.y + p.y, at.z + p.z);
+        colors.push(k, k, k, 1);
       }
       for (const i of [0,2,1,1,2,3,4,5,6,5,7,6,0,1,4,1,5,4,2,6,3,3,6,7,0,4,2,2,4,6,1,3,5,3,7,5]) indices.push(base + i);
     }
@@ -282,10 +287,15 @@ export function mountXrInput(app: pc.Application, opts: {
       const m = new pc.Mat4().setLookAt(at, at.clone().sub(n), Math.abs(n.y) > 0.99 ? pc.Vec3.RIGHT : pc.Vec3.UP);
       const q = new pc.Quat().setFromMat4(m);
       const ax = q.transformVector(new pc.Vec3(1, 0, 0)), ay = q.transformVector(new pc.Vec3(0, 1, 0));
-      box(at.clone().add(ay.clone().mulScalar(half - bar / 2)), new pc.Vec3(half, bar / 2, depth), q);
-      box(at.clone().sub(ay.clone().mulScalar(half - bar / 2)), new pc.Vec3(half, bar / 2, depth), q);
-      box(at.clone().add(ax.clone().mulScalar(half - bar / 2)), new pc.Vec3(bar / 2, half - bar, depth), q);
-      box(at.clone().sub(ax.clone().mulScalar(half - bar / 2)), new pc.Vec3(bar / 2, half - bar, depth), q);
+      const frame = (c: pc.Vec3, hf: number, b: number, dark: boolean): void => {
+        box(c.clone().add(ay.clone().mulScalar(hf - b / 2)), new pc.Vec3(hf, b / 2, depth), q, dark);
+        box(c.clone().sub(ay.clone().mulScalar(hf - b / 2)), new pc.Vec3(hf, b / 2, depth), q, dark);
+        box(c.clone().add(ax.clone().mulScalar(hf - b / 2)), new pc.Vec3(b / 2, hf - b, depth), q, dark);
+        box(c.clone().sub(ax.clone().mulScalar(hf - b / 2)), new pc.Vec3(b / 2, hf - b, depth), q, dark);
+      };
+      // ⚑ S422 (C-8) — a dark frame round the light one, a little nearer the surface, so the mark is seen on a white page
+      frame(cursor.point.clone().add(n.clone().mulScalar(0.0012)), half + bar * 0.8, bar * 2.6, true);
+      frame(at, half, bar, false);
       // …and on a room thing the ray only passes, a short leader from the mark to the thing itself
       if (cursor.target && cursor.target.distance(cursor.point) > side) {
         const a = cursor.point, b = cursor.target, len = a.distance(b);
@@ -318,7 +328,7 @@ export function mountXrInput(app: pc.Application, opts: {
       }
     }
     const mesh = meshes.get(src)!;
-    mesh.setPositions(vertices); mesh.setIndices(indices); mesh.update(pc.PRIMITIVE_TRIANGLES);
+    mesh.setPositions(vertices); mesh.setColors(colors); mesh.setIndices(indices); mesh.update(pc.PRIMITIVE_TRIANGLES);
   }
 
   const stickNow = { x: 0, y: 0 }, stickLast = { x: 0, y: 0 };

@@ -39,8 +39,8 @@ const F = (px: number): string => `${px}px ${MACHINE_FACE}`;
 const M = (card as unknown as { machine: MachineCopy }).machine;
 interface MachineCopy {
   panelHint: string; panelButton: string; windowTitle: string; tabs: { machine: string; receipt: string; lexicon: string };
-  back: string; roomsLabel: string; moreLabel: string; status: string; chip: string;
-  tips: { era: string; again: string; receipt: string; dossier: string; lexicon: string; back: string; machine: string; printing: string; printed: string };
+  back: string; roomsLabel: string; moreLabel: string; status: string; chip: string; panels: string; panelsShort: string;
+  tips: { era: string; again: string; receipt: string; dossier: string; lexicon: string; back: string; machine: string; printing: string; printed: string; panels: string };
 }
 export const MACHINE_COPY = M;
 
