@@ -59,7 +59,7 @@
    { "era": "e1", "subject": "Daniel", "promised": "your first steps out of the struggle" },
    { "era": "e2", "subject": "Daniel", "promised": "your Daily Realignment, and a purity streak" },
    { "era": "e3", "subject": "Vera", "promised": "softer colours, kinder words" },
-   { "era": "e4", "subject": "Maya", "promised": "your session, restored before you arrive" }
+   { "era": "e4", "subject": "Maya", "promised": "one companion on every screen", "_retiredS424": "was \"your session, restored before you arrive\": the u4 changelog no longer says it (S423). Replaced with u4's own \"one companion on every screen\" (job 35 call 13; his answer 23 Nov: \"Yes, your suggestion seems fine\")." }
   ],
   "promisedLabel": "promised:",
   "filedLine": "entries filed: {n} · flagged: {f}",

@@ -1,8 +1,10 @@
-STATUS: draft
+STATUS: live
 
 # 2016, from accepting Lambient to the update: a storyboard (23 Nov 2026) — UiB job 35 Part A (S421)
 
-*For his yes. Nothing here is built. Part D builds it after he has read it and changed what he wants (UIB_JOB_35 Part D).
+**Approved by him, 23 Nov 2026** (typed in the orchestrator's window: a yes to each of the eight calls, his words in §5). Part D builds it (S424 onward).
+
+*Written for his yes. Part D builds it after he has read it and changed what he wants (UIB_JOB_35 Part D).
 It answers his 20 Nov headset notes 16-6, 16-7, 16-8, 16-11, 16-13 … 16-18 (HEADSET_RUN_2026-11-20 §7) and his one
 idea for all of them: **the Grace Platform is a tutorial that teaches Vera** ("it moves us a little away from being the
 perpetrator"). It ends at the last beat before the update notification; the update and the flight are Part C's.*
@@ -489,24 +491,34 @@ which is the system's own failure (Part C writes it).
 
 ## 5. His calls
 
-*Each is a real choice between two readings. My pick is first; the storyboard is written with it.*
+*Each is a real choice between two readings. My pick is first; the storyboard is written with it. **He answered all eight on 23 Nov, typed in the orchestrator's window, as shown to him in plain words; his answers are under each call, word for word.***
+
+*Call 7, "not mandatory", as the orchestrator set it for Part D: "Not now" leaves 2016 whole (nothing later waits on the disc, and the walk passes without it); Lambient offers it once at most; the set is never brought to her eyes unasked and never plays by itself. The as-built note says whether the disc stays reachable later, and one walk never takes it.*
 
 1. **The lessons:** in order, the next one lit and the others opening when it is done (a tutorial teaches in order; fewer
    choices, less text) · **or** in any order, as the board is today.
+   **His answer (23 Nov):** "The lessons come in order, and the next one lights up. — Yes!"
 2. **Mam's unfinished reply:** already in her Notes, seen under the new line (one typing, one Notes moment) · **or** typed
    after Mam's message, as today (two Notes moments).
+   **His answer (23 Nov):** "Mam's unfinished note is already in Vera's Notes, under her new line. — Yes"
 3. **The Malta card:** not a link; the card carries "Malta · Act LV of 2016 · passed 5 December" (nothing leaves the felt
    scene) · **or** a link that opens the 2016 site's own page on the law, with its four sources.
+   **His answer (23 Nov):** "The Malta news is a card, not a link. — Yes"
 4. **Vera's one act in the chat:** "↪ Forward the link", hers to press or leave (she joins the women; nothing is said for
    her) · **or** nothing: she only reads.
+   **His answer (23 Nov):** "Vera can press "Forward the link" herself. — yes"
 5. **Orla's "missed you tonight x" (with the photo):** cut (the clock now runs a minute a minute and no longer reaches the
    end of the quiz; one beat fewer) · **or** kept as the last beat before the update.
+   **His answer (23 Nov):** "Orla's "missed you tonight x" is cut. — yes"
 6. **The verse and the manual line under each rule** ("Household 2:11 — …", "The Ordering §1.4 — …"): cut (Lambient's
    lessons carry the platform's authority now) · **or** keep the verse only.
+   **His answer (23 Nov):** "The scripture and manual lines under each rule are cut. — yes"
 7. **Heartwood:** offered after Lesson 1 (it teaches "dependency", that lesson's word) · **or** after her memory (the
    platform recommending it once she has looked back).
+   **His answer (23 Nov):** "The Heartwood disc is offered after Lesson 1. — Yes, but not mandatory"
 8. **The kit:** before the removal (the network answers the vote with her story, then silences the group) · **or** after
    the women outrun it (the system's last move is taking her story).
+   **His answer (23 Nov):** "The campaign kit comes before the removal. — Yes"
 
 ---
 
