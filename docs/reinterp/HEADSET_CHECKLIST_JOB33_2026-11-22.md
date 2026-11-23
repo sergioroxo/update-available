@@ -154,3 +154,6 @@ way in is `?era=4`.*
 45. Two texts still describe the old picture, and they are yours: the dossier card "The filter" (it also shows on the 2026
     era site) and the dossier's practice line "restored a photograph of you to someone else" (also on that site). What
     should they say?
+    → **Answered 23 Nov (S357fy, live):** the card now says what you see, then what is invented and what is real; the
+    lines read "restored your photograph to its default" and "cut her flag, her earrings and her hair out of her photo,
+    and called it becoming".
