@@ -338,6 +338,24 @@ const SCENES = {
     out.errors = errors; await page.close();
     return out;
   },
+  /** ⚑ S425 (UiB job 35 Part D, Act II beat 10) — 2016's memory page with her Notes typing in the Handset Window brought over its
+   *  right half (the window's slide, the note's letters at 7 a second): debug beat to the board, the memory page opened and turned,
+   *  its reading time skipped; measured while the note types (e3notes). */
+  async e3notes(mode, want) {
+    const out = {};
+    const { page, cdp, errors } = await open('?reinterp=1&kiosk=0&era=3&debug=1&home=0', mode);
+    await ready(page, mode);
+    await page.waitForFunction(() => window.__camPose && window.__graceQueue?.() && window.__xrComfort, { timeout: 180000 });
+    await settle(page); await wait(2500);
+    if (mode === 'xr') await calibrate(page);
+    await page.evaluate(() => { const q = window.__graceQueue(); q.debugBeat('board'); q.pauseOpen = false; q.lambPriority = false; q.lambLines = null; q.openMemory(); q.turnMemory(); q.memoryStageT = 999; });
+    await page.waitForFunction(() => window.__graceQueue().phone.refusalT >= 0, { timeout: 30000 }).catch(() => {});
+    await wait(900);
+    out.memory = await page.evaluate(() => window.__graceQueue().memoryState);
+    if (want.has('e3notes')) { await throttle(cdp, true); out.e3notes = await measure(page, cdp, SECONDS); await throttle(cdp, false); }
+    out.errors = errors; await page.close();
+    return out;
+  },
   async e2(mode, want) {
     const out = {};
     const { page, cdp, errors } = await open('?reinterp=1&kiosk=0&era=2&debug=1&home=0', mode);
@@ -391,7 +409,9 @@ const ROWS = [
   { key: 'flight34cross', scene: 'flight34', where: '2016 → 2026: the crossing (the draw peak\'s leg)', optIn: true },
   // S424: 2016's Lamby set, brought and playing (only when asked: --only e3tvheld,e3tvplay)
   { key: 'e3tvheld', scene: 'e3tv', where: '2016: the Lamby set brought (the training: beside the monitor, stopped)', optIn: true },
-  { key: 'e3tvplay', scene: 'e3tv', where: '2016: the Lamby set playing (brought)', optIn: true }
+  { key: 'e3tvplay', scene: 'e3tv', where: '2016: the Lamby set playing (brought)', optIn: true },
+  // S425: 2016's memory page with her Notes typing over its right half (only when asked: --only e3notes)
+  { key: 'e3notes', scene: 'e3notes', where: '2016: her Notes typing over the memory page', optIn: true }
 ].filter((r) => (!ONLY && !r.optIn) || ONLY.split(',').includes(r.key));
 
 const report = { label: LABEL, port: PORT, throttle: THROTTLE, seconds: SECONDS, at: new Date().toISOString(), rows: [] };
