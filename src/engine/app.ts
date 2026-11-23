@@ -2630,7 +2630,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     //   Maya's desk up over the partition to Daniel's seat) flies too, on its own arc, the facing held (yawTurn 0)
     // ⚑ S415 — and the turn to the room from 2026's acts: in a headset it is one snap of the facing under the world's follow
     //   (the turn's own leg, ~0 s), so the room is never re-formed under a captured view (that capture drew 90 calls at once)
-    const closeIn = closeStage === 'travel' || closeStage === 'lookUp' || closeStage === 'open' || (closeStage === 'turn' && !!xr?.active);   // …and the eyes rising to the stars (45° over 20 s); S361: and the seat coming back down as the panels open
+    const closeIn = closeStage === 'travel' || closeStage === 'lookUp' || closeStage === 'descend' || closeStage === 'open' || (closeStage === 'turn' && !!xr?.active);   // …and the eyes rising to the stars (45° over 20 s); S361: and the seat coming back down as the panels open
     const fly = (!!relocLeg || closeIn) && (!!xr?.active || reducedMotion());
     if (fly) { if (!closeIn) via = undefined; }   // era legs fly straight; the Close's way in keeps its arc
     else if (xr?.active) { dur = 0.001; via = undefined; }
@@ -3896,6 +3896,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     // ⚑ S396 — the MUTE fix: the era's tape is primed inside this press (WebKit gives sound only to a play() from a press)
     teachingTvs?.prime();
     if (closeStage === 'message') { nextCloseCard(); return; }   // S209 / P7-48 — a press turns the card
+    if (cloud?.visible && !cloud.panelsShown) return;   // S422: the stars are coming down; nothing in the sky takes a press yet
     // ⚑ S394 — Lamby's line in view (its card is over everything), then a Lamby set in the hand (in front of everything; a
     //   press that misses it passes on to the room)
     if (teachingTvs?.pressCard(ray)) return;
@@ -4006,7 +4007,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       // ⚑ S378 (UiB job 20 Part A, his "phantom clicks") — THE FAR GLASS TAKES NO PRESS. Daniel's machine still stands
       //   in the sky as an image, but its glass is no longer asked anything: no hit plane, no fly-to. The computer is the
       //   fifth panel now, and a press on it opens the machine's page in the site viewer (below), like the rooms' panels.
-      if (cloud?.visible) {
+      if (cloud?.panelsShown) {
         cloud.holdDrift(3);
         // ⚑ S175 — a label, then a panel: each turns ITS ROOM's panel to the room's
         //   dossier, in that room's own OS, right where it hangs (Sérgio: "the sources open need to be on the 4 panels
@@ -4036,6 +4037,9 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
         if (lb && lb.text !== lexStrings.star) { siteViewerBus.open(ERA_TARGET[lb.era] ?? 'hub'); return; }
         if (pi !== null) { siteViewerBus.open(ERA_TARGET[cloud.panelEraOf(pi)] ?? '1997'); return; }
       }
+      // ⚑ S422 (C-10) — in the Close the room is gone: a press that missed the sky's own things stops here (the room's
+      //   monitor, props and devices are tested as geometry, switched off or not, and a press in the dark took them)
+      if (cloud?.visible) return;
       const p = toDesktopR(ray);
       if (p) { // the monitor is the UI; everywhere else is the room
         const target = xr?.active ? os.xrPoint(p.x, p.y) : p;
@@ -4147,7 +4151,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     //   is pressing") — the panels took a press but published nothing a ray could land on: the ray stayed a stub and
     //   nothing named what it was on. The same tests as the press (resolveTapRay), in its order: a panel names itself,
     //   and the ray ends on it (aimAt).
-    if (cloud?.visible && closeStage !== 'message') {
+    if (cloud?.panelsShown && closeStage !== 'message') {
       // ⚑ S378 — the far glass is no longer asked (it takes no press); the computer's panel names itself
       const ph = cloud.panelHit(ray.p0, ray.p1);
       // ⚑ S406 / H1 — and in the headset the panel (or its button) the ray is on is framed: its hover
@@ -4161,6 +4165,9 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       const lb = cloud.labelAt(ray.p0, ray.p1);
       if (lb) return lb.text === lexStrings.star ? A.closeLexicon : A.closeLabel.replace('{label}', lb.text);
     }
+    // ⚑ S422 (C-10) — nothing of the room is named once the Close's sky is up (the ray named "the racket on the wall by the
+    //   bed" in the dark, the room switched off round him)
+    if (cloud?.visible) return null;
     if (os.isOff) return hitAt(ray, POWER_BTN, 0.08) ? A.power : null;
     // ⚑ S394 — the Lamby set names itself and what a press on it does (the press resolver asks it the same way)
     { const tv = os.era !== 'e2' || os.e2Arrived || teachingTvs?.holding ? teachingTvs?.aimPoint(ray) : null; if (tv) { aimAt = tv.at; return (A[`tv_${tv.what}`] ?? '').replace('{tape}', TAPES[tv.tape]?.title ?? '') || null; } }
@@ -4866,12 +4873,18 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
         // ⚑ S226 (his, 2026-10-10, cadence study Q6: "Press") — a card waits for a press, never for a clock: 39 words
         //   in 9 s was ~260 words a minute for readers in their second language. Each card says how to go on.
         void CLOSE_CARD_SECONDS;
-      } else if (closeStage === 'lead' || closeStage === 'hold' || closeStage === 'settled' || (closeStage === 'turn' && !camMove && !!xr?.active)) {
+      } else if (closeStage === 'lead' || closeStage === 'hold' || closeStage === 'settled' || (closeStage === 'turn' && !camMove && !!xr?.active)
+        || (!!xr?.active && !camMove && (closeStage === 'lookUp' || closeStage === 'descend' || closeStage === 'open'))) {
         closeHoldT += dt;
         // ⚑ S415 — in a headset the turn is one snap (no conducted turn, no cover); the room is given a breath to be seen before
         //   the crossing flies
+        // ⚑ S422 — and in a headset the lights going (`lookUp`), the stars coming down (`descend`) and the panels coming up
+        //   (`open`) run on their own clocks: nothing moves the seat. On a screen `hold` is the lights' whole crossfade (the
+        //   room goes only when it is dark)
         const cap = closeStage === 'lead' ? closeLeadNow : closeStage === 'turn' ? CLOSE_TURN_XR_HOLD
-          : closeStage === 'hold' ? CLOSE_DUSK_SECONDS : CLOSE_MONITOR_AFTER_SECONDS;
+          : closeStage === 'lookUp' ? CLOSE_LIGHTS_SECONDS : closeStage === 'descend' ? P_OPEN_SECONDS
+          : closeStage === 'open' ? CLOSE_XR_PANELS_SECONDS
+          : closeStage === 'hold' ? (xr?.active ? CLOSE_XR_NIGHT_SECONDS : CLOSE_LIGHTS_SECONDS) : CLOSE_MONITOR_AFTER_SECONDS;
         if (closeHoldT >= cap) advanceClose();
       } else if (closeStage && !camMove) advanceClose();
       // (C-01's night and constellation during the flight are gone — S361 / H50: the panels come after the messages)
@@ -5734,7 +5747,8 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
    * The review route (`?close=1`) starts at Daniel's seat, so it keeps the old
    * order: lookUp, night on the stars, then the opening.
    */
-  type CloseStage = 'lead' | 'turn' | 'travel' | 'line' | 'lookUp' | 'message' | 'hold' | 'open' | 'settled' | null;
+  /** ⚑ S422 — `descend`: the stars come down from the ceiling and settle round him (C-2), before the cards */
+  type CloseStage = 'lead' | 'turn' | 'travel' | 'line' | 'lookUp' | 'hold' | 'descend' | 'message' | 'open' | 'settled' | null;
   /** ⚑ S209 / P7-48 — THE CLOSE'S MESSAGE (data/strings/close_message.json): with the eyes on the stars and before
    *  the panels open, a few plain cards in the frame's voice — what SOGICE is, that it persists, that the law did not
    *  come, and his last line. Each holds CLOSE_CARD_SECONDS or until a press; the frame never plays. */
@@ -5767,7 +5781,9 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     closeMsgEl.style.opacity = xr?.active ? '0' : '1';   // the headset has its own card (below); the page's is for the computer
     // ⚑ S361 / H50 — the headset reads it on its own card in front of the eyes (the helper's plate held two lines and
     //   the helper redrew it every frame: in his headset the cards never showed — "where are the message parts?")
-    xrFrame?.setCard({ text: c.text, by: c.by, foot: closeMessage.continue });
+    // ⚑ S422 — only in a headset: on a screen the plate was always hung too, at eye height under a gaze raised 72° to the
+    //   stickers, so it was never seen; with the gaze on the stars at 24° (C-2) it stood in the lower half of the frame
+    xrFrame?.setCard(xr?.active ? { text: c.text, by: c.by, foot: closeMessage.continue } : null);
     // the audit's handle (?debug=1 tools only): a card is up and a press anywhere turns it (tools/walk.mjs)
     (window as { __closeCard?: { on: boolean; i: number } }).__closeCard = { on: true, i };
   }
@@ -5824,19 +5840,37 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   /** 90° of turn with the 72° rise: 1.875 × 90 / 20 = 8.4 °/s */
   const CLOSE_LOOKUP_SECONDS = 20;
   const CLOSE_LIGHTS_SECONDS = 8;
-  /** ⚑ S361 / H50 — night falls on the stars, then the first message (his order: up, then only the messages) */
-  const CLOSE_DUSK_SECONDS = 6;
-  /** ⚑ S361 / H50 — in the headset the head is the camera and the world is never tilted, so the eyes cannot be raised
-   *  to the stars: the seat rises toward them instead, slowly (0.8 m in 20 s, ≤0.08 m/s at the crest), and comes back
-   *  down as the panels open */
-  const CLOSE_XR_RISE = 0.8;
+  // ⚑ S361 / H50 — CLOSE_DUSK_SECONDS (6: night falls on the stars, then the first message) and CLOSE_XR_RISE (0.8 m: in the
+  //   headset the seat rose toward the stars over 20 s and came back down as the panels opened) are retired by S422: on a
+  //   screen `hold` is the lights' whole crossfade (CLOSE_LIGHTS_SECONDS), and in a headset the stars come down instead
+  //   (both are in 0ee79d30)
+  /**
+   * ⚑ S422 (UiB job 35 Part B; his headset run of 20 Nov at the Close: "we got up and the star should be coming down";
+   * "they should be floating around us so we can read this"; "still seeing stuff behind me") — THE STARS COME DOWN, AND THE
+   * ROOM GOES. The seat no longer rises in the headset (CLOSE_XR_RISE, retired above): after his line the
+   * room's lights go out round him (`lookUp`: on a screen the eyes still rise to the stickers first, then the lights go in
+   * `hold`), the room is switched off whole once it is dark (`descend` begins: nothing of it is left in any direction), and
+   * the constellation comes down out of the stickers' patch to sit round the seat at reading distance — the panels not yet
+   * (pointCloud `showPanels`, after the cards). On a screen the gaze comes down with the stars to the labels (CLOSE_STARS_
+   * READ_PITCH); in a headset nothing moves but the stars. The cards are read with the stars round him; then the panels
+   * come up in front of him at eye height, and the machine stands under them. No conducted turn anywhere: the sky is laid
+   * out on the seat's own facing (`closeArcYaw`).
+   */
+  const CLOSE_XR_NIGHT_SECONDS = 2;
+  const CLOSE_STARS_READ_PITCH = 24;
+  const CLOSE_PANELS_SECONDS = 8;
+  const CLOSE_XR_PANELS_SECONDS = 2.5;
+  /** the bearing the Close's sky is laid out on (the seat's facing when the stars come down) */
+  let closeArcYaw = 0;
+  /** the constellation's own opening (cluster.json pointCloud.openSeconds): the stars' descent */
+  const P_OPEN_SECONDS = (clusterData.pointCloud as { openSeconds: number }).openSeconds;
   /** ⚑ S361 / H50 (his: "a song behind it all"; "the music for the Close is missing", twice) — the Close's song, from
    *  the flight out of Maya's room to the Restart card (tools/make_close_song.py) */
   const CLOSE_SONG = 'close_song.mp3';
-  const CLOSE_OPEN_SECONDS = 16;
+  // (S422: CLOSE_OPEN_SECONDS 16 and CLOSE_SKY_PITCH 10 — the gaze's 16 s down into the sky as the panels opened — are
+  //   retired: the stars' descent is the constellation's own `openSeconds`, and the panels come up at eye level, pitch 0)
   const CLOSE_MONITOR_AFTER_SECONDS = 20;
   const CLOSE_STARS_PITCH = 72;
-  const CLOSE_SKY_PITCH = 10;
   let skyLerp: { from: pc.Color; to: pc.Color; t: number; seconds: number } | null = null;
 
   /**
@@ -5845,21 +5879,39 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
    * the panels were up before the first message. Now: the sky lerps to its night-blue, the constellation opens out of
    * the stars, the room goes under it (`closeRoomPending`, at half open), and the gaze comes down into the sky — in the
    * headset the seat comes back down from its rise, as slowly as it went up.
+   * ⚑ S422 — the stars come down BEFORE the cards now (`beginStarsDown`, at `descend`) and the room has gone by then; this
+   * brings up only the panels and the machine (pointCloud `showPanels`), in front of him at eye height.
    */
   function openClosePanels(): void {
     if (!cluster || !cloud) return;
-    closeStage = 'open';
-    if (!closeMorphBegun) {
-      closeMorphBegun = true;
-      // Round 18: never black — the constellation sits in a night-blue sky; 2026-09-12: and it gets there over the
-      // opening, not on a frame
-      if (camera.camera) {
-        skyLerp = { from: camera.camera.clearColor.clone(), to: closeBackdropColor(), t: 0, seconds: CLOSE_OPEN_SECONDS };
-      }
-      cloud.show();
-    }
+    // (a route with no cards, or that skipped the descent: the stars come down now)
+    if (!closeMorphBegun) beginStarsDown(true);
+    closeStage = 'open'; closeHoldT = 0;
+    // ⚑ S422 (C-7) — the panels (and Daniel's machine under them) come up in front of him, at eye height; on a screen the
+    //   gaze comes down from the labels to them, at the seat's own facing; in a headset nothing moves
+    cloud.showPanels(true);
     roomBed.set(CLOSE_SONG, 4);   // (already playing since the flight; a review that skipped it starts it here)
-    startCamMove({ x: EYE.x, y: EYE.y, z: EYE.z, pitch: CLOSE_SKY_PITCH, yaw: 0 }, CLOSE_OPEN_SECONDS, true);
+    if (!xr?.active) startCamMove({ x: EYE.x, y: EYE.y, z: EYE.z, pitch: 0, yaw: closeArcYaw }, CLOSE_PANELS_SECONDS, true);
+  }
+
+  /**
+   * ⚑ S422 (C-2, C-10) — THE ROOM GOES, THE STARS COME DOWN. Called when the room is dark: every entity of the room is
+   * switched off at once (in the dark, so nothing is seen to vanish), his monitor with it; the sky goes from the room's
+   * dark to the constellation's night-blue over the descent; the constellation opens out of the stickers' patch, laid out
+   * on the seat's facing. `now` (a route that skipped the stages): the same, for the panels' sake.
+   */
+  function beginStarsDown(now = false): void {
+    if (!cluster || !cloud) return;
+    closeMorphBegun = true;
+    for (const id of CLOSE_ROOM_ENTITIES) {
+      const e = app.root.findByName(id);
+      if (e instanceof pc.Entity) e.enabled = false;
+    }
+    closeRoomPending = null;
+    danielLine?.hide();
+    closeArcYaw = ((camYaw % 360) + 540) % 360 - 180;
+    if (camera.camera) skyLerp = { from: camera.camera.clearColor.clone(), to: closeBackdropColor(), t: 0, seconds: now ? 2 : P_OPEN_SECONDS };
+    cloud.show(closeArcYaw);
   }
 
   function advanceClose(): void {
@@ -5927,27 +5979,39 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       closeStage = 'line';
     }
     if (closeStage === 'line') {
-      closeStage = 'lookUp';
+      closeStage = 'lookUp'; closeHoldT = 0;
       // ⚑ W1-G1 — the eyes rise to the stars and come round only HALF of the quarter-turn to Daniel's desk (the other
       //   half is spent while the gaze comes down, in `open`): 45° over 20 s and 45° over 16 s, 4 and 5 °/s at the
       //   crest, where the one 90° turn in either leg alone would be 8–10 °/s — a spin straight overhead.
-      // ⚑ S361 / H50 — in the headset the seat itself rises toward the stars (the pitch is the head's, never ours)
-      const quarter = ((0 - camYaw + 540) % 360) - 180;
-      startCamMove({ x: EYE.x, y: EYE.y + (xr?.active ? CLOSE_XR_RISE : 0), z: EYE.z, pitch: CLOSE_STARS_PITCH, yaw: camYaw + quarter / 2 },
-        CLOSE_LOOKUP_SECONDS, true);
+      // ⚑ S422 — no quarter-turn any more: the sky is laid out on the facing the eyes already have (`closeArcYaw`), so the
+      //   eyes only rise (a screen); and in a headset the seat no longer rises (his "we got up and the star should be coming
+      //   down"): the lights go out round him where he sits, and the stars will come down to him
+      if (xr?.active) {
+        cluster.applyRig('close', true, CLOSE_LIGHTS_SECONDS);
+        return;
+      }
+      startCamMove({ x: EYE.x, y: EYE.y, z: EYE.z, pitch: CLOSE_STARS_PITCH, yaw: camYaw }, CLOSE_LOOKUP_SECONDS, true);
       return;
     }
     if (closeStage === 'lookUp') {
       // ⚑ the lights go out ON the stars, not before the eyes start rising — measured: with the rig applied at the
       //   start of lookUp the whole rise was through a black room, and a ceiling you cannot see is not a ceiling.
       // ⚑ S361 / H50 — night falls first (CLOSE_DUSK_SECONDS), then the messages; no constellation yet
+      // ⚑ S422 — in a headset the lights have gone already (in `lookUp`); a breath of night, then the stars come down
       closeStage = 'hold'; closeHoldT = 0;
-      danielLine?.hide();   // S401: the lights go out on the stars; his monitor goes with the room's light
-      cluster.applyRig('close', true, CLOSE_LIGHTS_SECONDS);
+      danielLine?.off();   // S422 (C-1): his monitor stays where it was brought; its glass goes dark with the room's light
+      if (!xr?.active) cluster.applyRig('close', true, CLOSE_LIGHTS_SECONDS);
       return;
     }
     if (closeStage === 'hold') {
-      // ⚑ S209 / P7-48 — the message, with the eyes on the stars; its last card opens the panels (nextCloseCard)
+      // ⚑ S422 (C-10, C-2) — the room is dark: it goes, whole, and the stars come down round him
+      closeStage = 'descend'; closeHoldT = 0;
+      beginStarsDown();
+      if (!xr?.active) startCamMove({ x: EYE.x, y: EYE.y, z: EYE.z, pitch: CLOSE_STARS_READ_PITCH, yaw: closeArcYaw }, P_OPEN_SECONDS, true);
+      return;
+    }
+    if (closeStage === 'descend') {
+      // ⚑ S209 / P7-48 — the message, with the stars round him; its last card opens the panels (nextCloseCard)
       if (closeMessage.cards.length) { closeStage = 'message'; showCloseCard(0); return; }
       openClosePanels();
       return;
@@ -5973,6 +6037,8 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
    */
   function conductToMachinePanel(): void {
     if (!cloud) return;
+    // ⚑ S422 (C-7) — in a headset the machine stands in front of him under the panels, in view: nothing is turned
+    if (xr?.active) return;
     const i = cloud.machinePanel;
     const c = i >= 0 ? cloud.panelCentre(i) : null;
     if (!c) return;
@@ -6160,6 +6226,14 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
         xrFrame?.close();
         xrFrame?.setHint(menuStrings.xrRestartNote);
         window.setTimeout(() => restartVisit({ armed: true }), 3200);
+      },
+      // ⚑ S422 (C-5) — back to the panels: the window closes; on a screen the gaze comes back up to the panels at the comfort
+      //   law's pace (the machine sits 25° under them); in a headset they are in front of him already
+      panels: () => {
+        siteViewerBus.close();
+        if (xr?.active || !cloud?.panelsShown) return;
+        const dp = Math.abs(camPitch);
+        startCamMove({ x: EYE.x, y: EYE.y, z: EYE.z, pitch: 0, yaw: closeArcYaw }, Math.max(3, 0.21 * dp), true);
       }
     };
     // read-only probe, like __os: the end of the Close — the machine's page (S380: Daniel's CRT in the row, pressed)
@@ -6298,7 +6372,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     // S361 — ?debug=1 only: the Close from wherever the visitor is (tools/close-order-probe.mjs), and where it has got to
     if (debugOn) (window as { __enterClose?: () => void }).__enterClose = () => enterClose();
     if (debugOn) (window as { __closeState?: () => unknown }).__closeState = () => ({ stage: closeStage, card: closeCard,
-      panels: !!cloud?.visible, open: cloud?.open ?? 0,
+      panels: !!cloud?.panelsShown, stars: !!cloud?.visible, open: cloud?.open ?? 0, arcYaw: closeArcYaw,
       // ⚑ S378 — the end of the Close: the gaze taken to the computer's panel (`ended`), and the page open (`page`)
       ended: !!cloud?.visible && closeMorphBegun && closeStage === null && !camMove, page: siteViewerBus.view, bed: roomBed.current,
       rig: closeMorphBegun, glitching: !!cluster?.busy });

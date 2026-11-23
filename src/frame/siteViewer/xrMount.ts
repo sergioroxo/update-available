@@ -152,6 +152,7 @@ export function mountSiteViewerXr(app: pc.Application, head: pc.Entity, opts: {
     audio: viewerAudio,
     film: viewerFilm,
     filmLayer: true,
+    ringHover: true,   // S422 (C-8)
     changed: () => { dirty = true; }
   };
   const core = new ViewerCore(host);
@@ -189,6 +190,8 @@ export function mountSiteViewerXr(app: pc.Application, head: pc.Entity, opts: {
     open = false; minimised = false; plane.enabled = false; tab.enabled = false; wristed = false; core.release();
     viewerAudio.stop(); viewerFilm.stop(); filmPlane.enabled = false; core.closed();
     closedAt = performance.now();
+    // ⚑ S422 — its note ("To close this window: …") goes with it (it stood on for its 7 s under a window already closed)
+    if (opts.closeNote && performance.now() - openedAt < 7000) opts.note(null);
     if (fromMenu && gameMenuBus.isOpen) opts.suspendMenu(false);
     fromMenu = false;
   }

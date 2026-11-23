@@ -11,6 +11,8 @@ export interface MachineHooks {
   era(era: 'e1' | 'e2' | 'e3' | 'e4'): void;
   /** start again (the headset says so first, as the menu's Restart does) */
   again(): void;
+  /** ⚑ S422 (C-5, his "we should be able to go back … to the panels") — close the window and look at the panels again */
+  panels(): void;
 }
 
 class SiteViewerBus {

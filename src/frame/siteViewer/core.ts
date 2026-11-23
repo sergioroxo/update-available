@@ -18,6 +18,7 @@ import { FILM_BAND_K, FILM_BAR, FILM_INSET, layoutDoc, type Doc, type DocHit, ty
 import type { FilmState } from './audio';
 import { drawScrollbar, drawSiteHeader, drawStatus, drawWindow, roundRect, SCROLL_W, type DrawEnv, type Hit } from './frame';
 import { siteViewerBus } from './bus';
+import { xrOutline } from '../xrTargets';
 
 export interface ViewerHost {
   /** a browser can open a new tab with the page version; a headset cannot */
@@ -36,6 +37,8 @@ export interface ViewerHost {
   filmLayer?: boolean;
   /** something changed that the mount must redraw (an image arrived, audio ended) */
   changed(): void;
+  /** ⚑ S422 (C-8) — the headset: the window's own control under the ray gets the frame's two-line ring (xrTargets.xrOutline) */
+  ringHover?: boolean;
 }
 
 export interface FilmApi {
@@ -248,6 +251,7 @@ export class ViewerCore {
     if (live) this.drawToast(ctx, live, reg.status, skin);
     const pct = this.maxScroll <= 0 ? 'all shown' : `${Math.round((this.scroll / this.maxScroll) * 100)}%`;
     drawStatus(env, reg.status, left, pct);
+    this.ringHover(ctx);
   }
 
   /**
@@ -261,6 +265,9 @@ export class ViewerCore {
     const tabs = this.machineMode
       ? (['machine', 'receipt', 'lexicon'] as const).map((v) => ({ id: `view:${v}`, label: M.tabs[v], active: this.view === v, tip: M.tips[v === 'machine' ? 'machine' : v] }))
       : [];
+    // ⚑ S422 (UiB job 35 Part B, C-5; his headset run of 20 Nov: "we should be able to go back, if you want to, to the
+    //   panels") — opened from the Close, the machine's window says how to get back to the panels: a press, never a look
+    if (this.machineMode && siteViewerBus.machine) tabs.push({ id: 'm:panels', label: env.W < 640 ? M.panelsShort : M.panels, active: false, tip: M.tips.panels });
     const title = this.machineMode || this.view !== 'lexicon' ? M.windowTitle : (lexStrings as { star: string }).star;
     const items = [...back, ...tabs];
     const reg = drawWindow(env, title, items, false, '');
@@ -295,6 +302,21 @@ export class ViewerCore {
     if (live) this.drawToast(ctx, live, reg.status, SKINS[this.view]);
     const left = live ? '' : hit?.tip || (this.view === 'machine' ? M.status : this.view === 'receipt' ? (this.receipt.printing ? M.tips.printing : M.tips.printed) : M.tips.lexicon);
     drawStatus(env, reg.status, left, this.view === 'receipt' && this.maxScroll > 0 ? `${Math.round((this.scroll / this.maxScroll) * 100)}%` : '');
+    this.ringHover(ctx);
+  }
+
+  /**
+   * ⚑ S422 (UiB job 35 Part B, C-8; his headset run of 20 Nov at the Close: "the websites are so white … I cannot see where
+   * the arrow is pointing to"; "the lexicon … I don't know where I'm pressing") — in the headset the window's own controls
+   * (its year tabs, Back, Close, the scrollbar, the machine's buttons) changed by a shade under the ray, which a white page
+   * swallowed (the 2016 site's year tabs, photographed in the mock: no visible change). The control under the ray now carries the frame's ring, a dark line
+   * round a light one (S406's xrOutline), on any skin. The page's own links keep S406's tint and line; the Lexicon lights its
+   * own controls.
+   */
+  private ringHover(ctx: CanvasRenderingContext2D): void {
+    if (!this.host.ringHover || !this.hover || this.hover.startsWith('lx:')) return;
+    const h = this.hits.find((q) => q.id === this.hover);
+    if (h) xrOutline(ctx, h);
   }
 
   /** a note (an address to open later, a page that opens outside the headset): wrapped, large, over the foot of the window */
@@ -523,6 +545,7 @@ export class ViewerCore {
     if (id === 'back') { this.back(); return; }
     if (id.startsWith('m:era:')) { siteViewerBus.machine?.era(id.slice(6) as 'e1' | 'e2' | 'e3' | 'e4'); return; }
     if (id === 'm:again') { siteViewerBus.machine?.again(); return; }
+    if (id === 'm:panels') { siteViewerBus.machine?.panels(); return; }   // S422 (C-5)
     if (id === 'm:receipt') { this.go('receipt'); return; }
     if (id === 'm:lexicon') { this.go('lexicon'); return; }
     if (id === 'm:dossier') { this.go('hub'); return; }
