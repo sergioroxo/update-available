@@ -151,8 +151,8 @@
     },
     "photos": {
       "title": "The Restoration tool",
-      "_docS357fy": "⚑ S357fy (23 Nov) — DRAFT for his edit (call 45). S420: the filter no longer turns her into someone else; it cuts what she chose out of her photo toward default.png. Before: 'restored a photograph of you to someone else'.",
-      "did": "cut what you chose out of a photograph of you, one thing at a time",
+      "_docS357fy": "⚑ S357fy (23 Nov) — DRAFT 2 for his edit (call 45; draft 1, 'cut what you chose out of a photograph of you, one thing at a time', he did not like). S420: the filter no longer turns her into someone else; it cuts what she chose out of her photo toward default.png. Before: 'restored a photograph of you to someone else'.",
+      "did": "restored your photograph to its default",
       "status": "speculative",
       "source": {
         "file": "e4_offers",
@@ -370,7 +370,8 @@
     "swapFilter": {
       "_doc": "⚑ S364 (UiB job 14 Part B item 5) — DRAFT. DOSSIER PHRASING IS SÉRGIO'S: the `did` line is Claude's draft, ⚑ HIS TO WRITE OR REPLACE. Speculative: the 2019 swap lenses are the only documented context (the card's own _docS364).",
       "title": "The filter",
-      "did": "ran a filter over her photo and called the result her",
+      "_docS357fy": "⚑ S357fy (23 Nov) — DRAFT for his edit (his: the old line's style was 'a bit meh'). Before: 'ran a filter over her photo and called the result her'. The cuts and the word on screen ('Becoming'), so it does not repeat the photos line.",
+      "did": "cut her flag, her earrings and her hair out of her photo, and called it becoming",
       "status": "speculative",
       "source": {
         "file": "e4_offers",
