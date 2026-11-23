@@ -1053,7 +1053,10 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
       ctx.translate(RITUAL_OFFSET.x, RITUAL_OFFSET.y);
       ritual.draw(ctx);
       ctx.restore();
-      graceQueueLite.drawDisconnected(ctx, w);
+      // ⚑ S423 (his headset, 20 Nov, over the install: "handset window, no handset, we don't need that message") — the
+      //   Handset Window's "This device is no longer supported. Phone disconnected." no longer lies over the changelog
+      //   (one voice at a time: the changelog's own last line says it, "- phone link: not supported"). The phone still
+      //   disconnects (`disconnectPhone`, in tick); only the notice is gone. Was: graceQueueLite.drawDisconnected(ctx, w).
       return;
     }
     if (e4Bridge()?.sendOfferActive()) {

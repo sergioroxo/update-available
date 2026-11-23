@@ -324,6 +324,9 @@ export interface RelocationPlan {
    *  `morphDelaySeconds` = `turnSeconds` the space starts changing as the turn ends, in front of you, and the crossing
    *  still starts this long after it began (the gap the fold needs to open Room 1's east wall out of the path). */
   watchSeconds?: number;
+  /** ⚑ S423 — which way the facing turns from the seat you leave to the seat you land in: −1 = the yaw falls, +1 = it
+   *  rises; omitted = the shorter way (every other change). Read by app.ts's facing curve (`flightYaw`), in every look. */
+  turnDirection?: 1 | -1;
 }
 
 /** keyed `${from}-${to}`; a transition absent here takes the plain morph path */
@@ -369,6 +372,14 @@ export const RELOCATIONS: Record<string, RelocationPlan | undefined> = {
      *  6 s more — the same 6 s the fold always had before the crossing, so the east wall is open in time. */
     morphDelaySeconds: 6.0,
     watchSeconds: 6.0,
+    /** ⚑ S423 / 16-21 (his headset, 20 Nov: "Why are we turning face to the wall when we could face to the room? … as
+     *  the camera is going up, it should already be able to do the turn slowly") — the turn from Vera's desk (93°) to
+     *  Maya's (270°) goes through NORTH (0°): over her bed, her posters, and the doorway into Daniel's room. The shorter
+     *  way (+177°, through 180°) is the bare south wall, close to the overlook and filling the view: the headset took
+     *  it (its facing curve took the shorter way); the computer's turn leg, a −180° tie, happened to go north.
+     *  Photographed from the overlook at twelve facings: research/…/S423/before/yaw_survey.png. The turn also STARTS
+     *  WITH THE RISE now, in every look (app.ts `flightYaw`); the legs' seconds are unchanged. */
+    turnDirection: -1,
     opensWalls: false, seat: 270
   }
 };

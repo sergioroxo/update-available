@@ -15,6 +15,7 @@
  *
  *     node tools/s406-frame-probe.mjs --port 5461 --label after [--out out/s406-frames] [--modes desktop,xr]
  *                                     [--only entrance,setup,dissolve,e1,e1kit,flight,e2,e2desk,phone] [--throttle 4]
+ *                                     (S423: --only flight34turn,flight34cascade,flight34cross — 2016 → 2026, asked for only)
  *                                     [--seconds 6] [--no-profile]
  *
  * Writes <out>/<label>.json and <label>.md (one row per moment and mode). Needs a Vite dev server on --port. Measurement
@@ -288,6 +289,30 @@ const SCENES = {
     await page.close();
     return { flight, errors };
   },
+  /** ⚑ S423 (UiB job 35 C) — 2016 → 2026: the era-3 page, Vera's chair, the change fired where play fires it (the restart's
+   *  end, `onEraShift('e4')`), three windows keyed to the legs (a headset's turn is 11 s longer): the rise and the turn,
+   *  the room changing (the cascade, from the turn's end), and the crossing's first seconds (the draw peak's leg) */
+  async flight34(mode, want) {
+    const out = {};
+    const { page, cdp, errors } = await open('?reinterp=1&kiosk=0&era=3&debug=1&home=0', mode);
+    await ready(page, mode);
+    await page.waitForFunction(() => window.__camPose && window.__seatCut && window.__xrComfort, { timeout: 180000 });
+    await settle(page); await wait(2000);
+    await page.evaluate(() => window.__seatCut(90)); await wait(2500);
+    if (mode === 'xr') await calibrate(page);
+    await wait(1500);
+    await throttle(cdp, true);
+    await page.evaluate(() => window.__os.onEraShift('e4'));
+    const legIs = (l) => page.waitForFunction((l) => window.__camPose().leg === l, { timeout: 120000, polling: 100 }, l).catch(() => {});
+    if (want.has('flight34turn')) { await wait(1500); out.flight34turn = await measure(page, cdp, 5); }
+    await legIs('watch');
+    if (want.has('flight34cascade')) out.flight34cascade = await measure(page, cdp, 5);
+    await legIs('build');
+    if (want.has('flight34cross')) out.flight34cross = await measure(page, cdp, 5);
+    await throttle(cdp, false);
+    out.errors = errors; await page.close();
+    return out;
+  },
   async e2(mode, want) {
     const out = {};
     const { page, cdp, errors } = await open('?reinterp=1&kiosk=0&era=2&debug=1&home=0', mode);
@@ -334,8 +359,12 @@ const ROWS = [
   { key: 'e2', scene: 'e2', where: '2003 (arriving: the intro, Lamby)' },
   { key: 'e2lamby', scene: 'e2', where: '2003 (Lamby on the glass, his introduction)' },
   { key: 'e2desk', scene: 'e2', where: '2003 (the desktop)' },
-  { key: 'phone', scene: 'e2', where: '2003 (the phone game, CLEAR)' }
-].filter((r) => !ONLY || ONLY.split(',').includes(r.key));
+  { key: 'phone', scene: 'e2', where: '2003 (the phone game, CLEAR)' },
+  // S423: 2016 → 2026 (only when asked: --only flight34turn,flight34cascade,flight34cross)
+  { key: 'flight34turn', scene: 'flight34', where: '2016 → 2026: the rise and the turn', optIn: true },
+  { key: 'flight34cascade', scene: 'flight34', where: '2016 → 2026: the room changing (the cascade)', optIn: true },
+  { key: 'flight34cross', scene: 'flight34', where: '2016 → 2026: the crossing (the draw peak\'s leg)', optIn: true }
+].filter((r) => (!ONLY && !r.optIn) || ONLY.split(',').includes(r.key));
 
 const report = { label: LABEL, port: PORT, throttle: THROTTLE, seconds: SECONDS, at: new Date().toISOString(), rows: [] };
 for (const mode of MODES) {

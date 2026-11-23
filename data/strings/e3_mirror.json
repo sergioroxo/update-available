@@ -1,6 +1,7 @@
 {
   "title": "Handset Window",
   "disconnected": "This device is no longer supported. Phone disconnected.",
+  "_docRetiredS423disconnected": "⚑ S423 (UiB job 35 Part C; his headset, 20 Nov, over the 2016 → 2026 install: \"handset window, no handset, we don't need that message\"): `disconnected` is no longer shown — it lay over the changelog, whose own last line says the same (\"- phone link: not supported\"). Kept as a research state; graceQueueLite.drawDisconnected still reads it but nothing calls it (src/room/era3Devices.ts drawWorkstation).",
   "account": "My account · activity",
   "focus": [
     "Your phone is connected. Focus mode can hold notifications while you work."
