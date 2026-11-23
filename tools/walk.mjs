@@ -1030,6 +1030,10 @@ async function main() {
       if (/^win-min$|^task-restore$/.test(id)) return false;
       // ⚑ S424 — the board's This week button reopens the card she has read: a reader's press, never the way on (Begin is)
       if (id === 'week-open') return false;
+      // ⚑ S424 — while a lesson's Watch runs (Lambient's own first cut; Lambient answering Maureen) a visitor watches: the walker
+      //   does not leave the lesson, play the film or pick a mother then (leaving Lesson 1 before Lambient's cut starts it over:
+      //   the first walk of S424 pressed Back to Today and Lesson 1 again ~1,600 times)
+      if (st.lessonWatch && /^board-back$|^video$|^family-sel-|^account-activity$|^start-menu$/.test(id)) return false;
       // ⚑ S332 — the four jobs, in the board's order, each once (each finished job files `e3-job:<id>`)
       const JOBS = ['testimony', 'places', 'family', 'group'];
       const tm = /^task-(\d+)$/.exec(id);

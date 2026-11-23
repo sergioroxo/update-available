@@ -647,6 +647,10 @@ const LAP = { w: 224, h: 140 };
       driven: !!(pose && (pose.driven || pose.reloc)),
       qMode: q ? q.mode : null,
       qFamilyComplete: q?.surfaces?.get('family')?.complete() ?? false,
+      // ⚑ S424 — a lesson's "Watch" is running (Lesson 1: Lambient makes the first cut; Lesson 3: Lambient answers Maureen): a visitor
+      //   watches it — there is nothing of hers to press on that screen until it is done
+      lessonWatch: !!(q && q.watch) || (() => { const f = q?.surfaces?.get('family'); return !!(f && q?.openSurface === f && typeof f.lessonSent === 'boolean'
+        && !f.lessonSent && !f.lessonMoved && !f.outcomes?.has('p_maureen')); })(),
       ritualOpen: !!(os.updateApp && os.updateApp.visible),
       rawOsHits: (os.hits || []).length,
       // S269: what keeps the desktop from being idle (the spine waits on it in 1997 and 2003)
