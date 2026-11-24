@@ -4,7 +4,7 @@ STATUS: live
 
 *For the Quest. One line per item: what to look at. Nothing is "done" until you have checked it in the headset. The ids
 are the T97 rows in TODO (from your run of 20 Nov). The pictures are in `research/article-images-2026-11-23/job35/`
-(`S424/` the training, `S425/` the memory, `S426/` Malta), each sheet before (above) and after (below). The quickest way
+(`S424/` the training, `S425/` the memory, `S426/` Malta; `S426/SHEET_fix_*.png` the group back in its column), each sheet before (above) and after (below). The quickest way
 in: `?era=3`. What was built: `AS_BUILT_JOB35D_2026-11-24.md`.*
 
 ## Act I · the training
@@ -34,8 +34,14 @@ in: `?era=3`. What was built: `AS_BUILT_JOB35D_2026-11-24.md`.*
 
 ## Act III · Malta
 
-- [ ] **16-16 · Bea's news.** The group fills the monitor, and you can scroll back. Bea's card and its line "Malta · Act LV
-  of 2016 · passed 5 December" are readable. Nothing is offered for you to say.
+- [ ] **16-16 · The group in its place.** The group stays in the phone's column beside the board, all through Malta. It
+  never covers the board or the whole screen.
+- [ ] **16-16 · No line cut.** Every message, name and card is whole: nothing is cut by the blue bar or the header.
+- [ ] **16-16 · A pace you can read.** Each message stays long enough to read before the next one comes.
+- [ ] **16-16 · The scroll.** "▲ Earlier messages" takes you up. When a new message comes, you stay where you are, and
+  "▼ New messages" takes you down. Try it with the ray.
+- [ ] **16-16 · Bea's news.** Bea's card and its line "Malta · Act LV of 2016 · passed 5 December" are readable. Nothing is
+  offered for you to say.
 - [ ] **16-15 · The kit.** "GracePlatform chose your story." The kit and the take-down line read clearly.
 - [ ] **16-17 · The removal, seen.** The outline is slow and calm; "removing…", the grey and the fold are each visible.
 - [ ] **16-17 · Outnumbered.** The forwards outrun it, "Review could not keep up." appears, and the ray reaches "↪ Forward
@@ -54,9 +60,15 @@ in: `?era=3`. What was built: `AS_BUILT_JOB35D_2026-11-24.md`.*
 4. **The board's word of the day** ("DEPENDENCY…") is gone in 2016: you meet the word in Lesson 1.
 5. **The ▶ lamp** on the set is lit whenever a tape waits to be played, in every era.
 6. **If you press Close before your Notes come,** they still come, in their column.
-7. **The group fills the whole monitor** for Bea's news and the removal, then goes back to its column.
-8. **Hanne's "read that again susan" is not removed** (only the card, Bea's and Susan's lines are).
-9. **Your forward** is the same link as the women's, with no words.
-10. **"↪ Forward the link" stays** until the update comes.
-11. **If the memory page is still open** when the news comes, the news closes it.
-12. **The board's "Campaign kit · scheduled" tile** after the removal is gone (it sat half over the taskbar).
+7. **Hanne's "read that again susan" is not removed** (only the card, Bea's and Susan's lines are).
+8. **Your forward** is the same link as the women's, with no words.
+9. **"↪ Forward the link" stays** until you press it or the update comes.
+10. **If the memory page is still open** when the news comes, the news closes it.
+11. **The board's "Campaign kit · scheduled" tile** after the removal is gone (it sat half over the taskbar).
+12. **Bea's card in the column:** its headline and fact line wrap whole; the red square is now a red stripe down its left
+    side, to make room.
+13. **Gaps in the chat:** only whole messages are shown, so a long message that does not fit leaves an empty band under
+    "▲ Earlier messages" instead of half a line.
+14. **The removal is slower:** about 26 s (it was about 13), so each step can be read.
+15. **While the review shows an older message,** "▼" steps aside for a moment ("▲" stays). If you press "▲" yourself, the
+    chat stops scrolling for you.

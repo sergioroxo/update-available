@@ -4,7 +4,7 @@ STATUS: live
 
 **Approved by him, 23 Nov 2026** (typed in the orchestrator's window: a yes to each of the eight calls, his words in §5). Part D builds it (S424 onward).
 
-**Built** (24 Nov): S424 Act I, S425 Act II, S426 Act III (and the Notes' place fixed at his word), walked through both doors at 1cdb26f7. What was built, and where it differs from this page: `AS_BUILT_JOB35D_2026-11-24.md`.
+**Built** (24 Nov): S424 Act I, S425 Act II, S426 Act III (and the Notes' place fixed at his word), walked through both doors at 1cdb26f7; then the group put back in its column at his word (S426e), walked through both doors at 1d9b6f60. What was built, and where it differs from this page: `AS_BUILT_JOB35D_2026-11-24.md`.
 
 *Written for his yes. Part D builds it after he has read it and changed what he wants (UIB_JOB_35 Part D).
 It answers his 20 Nov headset notes 16-6, 16-7, 16-8, 16-11, 16-13 … 16-18 (HEADSET_RUN_2026-11-20 §7) and his one
@@ -119,7 +119,7 @@ added. ⟨felt⟩ beats have nothing over them.*
 | 9 | Her 2014 story | Look back | her story as the platform published it, "Edited with: Name the dependency, not the person"; then her own words, the cuts struck through | See what you wrote · Close | operable page, her words ⟨felt⟩ | — |
 | 10 | Her Notes | her own words on the screen | the Handset Window comes in over the page's right half and opens her Notes; she types "It wasn't dependency. I was in love with her."; Mam's unfinished note under it; then Nuala's message lands | — | ⟨felt⟩ | — |
 | | **ACT III · MALTA** | | | | | |
-| 11 | Bea's news | the evening; the board clear | the group opens wide and scrolls, keeping every message; Bea, the card, Susan, Hanne; the room's light lifts | ▲ ▼ (if she wants) | ⟨felt⟩ | — |
+| 11 | Bea's news | the evening; the board clear | the group opens wide and scrolls (⚑ S426e: in its own column, not wide), keeping every message; Bea, the card, Susan, Hanne; the room's light lifts | ▲ ▼ (if she wants) | ⟨felt⟩ | — |
 | 12 | The network answers | the vote | URGENT: the campaign kit, "GracePlatform chose your story." | Open the kit; Approve kit · Take my story down · Back to today | operable | — |
 | 13 | The removal, seen | the kit closed; "Malta" in the group | in the chat: each Malta message outlined, greyed and folded into "Removed by GracePlatform" | — | operable over ⟨felt⟩ words (it acts on them, never mocks them) | — (the platform's bar: "You do not need to do anything.") |
 | 14 | Outnumbered (the last beat) | the removal | the women forward the link faster than it can be removed; three more join; "Review could not keep up."; the thread holds, lit | ↪ Forward the link (if she wants) | ⟨felt⟩ | — |
@@ -323,6 +323,7 @@ the group, `s3_maiden.json` `before`, `news`, `cascade`; Áine, `s3_places.json`
 
 **Beat 11 · Bea's news · about 40 s · ⟨felt⟩**
 - **Because:** the evening goes on; the board is clear.
+- ⚑ **Revised 24 Nov (S426e):** the group stays in its column, beside the board; see the note at the top of Act III's §4 item 16-16.
 - **On the screen:** the group opens wide on the monitor, in the board's place, while the group is speaking:
   **Maiden-to-be**, a chat that scrolls and keeps every message (smaller bubbles, the newest at the bottom, ▲ ▼ to look
   back; the morning's messages above). Each message lands only after the one before it has been read, as built:
@@ -371,6 +372,7 @@ the group, `s3_maiden.json` `before`, `news`, `cascade`; Áine, `s3_places.json`
 
 **Beat 13 · The removal, seen · about 15 s**
 - **Because:** the kit is closed, and "Malta" is still in the group.
+- ⚑ **Revised 24 Nov (S426e):** the group stays in its column; the bar, the outlines and the fold happen there, 4 s a message.
 - **On the screen:** the group opens wide again. A bar at the top of the chat, in the platform's blue:
   *"GracePlatform · reviewing this group · You do not need to do anything."*
   Then, one message at a time, slowly enough to watch: the platform's outline around it, *"removing…"*, the bubble greys
@@ -470,7 +472,7 @@ what it calls “conversion practices”." The consent and terms lines are cut; 
 show that people can choose a different path." stays. About 45 words, from about 64. Renata's row is now "your edit ·
 0:20": the film she cut in Lesson 1 is in the campaign.
 
-**16-16 · A chat she can read, and a link that is not blank.** The group, Maiden-to-be, opens wide on the monitor while
+**16-16 · A chat she can read, and a link that is not blank.** ⚑ **Revised 24 Nov at his word (S426e):** "And now the messenger covers all of the screen?? What happened?" The group stays in the Handset Window's own column for the whole of Act III, beside the board, with no line cut, a pace to read by and ▲ ▼ that work. The "opens wide" wording on this page is kept as the plan he approved: a research state (built at 9974fe1f). The group, Maiden-to-be, opens wide on the monitor while
 it is speaking, and scrolls: every message stays, the newest at the bottom, ▲ ▼ to go back; each message lands only
 after the one before has been read (as built). The Malta card is **not a link** (my pick): the card itself carries the
 fact, "Malta · Act LV of 2016 · passed 5 December" (documentary: the Act was passed unanimously on 5 Dec 2016 and
