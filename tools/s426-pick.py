@@ -37,7 +37,7 @@ if which == 'after':
     pick('15b_removing-card', lambda e: tokp(e, 'rv:n1:removing') != '')
     pick('15c_greyed', lambda e: tokp(e, 'rv:').endswith(':grey') and tokp(e, 'rv:').startswith('rv:n'))
     pick('15d_folded', lambda e: has(e, 'takeover') and num(e, 'r') == 4 and num(e, 'c') == 0, last=True)
-    pick('16_forwards', lambda e: has(e, 'takeover') and num(e, 'c') >= 1 and not has(e, 'fwd'))
+    pick('16_forwards', lambda e: e.get('why') == 'press-mirror:forward-link' or (has(e, 'takeover') and num(e, 'c') >= 1 and not has(e, 'fwd')))
     pick('17_her-forward', lambda e: has(e, 'fwd') and has(e, 'w1'))
     pick('18_could-not-keep-up', lambda e: has(e, 'after') and has(e, 'w1'))
     pick('19_last-beat', lambda e: has(e, 'after') and has(e, 'w0') and not upd(e), last=True)

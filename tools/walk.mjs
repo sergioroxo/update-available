@@ -1569,20 +1569,22 @@ async function main() {
       const g = await page.evaluate(() => { const q = window.__graceQueue?.(); const p = q?.phone; return p ? { stage: p.stage, newsN: p.newsN, view: p.groupView, screen: p.screen } : null; }).catch(() => null);
       const up = s.targets.find((t) => t.id === 'mirror:scroll-up'), down = s.targets.find((t) => t.id === 'mirror:scroll-down');
       if (g && g.screen === 'group' && (g.stage === 'news' || g.stage === 'read' || g.stage === 'takeover')) {
-        if (scrollCheck.phase === 0 && g.newsN >= 3 && up && !g.view.keys.includes('n0')) {
+        // as soon as Bea's first line has scrolled out of view (the card under it), so that more of the news lands while she looks back
+        if (scrollCheck.phase === 0 && g.newsN >= 2 && g.newsN < 5 && up && !g.view.keys.includes('n0')) {
           scrollCheck.phase = 1;
           scrollCheck.before = g.view.keys;
         }
         if (scrollCheck.phase === 1) {
           if (g.view.keys.includes('n0') && g.view.userScrolled) { scrollCheck.phase = 2; scrollCheck.sawBeaFirst = true; scrollCheck.scrolled = g.view; scrollCheck.since = Date.now(); note('scroll-check', { what: `▲ pressed ${scrollCheck.ups}×: Bea's first line is in the drawn list (${g.view.keys.join(',')})`, era: s.era }); s = await probe(); continue; }
-          if (up && scrollCheck.ups < 3) { scrollCheck.ups++; stalls = 0; s = await press(up, s); continue; }
+          // one ▲ at a time, the thread redrawn before it is read again (a second press on a stale view overshoots her first line)
+          if (up && scrollCheck.ups < 6) { scrollCheck.ups++; stalls = 0; s = await press(up, s); await wait(900); s = await probe(); continue; }
           scrollCheck.phase = 3; scrollCheck.failed = 'Bea\'s first line not reached'; note('scroll-check', { what: 'FAILED: ' + scrollCheck.failed, era: s.era });
         }
         if (scrollCheck.phase === 2) {
           const waited = (Date.now() - scrollCheck.since) / 1000;
           if (down && (g.view.unseen > 0 || waited > 20)) {
             scrollCheck.newMessages = g.view.unseen; scrollCheck.keptPlace = g.view.keys.includes('n0');
-            stalls = 0; s = await press(down, s);
+            stalls = 0; s = await press(down, s); await wait(900);
             const a = await page.evaluate(() => window.__graceQueue?.()?.phone?.groupView ?? null).catch(() => null);
             scrollCheck.back = !!a && a.scrollBack === 0; scrollCheck.after = a?.keys ?? []; scrollCheck.phase = 3;
             note('scroll-check', { what: `"${g.view.unseen > 0 ? 'New messages' : 'Latest'}" pressed with ${g.view.unseen} new below (her place kept: ${scrollCheck.keptPlace}); back at the bottom: ${scrollCheck.back}`, era: s.era });
