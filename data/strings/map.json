@@ -350,10 +350,11 @@
     },
     {
      "id": "work",
-     "label": "A story, corrected",
+     "label": "Lesson 1 · A testimony",
      "done": "renataWorked",
-     "hint": "Correct Renata’s testimony: apply or skip each rule. Then return to Today.",
-     "where": "the workstation"
+     "hint": "Begin Lesson 1: Lambient makes the first cut in Renata’s film; apply or skip the next two rules, then send it. Then return to Today.",
+     "where": "the workstation",
+     "_retiredS424": "⚑ S424 (UiB job 35 Part D, Act I: the board is the training) — `label` was \"A story, corrected\", `hint` \"Correct Renata’s testimony: apply or skip each rule. Then return to Today.\"."
     },
     {
      "id": "pipeline",
@@ -366,17 +367,19 @@
     },
     {
      "id": "places",
-     "label": "The places list",
+     "label": "Lesson 2 · The places list",
      "done": "placesDone",
-     "hint": "On the board: The places list. Add The Wick to the list, or leave it off.",
-     "where": "the workstation"
+     "hint": "Lesson 2 opens once Lesson 1 is done: add The Wick to the list, or leave it off.",
+     "where": "the workstation",
+     "_retiredS424": "⚑ S424 — `label` was \"The places list\", `hint` \"On the board: The places list. Add The Wick to the list, or leave it off.\"."
     },
     {
      "id": "family",
-     "label": "The mothers",
+     "label": "Lesson 3 · The mothers",
      "done": "familyDone",
-     "hint": "On the board: Answer the mothers. Send each a reply, or don’t.",
-     "where": "the workstation"
+     "hint": "Lesson 3: Lambient answers the first mother; then Annette is yours. Send a reply, or don’t.",
+     "where": "the workstation",
+     "_retiredS424": "⚑ S424 — `label` was \"The mothers\", `hint` \"On the board: Answer the mothers. Send each a reply, or don’t.\"."
     },
     {
      "id": "group",
@@ -388,25 +391,37 @@
     },
     {
      "id": "vera-install",
-     "label": "Kindredraft",
+     "label": "A memory from 2014",
      "done": "veraRecordOpened",
-     "hint": "When the board’s jobs are done, install Kindredraft. It opens Vera’s own 2014 story.",
-     "where": "the workstation"
+     "hint": "When the training is done, Kindredraft shows a memory from 2014. Look back opens Vera’s own story.",
+     "where": "the workstation",
+     "_retiredS425": "⚑ S425 (UiB job 35 Part D, Act II: Kindredraft as a memory, no Install) — `label` was \"Kindredraft\", `hint` \"When the board’s jobs are done, install Kindredraft. It opens Vera’s own 2014 story.\""
     },
     {
      "id": "vera-story",
      "label": "Vera · 2014",
      "done": "veraRecordClosed",
      "quiet": true,
-     "hint": "As sent shows her earlier account. Close record returns to the day.",
-     "where": "the workstation"
+     "hint": "Her story as it was published, then her own words. Her Notes follow. Close returns to the board.",
+     "where": "the workstation",
+     "_retiredS425": "⚑ S425 — `hint` was \"As sent shows her earlier account. Close record returns to the day.\" (As sent and Close record are retired: See what you wrote and Close)."
+    },
+    {
+     "id": "vote",
+     "label": "Bea’s news",
+     "done": "voted",
+     "hint": "After Nuala’s message, Bea’s news from Malta comes to the group, opened wide on the monitor. ▲ ▼ look back.",
+     "where": "the group, wide on the monitor",
+     "_retiredS426": "⚑ S426 (UiB job 35 Part D, Act III beat 11; his call 8, the kit after the news) — `label` was \"The vote\", `hint` \"When the campaign kit closes, Bea shares the news from Malta in the group, beside the platform.\", `where` \"the mirrored phone beside the platform\"; it came after the kit. Its `done` (`voted`) is set once the news has been read now (it was set as it began).",
+     "quiet": true
     },
     {
      "id": "vera-kit",
      "label": "The campaign kit",
      "done": "veraKitClosed",
-     "hint": "After Nuala’s message, the campaign kit opens. Approve it or return to Today. Take my story down is optional.",
-     "where": "the workstation"
+     "hint": "After Bea’s news, the URGENT pop-in: Open the kit. Approve it, take your story down, or go back to Today.",
+     "where": "the workstation",
+     "_retiredS426": "⚑ S426 — `hint` was \"After Nuala’s message, the campaign kit opens. Approve it or return to Today. Take my story down is optional.\" (it comes after Bea’s news now, his call 8)."
     },
     {
      "id": "record",
@@ -417,35 +432,33 @@
      "where": "the workstation"
     },
     {
-     "id": "phone",
-     "label": "The phone",
-     "done": "phoneAfterKit",
-     "hint": "Her phone is mirrored beside the platform. Each finished job brings a message there.",
-     "where": "the mirrored phone beside the platform"
-    },
-    {
-     "id": "vote",
-     "label": "The vote",
-     "done": "voted",
-     "hint": "When the campaign kit closes, Bea shares the news from Malta in the group, beside the platform.",
-     "where": "the mirrored phone beside the platform"
-    },
-    {
      "id": "cascade",
-     "label": "The group",
+     "label": "The group, outnumbered",
      "done": "cascadeSeen",
      "quiet": true,
-     "hint": "GracePlatform removes the messages by itself. The group forwards them faster.",
-     "where": "the mirrored phone beside the platform"
+     "hint": "With the kit closed, GracePlatform removes the news from the group, one message at a time. The women forward it faster. ↪ Forward the link is hers, if she wants.",
+     "where": "the group, wide on the monitor",
+     "_retiredS426": "⚑ S426 (Act III beats 13–14) — `label` was \"The group\", `hint` \"GracePlatform removes the messages by itself. The group forwards them faster.\", `where` \"the mirrored phone beside the platform\"."
     },
     {
      "id": "update",
      "label": "The update",
      "done": "updatedTo4",
-     "hint": "The system update follows the group’s cascade.",
-     "where": "the workstation"
+     "hint": "The system update follows once the review could not keep up.",
+     "where": "the workstation",
+     "_retiredS426": "⚑ S426 — `hint` was \"The system update follows the group’s cascade.\""
     }
-   ]
+   ],
+   "_retiredS426beats": [
+    {
+     "id": "phone",
+     "label": "The phone",
+     "done": "phoneAfterKit",
+     "hint": "Her phone is mirrored beside the platform. Each finished job brings a message there.",
+     "where": "the mirrored phone beside the platform"
+    }
+   ],
+   "_retiredS426beatsWhy": "⚑ S426 (UiB job 35 Part D, Act III) — the beat \"The phone\" (`phone`, done `phoneAfterKit`: \"Her phone is mirrored beside the platform. Each finished job brings a message there.\") is retired from the map: the news comes to her wide on the monitor (\"Bea’s news\", before the kit, his call 8), and the phone's own messages are each lesson's answer (Act I). `vote` moved before `vera-kit`. Kept here word for word."
   },
   {
    "id": "e4",

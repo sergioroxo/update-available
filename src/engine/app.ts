@@ -1071,7 +1071,9 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
         //   before the fellowship path and went behind the CRT. 1997's "Did you know" names it and brings it (os.onPauseTv →
         //   TeachingTvs.bring); `arm` (?debug=1) still runs the old moment for the probes.
         if (tape === '1997') return false;
-        if (tape === '2016') return os.era === 'e3' && ledger.records.includes('e3-job:testimony');
+        // ⚑ S424 (UiB job 35 Part D, Act I beat 5) — 2016's OFFER is due once Lesson 1 is done and the Mentor's message (its
+        //   answer) has landed; `quiet` then waits for that message's reading time and a board at rest
+        if (tape === '2016') return os.era === 'e3' && ledger.records.includes('e3-job:testimony') && !!era3Devices?.debugQueue().phone.delivered('mentor');
         // ⚑ S412 (UiB job 33 Part A; 26-4, 26-5) — 2026's set has no moment of its own any more: the parents' course comes
         //   through Mum's email, and only if Maya presses its link (os.e4.browser.onHedge → TeachingTvs.bringBeside). Dad's read
         //   no longer sends it (his: "a course for parents, so it doesn't make sense that the father would send it").
@@ -1099,7 +1101,12 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       //   guide's balloon for the call (and the later offer) is drawn IN VIEW by the set's card, not on the glass
       call: (_tape, text) => { tvCallText = text ?? undefined; os.dirty = true; },
       callOpen: () => os.lambyGuide.view.rung === 'tvcall' && os.lambyGuide.active,
-      guidePress: (id) => { os.lambyGuide.press(id); os.dirty = true; }
+      guidePress: (id) => { os.lambyGuide.press(id); os.dirty = true; },
+      // ⚑ S425 — on a computer, 2016's set brought beside the monitor turns the look (as little as it takes) so the set can stand
+      //   large enough to read at the monitor's left, the monitor whole; it gives the look back when she puts the set back. A free
+      //   move (her drag takes it at any time); never in a headset (no conducted turns there), never under the gyro
+      look: (yaw, pitch) => { if (xr?.active || motionState === 'live') return; startCamMove({ x: camPos.x, y: camPos.y, z: camPos.z, pitch, yaw }, 1.0, false); },
+      facing: () => (xr?.active ? null : { yaw: camYaw + lookOffYaw, pitch: camPitch + lookOffPitch })
     });
   }
   // (the in-room cork board that used to be built here is RETIRED — decision
@@ -1147,6 +1154,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       putBack: (tape: '1997' | '2016' | '2026') => teachingTvs?.tvs[tape].putBack(null, 'visitor'),
       // ⚑ S412 — review aid: Mum's link's own bring (beside the monitor), without the press (a probe that proves the link presses it)
       beside: () => teachingTvs?.bringBeside(app.root.findByName('era3-device-monitor') as pc.Entity | null) ?? false,
+      bringTo: (tape: '1997' | '2016' | '2026') => teachingTvs?.bringTo(tape) ?? false,   // ⚑ S425: as Bring it brings it (tools/s425-set-measure.mjs)
       fitAll: () => teachingTvs?.fitAll() ?? null,   // S394 fix: every caption and margin line drawn into the bar, measured
       inst: (tape: '1997' | '2016' | '2026') => teachingTvs?.tvs[tape] ?? null,   // S394 fix: the set itself (review aid)
       canvases: () => teachingTvs?.canvases() ?? {},
@@ -2630,7 +2638,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     //   Maya's desk up over the partition to Daniel's seat) flies too, on its own arc, the facing held (yawTurn 0)
     // ⚑ S415 — and the turn to the room from 2026's acts: in a headset it is one snap of the facing under the world's follow
     //   (the turn's own leg, ~0 s), so the room is never re-formed under a captured view (that capture drew 90 calls at once)
-    const closeIn = closeStage === 'travel' || closeStage === 'lookUp' || closeStage === 'open' || (closeStage === 'turn' && !!xr?.active);   // …and the eyes rising to the stars (45° over 20 s); S361: and the seat coming back down as the panels open
+    const closeIn = closeStage === 'travel' || closeStage === 'lookUp' || closeStage === 'descend' || closeStage === 'open' || (closeStage === 'turn' && !!xr?.active);   // …and the eyes rising to the stars (45° over 20 s); S361: and the seat coming back down as the panels open
     const fly = (!!relocLeg || closeIn) && (!!xr?.active || reducedMotion());
     if (fly) { if (!closeIn) via = undefined; }   // era legs fly straight; the Close's way in keeps its arc
     else if (xr?.active) { dur = 0.001; via = undefined; }
@@ -2755,7 +2763,44 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     // the space starts changing as the (longer) turn ends, as it does on the computer (cluster.ts 'e3-e4')
     return { ...plan, turnSeconds, morphDelaySeconds: plan.morphDelaySeconds !== undefined ? turnSeconds : undefined };
   }
-  function flightYaw(): number { return flightYaw0 + (flightYaw1 - flightYaw0) * flyEase(Math.min(1, flightT / flightTurnTotal)); }
+  /**
+   * ⚑ S423 / 16-21 (his headset, 20 Nov: "Why are we turning face to the wall when we could face to the room? … as the
+   * camera is going up, it should already be able to do the turn slowly") — 2016 → 2026's FACING CURVE, in every look:
+   *   · it turns THROUGH THE ROOM (cluster.ts 'e3-e4' `turnDirection` −1: Vera's desk → her bed and posters → the doorway
+   *     into Daniel's room → Maya's), never the shorter way past the bare south wall the headset used to take;
+   *   · it STARTS WITH THE RISE. In a headset (and reduced motion) that was already so, but it turned the wall's way; on
+   *     the computer and the phone the facing held still for the 7 s rise and then swung 180° in the 6 s turn leg
+   *     (smoothstep, ~45 °/s at its peak). Now on the computer and the phone one smoothstep runs from the rise's first
+   *     frame to the turn leg's end (13 s: ~21 °/s at its peak, ~100° turned by the top of the rise), the legs' places
+   *     and seconds unchanged (`facingLead`, read by the camera update while the leg is the rise or the turn).
+   *   · in a headset the same 24 s as before (the music is rendered to it), on a trapezoid with a 15 % ramp: the way
+   *     through the room is 183°, not 177°, and 183° × 1/0.85 / 24 s = 8.97 °/s at its peak, inside the comfort law's 9.1
+   *     (the flight's 18 % ramp would be 9.3). The world turns under the head, as before; the head is never written.
+   */
+  const TURN_RAMP = 0.15;
+  const turnEase = (k: number): number => {
+    const r = TURN_RAMP, v = 1 / (1 - r);
+    if (k <= 0) return 0;
+    if (k >= 1) return 1;
+    if (k < r) return (v / (2 * r)) * k * k;
+    if (k > 1 - r) return 1 - (v / (2 * r)) * (1 - k) * (1 - k);
+    return v * (k - r / 2);
+  };
+  /** S423: the facing curve's shape: 'fly' (the flight's trapezoid: other changes in a headset), 'turn' (2016 → 2026 in a
+   *  headset: the 15 % trapezoid), 'smooth' (2016 → 2026 on the computer and the phone: one smoothstep) */
+  let flightEase: 'fly' | 'turn' | 'smooth' = 'fly';
+  /** S423: on the computer and the phone, 2016 → 2026's facing follows the curve while the leg is the rise or the turn */
+  let facingLead = false;
+  function flightYaw(): number {
+    const k = Math.min(1, flightT / flightTurnTotal);
+    const e = flightEase === 'smooth' ? k * k * (3 - 2 * k) : flightEase === 'turn' ? turnEase(k) : flyEase(k);
+    return flightYaw0 + (flightYaw1 - flightYaw0) * e;
+  }
+  /** S423: the signed turn from one facing to another, the shorter way unless the plan names a direction */
+  function turnDelta(from: number, to: number, dir?: 1 | -1): number {
+    const short = ((((to - from) % 360) + 540) % 360) - 180;
+    return dir && short !== 0 && Math.sign(short) !== dir ? short + dir * 360 : short;
+  }
   /** set when an era lands mid-flight; consumed by `endRelocation` */
   let pendingBed: string | null | undefined;
 
@@ -2795,9 +2840,17 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     stopMorphLayer(0);
     flightT = 0;
     flightTotal = Math.max(1, plan.riseSeconds + (plan.turnSeconds ?? 0) + (plan.watchSeconds ?? 0) + plan.buildSeconds + plan.descendSeconds);
-    flightTurnTotal = key === 'e3-e4' ? Math.min(flightTotal, E3E4_FACING_TURN_SECONDS) : flightTotal;   // S359 / H22
+    // ⚑ S423 — 2016 → 2026: through the room, from the rise (see `flightYaw`). Where the flight flies (a headset,
+    //   reduced motion) the facing turns over its first 24 s, as S359 had it; on the computer and the phone over the
+    //   rise and the turn leg together. Every other change keeps the whole flight's turn, the shorter way.
+    const slowFacing = !!xr?.active || reducedMotion();
+    flightTurnTotal = key === 'e3-e4'
+      ? (slowFacing ? Math.min(flightTotal, E3E4_FACING_TURN_SECONDS) : Math.max(1, plan.riseSeconds + (plan.turnSeconds ?? 0)))
+      : flightTotal;   // S359 / H22
+    flightEase = key === 'e3-e4' ? (slowFacing ? 'turn' : 'smooth') : 'fly';
+    facingLead = key === 'e3-e4' && !slowFacing;
     flightYaw0 = camYaw;
-    flightYaw1 = camYaw + ((((seatPose(plan.seat).yaw - camYaw) % 360) + 540) % 360 - 180);
+    flightYaw1 = camYaw + turnDelta(camYaw, seatPose(plan.seat).yaw, plan.turnDirection);
     const poses = RELOC_POSES[key];
     if (!poses) return;
     // ⚑ A relocation owns the camera outright, so the front door cannot still
@@ -3896,6 +3949,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     // ⚑ S396 — the MUTE fix: the era's tape is primed inside this press (WebKit gives sound only to a play() from a press)
     teachingTvs?.prime();
     if (closeStage === 'message') { nextCloseCard(); return; }   // S209 / P7-48 — a press turns the card
+    if (cloud?.visible && !cloud.panelsShown) return;   // S422: the stars are coming down; nothing in the sky takes a press yet
     // ⚑ S394 — Lamby's line in view (its card is over everything), then a Lamby set in the hand (in front of everything; a
     //   press that misses it passes on to the room)
     if (teachingTvs?.pressCard(ray)) return;
@@ -4006,7 +4060,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       // ⚑ S378 (UiB job 20 Part A, his "phantom clicks") — THE FAR GLASS TAKES NO PRESS. Daniel's machine still stands
       //   in the sky as an image, but its glass is no longer asked anything: no hit plane, no fly-to. The computer is the
       //   fifth panel now, and a press on it opens the machine's page in the site viewer (below), like the rooms' panels.
-      if (cloud?.visible) {
+      if (cloud?.panelsShown) {
         cloud.holdDrift(3);
         // ⚑ S175 — a label, then a panel: each turns ITS ROOM's panel to the room's
         //   dossier, in that room's own OS, right where it hangs (Sérgio: "the sources open need to be on the 4 panels
@@ -4036,6 +4090,9 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
         if (lb && lb.text !== lexStrings.star) { siteViewerBus.open(ERA_TARGET[lb.era] ?? 'hub'); return; }
         if (pi !== null) { siteViewerBus.open(ERA_TARGET[cloud.panelEraOf(pi)] ?? '1997'); return; }
       }
+      // ⚑ S422 (C-10) — in the Close the room is gone: a press that missed the sky's own things stops here (the room's
+      //   monitor, props and devices are tested as geometry, switched off or not, and a press in the dark took them)
+      if (cloud?.visible) return;
       const p = toDesktopR(ray);
       if (p) { // the monitor is the UI; everywhere else is the room
         const target = xr?.active ? os.xrPoint(p.x, p.y) : p;
@@ -4147,7 +4204,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     //   is pressing") — the panels took a press but published nothing a ray could land on: the ray stayed a stub and
     //   nothing named what it was on. The same tests as the press (resolveTapRay), in its order: a panel names itself,
     //   and the ray ends on it (aimAt).
-    if (cloud?.visible && closeStage !== 'message') {
+    if (cloud?.panelsShown && closeStage !== 'message') {
       // ⚑ S378 — the far glass is no longer asked (it takes no press); the computer's panel names itself
       const ph = cloud.panelHit(ray.p0, ray.p1);
       // ⚑ S406 / H1 — and in the headset the panel (or its button) the ray is on is framed: its hover
@@ -4161,6 +4218,9 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       const lb = cloud.labelAt(ray.p0, ray.p1);
       if (lb) return lb.text === lexStrings.star ? A.closeLexicon : A.closeLabel.replace('{label}', lb.text);
     }
+    // ⚑ S422 (C-10) — nothing of the room is named once the Close's sky is up (the ray named "the racket on the wall by the
+    //   bed" in the dark, the room switched off round him)
+    if (cloud?.visible) return null;
     if (os.isOff) return hitAt(ray, POWER_BTN, 0.08) ? A.power : null;
     // ⚑ S394 — the Lamby set names itself and what a press on it does (the press resolver asks it the same way)
     { const tv = os.era !== 'e2' || os.e2Arrived || teachingTvs?.holding ? teachingTvs?.aimPoint(ray) : null; if (tv) { aimAt = tv.at; return (A[`tv_${tv.what}`] ?? '').replace('{tape}', TAPES[tv.tape]?.title ?? '') || null; } }
@@ -4845,7 +4905,9 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
           camPos.z = camMove.fz + (camMove.tz - camMove.fz) * s;
         }
         camPitch = camMove.fp + (camMove.tp - camMove.fp) * s;
-        camYaw = camMove.fyaw + (camMove.tyaw - camMove.fyaw) * s;
+        // ⚑ S423 / 16-21 — 2016 → 2026 on the computer and the phone: the facing turns from the rise's first frame,
+        //   through the room, across the rise and the turn leg (`flightYaw`); the place still follows the leg
+        camYaw = facingLead && (relocLeg === 'rise' || relocLeg === 'turn') ? flightYaw() : camMove.fyaw + (camMove.tyaw - camMove.fyaw) * s;
         if (k >= 1) camMove = null;
       }
       // the front door landed (the arc above just resolved on the seat) — hand
@@ -4866,12 +4928,18 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
         // ⚑ S226 (his, 2026-10-10, cadence study Q6: "Press") — a card waits for a press, never for a clock: 39 words
         //   in 9 s was ~260 words a minute for readers in their second language. Each card says how to go on.
         void CLOSE_CARD_SECONDS;
-      } else if (closeStage === 'lead' || closeStage === 'hold' || closeStage === 'settled' || (closeStage === 'turn' && !camMove && !!xr?.active)) {
+      } else if (closeStage === 'lead' || closeStage === 'hold' || closeStage === 'settled' || (closeStage === 'turn' && !camMove && !!xr?.active)
+        || (!!xr?.active && !camMove && (closeStage === 'lookUp' || closeStage === 'descend' || closeStage === 'open'))) {
         closeHoldT += dt;
         // ⚑ S415 — in a headset the turn is one snap (no conducted turn, no cover); the room is given a breath to be seen before
         //   the crossing flies
+        // ⚑ S422 — and in a headset the lights going (`lookUp`), the stars coming down (`descend`) and the panels coming up
+        //   (`open`) run on their own clocks: nothing moves the seat. On a screen `hold` is the lights' whole crossfade (the
+        //   room goes only when it is dark)
         const cap = closeStage === 'lead' ? closeLeadNow : closeStage === 'turn' ? CLOSE_TURN_XR_HOLD
-          : closeStage === 'hold' ? CLOSE_DUSK_SECONDS : CLOSE_MONITOR_AFTER_SECONDS;
+          : closeStage === 'lookUp' ? CLOSE_LIGHTS_SECONDS : closeStage === 'descend' ? P_OPEN_SECONDS
+          : closeStage === 'open' ? CLOSE_XR_PANELS_SECONDS
+          : closeStage === 'hold' ? (xr?.active ? CLOSE_XR_NIGHT_SECONDS : CLOSE_LIGHTS_SECONDS) : CLOSE_MONITOR_AFTER_SECONDS;
         if (closeHoldT >= cap) advanceClose();
       } else if (closeStage && !camMove) advanceClose();
       // (C-01's night and constellation during the flight are gone — S361 / H50: the panels come after the messages)
@@ -5300,6 +5368,8 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
         viewer: viewerFilm.state() === 'playing' ? `film:${viewerFilm.file()}` : viewerAudio.playing() ?? ''
       };
       teachingTvs.update(dt, closeStage ? 'close' : os.era, voices, os.updateArmed);
+      // ⚑ S424 — Lesson 2 waits for Heartwood's offer (after Lesson 1) to be answered or let go (graceQueueLite.lessonState)
+      if (q3) q3.heartwoodSettled = teachingTvs.offerSettled('2016');
       // ⚑ S394 — Lamby's call and his later offer, in view (the card), from the guide's own view
       teachingTvs.guide(os.lambyGuide.view, os.lambyGuide.active);
       setFilmAudible(teachingTvs.audible);
@@ -5734,7 +5804,8 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
    * The review route (`?close=1`) starts at Daniel's seat, so it keeps the old
    * order: lookUp, night on the stars, then the opening.
    */
-  type CloseStage = 'lead' | 'turn' | 'travel' | 'line' | 'lookUp' | 'message' | 'hold' | 'open' | 'settled' | null;
+  /** ⚑ S422 — `descend`: the stars come down from the ceiling and settle round him (C-2), before the cards */
+  type CloseStage = 'lead' | 'turn' | 'travel' | 'line' | 'lookUp' | 'hold' | 'descend' | 'message' | 'open' | 'settled' | null;
   /** ⚑ S209 / P7-48 — THE CLOSE'S MESSAGE (data/strings/close_message.json): with the eyes on the stars and before
    *  the panels open, a few plain cards in the frame's voice — what SOGICE is, that it persists, that the law did not
    *  come, and his last line. Each holds CLOSE_CARD_SECONDS or until a press; the frame never plays. */
@@ -5767,7 +5838,9 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     closeMsgEl.style.opacity = xr?.active ? '0' : '1';   // the headset has its own card (below); the page's is for the computer
     // ⚑ S361 / H50 — the headset reads it on its own card in front of the eyes (the helper's plate held two lines and
     //   the helper redrew it every frame: in his headset the cards never showed — "where are the message parts?")
-    xrFrame?.setCard({ text: c.text, by: c.by, foot: closeMessage.continue });
+    // ⚑ S422 — only in a headset: on a screen the plate was always hung too, at eye height under a gaze raised 72° to the
+    //   stickers, so it was never seen; with the gaze on the stars at 24° (C-2) it stood in the lower half of the frame
+    xrFrame?.setCard(xr?.active ? { text: c.text, by: c.by, foot: closeMessage.continue } : null);
     // the audit's handle (?debug=1 tools only): a card is up and a press anywhere turns it (tools/walk.mjs)
     (window as { __closeCard?: { on: boolean; i: number } }).__closeCard = { on: true, i };
   }
@@ -5824,19 +5897,37 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   /** 90° of turn with the 72° rise: 1.875 × 90 / 20 = 8.4 °/s */
   const CLOSE_LOOKUP_SECONDS = 20;
   const CLOSE_LIGHTS_SECONDS = 8;
-  /** ⚑ S361 / H50 — night falls on the stars, then the first message (his order: up, then only the messages) */
-  const CLOSE_DUSK_SECONDS = 6;
-  /** ⚑ S361 / H50 — in the headset the head is the camera and the world is never tilted, so the eyes cannot be raised
-   *  to the stars: the seat rises toward them instead, slowly (0.8 m in 20 s, ≤0.08 m/s at the crest), and comes back
-   *  down as the panels open */
-  const CLOSE_XR_RISE = 0.8;
+  // ⚑ S361 / H50 — CLOSE_DUSK_SECONDS (6: night falls on the stars, then the first message) and CLOSE_XR_RISE (0.8 m: in the
+  //   headset the seat rose toward the stars over 20 s and came back down as the panels opened) are retired by S422: on a
+  //   screen `hold` is the lights' whole crossfade (CLOSE_LIGHTS_SECONDS), and in a headset the stars come down instead
+  //   (both are in 0ee79d30)
+  /**
+   * ⚑ S422 (UiB job 35 Part B; his headset run of 20 Nov at the Close: "we got up and the star should be coming down";
+   * "they should be floating around us so we can read this"; "still seeing stuff behind me") — THE STARS COME DOWN, AND THE
+   * ROOM GOES. The seat no longer rises in the headset (CLOSE_XR_RISE, retired above): after his line the
+   * room's lights go out round him (`lookUp`: on a screen the eyes still rise to the stickers first, then the lights go in
+   * `hold`), the room is switched off whole once it is dark (`descend` begins: nothing of it is left in any direction), and
+   * the constellation comes down out of the stickers' patch to sit round the seat at reading distance — the panels not yet
+   * (pointCloud `showPanels`, after the cards). On a screen the gaze comes down with the stars to the labels (CLOSE_STARS_
+   * READ_PITCH); in a headset nothing moves but the stars. The cards are read with the stars round him; then the panels
+   * come up in front of him at eye height, and the machine stands under them. No conducted turn anywhere: the sky is laid
+   * out on the seat's own facing (`closeArcYaw`).
+   */
+  const CLOSE_XR_NIGHT_SECONDS = 2;
+  const CLOSE_STARS_READ_PITCH = 24;
+  const CLOSE_PANELS_SECONDS = 8;
+  const CLOSE_XR_PANELS_SECONDS = 2.5;
+  /** the bearing the Close's sky is laid out on (the seat's facing when the stars come down) */
+  let closeArcYaw = 0;
+  /** the constellation's own opening (cluster.json pointCloud.openSeconds): the stars' descent */
+  const P_OPEN_SECONDS = (clusterData.pointCloud as { openSeconds: number }).openSeconds;
   /** ⚑ S361 / H50 (his: "a song behind it all"; "the music for the Close is missing", twice) — the Close's song, from
    *  the flight out of Maya's room to the Restart card (tools/make_close_song.py) */
   const CLOSE_SONG = 'close_song.mp3';
-  const CLOSE_OPEN_SECONDS = 16;
+  // (S422: CLOSE_OPEN_SECONDS 16 and CLOSE_SKY_PITCH 10 — the gaze's 16 s down into the sky as the panels opened — are
+  //   retired: the stars' descent is the constellation's own `openSeconds`, and the panels come up at eye level, pitch 0)
   const CLOSE_MONITOR_AFTER_SECONDS = 20;
   const CLOSE_STARS_PITCH = 72;
-  const CLOSE_SKY_PITCH = 10;
   let skyLerp: { from: pc.Color; to: pc.Color; t: number; seconds: number } | null = null;
 
   /**
@@ -5845,21 +5936,39 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
    * the panels were up before the first message. Now: the sky lerps to its night-blue, the constellation opens out of
    * the stars, the room goes under it (`closeRoomPending`, at half open), and the gaze comes down into the sky — in the
    * headset the seat comes back down from its rise, as slowly as it went up.
+   * ⚑ S422 — the stars come down BEFORE the cards now (`beginStarsDown`, at `descend`) and the room has gone by then; this
+   * brings up only the panels and the machine (pointCloud `showPanels`), in front of him at eye height.
    */
   function openClosePanels(): void {
     if (!cluster || !cloud) return;
-    closeStage = 'open';
-    if (!closeMorphBegun) {
-      closeMorphBegun = true;
-      // Round 18: never black — the constellation sits in a night-blue sky; 2026-09-12: and it gets there over the
-      // opening, not on a frame
-      if (camera.camera) {
-        skyLerp = { from: camera.camera.clearColor.clone(), to: closeBackdropColor(), t: 0, seconds: CLOSE_OPEN_SECONDS };
-      }
-      cloud.show();
-    }
+    // (a route with no cards, or that skipped the descent: the stars come down now)
+    if (!closeMorphBegun) beginStarsDown(true);
+    closeStage = 'open'; closeHoldT = 0;
+    // ⚑ S422 (C-7) — the panels (and Daniel's machine under them) come up in front of him, at eye height; on a screen the
+    //   gaze comes down from the labels to them, at the seat's own facing; in a headset nothing moves
+    cloud.showPanels(true);
     roomBed.set(CLOSE_SONG, 4);   // (already playing since the flight; a review that skipped it starts it here)
-    startCamMove({ x: EYE.x, y: EYE.y, z: EYE.z, pitch: CLOSE_SKY_PITCH, yaw: 0 }, CLOSE_OPEN_SECONDS, true);
+    if (!xr?.active) startCamMove({ x: EYE.x, y: EYE.y, z: EYE.z, pitch: 0, yaw: closeArcYaw }, CLOSE_PANELS_SECONDS, true);
+  }
+
+  /**
+   * ⚑ S422 (C-2, C-10) — THE ROOM GOES, THE STARS COME DOWN. Called when the room is dark: every entity of the room is
+   * switched off at once (in the dark, so nothing is seen to vanish), his monitor with it; the sky goes from the room's
+   * dark to the constellation's night-blue over the descent; the constellation opens out of the stickers' patch, laid out
+   * on the seat's facing. `now` (a route that skipped the stages): the same, for the panels' sake.
+   */
+  function beginStarsDown(now = false): void {
+    if (!cluster || !cloud) return;
+    closeMorphBegun = true;
+    for (const id of CLOSE_ROOM_ENTITIES) {
+      const e = app.root.findByName(id);
+      if (e instanceof pc.Entity) e.enabled = false;
+    }
+    closeRoomPending = null;
+    danielLine?.hide();
+    closeArcYaw = ((camYaw % 360) + 540) % 360 - 180;
+    if (camera.camera) skyLerp = { from: camera.camera.clearColor.clone(), to: closeBackdropColor(), t: 0, seconds: now ? 2 : P_OPEN_SECONDS };
+    cloud.show(closeArcYaw);
   }
 
   function advanceClose(): void {
@@ -5927,27 +6036,39 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       closeStage = 'line';
     }
     if (closeStage === 'line') {
-      closeStage = 'lookUp';
+      closeStage = 'lookUp'; closeHoldT = 0;
       // ⚑ W1-G1 — the eyes rise to the stars and come round only HALF of the quarter-turn to Daniel's desk (the other
       //   half is spent while the gaze comes down, in `open`): 45° over 20 s and 45° over 16 s, 4 and 5 °/s at the
       //   crest, where the one 90° turn in either leg alone would be 8–10 °/s — a spin straight overhead.
-      // ⚑ S361 / H50 — in the headset the seat itself rises toward the stars (the pitch is the head's, never ours)
-      const quarter = ((0 - camYaw + 540) % 360) - 180;
-      startCamMove({ x: EYE.x, y: EYE.y + (xr?.active ? CLOSE_XR_RISE : 0), z: EYE.z, pitch: CLOSE_STARS_PITCH, yaw: camYaw + quarter / 2 },
-        CLOSE_LOOKUP_SECONDS, true);
+      // ⚑ S422 — no quarter-turn any more: the sky is laid out on the facing the eyes already have (`closeArcYaw`), so the
+      //   eyes only rise (a screen); and in a headset the seat no longer rises (his "we got up and the star should be coming
+      //   down"): the lights go out round him where he sits, and the stars will come down to him
+      if (xr?.active) {
+        cluster.applyRig('close', true, CLOSE_LIGHTS_SECONDS);
+        return;
+      }
+      startCamMove({ x: EYE.x, y: EYE.y, z: EYE.z, pitch: CLOSE_STARS_PITCH, yaw: camYaw }, CLOSE_LOOKUP_SECONDS, true);
       return;
     }
     if (closeStage === 'lookUp') {
       // ⚑ the lights go out ON the stars, not before the eyes start rising — measured: with the rig applied at the
       //   start of lookUp the whole rise was through a black room, and a ceiling you cannot see is not a ceiling.
       // ⚑ S361 / H50 — night falls first (CLOSE_DUSK_SECONDS), then the messages; no constellation yet
+      // ⚑ S422 — in a headset the lights have gone already (in `lookUp`); a breath of night, then the stars come down
       closeStage = 'hold'; closeHoldT = 0;
-      danielLine?.hide();   // S401: the lights go out on the stars; his monitor goes with the room's light
-      cluster.applyRig('close', true, CLOSE_LIGHTS_SECONDS);
+      danielLine?.off();   // S422 (C-1): his monitor stays where it was brought; its glass goes dark with the room's light
+      if (!xr?.active) cluster.applyRig('close', true, CLOSE_LIGHTS_SECONDS);
       return;
     }
     if (closeStage === 'hold') {
-      // ⚑ S209 / P7-48 — the message, with the eyes on the stars; its last card opens the panels (nextCloseCard)
+      // ⚑ S422 (C-10, C-2) — the room is dark: it goes, whole, and the stars come down round him
+      closeStage = 'descend'; closeHoldT = 0;
+      beginStarsDown();
+      if (!xr?.active) startCamMove({ x: EYE.x, y: EYE.y, z: EYE.z, pitch: CLOSE_STARS_READ_PITCH, yaw: closeArcYaw }, P_OPEN_SECONDS, true);
+      return;
+    }
+    if (closeStage === 'descend') {
+      // ⚑ S209 / P7-48 — the message, with the stars round him; its last card opens the panels (nextCloseCard)
       if (closeMessage.cards.length) { closeStage = 'message'; showCloseCard(0); return; }
       openClosePanels();
       return;
@@ -5973,6 +6094,8 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
    */
   function conductToMachinePanel(): void {
     if (!cloud) return;
+    // ⚑ S422 (C-7) — in a headset the machine stands in front of him under the panels, in view: nothing is turned
+    if (xr?.active) return;
     const i = cloud.machinePanel;
     const c = i >= 0 ? cloud.panelCentre(i) : null;
     if (!c) return;
@@ -6160,6 +6283,14 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
         xrFrame?.close();
         xrFrame?.setHint(menuStrings.xrRestartNote);
         window.setTimeout(() => restartVisit({ armed: true }), 3200);
+      },
+      // ⚑ S422 (C-5) — back to the panels: the window closes; on a screen the gaze comes back up to the panels at the comfort
+      //   law's pace (the machine sits 25° under them); in a headset they are in front of him already
+      panels: () => {
+        siteViewerBus.close();
+        if (xr?.active || !cloud?.panelsShown) return;
+        const dp = Math.abs(camPitch);
+        startCamMove({ x: EYE.x, y: EYE.y, z: EYE.z, pitch: 0, yaw: closeArcYaw }, Math.max(3, 0.21 * dp), true);
       }
     };
     // read-only probe, like __os: the end of the Close — the machine's page (S380: Daniel's CRT in the row, pressed)
@@ -6298,7 +6429,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     // S361 — ?debug=1 only: the Close from wherever the visitor is (tools/close-order-probe.mjs), and where it has got to
     if (debugOn) (window as { __enterClose?: () => void }).__enterClose = () => enterClose();
     if (debugOn) (window as { __closeState?: () => unknown }).__closeState = () => ({ stage: closeStage, card: closeCard,
-      panels: !!cloud?.visible, open: cloud?.open ?? 0,
+      panels: !!cloud?.panelsShown, stars: !!cloud?.visible, open: cloud?.open ?? 0, arcYaw: closeArcYaw,
       // ⚑ S378 — the end of the Close: the gaze taken to the computer's panel (`ended`), and the page open (`page`)
       ended: !!cloud?.visible && closeMorphBegun && closeStage === null && !camMove, page: siteViewerBus.view, bed: roomBed.current,
       rig: closeMorphBegun, glitching: !!cluster?.busy });

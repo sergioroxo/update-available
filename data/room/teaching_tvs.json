@@ -7,6 +7,8 @@
   },
   "2016": {
    "era": "e3", "place": { "pos": [-4.45, 0.45, 2.23], "yaw": 180 }, "style": "dvd", "seat": [-4.4, 1.16, 0.7],
+   "offer": true, "beside": "era3-device-workstation", "xrFitDeg": 43,
+   "_docS424": "⚑ S424 (UiB job 35 Part D, Act I beat 5; his 23 Nov call 7: \"Yes, but not mandatory\") — 2016's moment is an OFFER (`offer`): after Lesson 1 and the Mentor's message the set lights by the door and Lambient asks once, in view; nothing comes or plays unasked. Brought (Bring it, or a press on the lit set at any time after), it stands BESIDE the monitor named `beside` (src/room/teachingTv.ts takeBeside, S412's grammar), never in front of it, and arrives stopped on its label, ▶ lit: nothing plays until her ▶. In a headset the whole set is kept inside `xrFitDeg` of the line of sight to the monitor (the mock's view is ±45°; its frame and keys in view, the monitor uncovered); on a phone held upright, where there is no room at the side, it stands above the monitor.",
    "_docPlace": "on wallTvUnit (top y 0.45), facing the seat (north); the wall TV, its DVD player, tray, light and the course's case are gone from r3"
   },
   "2026": {
@@ -16,7 +18,9 @@
  },
  "held": {
   "_doc": "BROUGHT CLOSE (heldDevice's grammar). In a headset the glass comes `xrDist` m before the eyes (Meta's 0.5 m floor for anything looked at for long; ⚑ the headset seat's own monitor is 0.56 m from the eye — S374 — so at 0.6 the 1997 CRT stood in front of the set's glass in the probe's photographs: at 0.5 the set's face is the nearest thing), and the set grows until its PICTURE is `pictureDeg` tall (the brief: 25–30°). On a computer or a phone the set keeps its size and comes to the distance where its face — the glass's top to the keys' foot, 0.374 m — fills `flatFill` of the view's height (⚑ S394 fix: a phone `phoneFill`, the glass, the bar and the keys filling the height so its capitals reach 12 px, the keys whole on screen), never more than `flatMaxW` of its width (a portrait phone). The travel keeps `clearance` m from the eye and takes liftBase + liftPerMetre × the distance, at most liftMax s (smoothstep). `glowRest`/`glowHeld`: the body's self-light share (the 'system' tier's 0.34 in the room; more in the hand, its face turned from the lamp). `xrKey`: a key catches a headset's ray within this many metres (heldDevice's XR_BUTTON, wider for a larger key).",
-  "xrDist": 0.5, "pictureDeg": 28, "flatFill": 0.92, "phoneFill": 0.98, "flatMaxW": 0.94, "liftBase": 0.45, "liftPerMetre": 0.22, "liftMax": 1.15, "clearance": 0.55, "glowRest": 0.3, "glowHeld": 0.55, "xrKey": 0.03
+  "xrDist": 0.5, "pictureDeg": 28, "flatFill": 0.92, "phoneFill": 0.98, "flatMaxW": 0.94, "liftBase": 0.45, "liftPerMetre": 0.22, "liftMax": 1.15, "clearance": 0.55, "glowRest": 0.3, "glowHeld": 0.55, "xrKey": 0.03,
+  "besideGlassOfMonitor": 0.36, "besideTurnMaxDeg": 24,
+  "_docS425": "⚑ S425 (UiB job 35 Part D; the coordinator's S424 follow-up: on the computer the brought set stood left of the monitor at a quarter of its width and its picture and captions could not be read from the seat) — `besideGlassOfMonitor`: on a computer the set brought beside the monitor is at least this wide in its glass, as a share of the monitor's width — at 0.33 the tape's caption letters (burned into the picture, v6: their tall letters 3.4 % of the glass's width) stand at least as tall as the monitor's body text (11 canvas px, its tall letters 0.72 of that, on a 676-px-wide canvas). When the seat's view has no room for it beside the whole monitor, the look is turned left, as little as it takes, at most `besideTurnMaxDeg`, the monitor kept whole (src/room/teachingTv.ts planBesideFor); it comes back when she puts the set back. A headset and a phone held upright keep S424's place (above the monitor), which already reads larger than the monitor's text (tools/s425-set-measure.mjs)."
  },
  "bar": {
   "_doc": "THE BAR UNDER THE PICTURE (B2; Part A's A1; ⚑ S394 fix, his \"FIX first\": the 2026 margin line ran off the bar's foot). The glass is 960 × 720 canvas px; the bar is at least `baseH` (a quarter of the glass) and as tall as the tape's tallest moment needs in this look-mode (wrapped first: every caption and margin line whole), at most `maxH`, the picture above it taking the rest. Capitals are asked for at `captionCap` / `marginCap` canvas px and never fall under the look-mode's floor: `floorDeg` in a headset, `floorPxComputer` CSS px on a computer, `floorPxPhone` on a phone (src/room/teachingTv.ts readingScale turns each into canvas px). `pad` above and below, `gap` between the caption and the margin, `lineK` the line height (× the font size).",
@@ -28,6 +32,7 @@
  },
  "moment": {
   "_doc": "The moment's clock (no turns, no fades): `callHold` = the longest Lamby's line is given to be read before the set comes anyway (its yes sends it at once); `dismissBreath` = after × the set comes this long after; `noCall` = a call that never showed (the era's cap) lets the set come after this; `afterHold` = the end card held, the set in the hand, before the floor is free again; `afterDad` = the seconds Dad's two lines are given before his link; `noPlayRelease` = a tape that will not start lets the moment go after this.",
-  "callHold": 7, "dismissBreath": 1.2, "noCall": 2.5, "afterHold": 6, "afterDad": 4.5, "noPlayRelease": 8
+  "callHold": 7, "dismissBreath": 1.2, "noCall": 2.5, "afterHold": 6, "afterDad": 4.5, "noPlayRelease": 8, "offerHold": 16,
+  "_docS424": "⚑ S424 — `offerHold`: an OFFER (2016, `offer` above) left unanswered this long is let go — the same as Not now (its line, 12 words, reads in 6.8 s by the reading rule; this is twice that and a little). Nothing comes; the set stays lit by the door."
  }
 }

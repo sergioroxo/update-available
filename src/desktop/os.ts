@@ -679,6 +679,10 @@ export class DesktopOS {
   }
   /** Only navigational acts are allowed. This list deliberately excludes every answer/release/take. */
   private performGuideAct(act: string): void {
+    // ⚑ S424 (UiB job 35 Part D, Act I beat 5) — the Lamby set's own call is said OVER the floor its moment holds (the TV's
+    //   voice hold): its yes must reach the set. It was swallowed here by that same hold, and S394's call brought the set
+    //   anyway after its hold, so nobody saw the press fail; 2016's offer brings nothing unasked, so the yes has to work.
+    if (act === 'open:tv') { this.onGuideTv?.(); return; }   // S390: take me to the TV (it does not start itself)
     if (this.guideSilence.silent || this.guideSilence.voice) return;
     if (act === 'open:personalise') { this.openRestorify(); this.restorify?.showPersonalise(); return; }
     if (act === 'open:rootcause') { this.openRootCause(); return; }
@@ -688,7 +692,6 @@ export class DesktopOS {
     if (act === 'open:form') { this.openProvotype(originIntakeProvotypeData as unknown as Provotype); return; }
     // ⚑ S362 / H33 — the other answer of Lamby's "Release Work or the Family Form": the racket exercise, the way the room's racket opens it
     if (act === 'open:releasework') { this.openProvotype(pillowProvotypeData as unknown as Provotype); return; }
-    if (act === 'open:tv') { this.onGuideTv?.(); return; }   // S390: take me to the TV (it does not start itself)
     if (act.startsWith('focus:')) { this.onGuideFocus?.(act.slice(6)); return; }
     if (act.startsWith('move:')) { this.onGuideMove?.(act.slice(5)); return; }
     if (this.desktopEra === 'e3' || this.desktopEra === 'e4') { this.onGuidePress?.(act.slice(6)); return; }

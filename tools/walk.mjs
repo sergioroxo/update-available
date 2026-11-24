@@ -167,6 +167,20 @@ const GUIDED_WALK = CUT === 'speedrun' && !process.argv.includes('--explore');
  *  `here`: Join here, the session over the whole monitor and its Yes there. The other door is refused, never both. The door
  *  not walked is proved by tools/s414-act3-probe.mjs. */
 const DOOR = flag('door', 'vr') === 'here' ? 'here' : 'vr';
+/** ⚑ S424 (UiB job 35 Part D, Act I beat 5; his 23 Nov call 7: "The Heartwood disc is offered after Lesson 1. — Yes, but not
+ *  mandatory") — `--heartwood bring|notnow`: Lambient's one offer of Heartwood in 2016 ("Shall I bring the set?"). `bring` (the
+ *  default): Bring it, then ▶ on the set once it stands beside the monitor (it arrives stopped: nothing plays until ▶), the
+ *  tape watched to its end, then its body to set it back by the door. `notnow`: Not now, and the set is never touched (it
+ *  stays lit by the door; the walk proves 2016 runs whole without it). */
+const HEARTWOOD = flag('heartwood', 'bring') === 'notnow' ? 'notnow' : 'bring';
+/** ⚑ S426 (UiB job 35 Part D, Act III beat 14; his 23 Nov call 4: "Vera can press \"Forward the link\" herself. — yes") —
+ *  `--forward yes|no` (default no): "↪ Forward the link", her one act in the group while the forwards run. `yes`: pressed once
+ *  (on the Handset Window, as a visitor presses it); `no`: never — the walk proves the update comes either way (storyboard §6).
+ *  `--kit down|approve`: the one kit choice (beat 12) — Take my story down, or Approve kit — then Back to today; by default
+ *  `down` with `--forward yes` and `approve` with `--forward no`, so the two doors' walks take both. (The PRIORITY ALERT's OK,
+ *  the takeover's OK, her reply to Bea and the Review page's Back are retired with what they answered.) */
+const FORWARD = flag('forward', 'no') === 'yes' ? 'yes' : 'no';
+const KIT = (() => { const k = flag('kit', ''); return k === 'approve' || k === 'down' ? k : FORWARD === 'yes' ? 'down' : 'approve'; })();
 const MAX_STEPS = Number(flag('max', 320));
 /** ⚑ S332 — `--refuse`: in 2016 the walker refuses every job (Skip, Leave it off, Don't send a script, Not this week,
  *  the kit left unapproved) and never presses a comply control, to prove the system carries the day without her. */
@@ -212,8 +226,11 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
  * the piece in its first ten seconds, which is what the first run did.
  */
 const PREFER = [
-  /^vera-send$|^vera-as-sent$|^vera-kit-approve$|^vera-take-down$/i,
-  /^vera-send-close$|^vera-record-close$|^vera-kit-close$/i,
+  // ⚑ S425 (UiB job 35 Part D, Act II) — 2016's memory: Look back (never its Not now), See what you wrote, then Close (Kindredraft's
+  //   Install, As sent and Close record are retired; her Notes come with her own words on the page, or over the board after Close)
+  // ⚑ S426 — and her forward in the group (only ever a candidate with --forward yes: guidedAllows)
+  /^vera-send$|^memory-look$|^memory-see$|^vera-kit-approve$|^vera-take-down$|^mirror:forward-link$/i,
+  /^vera-send-close$|^memory-close$|^vera-kit-close$/i,
   // ⚑ S245 — the opening film (96 s) is MANDATORY and has no Skip: Show me is the only way on, and the walker sits
   //   the whole film out (stallCap below; the scripted entrance waits for the step after it).
   /^setup-choice-0$|^setup-advert-play-0$|^setup-sound-on$|^setup-close$/i,
@@ -1019,9 +1036,19 @@ async function main() {
     if (id === 'icon-provotype-intake' && (st?.era !== 'e1' || led?.provotypes?.some(p => p.id === 'origin_intake_e1'))) return false;
     // The phone is private optional reading now. The minimum visitor never needs to press it.
     if (st?.era === 'e3') {
-      // her one reply to Bea is the only press on the phone the walk makes (it is optional: Malta runs on without it)
-      if ((t.surface === 'phone' || id.startsWith('mirror:')) && !(id === 'mirror:reply-bea' && !REFUSE)) return false;
+      // ⚑ S426 — "↪ Forward the link" is the only press on the phone the walk makes, and only with --forward yes (it is optional:
+      //   the update comes without it). Her reply to Bea (S332) is retired; ▲ ▼ on the wide group are a reader's presses.
+      if ((t.surface === 'phone' || id.startsWith('mirror:')) && !(id === 'mirror:forward-link' && FORWARD === 'yes')) return false;
+      // ⚑ S426 — the kit: one choice (--kit), then Back to today
+      if (id === 'vera-take-down' && KIT !== 'down') return false;
+      if (id === 'vera-kit-approve' && KIT !== 'approve') return false;
       if (/^win-min$|^task-restore$/.test(id)) return false;
+      // ⚑ S424 — the board's This week button reopens the card she has read: a reader's press, never the way on (Begin is)
+      if (id === 'week-open') return false;
+      // ⚑ S424 — while a lesson's Watch runs (Lambient's own first cut; Lambient answering Maureen) a visitor watches: the walker
+      //   does not leave the lesson, play the film or pick a mother then (leaving Lesson 1 before Lambient's cut starts it over:
+      //   the first walk of S424 pressed Back to Today and Lesson 1 again ~1,600 times)
+      if (st.lessonWatch && /^board-back$|^video$|^family-sel-|^account-activity$|^start-menu$/.test(id)) return false;
       // ⚑ S332 — the four jobs, in the board's order, each once (each finished job files `e3-job:<id>`)
       const JOBS = ['testimony', 'places', 'family', 'group'];
       const tm = /^task-(\d+)$/.exec(id);
@@ -1029,7 +1056,8 @@ async function main() {
       if (REFUSE && /^apply$|^places-add$|^family-reply-|^group-post$|^vera-kit-approve$/.test(id)) return false;
       if (id === 'next-story') return false;
     }
-    if (st?.era === 'e3' && id === 'vera-as-published') return false;
+    // ⚑ S425 — the memory card's Not now is a reader's refusal, never the way on (Look back is)
+    if (st?.era === 'e3' && id === 'memory-notnow') return false;
     if (st?.era === 'e3' && has('e3-two-jobs') && (/^task-\d+$/.test(id) || id === 'update-accept')) return false;
     return true;
   };
@@ -1303,6 +1331,9 @@ async function main() {
   const stallCap = (st) => (st.era === 'e4' ? 160 : st.phase === 'setup:advert' ? 60 : 14);   // S245: the opening film is ~96 s (60 × 4 s)
   /** ⚑ S396 — each Lamby tape's furthest second while held, its length, whether it played to its end (the notes' `tape`) */
   const tvWatch = {};
+  let heartwoodNoted = false;
+  /** ⚑ S426e — the scroll check during Bea's news (see the loop) */
+  const scrollCheck = { phase: 0, ups: 0, sawBeaFirst: false, newMessages: 0, keptPlace: false, back: false };
   const pressed = new Map();
   /**
    * ⚑ KEYED ON THE COARSE STATE, NOT ON THE FULL CONTROL SET, and run 22 is why.
@@ -1528,6 +1559,43 @@ async function main() {
     if (s.silent.length) continue;
 
     /**
+     * ⚑ S426e (his 24 Nov: "there was no way to scroll through the messages") — THE SCROLL CHECK, once, while Bea's news lands in
+     * the group (the Handset Window's column): the walker presses "▲ Earlier messages" (as a visitor does, on the window) until Bea's
+     * first line is in the drawn list again (at most three presses), waits for a message to land under her (the bottom pill then
+     * reads "▼ New messages", her place kept), and presses it back to the bottom. What it saw is noted (`scroll-check`) and goes in
+     * the walk's JSON (`scrollCheck`).
+     */
+    if (s.era === 'e3' && scrollCheck.phase < 3) {
+      const g = await page.evaluate(() => { const q = window.__graceQueue?.(); const p = q?.phone; return p ? { stage: p.stage, newsN: p.newsN, view: p.groupView, screen: p.screen } : null; }).catch(() => null);
+      const up = s.targets.find((t) => t.id === 'mirror:scroll-up'), down = s.targets.find((t) => t.id === 'mirror:scroll-down');
+      if (g && g.screen === 'group' && (g.stage === 'news' || g.stage === 'read' || g.stage === 'takeover')) {
+        // as soon as Bea's first line has scrolled out of view (the card under it), so that more of the news lands while she looks back
+        if (scrollCheck.phase === 0 && g.newsN >= 2 && g.newsN < 5 && up && !g.view.keys.includes('n0')) {
+          scrollCheck.phase = 1;
+          scrollCheck.before = g.view.keys;
+        }
+        if (scrollCheck.phase === 1) {
+          if (g.view.keys.includes('n0') && g.view.userScrolled) { scrollCheck.phase = 2; scrollCheck.sawBeaFirst = true; scrollCheck.scrolled = g.view; scrollCheck.since = Date.now(); note('scroll-check', { what: `▲ pressed ${scrollCheck.ups}×: Bea's first line is in the drawn list (${g.view.keys.join(',')})`, era: s.era }); s = await probe(); continue; }
+          // one ▲ at a time, the thread redrawn before it is read again (a second press on a stale view overshoots her first line)
+          if (up && scrollCheck.ups < 6) { scrollCheck.ups++; stalls = 0; s = await press(up, s); await wait(900); s = await probe(); continue; }
+          scrollCheck.phase = 3; scrollCheck.failed = 'Bea\'s first line not reached'; note('scroll-check', { what: 'FAILED: ' + scrollCheck.failed, era: s.era });
+        }
+        if (scrollCheck.phase === 2) {
+          const waited = (Date.now() - scrollCheck.since) / 1000;
+          if (down && (g.view.unseen > 0 || waited > 20)) {
+            scrollCheck.newMessages = g.view.unseen; scrollCheck.keptPlace = g.view.keys.includes('n0');
+            stalls = 0; s = await press(down, s); await wait(900);
+            const a = await page.evaluate(() => window.__graceQueue?.()?.phone?.groupView ?? null).catch(() => null);
+            scrollCheck.back = !!a && a.scrollBack === 0; scrollCheck.after = a?.keys ?? []; scrollCheck.phase = 3;
+            note('scroll-check', { what: `"${g.view.unseen > 0 ? 'New messages' : 'Latest'}" pressed with ${g.view.unseen} new below (her place kept: ${scrollCheck.keptPlace}); back at the bottom: ${scrollCheck.back}`, era: s.era });
+            continue;
+          }
+          await wait(1000); s = await probe(); continue;
+        }
+      }
+    }
+
+    /**
      * ⚑ S394 — THE LAMBY SET (UiB job 27 B3). The piece brings the set to the visitor: Lamby's line appears in view, then the
      * set comes before the eye and plays the tape, and waits there, held. A visitor who is not watching anything
      * else answers it, and so does the walker, before anything behind it (the set and the card are in front of everything):
@@ -1549,10 +1617,17 @@ async function main() {
           note('tape', { tape: s.tvSet.tape, furthest: +w.furthest.toFixed(1), duration: w.duration, ended: w.ended, state: s.tvSet.state, era: s.era });
         }
       }
-      const yes = s.tvSet.card ? s.targets.find((t) => t.surface === 'tvcall' && t.id === 'lg-take@call') : null;
-      const body = !s.tvSet.card && s.tvSet.held && !s.tvSet.playing && !s.tvSet.lifting
+      // ⚑ S424 — 2016's offer has two answers (Bring it · Not now): `--heartwood` picks; a call (one answer) is answered yes
+      const offer = s.tvSet.card && s.targets.some((t) => t.surface === 'tvcall' && t.id === 'lg-later@call');
+      const answer = offer && HEARTWOOD === 'notnow' ? 'lg-later@call' : 'lg-take@call';
+      const yes = s.tvSet.card ? s.targets.find((t) => t.surface === 'tvcall' && t.id === answer) : null;
+      if (yes && offer && !heartwoodNoted) { heartwoodNoted = true; note('heartwood', { what: `Lambient's offer of Heartwood answered: ${HEARTWOOD === 'notnow' ? 'Not now' : 'Bring it'}`, era: s.era }); }
+      // ⚑ S424 — 2016's set arrives beside the monitor STOPPED on its label (▶ lit): the walker presses ▶ once (bring)
+      const play = !s.tvSet.card && s.tvSet.held && !s.tvSet.playing && !s.tvSet.lifting && s.tvSet.state === 'leader' && HEARTWOOD === 'bring'
+        ? s.targets.find((t) => t.surface === 'tvset' && t.id.startsWith('tv-play@')) : null;
+      const body = !play && !s.tvSet.card && s.tvSet.held && !s.tvSet.playing && !s.tvSet.lifting
         ? s.targets.find((t) => t.surface === 'tvset' && t.id.startsWith('tv-body@')) : null;
-      const t = yes || body;
+      const t = yes || play || body;
       if (t && (pressed.get(keyOf(sig, t)) || 0) < PRESS_CAP) {
         pressed.set(keyOf(sig, t), (pressed.get(keyOf(sig, t)) || 0) + 1);
         stalls = 0;
@@ -2034,6 +2109,9 @@ async function main() {
     reviewBoot: formOfferProbe ? 1 : null,
     walkPolicy: GUIDED_WALK ? 'guided' : 'explore',
     door: DOOR,   // ⚑ S414 — Act III's door this walk took (--door vr|here)
+    heartwood: HEARTWOOD,   // ⚑ S424 — 2016's offer of Heartwood, as this walk answered it (--heartwood bring|notnow)
+    forward: FORWARD, kit: KIT,   // ⚑ S426 — her forward in the group (--forward yes|no) and the one kit choice (--kit down|approve)
+    scrollCheck,   // ⚑ S426e — ▲ during Bea's news until her first line is drawn, then "▼ New messages" back to the bottom
     menuCheck,   // ⚑ S417 — 2026's Menu, opened once at beat 1's answers and closed
     steps: log.length, presses: presses.length, turns,
     reachedEra: final.era, spine: final.spine,

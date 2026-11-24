@@ -277,7 +277,7 @@ function pageSampler(opts) {
         const ph = q.phoneView ? q.phoneView() : null;
         g.q = { mode: q.mode, stage: q.phone && q.phone.stage, screen: q.phone && q.phone.screen, large: !!q.mirrorLarge, min: !!q.mirrorMin,
           arrived: ph && ph.arrived, open: ph && ph.open, page: q.veraPage ?? null,
-          popin: !!(q.kitPopin || q.storyOffer || q.maltaAlertT >= 0 || q.pauseOpen || (q.phone && q.phone.takeoverAlert)) };
+          popin: !!(q.kitPopin || q.memoryCard || q.storyOffer || q.maltaAlertT >= 0 || q.pauseOpen || (q.phone && q.phone.takeoverAlert)) };
       }
     } catch (e) { /* */ }
     try { if (os && os.e4) g.e4 = { stage: os.e4.stage, ball: !!(os.e4.ball && os.e4.ball.live), clip: !!(os.e4.browser && os.e4.browser.roomClipTakeover), act: !!(os.e4.browser && os.e4.browser.act), lightbox: !!(os.e4.browser && os.e4.browser.lightbox) }; } catch (e) { /* */ }

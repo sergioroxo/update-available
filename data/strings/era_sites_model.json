@@ -2761,7 +2761,7 @@
     ],
     [
      "Beats",
-     "16"
+     "15"
     ]
    ],
    "tabs": {
@@ -2861,19 +2861,14 @@
        "= the campaign kit: scheduled",
        "CONTINUITY — WHAT IS NEW",
        "+ GraceOS, with L: one companion on every screen",
-       "+ your session, restored before you arrive",
-       "+ search that finishes your sentence",
-       "+ support, in the tab that opens itself",
-       "+ your photographs, restored",
-       "+ immersive sessions · headset included",
-       "= the archive: intact",
-       "= Vera's file: archived · a new file: Maya",
+       "+ every story corrected as it arrives",
+       "+ your shift, handled for you",
+       "= your account: kept · read-only",
+       "= your archive: moved to Continuity",
        "= the goal: unchanged, on file",
        "- Kindredraft: archived",
-       "- the moderation queue: retired",
-       "- manual review: retired",
-       "- the waiting: retired",
-       "Root Cause — migrated",
+       "- correcting by hand: retired",
+       "- story caretenders: no longer needed",
        "- phone link: not supported"
       ]
      }
@@ -4072,9 +4067,9 @@
         "where": "Where: the workstation."
        },
        {
-        "label": "A story, corrected",
+        "label": "Lesson 1 · A testimony",
         "opt": "",
-        "hint": "Correct Renata’s testimony: apply or skip each rule. Then return to Today.",
+        "hint": "Begin Lesson 1: Lambient makes the first cut in Renata’s film; apply or skip the next two rules, then send it. Then return to Today.",
         "where": "Where: the workstation."
        },
        {
@@ -4084,15 +4079,15 @@
         "where": "Where: the workstation."
        },
        {
-        "label": "The places list",
+        "label": "Lesson 2 · The places list",
         "opt": "",
-        "hint": "On the board: The places list. Add The Wick to the list, or leave it off.",
+        "hint": "Lesson 2 opens once Lesson 1 is done: add The Wick to the list, or leave it off.",
         "where": "Where: the workstation."
        },
        {
-        "label": "The mothers",
+        "label": "Lesson 3 · The mothers",
         "opt": "",
-        "hint": "On the board: Answer the mothers. Send each a reply, or don’t.",
+        "hint": "Lesson 3: Lambient answers the first mother; then Annette is yours. Send a reply, or don’t.",
         "where": "Where: the workstation."
        },
        {
@@ -4102,21 +4097,27 @@
         "where": "Where: the workstation."
        },
        {
-        "label": "Kindredraft",
+        "label": "A memory from 2014",
         "opt": "",
-        "hint": "When the board’s jobs are done, install Kindredraft. It opens Vera’s own 2014 story.",
+        "hint": "When the training is done, Kindredraft shows a memory from 2014. Look back opens Vera’s own story.",
         "where": "Where: the workstation."
        },
        {
         "label": "Vera · 2014",
         "opt": "",
-        "hint": "As sent shows her earlier account. Close record returns to the day.",
+        "hint": "Her story as it was published, then her own words. Her Notes follow. Close returns to the board.",
         "where": "Where: the workstation."
+       },
+       {
+        "label": "Bea’s news",
+        "opt": "",
+        "hint": "After Nuala’s message, Bea’s news from Malta comes to the group, opened wide on the monitor. ▲ ▼ look back.",
+        "where": "Where: the group, wide on the monitor."
        },
        {
         "label": "The campaign kit",
         "opt": "",
-        "hint": "After Nuala’s message, the campaign kit opens. Approve it or return to Today. Take my story down is optional.",
+        "hint": "After Bea’s news, the URGENT pop-in: Open the kit. Approve it, take your story down, or go back to Today.",
         "where": "Where: the workstation."
        },
        {
@@ -4126,27 +4127,15 @@
         "where": "Where: the workstation."
        },
        {
-        "label": "The phone",
+        "label": "The group, outnumbered",
         "opt": "",
-        "hint": "Her phone is mirrored beside the platform. Each finished job brings a message there.",
-        "where": "Where: the mirrored phone beside the platform."
-       },
-       {
-        "label": "The vote",
-        "opt": "",
-        "hint": "When the campaign kit closes, Bea shares the news from Malta in the group, beside the platform.",
-        "where": "Where: the mirrored phone beside the platform."
-       },
-       {
-        "label": "The group",
-        "opt": "",
-        "hint": "GracePlatform removes the messages by itself. The group forwards them faster.",
-        "where": "Where: the mirrored phone beside the platform."
+        "hint": "With the kit closed, GracePlatform removes the news from the group, one message at a time. The women forward it faster. ↪ Forward the link is hers, if she wants.",
+        "where": "Where: the group, wide on the monitor."
        },
        {
         "label": "The update",
         "opt": "",
-        "hint": "The system update follows the group’s cascade.",
+        "hint": "The system update follows once the review could not keep up.",
         "where": "Where: the workstation."
        }
       ]

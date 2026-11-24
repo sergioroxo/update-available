@@ -1,14 +1,28 @@
 {
  "_doc": "S307. Invented people and platform practices, not survivor testimony. Research and limits: RESEARCH_2016_VERA_APPARATUS_2026-11-01.md. No trans engagement row. No trigger-safe mode. Story Record renamed Kindredraft after mark check. Felt reading files nothing.",
  "offer": {
-  "title": "New: Kindredraft",
-  "sub": "Your 2014 story is ready for its first refresh.",
-  "install": "Install",
-  "admin": "An administrator has refreshed it for you.",
-  "draftTag": "DRAFT",
-  "draftBy": "A suggestion. Not yet approved.",
-  "draft": "I came to my first night with a heart that was looking for home in the wrong place.",
+  "_retiredS425": {
+   "title": "New: Kindredraft",
+   "sub": "Your 2014 story is ready for its first refresh.",
+   "install": "Install",
+   "admin": "An administrator has refreshed it for you.",
+   "draftTag": "DRAFT",
+   "draftBy": "A suggestion. Not yet approved.",
+   "draft": "I came to my first night with a heart that was looking for home in the wrong place."
+  },
+  "_retiredS425Why": "⚑ S425 (UiB job 35 Part D, Act II; his 20 Nov 16-13/16-14 and his 23 Nov yes to the storyboard: \"Kindredraft as a memory, no text box, no Install\") — Kindredraft's offer is a memory now (`memory` below). Retired, word for word above: the card's title \"New: Kindredraft\", its line \"Your 2014 story is ready for its first refresh.\", Install, the DRAFT box and its typed draft (it typed only on a working board, so in every run it stood empty with a caret: a field that looked typeable), \"A suggestion. Not yet approved.\", and the administrator's line (the old record opened itself if she went back to the board with the card up). The drawing that used them (graceQueueLite drawStoryOffer, veraSurfaces drawVeraArchive) is kept at 76d0671d.",
   "_docS362": "⚑ S362 / H42b (his headset, 10 Nov, 21:13: the \"Kindred Heart\" draft \"should appear differently\" — read as Kindredraft, whose offer was a bare strip): the offer arrives as a pop-in card that shows the system's DRAFT of her story typing itself in (graceQueueLite `drawStoryOffer`), marked as a suggestion that is not yet approved. `draft` is the first sentence of `record.publishedText` (the system's version, unchanged); no new testimony."
+ },
+ "memory": {
+  "_docS425": "⚑ S425 (UiB job 35 Part D, Act II, storyboard 2016_SECOND_HALF beats 8–10; his 23 Nov yes) — KINDREDRAFT AS A MEMORY. Beat 8: when the training is done and Mam's message has had its reading time, a small card over the board (`card`, `line`, `ask`; `look` · `notNow`). No text box, no typing, no Install. Not now works once: the card goes and comes back at the next quiet moment with `look` alone. Beat 9: Look back opens Kindredraft's page, \"Vera · 2014\" (visual.archiveTitle): her story as GracePlatform published it (record.publishedText, as built), under it `editedWith` (Lesson 1's rule); `see` · `close`. `see` turns the page to her own words as she sent them, the cuts struck through (ownCut.runs, as built: S386's own cut, moved here from the end of Lesson 1); if she does not press it, the page turns by itself once the published story has had its reading time. Beat 10 (felt, bare): with her words on the page for their reading time, the Handset Window comes in over the page's right half and her Notes type the newest note (s3_maiden.json notes.entries `refusal`); nothing speaks; then the lock screen and Nuala's message. `card` is also the page's window title (was record.title, \"GracePlatform · Kindredraft · Vera\"). All new words here are the storyboard's (§3b), written by Claude, for his review.",
+  "card": "Kindredraft · Memories",
+  "line": "You have a memory from 2014.",
+  "ask": "Look back at your story?",
+  "look": "Look back",
+  "notNow": "Not now",
+  "editedWith": "Edited with: Name the dependency, not the person.",
+  "see": "See what you wrote",
+  "close": "Close"
  },
  "send": {
   "title": "Ready to share · Renata",
@@ -30,42 +44,44 @@
   "back": "Back to today"
  },
  "record": {
-  "title": "GracePlatform · Kindredraft · Vera",
-  "meta": "Vera · 2014 · Published",
-  "tag": "Filed as: emotional dependency",
-  "reviewer": "Volunteer mentor: Name the dependency, not the person. Close on hope.",
-  "published": "As published",
-  "sent": "As sent",
+  "_retiredS425": {
+   "title": "GracePlatform · Kindredraft · Vera",
+   "meta": "Vera · 2014 · Published",
+   "tag": "Filed as: emotional dependency",
+   "reviewer": "Volunteer mentor: Name the dependency, not the person. Close on hope.",
+   "published": "As published",
+   "sent": "As sent",
+   "close": "Close record",
+   "footer": "2014 · source retained · restricted to administrators"
+  },
+  "_retiredS425Why": "⚑ S425 (storyboard beat 9, §3b \"her record\"): the record's other lines are retired from the visit, word for word above: the window title \"GracePlatform · Kindredraft · Vera\" (now memory.card), \"Vera · 2014 · Published\", \"Filed as: emotional dependency\", the volunteer mentor's note, \"As published\" / \"As sent\", \"Close record\" and \"2014 · source retained · restricted to administrators\" (and visual.publishedOnly, \"Published only\", and the page's Next/Previous). Kept and still read: `publishedText` (her story as published, on the memory page) and `sentText` (her notebook's page, veraDesk.ts; the retained original's card).",
   "publishedText": "I came to my first night with a heart that was looking for home in the wrong place. A dependency had taken the place of God in my life. Today I am walking in wholeness, and I want the same for you.",
-  "sentText": "I came to the first night because of Nuala, and because the quiet at home had got too loud. We had lived together. I think what I had with her is what the leaflet calls dependency. I don't have a word for the part that wasn't. I do pray. That part is true.",
-  "close": "Close record",
-  "footer": "2014 · source retained · restricted to administrators"
+  "sentText": "I came to the first night because of Nuala, and because the quiet at home had got too loud. We had lived together. I think what I had with her is what the leaflet calls dependency. I don't have a word for the part that wasn't. I do pray. That part is true."
  },
  "kit": {
   "title": "Campaign kit · Chosen Course Compact",
-  "heading": "Campaign kit — your stories, for the law vote",
-  "intro": "Malta's parliament has voted to ban conversion practices. The network's campaign answers with three stories.",
+  "heading": "Your story is in the campaign.",
+  "intro": "Malta has banned what it calls “conversion practices”.",
+  "answer": "We answer with three stories. We chose yours.",
   "_docS327": "⚑ S327 / T23 + T24 (his 8 Nov headset session: 'impossible to understand what this is'; 'the Malta thing, what's happening?'): `heading` says what the page is; `intro` is the ONE plain line saying why it is here — the vote is documented (Malta, Act LV, December 2016), the campaign kit is the fiction answering it (the kit's own dossier card says so). The news itself arrives on her phone afterwards, as the pretend newspaper carrying the real law (s3_maiden.json `link`).",
   "stories": [
-   "Renata · clip · 0:40",
-   "Vera · 2014 · refreshed",
+   "Renata · your edit · 0:20",
+   "Vera · 2014 · chosen for you",
    "Deb M. · excerpt"
   ],
-  "consent": "Consent on file: general · Terms §4",
-  "terms": "Perpetual licence: publish, adapt, reuse. Original kept.",
   "footer": "These stories show that people can choose a different path.",
+  "kept": "Original kept.",
   "approve": "Approve kit",
   "approved": "Approved. Scheduled for tonight.",
   "admin": "Approved by administrator. Scheduled for tonight.",
   "takeDown": "Take my story down",
   "receipt": [
-   "Unpublished from SisterSignal.",
-   "Original retained under Terms §4."
+   "Taken down from SisterSignal. The copies stay. Original kept."
   ],
   "back": "Back to today",
   "urgentTag": "URGENT",
-  "urgentTitle": "Campaign kit · needs approval tonight",
-  "urgentLine": "The kit is waiting on you.",
+  "urgentTitle": "Campaign kit · the Malta vote",
+  "urgentLine": "GracePlatform chose your story.",
   "_docS399": "⚑ S399 (UiB job 29 B1, 2016 cut by about half): the kit said why it was here twice in a row (the pop-in, then the page) and its retained posts twice (the cards, then the receipt). Kept: `intro`, the one plain line on Malta (his T23/T24), the consent and licence line, the campaign's own slogan, the four retained cards. Cut: `urgentLine` was \"Malta's vote is in the news. The network's campaign goes out tonight with three stories, and the kit is waiting on you.\"; `footer` lost \"Used with permission under the Contributor Agreement.\" (the consent line above says it); `receipt` lost \"4 scheduled posts and 2 external copies remain.\" (the cards say it). Kindredraft's `offer.draftBy` was \"Suggested by Kindredraft, from your 2014 account. Not yet approved.\"",
   "urgentOpen": "Open the kit",
   "_docS362": "⚑ S362 / H41 (his headset, 10 Nov, 21:11: the campaign kit \"should arrive as a pop-in marked urgent\"): the kit no longer takes the screen by itself. It pops in over the board in the platform's own voice, marked URGENT (operable register: it may be loud), and opens from there (graceQueueLite `drawKitPopin`). If it is left, the platform opens it itself after 22 s.",
@@ -74,7 +90,25 @@
   "witnessRemoved": "story: take-down requested — scheduled posts, external copies and original retained",
   "witnessAdmin": "campaign kit: left unapproved — administrator scheduled it under general consent",
   "original": "2014 original · retained",
-  "_docS403": "⚑ S403 (UiB job 30 B3; his 17 Nov: \"the campaign kit repeating her 2014 story could go?\"): on \"Take my story down\" (veraSurfaces `drawRetainedCopies`) the first two cards (4 · Scheduled posts, 2 · External copies) no longer print the first sentence of `record.publishedText` (\"I came to my first night with a heart that was looking for home in the wrong place.\"); the third (1 · Original account, RETAINED) keeps her own words from `record.sentText`. No string here changed."
+  "_docS403": "⚑ S403 (UiB job 30 B3; his 17 Nov: \"the campaign kit repeating her 2014 story could go?\"): on \"Take my story down\" (veraSurfaces `drawRetainedCopies`) the first two cards (4 · Scheduled posts, 2 · External copies) no longer print the first sentence of `record.publishedText` (\"I came to my first night with a heart that was looking for home in the wrong place.\"); the third (1 · Original account, RETAINED) keeps her own words from `record.sentText`. No string here changed.",
+  "_retiredS426": {
+   "heading": "Campaign kit — your stories, for the law vote",
+   "intro": "Malta's parliament has voted to ban conversion practices. The network's campaign answers with three stories.",
+   "stories": [
+    "Renata · clip · 0:40",
+    "Vera · 2014 · refreshed",
+    "Deb M. · excerpt"
+   ],
+   "consent": "Consent on file: general · Terms §4",
+   "terms": "Perpetual licence: publish, adapt, reuse. Original kept.",
+   "receipt": [
+    "Unpublished from SisterSignal.",
+    "Original retained under Terms §4."
+   ],
+   "urgentTitle": "Campaign kit · needs approval tonight",
+   "urgentLine": "The kit is waiting on you."
+  },
+  "_retiredS426Why": "⚑ S426 (UiB job 35 Part D, Act III beat 12; his 20 Nov 16-15: \"the system chose this for her\", \"conversion practices\" in the network's own quote marks, the consent and terms lines cut, \"perhaps only Original kept\", keep \"These stories show…\", less text; his 23 Nov call 8: \"The campaign kit comes before the removal. — Yes\"). Retired, word for word above: the heading \"Campaign kit — your stories, for the law vote\", the intro \"Malta's parliament has voted to ban conversion practices. The network's campaign answers with three stories.\", the rows \"Renata · clip · 0:40\" and \"Vera · 2014 · refreshed\", \"Consent on file: general · Terms §4\", \"Perpetual licence: publish, adapt, reuse. Original kept.\", the take-down's \"Unpublished from SisterSignal.\" and \"Original retained under Terms §4.\", and the pop-in's \"Campaign kit · needs approval tonight\" / \"The kit is waiting on you.\". New (the storyboard's words, §3b): `heading`, `intro`, `answer`, `stories`, `kept`, `receipt`, `urgentTitle`, `urgentLine`. The pop-in comes after Bea's news now (keyed to the news, no longer to Nuala's message). Renata's row is the film she cut in Lesson 1."
  },
  "provenance": "",
  "_docS357frProvenance": "⚑ S357fr / 16-6 (his headset, 20 Nov, on Renata's editor: \"As sent, kept in archive, administrators only. No, it doesn't need to be there\"). Retired from the visit: the line under Apply / Skip and under the finished story is gone (graceQueueLite draws nothing for an empty provenance). Old: \"As sent · kept in archive · administrators only\". The ?cut=full page's `send.archive` (the same words) is frozen with that cut and left as it was.",
@@ -90,7 +124,7 @@
  "visual": {
   "archiveBrand": "Kindredraft",
   "archiveTitle": "Vera · 2014",
-  "publishedOnly": "Published only",
+  "_retiredS425publishedOnly": "Published only",
   "groupHeader": "gather · private group",
   "storyBy": "Renata",
   "emailHeader": "GracePlatform · Weekly email",
@@ -127,8 +161,11 @@
  },
  "ownCut": {
   "_doc": "⚑ S332 (his second answers: \"Renata's edit is frontal, not subtle\"): when the house rule \"Name the dependency, not the person\" is applied to Renata (by Vera, by Lambient or by an administrator), the platform shows Vera's OWN 2014 story beside it with the same cut in the same red (ERA3.alarm). The words are her record's \"as sent\" (below, `record.sentText`); the cut is what the rule took. The full record is still met later, felt, in Kindredraft.",
-  "heading": "Your story was edited with this rule too (2014)",
-  "meta": "Vera · as sent · 2014",
+  "_docS425": "⚑ S425 (storyboard beat 9; 16-6 \"Lesson 1 done.\"): her own cut no longer comes at the end of Lesson 1 (the editor's own screen after the send, \"Your story was edited with this rule too (2014)\", and its second Back are gone). `runs` are drawn on Kindredraft's memory page when it turns to her own words (See what you wrote), the cuts struck through in the same red; `rule` is kept as data (the page says memory.editedWith). Retired: `heading` and `meta` (word for word in `_retiredS425`).",
+  "_retiredS425": {
+   "heading": "Your story was edited with this rule too (2014)",
+   "meta": "Vera · as sent · 2014"
+  },
   "runs": [
    {
     "t": "I came to the first night "
@@ -158,27 +195,33 @@
   "rule": "Name the dependency, not the person."
  },
  "removals": {
-  "_doc": "⚑ S332 — MALTA ON THE PLATFORM: GracePlatform reviews Maiden-to-be by itself and removes the posts about the vote, then Vera's reply, while the forwards arrive faster than it can remove them. The platform's own voice, not Lambient's (Lambient is silent while a person's group is on screen). The removals are the piece's inference (ARTICLE_COMPANION §7g); the vote is documented (Act LV of 2016).",
-  "title": "GracePlatform · Review",
-  "heading": "Automatic review is on",
-  "sub": "GracePlatform is reviewing Maiden-to-be by itself.",
-  "rule": "Political content is removed to keep the community calm.",
-  "alertTag": "PRIORITY ALERT",
-  "alertLine": "We need to intervene immediately.",
-  "alertSub": "Maiden-to-be is discussing the Malta vote.",
-  "takeoverLine": "Intervening now.",
-  "takeoverSub": "You do not need to do anything.",
+  "_doc": "⚑ S426 (UiB job 35 Part D, Act III beats 13–14; his 20 Nov 16-17: \"the removal should be seen happening\"; \"4 items could not be…\" is confusing). THE REMOVAL, SEEN WHERE IT HAPPENS: in the chat. With the kit closed, the group opens wide again on the monitor and the platform's bar lies at the top of the thread, in its blue (`bar`); then, one message at a time, slowly enough to watch, the platform's outline around a Malta message, `removing…`, the bubble greyed, and folded into one line (s3_maiden.json `removedLine`): the card first, then Bea's lines, then Susan's. The forwards land faster (a message every 0.75 s): the review greys the first two and cannot keep up; the bar says `lost`. The platform's own voice (no Lambient). The removals are the piece's inference (ARTICLE_COMPANION §7g); the vote is documented (Act LV of 2016).",
+  "_docS332": "⚑ S332 — MALTA ON THE PLATFORM: GracePlatform reviews Maiden-to-be by itself and removes the posts about the vote, then Vera's reply, while the forwards arrive faster than it can remove them. The platform's own voice, not Lambient's (Lambient is silent while a person's group is on screen). The removals are the piece's inference (ARTICLE_COMPANION §7g); the vote is documented (Act LV of 2016).",
+  "bar": "GracePlatform · reviewing this group · You do not need to do anything.",
+  "lost": "Review could not keep up.",
+  "removing": "removing…",
+  "_retiredS426": {
+   "title": "GracePlatform · Review",
+   "heading": "Automatic review is on",
+   "sub": "GracePlatform is reviewing Maiden-to-be by itself.",
+   "rule": "Political content is removed to keep the community calm.",
+   "alertTag": "PRIORITY ALERT",
+   "alertLine": "We need to intervene immediately.",
+   "alertSub": "Maiden-to-be is discussing the Malta vote.",
+   "takeoverLine": "Intervening now.",
+   "takeoverSub": "You do not need to do anything.",
+   "alertOk": "OK",
+   "removed": "removed",
+   "waiting": "not reviewed",
+   "counter": "{n} items could not be reviewed",
+   "stillWorking": "Review is still running.",
+   "link": "link · The Continental Wire"
+  },
+  "_retiredS426Why": "⚑ S426 (storyboard beat 13: \"Retired: the PRIORITY ALERT pop-in …, the second one …, and the Review page on the board … Its one thought, that she is not needed, is the bar's.\"). Retired, word for word above: the Review page (\"GracePlatform · Review\", \"Automatic review is on\", \"GracePlatform is reviewing Maiden-to-be by itself.\", \"Political content is removed to keep the community calm.\", its rows' \"removed\" / \"not reviewed\" / \"link · The Continental Wire\", \"{n} items could not be reviewed\", \"Review is still running.\"), the PRIORITY ALERT (\"PRIORITY ALERT\", \"We need to intervene immediately.\", \"Maiden-to-be is discussing the Malta vote.\", OK) and the takeover's alert (\"Intervening now.\", \"You do not need to do anything.\" — its thought is the bar's now). The drawing that used them (graceQueueLite drawRemovals, drawMaltaAlert) is at 17847974.",
   "_docS399": "⚑ S399 (UiB job 29 B1): the two alerts and the review page said the same sentence three times. `alertLine` (his words, \"we need to intervene immediately\") and `rule` stay. Cut: `alertSub` lost \"Review starts now.\" (the review opens); `takeoverSub` was \"Political content in Maiden-to-be is being removed. You do not need to do anything.\" (the page's own `rule` says the first half).",
-  "alertOk": "OK",
   "_docS368": "⚑ S368 / F03·F04 (UiB job 16, the reading rule): both alerts hold by the rule (2 s + 0.4 s a word, about 9 s; they were 4.5 s) or until `alertOk` is pressed. The first now fires when the second member has spoken (Susan, after Bea), since it says the group is discussing; the takeover's sits above the review rows it describes, no longer over them. Text unchanged.",
   "_docS362b": "⚑ S362 / H43 (his 21:13 words, \"when the Malta message appears\"): `alertTag`/`alertLine`/`alertSub` are the pop-in that fires the moment Bea's FIRST Malta message lands (graceQueueLite `drawMaltaAlert`, over whatever is on the desk, with the chime; the phone's news waits while it is up). The takeover's own card, when the review opens, now says `takeoverLine`/`takeoverSub` so the same sentence is not said twice.",
-  "_docS362": "⚑ S362 / H43 (his headset, 10 Nov, 21:13: GracePlatform should \"jump in more dramatically\" with \"we need to intervene immediately\" when the Malta message appears): the removals page opens on this alert (platform voice, operable; flashing band + chime) and holds it ~4.5 s before the first removal (phoneE3 TAKEOVER_ALERT).",
-  "removing": "removing…",
-  "removed": "removed",
-  "waiting": "not reviewed",
-  "counter": "{n} items could not be reviewed",
-  "stillWorking": "Review is still running.",
-  "link": "link · The Continental Wire"
+  "_docS362": "⚑ S362 / H43 (his headset, 10 Nov, 21:13: GracePlatform should \"jump in more dramatically\" with \"we need to intervene immediately\" when the Malta message appears): the removals page opens on this alert (platform voice, operable; flashing band + chime) and holds it ~4.5 s before the first removal (phoneE3 TAKEOVER_ALERT)."
  },
  "forcedBy": {
   "_doc": "⚑ S332 — the suffix on a witness line when a rule she refused was applied for her (lambientDesk.ts ladder).",

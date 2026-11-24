@@ -79,10 +79,10 @@ ledger.checkins.push(
 );
 ledger.records.push('e3-signed-in', 'e3-job-done');
 for (const j of JOBS) ledger.records.push('e3-job:' + j);
-ledger.records.push('e3-two-jobs', 'e3-jobs-done', 'e3-day-done');
+ledger.records.push('e3-two-jobs', 'e3-jobs-done', 'e3-day-done', 'e3-memory-notnow');   // S426c: the memory card's Not now
 
 const by = entriesByEra();
-const isMark = (id) => id.startsWith('e3-job') || id === 'e3-jobs-done' || id === 'e3-signed-in' || id === 'e3-two-jobs' || id === 'e3-day-done';
+const isMark = (id) => id.startsWith('e3-job') || id === 'e3-jobs-done' || id === 'e3-signed-in' || id === 'e3-two-jobs' || id === 'e3-day-done' || id === 'e3-memory-notnow';
 const isFamily = (e) => e.id.startsWith(FAMILY_CHECKIN) || /p_maureen|p_annette/.test(e.id) || e.witness.startsWith('family:');
 for (const era of ['e1', 'e2']) {
   assert.equal(by[era].filter(isFamily).length, 0, `${era} holds no family entry`);

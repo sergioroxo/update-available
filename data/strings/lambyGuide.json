@@ -206,44 +206,18 @@
         "act": "focus:consent-allow"
       },
       "work": {
-        "tip": "Pick a card on the board and work it through to the end.",
-        "here": "Any card will do. Start with the first.",
-        "again": "One card at a time. The first one is fine.",
+        "tip": "Your training is on the board. Lesson 1 is lit: begin there.",
+        "here": "Lesson 1 starts here.",
+        "again": "One lesson at a time. Lesson 1 comes first.",
+        "_retiredS424": "⚑ S424 (UiB job 35 Part D, Act I: the board is the training, lessons in order) — was `tip` \"Pick a card on the board and work it through to the end.\", `here` \"Any card will do. Start with the first.\", `again` \"One card at a time. The first one is fine.\" (any card no longer opens: the next lesson is lit). `week-begin` (This week's Begin) is the first target now.",
         "target": [
+          "week-begin",
           "task-0",
           "apply",
           "skip",
           "board-back"
         ],
         "act": "focus:task-0"
-      },
-      "phone": {
-        "tip": "The campaign kit is on the platform. Either answer continues.",
-        "here": "The controls are below the kit.",
-        "again": "Approve the kit or return to Today.",
-        "target": [
-          "vera-kit-approve",
-          "vera-kit-close",
-          "board-back"
-        ],
-        "act": "focus:vera-kit-close"
-      },
-      "vote": {
-        "tip": "Bea's news from Malta is coming to the group.",
-        "here": "It comes to the phone, beside the platform.",
-        "again": "The news is on its way to the phone.",
-        "target": [
-          "link",
-          "link2"
-        ]
-      },
-      "cascade": {
-        "tip": "The day can stay open while the messages arrive.",
-        "here": "Today is still on the platform.",
-        "again": "The next update will arrive here.",
-        "target": [
-          "board-back"
-        ]
       },
       "update": {
         "tip": "GracePlatform will ask about its update once more. Update now carries on.",
@@ -262,12 +236,12 @@
         "act": "focus:vera-send"
       },
       "vera-install": {
-        "tip": "Return to Today, then install Kindredraft to open your 2014 story.",
+        "tip": "Kindredraft has a memory for you. Look back opens your 2014 story.",
+        "_retiredS425": "⚑ S425 (UiB job 35 Part D, Act II, storyboard beat 8: Kindredraft as a memory, no Install) — was `tip` \"Return to Today, then install Kindredraft to open your 2014 story.\", `target` [\"vera-send-close\", \"update-accept\"], `act` \"focus:update-accept\". Visitor help only: it answers a stall on the memory card, on the board; the guide is silent on the memory page and while her Notes are up (graceQueueLite guideSilent: the record page, personalQuiet).",
         "target": [
-          "vera-send-close",
-          "update-accept"
+          "memory-look"
         ],
-        "act": "focus:update-accept"
+        "act": "focus:memory-look"
       },
       "vera-kit": {
         "tip": "The campaign kit is on the platform. Either answer continues.",
@@ -278,8 +252,9 @@
         "act": "focus:vera-kit-close"
       },
       "places": {
-        "tip": "Next on the board: the places list. Either answer is recorded.",
-        "here": "The places list is the second card.",
+        "tip": "Lesson 2 is lit on the board: the places list.",
+        "here": "Lesson 2 is the second card.",
+        "_retiredS424": "⚑ S424 — was `tip` \"Next on the board: the places list. Either answer is recorded.\", `here` \"The places list is the second card.\"",
         "again": "Add the place, or leave it off.",
         "target": [
           "task-1",
@@ -290,8 +265,9 @@
         "act": "focus:task-1"
       },
       "family": {
-        "tip": "Next: the mothers. Two are waiting.",
-        "here": "Answer the mothers is the third card.",
+        "tip": "Lesson 3 is lit: answer the mothers.",
+        "here": "Lesson 3 is the third card.",
+        "_retiredS424": "⚑ S424 — was `tip` \"Next: the mothers. Two are waiting.\", `here` \"Answer the mothers is the third card.\"",
         "again": "Send a reply, or don’t send a script.",
         "_docS403": "⚑ S403 (UiB job 30 B1): `tip` was \"Next: the family calls. Three parents are waiting.\", `here` \"The family calls are the third card.\"; Ruth and the parents' circle reply left, so `family-sel-2` and `family-reply-r_group` are no longer targets.",
         "target": [
@@ -317,7 +293,38 @@
           "board-back"
         ],
         "act": "focus:task-3"
-      }
+      },
+      "_retiredS426": {
+        "vote": {
+          "tip": "Bea's news from Malta is coming to the group.",
+          "here": "It comes to the phone, beside the platform.",
+          "again": "The news is on its way to the phone.",
+          "target": [
+            "link",
+            "link2"
+          ]
+        },
+        "cascade": {
+          "tip": "The day can stay open while the messages arrive.",
+          "here": "Today is still on the platform.",
+          "again": "The next update will arrive here.",
+          "target": [
+            "board-back"
+          ]
+        },
+        "phone": {
+          "tip": "The campaign kit is on the platform. Either answer continues.",
+          "here": "The controls are below the kit.",
+          "again": "Approve the kit or return to Today.",
+          "target": [
+            "vera-kit-approve",
+            "vera-kit-close",
+            "board-back"
+          ],
+          "act": "focus:vera-kit-close"
+        }
+      },
+      "_retiredS426Why": "⚑ S426 (UiB job 35 Part D, Act III; his 23 Nov yes to the storyboard: \"Lambient says nothing unasked in beats 11–14\") — the stall hints `vote` (\"Bea's news from Malta is coming to the group.\" …) and `cascade` (\"The day can stay open while the messages arrive.\" …) are retired: the news and the removal are conducted, wide on the monitor, and nothing of Lambient's is said over the group (felt); `phone` (the kit's hint under the map's retired \"The phone\" beat) went with that beat. The kit's own hint (`vera-kit`) is kept. Help she asks for still answers with the map's hint (lambyGuide.ts)."
     },
     "e4": {
       "_docS321": "⚑ S321 — 2026 v3. One step per map beat that is not quiet (felt beats — eighteen, Mum, Dad, left, Junie — are silent: Lamby never speaks over a person). Every target id is a live rect at that step (tools/lamby-guide-test.mjs checks the shape; the tour photographs each). `act` presses navigation only, never an answer.",

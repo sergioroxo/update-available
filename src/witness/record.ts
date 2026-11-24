@@ -113,7 +113,9 @@ const MAP_BEATS = new Set(['e3-signed-in', 'e3-job-done', 'e3-two-jobs', 'e3-day
  *  not filings. Each job files its own entry (the testimony: graceQueue + era3Jobs 'pipeline'; the places list: era3Jobs
  *  'places'; the mothers: their check-ins below; the group: era3Jobs 'group'), so the marks belong in no file. Until S405
  *  they fell through recordKind() into 1997's file as "The exercise", with the bare word after the colon as their line. */
-const isMapMark = (id: string): boolean => MAP_BEATS.has(id) || id.startsWith('e3-job:') || id === 'e3-jobs-done';
+/** ⚑ S426c — and the memory card's Not now (S425, graceQueueLite: `e3-memory-notnow`, the dismissal's log): a mark of
+ *  the day, not a filing. Until S426c it fell through recordKind() into Daniel's 1997 file as a stray entry. */
+const isMapMark = (id: string): boolean => MAP_BEATS.has(id) || id.startsWith('e3-job:') || id === 'e3-jobs-done' || id === 'e3-memory-notnow';
 
 /** ⚑ S405 (UiB job 31, T94) — the mothers' messages ("Answer the mothers", familyCalls.ts) are Vera's job in 2016. They
  *  file into `ledger.checkins` (the list the record reads as attention paid to a message), and every 2003 reader of that

@@ -1,7 +1,9 @@
 {
   "title": "Handset Window",
   "disconnected": "This device is no longer supported. Phone disconnected.",
+  "_docRetiredS423disconnected": "⚑ S423 (UiB job 35 Part C; his headset, 20 Nov, over the 2016 → 2026 install: \"handset window, no handset, we don't need that message\"): `disconnected` is no longer shown — it lay over the changelog, whose own last line says the same (\"- phone link: not supported\"). Kept as a research state; graceQueueLite.drawDisconnected still reads it but nothing calls it (src/room/era3Devices.ts drawWorkstation).",
   "account": "My account · activity",
+  "_retiredS424focus": "⚑ S424 (UiB job 35 Part D, Act I beat 1; storyboard §3: \"Retired here: the Focus mode card … This week says it\") — `focus`, `on`, `later` are the Focus mode offer, never shown since S324 (his 8 Nov: it removed the felt part); This week now says what it said (pauses.json e3: \"Messages wait until a lesson is done.\"), and the dead code that drew it is gone from graceQueueLite.ts. Kept as the record.",
   "focus": [
     "Your phone is connected. Focus mode can hold notifications while you work."
   ],
@@ -43,7 +45,9 @@
       "time": "21:12",
       "from": "Nuala",
       "text": "The second mug's still on the hook. I'm not making a thing of it."
-    },
+    }
+  ],
+  "_retiredS426events": [
     {
       "id": "after",
       "time": "22:51",
@@ -52,6 +56,7 @@
       "photo": true
     }
   ],
+  "_retiredS426eventsWhy": "⚑ S426 (UiB job 35 Part D, Act III; his 23 Nov call 5: \"Orla's \\\"missed you tonight x\\\" is cut. — yes\"): Orla's last message, \"missed you tonight x\" with its photo, is no longer an event of the evening (the phone's sleep before it, and Lambient's two lines after it, went with it). The last beat before the update is the group's thread, holding, lit. Kept here word for word, out of `events` so nothing can deliver it; phoneE3's photo date and lock card still read an `after` that never comes.",
   "previous": "Previous",
   "next": "Next",
   "register": "felt",

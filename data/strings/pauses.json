@@ -69,6 +69,16 @@
    },
    "outro": "Small steps count.",
    "close": "Close",
+   "weekLead": "Your training starts today.",
+   "week": [
+    "Lesson 1 · Correct a testimony",
+    "Lesson 2 · The places list",
+    "Lesson 3 · Answer the mothers",
+    "Heartwood, Session Two · on the set by the door",
+    "Your phone · in the Handset Window. Messages wait until a lesson is done."
+   ],
+   "begin": "Begin",
+   "_docS424": "⚑ S424 (UiB job 35 Part D, Act I beat 1; 16-8, his 20 Nov: \"This week\" should come first, right after accepting Lambient — it explains the jobs and the phone; storyboard 2016_SECOND_HALF §3 beat 1) — THIS WEEK, FIRST: the card is the first thing over the board after her answer to Lambient (src/room/graceQueueLite.ts `openWeek`), titled `title`, led by `weekLead`, listing `week` (fixed: the three lessons, Heartwood, the phone), with one button, `begin`, which opens the lesson that is lit. The board's small This week button opens it again (then its button reads `close` once the training is done). RETIRED from this card: `lead` (\"This week on GracePlatform\"), the live `items` list read from the map (\"Your record …\", \"Jobs on the board, in any order.\", \"Answer the mothers.\", \"Kindredraft — offered when the board is done.\", \"Post to the group.\", \"FloppySheep — on your phone.\") and `outro` (\"Small steps count.\"); the card no longer waits for a first job and six quiet seconds. Kept as the record.",
    "_docS307": "S307: the legacy video-tool offer is retired. The notice names the one story-record offer.",
    "_docS403": "⚑ S403 (UiB job 30 B1): `items.family` is new: the card names the mothers while their job is open (it follows the map's `family` beat, so it goes once they are answered), as Lambient's order and its waiting line do."
   },

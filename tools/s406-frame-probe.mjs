@@ -15,6 +15,7 @@
  *
  *     node tools/s406-frame-probe.mjs --port 5461 --label after [--out out/s406-frames] [--modes desktop,xr]
  *                                     [--only entrance,setup,dissolve,e1,e1kit,flight,e2,e2desk,phone] [--throttle 4]
+ *                                     (S423: --only flight34turn,flight34cascade,flight34cross — 2016 → 2026, asked for only)
  *                                     [--seconds 6] [--no-profile]
  *
  * Writes <out>/<label>.json and <label>.md (one row per moment and mode). Needs a Vite dev server on --port. Measurement
@@ -288,6 +289,101 @@ const SCENES = {
     await page.close();
     return { flight, errors };
   },
+  /** ⚑ S423 (UiB job 35 C) — 2016 → 2026: the era-3 page, Vera's chair, the change fired where play fires it (the restart's
+   *  end, `onEraShift('e4')`), three windows keyed to the legs (a headset's turn is 11 s longer): the rise and the turn,
+   *  the room changing (the cascade, from the turn's end), and the crossing's first seconds (the draw peak's leg) */
+  async flight34(mode, want) {
+    const out = {};
+    const { page, cdp, errors } = await open('?reinterp=1&kiosk=0&era=3&debug=1&home=0', mode);
+    await ready(page, mode);
+    await page.waitForFunction(() => window.__camPose && window.__seatCut && window.__xrComfort, { timeout: 180000 });
+    await settle(page); await wait(2000);
+    await page.evaluate(() => window.__seatCut(90)); await wait(2500);
+    if (mode === 'xr') await calibrate(page);
+    await wait(1500);
+    await throttle(cdp, true);
+    await page.evaluate(() => window.__os.onEraShift('e4'));
+    const legIs = (l) => page.waitForFunction((l) => window.__camPose().leg === l, { timeout: 120000, polling: 100 }, l).catch(() => {});
+    if (want.has('flight34turn')) { await wait(1500); out.flight34turn = await measure(page, cdp, 5); }
+    await legIs('watch');
+    if (want.has('flight34cascade')) out.flight34cascade = await measure(page, cdp, 5);
+    await legIs('build');
+    if (want.has('flight34cross')) out.flight34cross = await measure(page, cdp, 5);
+    await throttle(cdp, false);
+    out.errors = errors; await page.close();
+    return out;
+  },
+  /** ⚑ S424 (UiB job 35 D, Act I beat 5) — 2016's Lamby set brought and playing: the era-3 page, the board, the 2016 moment
+   *  armed (a review aid: the walk proves the beat), Lambient's yes pressed (the guide's own press), then — where the set
+   *  arrives stopped (the training) — ▶ pressed on it; measured while it stands brought (e3tvheld) and while it plays
+   *  (e3tvplay). Today's build brings it before the eye and plays it by itself: the same two windows are its "before". */
+  async e3tv(mode, want) {
+    const out = {};
+    const { page, cdp, errors } = await open('?reinterp=1&kiosk=0&era=3&debug=1&home=0', mode);
+    await ready(page, mode);
+    await page.waitForFunction(() => window.__camPose && window.__graceQueue?.() && window.__teachingTv?.() && window.__xrComfort, { timeout: 180000 });
+    await settle(page); await wait(2500);
+    if (mode === 'xr') await calibrate(page);
+    await page.evaluate(() => { const q = window.__graceQueue(); q.debugBeat('board'); q.pauseOpen = false; q.lambPriority = false; q.lambLines = null; window.__teachingTv.arm('2016'); });
+    await page.waitForFunction(() => window.__teachingTv().call.shown, { timeout: 60000 }).catch(() => {});
+    await wait(1200);
+    await page.evaluate(() => window.__os.lambyGuide.press('lg-take'));
+    await page.waitForFunction(() => window.__teachingTv().tvs.find((t) => t.tape === '2016')?.pose === 'held', { timeout: 30000 }).catch(() => {});
+    await wait(1500);
+    out.tvState = await page.evaluate(() => { const t = window.__teachingTv().tvs.find((x) => x.tape === '2016'); return { pose: t.pose, state: t.state, beside: t.beside, fitted: t.fitted ?? null }; });
+    if (want.has('e3tvheld')) { await throttle(cdp, true); out.e3tvheld = await measure(page, cdp, SECONDS); await throttle(cdp, false); }
+    if (out.tvState.state === 'leader') await page.evaluate(() => window.__teachingTv.press('2016', 'tv-play'));
+    await wait(2500);
+    if (want.has('e3tvplay')) { await throttle(cdp, true); out.e3tvplay = await measure(page, cdp, SECONDS); await throttle(cdp, false); }
+    out.errors = errors; await page.close();
+    return out;
+  },
+  /** ⚑ S425 (UiB job 35 Part D, Act II beat 10) — 2016's memory page with her Notes typing in the Handset Window brought over its
+   *  right half (the window's slide, the note's letters at 7 a second): debug beat to the board, the memory page opened and turned,
+   *  its reading time skipped; measured while the note types (e3notes). */
+  async e3notes(mode, want) {
+    const out = {};
+    const { page, cdp, errors } = await open('?reinterp=1&kiosk=0&era=3&debug=1&home=0', mode);
+    await ready(page, mode);
+    await page.waitForFunction(() => window.__camPose && window.__graceQueue?.() && window.__xrComfort, { timeout: 180000 });
+    await settle(page); await wait(2500);
+    if (mode === 'xr') await calibrate(page);
+    await page.evaluate(() => { const q = window.__graceQueue(); q.debugBeat('board'); q.pauseOpen = false; q.lambPriority = false; q.lambLines = null; q.openMemory(); q.turnMemory(); q.memoryStageT = 999; });
+    await page.waitForFunction(() => window.__graceQueue().phone.refusalT >= 0, { timeout: 30000 }).catch(() => {});
+    await wait(900);
+    out.memory = await page.evaluate(() => window.__graceQueue().memoryState);
+    if (want.has('e3notes')) { await throttle(cdp, true); out.e3notes = await measure(page, cdp, SECONDS); await throttle(cdp, false); }
+    out.errors = errors; await page.close();
+    return out;
+  },
+  /** ⚑ S426 (UiB job 35 Part D, Act III beats 13–14) — the group wide in the board's place while the platform removes the news in the
+   *  chat (e3removal: the outline marching, a message greyed and folded) and while the forwards land faster than it can follow
+   *  (e3cascade: a message every 0.75 s, two forwards greyed and folded). A review aid lands there (`maltaReview`: the kit closed,
+   *  the review asked for; the walk proves the route). Today's build has no such beat: `phoneCascade` puts its takeover's
+   *  cascade up (the Review page on the board, the forwards on the Handset Window) — the "before" of e3cascade. */
+  async e3review(mode, want) {
+    const out = {};
+    const { page, cdp, errors } = await open('?reinterp=1&kiosk=0&era=3&debug=1&home=0', mode);
+    await ready(page, mode);
+    await page.waitForFunction(() => window.__camPose && window.__graceQueue?.() && window.__xrComfort, { timeout: 180000 });
+    await settle(page); await wait(2500);
+    if (mode === 'xr') await calibrate(page);
+    const built = await page.evaluate(() => {
+      const q = window.__graceQueue(); q.debugBeat('board'); q.pauseOpen = false; q.lambPriority = false; q.lambLines = null;
+      if ('maltaConduct' in q) { q.debugBeat('maltaReview'); return 'storyboard'; }
+      q.debugBeat('phoneCascade'); return 'today';
+    });
+    out.built = built;
+    if (built === 'storyboard') {
+      await page.waitForFunction(() => window.__graceQueue().phone.reviewState?.phase === 'outline', { timeout: 30000 }).catch(() => {});
+      if (want.has('e3removal')) { await throttle(cdp, true); out.e3removal = await measure(page, cdp, SECONDS); await throttle(cdp, false); }
+      await page.waitForFunction(() => window.__graceQueue().phone.cascadeOn, { timeout: 60000 }).catch(() => {});
+    } else await wait(1500);
+    if (want.has('e3cascade')) { await throttle(cdp, true); out.e3cascade = await measure(page, cdp, SECONDS); await throttle(cdp, false); }
+    out.review = await page.evaluate(() => { const q = window.__graceQueue(); return { wide: q.mirrorWide ?? null, state: q.phone.reviewState ?? null, cascadeN: q.phone.cascadeN }; });
+    out.errors = errors; await page.close();
+    return out;
+  },
   async e2(mode, want) {
     const out = {};
     const { page, cdp, errors } = await open('?reinterp=1&kiosk=0&era=2&debug=1&home=0', mode);
@@ -334,8 +430,20 @@ const ROWS = [
   { key: 'e2', scene: 'e2', where: '2003 (arriving: the intro, Lamby)' },
   { key: 'e2lamby', scene: 'e2', where: '2003 (Lamby on the glass, his introduction)' },
   { key: 'e2desk', scene: 'e2', where: '2003 (the desktop)' },
-  { key: 'phone', scene: 'e2', where: '2003 (the phone game, CLEAR)' }
-].filter((r) => !ONLY || ONLY.split(',').includes(r.key));
+  { key: 'phone', scene: 'e2', where: '2003 (the phone game, CLEAR)' },
+  // S423: 2016 → 2026 (only when asked: --only flight34turn,flight34cascade,flight34cross)
+  { key: 'flight34turn', scene: 'flight34', where: '2016 → 2026: the rise and the turn', optIn: true },
+  { key: 'flight34cascade', scene: 'flight34', where: '2016 → 2026: the room changing (the cascade)', optIn: true },
+  { key: 'flight34cross', scene: 'flight34', where: '2016 → 2026: the crossing (the draw peak\'s leg)', optIn: true },
+  // S424: 2016's Lamby set, brought and playing (only when asked: --only e3tvheld,e3tvplay)
+  { key: 'e3tvheld', scene: 'e3tv', where: '2016: the Lamby set brought (the training: beside the monitor, stopped)', optIn: true },
+  { key: 'e3tvplay', scene: 'e3tv', where: '2016: the Lamby set playing (brought)', optIn: true },
+  // S425: 2016's memory page with her Notes typing over its right half (only when asked: --only e3notes)
+  { key: 'e3notes', scene: 'e3notes', where: '2016: her Notes typing over the memory page', optIn: true },
+  // S426: 2016's Act III, the group wide: the review removing the news, then the forwards outrunning it (--only e3removal,e3cascade)
+  { key: 'e3removal', scene: 'e3review', where: '2016: the review removing the news in the group (wide)', optIn: true },
+  { key: 'e3cascade', scene: 'e3review', where: '2016: the forwards outrunning the review (the cascade)', optIn: true }
+].filter((r) => (!ONLY && !r.optIn) || ONLY.split(',').includes(r.key));
 
 const report = { label: LABEL, port: PORT, throttle: THROTTLE, seconds: SECONDS, at: new Date().toISOString(), rows: [] };
 for (const mode of MODES) {

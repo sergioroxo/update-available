@@ -127,8 +127,14 @@ function segmentDistToOrigin(a: number[], b: number[]): number {
 }
 
 export interface PointCloud {
-  /** fade the constellation in (the room's own fade-out is the caller's rig) */
-  show(): void;
+  /** fade the constellation in (the room's own fade-out is the caller's rig). ⚑ S422 — `yawDeg`: the seat's facing, the
+   *  bearing the sky's front (the panels' arc, the machine) is laid out on; the panels wait for `showPanels` */
+  show(yawDeg?: number): void;
+  /** ⚑ S422 (his order, 10 Nov: the messages first, then the panels) — the stars come down first; the panels and Daniel's
+   *  machine fade in when this is called (true), after the cards */
+  showPanels(on: boolean): void;
+  /** the panels are up (they can be aimed at and pressed) */
+  readonly panelsShown: boolean;
   /** ⚑ S144: the player's own lines on each era's panel, set as the Close begins */
   setPlayerLines(linesByEra: Record<number, string[]>): void;
   /** ⚑ 2026-09-12: the Close can be LEFT now (Daniel's monitor's era buttons) —
@@ -209,219 +215,171 @@ export function buildPointCloud(app: pc.Application, viewCamera?: () => pc.Entit
   const rng = makeRng(19970704);
   const [ox, oy, oz] = P.center as number[];
 
-  // ── PERSON nodes: dense gaussian-ish core + scattered satellites. Soft,
-  // warm, unlabelled, unlinked — no names, no stories, no count a player can
-  // read off. This is the exact population the single-tier build always
-  // drew; only its material treatment (below) and its total silence (no
-  // label, no link) are new. ──
   /**
-   * ⚑ THE FOUR PANELS' SIGHT-LINES ARE KEPT CLEAR (S101), and only theirs.
-   * Person nodes fill the whole sky, panels hang in it, and a warm slot drifting
-   * across a line of text makes the ending's only prose unreadable. This rejects
-   * a person node that would sit in the narrow corridor between the seat and a
-   * panel — it does not thin the population (every rejection is re-rolled) and it
-   * does not touch the count, the opacity or the silence. Nothing else in the
-   * sky gets this courtesy: the apparatus's own labels are allowed to be crowded.
+   * ⚑ S422 (UiB job 35 Part B; his headset run of 20 Nov, the Close: C-2 "the stars should be down from the ceiling …
+   * they should be floating around us so we can read this", C-7 "why are the panels so high and lopsided? … it should be in
+   * front of me, on my eye level", C-6 "the stars in front") — THE SKY IS LAID OUT FROM THE EYE NOW. The constellation's
+   * centre is the seat's eye (cluster.json `center`), so every direction below is the direction the visitor looks in, and
+   * the whole sky comes down from the ceiling to sit round him (the opening's lerp, `applyOpen`, is unchanged: from the
+   * stickers' patch at a third of its size to here):
+   *   · the four panels in a FRONT ARC at eye height, level, square to him (`eraBearingDeg` left to right: 1997, 2003,
+   *     2016, 2026), at `panel.radius`; nothing leans, nothing is behind him;
+   *   · Daniel's machine in front of him, below the panels, nearer, like a monitor on a table (`machinePanel`);
+   *   · each year's labelled stars in a column above its own panel, at reading distance (`labels.dist`), one star a line,
+   *     its label to its right, the chain running straight up the column (so no link crosses a word); the project's own
+   *     documents (era 0) in two columns over the front, higher, where the ceiling was;
+   *   · the warm stars everywhere else round him, never on a panel, the machine or a label, at any distance (nothing draws
+   *     in front of what is read, and nothing shows through it).
+   * The S101 layout (the ring of four bearings 90° apart, the clusters beside each panel, the frame's cap overhead) is in
+   * 0ee79d30; its numbers are kept in cluster.json `_retiredS422`.
    */
-  const panelBearings = ((network as { panels?: { era: number }[] }).panels ?? [])
-    .map((pn) => ((P.eraBearingDeg as number[])[pn.era - 1] ?? 0) * Math.PI / 180);
-  // ⚑ S378 — and the computer's panel's (machinePanel below): its sight-line is kept as clear as the rooms'
-  {
-    const mpb = (P as { machinePanel?: { bearingDeg: number } }).machinePanel?.bearingDeg;
-    if (typeof mpb === 'number') panelBearings.push(mpb * Math.PI / 180);
-  }
-  /** ⚑ 2026-09-13: the test is ANGULAR now — what the seat sees, not where the
-   *  node is. A card is a rectangle of azimuth × elevation from the origin
-   *  (its half-width and its top and bottom edges at `radius`), and anything
-   *  inside that rectangle at ANY distance stands in front of the text or
-   *  shows through it (the person mesh is one mesh, sorted from its centre,
-   *  so depth does not save the card). Used for nodes and, sampled, for links. */
-  const CARD_AZ = Math.atan2(P.panel.w / 2, P.panel.radius) + 0.04;
-  const CARD_EL_LO = Math.atan2(P.panel.y - P.panel.h / 2, P.panel.radius) - 0.03;
-  const CARD_EL_HI = Math.atan2(P.panel.y + P.panel.h / 2, P.panel.radius) + 0.03;
-  function inCardView(x: number, y: number, z: number): boolean {
-    const r = Math.sqrt(x * x + z * z);
-    const el = Math.atan2(y, r);
-    if (el < CARD_EL_LO || el > CARD_EL_HI) return false;
-    const th = Math.atan2(x, -z);
-    for (const b of panelBearings) {
-      let d = th - b;
-      while (d > Math.PI) d -= Math.PI * 2;
-      while (d < -Math.PI) d += Math.PI * 2;
-      if (Math.abs(d) < CARD_AZ) return true;
+  const D2R = Math.PI / 180;
+  const LAY = (P as unknown as { labels: { dist: number; columnOffsetDeg: number; eraElevDeg: number[]; frameColumnsDeg: number[];
+    frameElevDeg: number[]; gap: number } }).labels;
+  /** a point at bearing `th` (deg, + to the right of ahead), elevation `ph` (deg, + up), `d` metres from the eye */
+  const toward = (th: number, ph: number, d: number): number[] =>
+    [d * Math.cos(ph * D2R) * Math.sin(th * D2R), d * Math.sin(ph * D2R), -d * Math.cos(ph * D2R) * Math.cos(th * D2R)];
+  /** the direction of a point from the eye, in degrees */
+  const bearingOf = (x: number, z: number): number => Math.atan2(x, -z) / D2R;
+  const elevOf = (x: number, y: number, z: number): number => Math.atan2(y, Math.hypot(x, z)) / D2R;
+  /** the angular rectangles that are read (panels, the machine, every label): nothing else may stand in them */
+  type Rect = { th: number; ph: number; hw: number; hh: number };
+  const readRects: Rect[] = [];
+  const inRead = (x: number, y: number, z: number, pad = 0): boolean => {
+    const th = bearingOf(x, z), ph = elevOf(x, y, z);
+    for (const r of readRects) {
+      let d = th - r.th;
+      while (d > 180) d -= 360;
+      while (d < -180) d += 360;
+      if (Math.abs(d) <= r.hw + pad && Math.abs(ph - r.ph) <= r.hh + pad) return true;
     }
     return false;
+  };
+
+  // ── the panels' and the machine's rectangles (their geometry is built below, from the same numbers) ──
+  const panelsDef = ((network as { panels?: { era: number }[] }).panels ?? []).slice(0, 4);
+  const bearings = P.eraBearingDeg as number[];
+  for (const pn of panelsDef) {
+    const th = bearings[pn.era - 1] ?? 0;
+    readRects.push({ th, ph: Math.atan2(P.panel.y, P.panel.radius) / D2R,
+      hw: Math.atan2(P.panel.w / 2, P.panel.radius) / D2R + 2.5, hh: Math.atan2(P.panel.h / 2, P.panel.radius) / D2R + 2.5 });
   }
-  function clearOfPanels(x: number, y: number, z: number): boolean {
-    const r = Math.sqrt(x * x + z * z);
-    // ⚑ 2026-09-13: and nothing LOW AND NEAR — Daniel's monitor lights on the
-    //   desk in front of the seat at the end (closeMonitor.ts), and the cloud
-    //   drifts, so a fixed box would rotate away: a cylinder under the eye line
-    //   within 1.25 m is kept empty in every direction. Sérgio saw a star
-    //   standing in the Restart card.
-    if (r < 1.25 && y < 0.25) return false;
-    return !inCardView(x, y, z);
+  {
+    const mp = (P as { machinePanel?: { bearingDeg: number; dist: number; downDeg: number; scale: number } }).machinePanel;
+    if (mp) {
+      // the CRT's case at its scale: 0.54 × 0.44 m and its foot below (era1.json), seen from `dist`
+      const hw = Math.atan2(0.3 * mp.scale, mp.dist) / D2R + 3, hh = Math.atan2(0.32 * mp.scale, mp.dist) / D2R + 3;
+      readRects.push({ th: mp.bearingDeg, ph: -mp.downDeg - 2, hw, hh });
+    }
   }
 
+  // ── APPARATUS nodes and their labels: exactly one per close_network.json entry ──
+  type Entry = { text: string; era: number };
+  const entries = (network.labels as Entry[]).slice(0, 32);
+  const labels = entries.map((e) => e.text);
+  /** entry indices per era, in file order — the columns, and the link chains */
+  const byEra: number[][] = [[], [], [], [], []];
+  entries.forEach((e, i) => { byEra[Math.max(0, Math.min(4, e.era | 0))].push(i); });
+  // each label's width in the atlas (px), measured now so the layout knows how far each one reaches (the atlas below draws
+  // them with the same font)
+  const ROW = 36;
+  const ATLAS = 1152; // 32 rows * ROW — the 32-label cap this atlas must fit
+  const labelPx: number[] = (() => {
+    const m = document.createElement('canvas').getContext('2d');
+    if (!m) return labels.map(() => ATLAS / 3);
+    m.font = 'bold 26px monospace';
+    return labels.map((t) => Math.min(ATLAS, m.measureText(t).width + (t === lexStrings.star ? 48 : 8)));
+  })();
+  const labelW = (i: number): number => (labelPx[i] / ROW) * P.labelHeight;
+  const apparatusNodes: number[][] = new Array(entries.length);
+  /** where each label's centre hangs (root space), set with its node */
+  const labelAt0: number[][] = new Array(entries.length);
+  const apparatusHalf = P.apparatusNodeSize / 2;
+  /** one column of stars: the node at (th, ph), its label to its right (the node is the line's bullet) */
+  const place = (idx: number, th: number, ph: number, d: number): void => {
+    apparatusNodes[idx] = [...toward(th, ph, d), 1];
+    const w = labelW(idx);
+    // the label's centre: the bullet, a gap, then half the label, along the line at this elevation
+    const reach = apparatusHalf * 1.9 + LAY.gap + w / 2;
+    const dth = Math.atan2(reach, d * Math.cos(ph * D2R)) / D2R;
+    labelAt0[idx] = toward(th + dth, ph, d);
+    const hh = Math.atan2(P.labelHeight / 2, d) / D2R + 0.8;
+    readRects.push({ th: th + dth, ph, hw: Math.atan2(w / 2 + apparatusHalf * 2 + LAY.gap, d) / D2R + 0.8, hh });
+  };
+  for (let era = 1; era <= 4; era++) {
+    const col = (bearings[era - 1] ?? 0) + LAY.columnOffsetDeg;
+    byEra[era].forEach((idx, j) => {
+      const ph = LAY.eraElevDeg[Math.min(j, LAY.eraElevDeg.length - 1)] + Math.max(0, j - (LAY.eraElevDeg.length - 1)) * 4.5;
+      place(idx, col, ph, LAY.dist * (1 + (rng() - 0.5) * 0.04));
+    });
+  }
+  // era 0 — the project's own documents, where the ceiling was: two columns over the front, higher than the years
+  byEra[0].forEach((idx, j) => {
+    const cols = LAY.frameColumnsDeg, rows = Math.ceil(byEra[0].length / cols.length);
+    const c = Math.floor(j / rows), r = j % rows;
+    place(idx, cols[Math.min(c, cols.length - 1)], LAY.frameElevDeg[Math.min(r, LAY.frameElevDeg.length - 1)], LAY.dist * (1 + (rng() - 0.5) * 0.04));
+  });
+
+  // ── PERSON nodes: dense gaussian-ish core + scattered satellites. Soft, warm, unlabelled, unlinked — no names, no
+  // stories, no count a player can read off. Kept out of everything that is read (`inRead`), at any distance; every
+  // rejection is re-rolled, so the population is whole. ──
   const personNodes: number[][] = [];
   for (let i = 0; i < P.coreCount; i++) {
-    // sum of 3 uniforms ≈ gaussian; core hugs the center — but a clear bubble
-    // stays around the seated player so no node looms against the near clip
     let x = 0, y = 0, z = 0;
-    for (let tries = 0; tries < 64; tries++) {   // ⚑ 64, not 8: with the cones AND the desk's cylinder kept clear, eight tries left ~2% of nodes wherever the eighth landed
+    for (let tries = 0; tries < 64; tries++) {
       const r = P.innerClear + (P.coreRadius - P.innerClear) * ((rng() + rng() + rng()) / 3);
       const th = rng() * Math.PI * 2;
       const ph = Math.acos(2 * rng() - 1);
-      // positions are RELATIVE to the root (placed at P.center below) so the
-      // drift rotation spins the constellation about its own center
       x = r * Math.sin(ph) * Math.cos(th);
       y = r * Math.cos(ph) * 0.75; // slightly flattened — a sky, not a ball
       z = r * Math.sin(ph) * Math.sin(th);
-      if (clearOfPanels(x, y, z)) break;
+      if (!inRead(x, y, z, 1)) break;
     }
-    personNodes.push([
-      x, y, z,
-      P.personScaleMin + rng() * (P.personScaleMax - P.personScaleMin) // gentle, uniform — no competing "hubs"
-    ]);
+    personNodes.push([x, y, z, P.personScaleMin + rng() * (P.personScaleMax - P.personScaleMin)]);
   }
   for (let i = 0; i < P.satelliteCount; i++) {
     let x = 0, y = 0, z = 0;
-    for (let tries = 0; tries < 64; tries++) {   // ⚑ 64, not 8: with the cones AND the desk's cylinder kept clear, eight tries left ~2% of nodes wherever the eighth landed
+    for (let tries = 0; tries < 64; tries++) {
       const r = P.coreRadius + (P.outerRadius - P.coreRadius) * Math.pow(rng(), 0.6);
       const th = rng() * Math.PI * 2;
       const ph = Math.acos(2 * rng() - 1);
       x = r * Math.sin(ph) * Math.cos(th);
       y = r * Math.cos(ph) * 0.6;
       z = r * Math.sin(ph) * Math.sin(th);
-      if (clearOfPanels(x, y, z)) break;
+      if (!inRead(x, y, z, 1)) break;
     }
-    personNodes.push([
-      x, y, z,
-      P.personScaleMin + rng() * ((P.personScaleMax - P.personScaleMin) * 0.6) // satellites stay a touch smaller
-    ]);
+    personNodes.push([x, y, z, P.personScaleMin + rng() * ((P.personScaleMax - P.personScaleMin) * 0.6)]);
   }
+  /** ⚑ S422 — a star that could not be kept out of the reading in 64 tries is folded to nothing (never drawn on a word) */
+  for (const n of personNodes) if (inRead(n[0], n[1], n[2], 0.5)) n[3] = 0;
 
-  /**
-   * ── APPARATUS nodes: exactly one per close_network.json entry. ⚑ S101 — AND
-   * THE SHAPE NOW MEANS SOMETHING. They were a Fibonacci/golden-angle spread,
-   * which spaced the labels beautifully and said nothing: a player could trace
-   * the web end to end and learn only that it was traceable. Each entry carries
-   * the ERA OF THE PIECE IT GROUNDS, so the network is laid out the way the
-   * piece is:
-   *
-   *   era 0 — the project's own frame, in a small cap DIRECTLY OVERHEAD, where
-   *           the ceiling was and where the stars came from. The piece
-   *           documents itself in the same image in which it documents the
-   *           apparatus, and puts its own workings above its head, not off in
-   *           a corner (Sérgio, 2026-07-24: the production should be disclosed
-   *           prominently, "as in its core will be used as an example of AI for
-   *           VR digital storytelling").
-   *   eras 1-4 — one arc each, at four bearings 90° apart, in order. You turn
-   *           through 1997 → 2003 → 2016 → now. ⚑ The turn is the piece's one
-   *           bodily ask and this is the last time it asks for it.
-   * ──
-   */
-  type Entry = { text: string; era: number };
-  const entries = (network.labels as Entry[]).slice(0, 32);
-  const labels = entries.map((e) => e.text);
-  /** entry indices per era, in file order — the arcs, and the link chains */
-  const byEra: number[][] = [[], [], [], [], []];
-  entries.forEach((e, i) => { byEra[Math.max(0, Math.min(4, e.era | 0))].push(i); });
-  const apparatusNodes: number[][] = new Array(entries.length);
-  // era 0 — the frame, overhead: a small golden-angle cap so the project's own
-  // nodes read as one cluster rather than as a fifth era.
-  byEra[0].forEach((idx, j) => {
-    const m = byEra[0].length;
-    const golden = Math.PI * (3 - Math.sqrt(5));
-    const th = j * golden;
-    const rXZ = P.frameCapRadius * (m > 1 ? Math.sqrt((j + 0.6) / m) : 0);
-    const jitter = 1 + (rng() - 0.5) * P.apparatusRadiusJitter * 0.5;
-    apparatusNodes[idx] = [
-      rXZ * Math.cos(th) * P.apparatusRadius * jitter,
-      P.apparatusRadius * 0.62 * jitter, // overhead, at the sky's own flattening
-      rXZ * Math.sin(th) * P.apparatusRadius * jitter,
-      1
-    ];
-  });
-  // eras 1-4 — one arc each, at its own bearing, fanned in elevation so the
-  // labels never sit on one line
-  const bearings = P.eraBearingDeg as number[];
-  for (let era = 1; era <= 4; era++) {
-    const group = byEra[era];
-    const m = group.length;
-    group.forEach((idx, j) => {
-      const t = m > 1 ? j / (m - 1) - 0.5 : 0;
-      // ⚑ THE ANCHORS HANG BESIDE THEIR PANEL (2026-09-12), to its right and
-      //   a little below its foot — see cluster.json `_docCluster`. Two rows,
-      //   scattered, so a cluster reads as a cluster and not as a line.
-      const th = ((bearings[era - 1] ?? 0) + P.clusterOffsetDeg + t * P.arcSpreadDeg) * Math.PI / 180;
-      const y = P.clusterY + (j % 2 ? -0.5 : 0.5) * P.clusterYSpread * (0.6 + rng() * 0.4);
-      const jitter = 1 + (rng() - 0.5) * P.apparatusRadiusJitter;
-      const r = P.apparatusRadius * jitter;
-      // ⚑ bearing 0 is AHEAD of the seat: PlayCanvas looks down -Z, and the
-      //   Close seats the camera at yaw 0, so era 1 is the first thing there.
-      apparatusNodes[idx] = [
-        r * Math.sin(th),
-        y,
-        -r * Math.cos(th),
-        1
-      ];
-    });
-  }
-
-  // ── links ──
-  // Round-18 fixes carry forward: ends TRIM back to the node surfaces, and a
-  // link whose segment would cross the player's clear bubble is rejected.
+  // ── links: APPARATUS ONLY. Each column chained bottom to top (straight up the bullets: a link never crosses a word);
+  // between the years, one hand-over each; the frame's documents joined to the year they frame. A link that would cross
+  // anything read (a panel, the machine, a label) or pass through the seat's clear bubble is not drawn. ──
   const surface = (baseHalf: number, n: number[]): number => baseHalf * (n[3] ?? 1) * 1.9;
   const personHalf = P.nodeSize / 2;
-  const apparatusHalf = P.apparatusNodeSize / 2;
-
-  // APPARATUS ONLY: a guaranteed-connected chain (node i → i+1, by
-  // construction — never a "maybe" like the old proximity search) plus a
-  // handful of deterministic cross-links for a richer, still fully-traceable
-  // web. PERSON nodes get no link mesh at all: there is no line to follow
-  // from one soft room to another, which is the asymmetry in one picture.
   const apparatusLinkPositions: number[] = [];
   function tryLink(a: number[], b: number[]): void {
     const dx = b[0] - a[0], dy = b[1] - a[1], dz = b[2] - a[2];
     const d = Math.sqrt(dx * dx + dy * dy + dz * dz);
     if (d < 1e-4) return;
     if (segmentDistToOrigin(a, b) < P.innerClear * 0.85) return; // never through the player
-    // ⚑ 2026-09-13: and never ACROSS a card, from the seat's point of view —
-    //   the frame's hand-down to an era swept across the card beside it
-    for (let k = 0; k <= 16; k++) {
-      const t = k / 16;
-      if (inCardView(a[0] + dx * t, a[1] + dy * t, a[2] + dz * t)) return;
-    }
     const ta = surface(apparatusHalf, a) / d, tb = 1 - surface(apparatusHalf, b) / d;
     if (tb <= ta) return;
+    for (let k = 1; k < 24; k++) {
+      const t = ta + (tb - ta) * (k / 24);
+      if (inRead(a[0] + dx * t, a[1] + dy * t, a[2] + dz * t, 0.2)) return;
+    }
     apparatusLinkPositions.push(
       a[0] + dx * ta, a[1] + dy * ta, a[2] + dz * ta,
       a[0] + dx * tb, a[1] + dy * tb, a[2] + dz * tb
     );
   }
-  /**
-   * ⚑ S101 — THE WEB IS READ ERA BY ERA, AND THEN ACROSS. It used to be one
-   * chain in file order plus a scatter of random cross-links: connected, by
-   * construction, and arbitrary, by construction. Now:
-   *
-   *   · within an era, every anchor is chained to the next — each era is
-   *     traceable on its own, which is what a panel's four lines are claiming;
-   *   · between eras, EXACTLY THREE links, one per hand-over, from the last
-   *     anchor of one arc to the first of the next. Three lines carry the whole
-   *     argument: *the demand never changed, only the disguise* — and because
-   *     there are only three, they can actually be followed;
-   *   · the frame overhead is joined to the era it is a frame FOR — all of
-   *     them — by one link each, so the piece's own workings hang off the thing
-   *     they were built to document rather than floating free of it.
-   */
   for (const group of byEra) {
-    for (let i = 0; i < group.length - 1; i++) {
-      tryLink(apparatusNodes[group[i]], apparatusNodes[group[i + 1]]);
-    }
+    for (let i = 0; i < group.length - 1; i++) tryLink(apparatusNodes[group[i]], apparatusNodes[group[i + 1]]);
   }
   for (let era = 1; era <= 3; era++) {
-    const from = byEra[era][byEra[era].length - 1];
+    const from = byEra[era][0];
     const to = byEra[era + 1][0];
     if (from !== undefined && to !== undefined) tryLink(apparatusNodes[from], apparatusNodes[to]);
   }
@@ -429,9 +387,8 @@ export function buildPointCloud(app: pc.Application, viewCamera?: () => pc.Entit
     const era = 1 + (j % 4);
     const group = byEra[era];
     if (!group.length) return;
-    tryLink(apparatusNodes[idx], apparatusNodes[group[j % group.length]]);
+    tryLink(apparatusNodes[idx], apparatusNodes[group[group.length - 1]]);
   });
-
   // ── build: one mesh per warm (person) tone + the apparatus mesh + the
   // apparatus link mesh ──
   const root = new pc.Entity('point-cloud');
@@ -514,12 +471,13 @@ export function buildPointCloud(app: pc.Application, viewCamera?: () => pc.Entit
   const labelWidths = new Float32Array(labels.length);
   /** ⚑ S377 — which labels the sight-line has folded this frame (published by __closeLabels for the checks) */
   const labelFolded = new Uint8Array(labels.length);
+  /** ⚑ S422 — each label's up, as the last billboard pass drew it (root space; published by __closeLabels for the checks) */
+  const labelUp = new Float32Array(labels.length * 3);
   let labelMesh: pc.Mesh | null = null;
   let labelVertexData: Float32Array | null = null;
   let labelPositionOffset = 0;
   let labelVertexStride = 0;
-  const ATLAS = 1152; // 32 rows * ROW — the 32-label cap this atlas must fit
-  const ROW = 36;
+  // (ATLAS and ROW are set above, where the layout measures each label — S422)
   const atlas = document.createElement('canvas');
   atlas.width = ATLAS;
   atlas.height = ATLAS;
@@ -580,8 +538,10 @@ export function buildPointCloud(app: pc.Application, viewCamera?: () => pc.Entit
       upv.cross(nrm, right).normalize();
       const hgt = P.labelHeight;
       const wid = (widths[li] / ROW) * hgt;
-      const lift = surface(apparatusHalf, n) + hgt * 0.85; // sits just above its node
-      const cxp = n[0] + upv.x * lift, cyp = n[1] + upv.y * lift, czp = n[2] + upv.z * lift;
+      // ⚑ S422 — the label stands to the RIGHT of its star, on its line (the star is the line's bullet: `place` above);
+      //   until S422 it sat just above its node
+      const at = labelAt0[li] ?? [n[0], n[1] + surface(apparatusHalf, n) + hgt * 0.85, n[2]];
+      const cxp = at[0], cyp = at[1], czp = at[2];
       labelCenters[li * 3] = cxp;
       labelCenters[li * 3 + 1] = cyp;
       labelCenters[li * 3 + 2] = czp;
@@ -695,7 +655,7 @@ export function buildPointCloud(app: pc.Application, viewCamera?: () => pc.Entit
    * machine's face. It keeps a FRAME here (index `machineIdx`, the front of its case) so the press, the aim, the gaze
    * conducted to it and the probes ask it exactly as they ask the rooms' panels; it has no cell and no quad.
    */
-  type MachineGeo = { bearingDeg: number; scale: number; yawDeg?: number };
+  type MachineGeo = { bearingDeg: number; scale: number; yawDeg?: number; dist?: number; downDeg?: number };
   const MP = (P as unknown as { machinePanel?: MachineGeo }).machinePanel;
   const machineIdx = MP && panels.length > 0 ? panels.length : -1;
   const nCells = panels.length + (machineIdx >= 0 ? 1 : 0);
@@ -1006,6 +966,8 @@ export function buildPointCloud(app: pc.Application, viewCamera?: () => pc.Entit
         //   AUDIT" tilted and cut off) — each card hangs ~0.75 m above the eye at 3 m and stood upright, so from the seat
         //   it was seen from below, its title row foreshortened at the top of the view. It now faces the EYE (the seat,
         //   app.ts EYE y 1.16, in the cloud's own space): leaned toward him by ~14°, still level left to right.
+        // ⚑ S422 (C-7, his 20 Nov: "too high and lopsided … in front of me, on my eye level") — the cloud's centre is the eye
+        //   and the panels hang at its height (`panel.y` 0), so the normal is level: nothing leans
         pN.set(-cx, PANEL_EYE_Y - (P.center as number[])[1] - cy, -cz).normalize();
         pR.cross(pUp, pN);
         if (pR.length() < 1e-3) pR.set(1, 0, 0); else pR.normalize();
@@ -1028,11 +990,14 @@ export function buildPointCloud(app: pc.Application, viewCamera?: () => pc.Entit
       //   Its frame is the case's front, so a press anywhere on the machine's face is a press on it.
       if (machineIdx >= 0 && MP) {
         const i = machineIdx;
-        const bearing = MP.bearingDeg * Math.PI / 180;
-        const cx = P.panel.radius * Math.sin(bearing);
-        const cz = -P.panel.radius * Math.cos(bearing);
-        const cy = P.panel.y;
-        pN.set(-cx, PANEL_EYE_Y - (P.center as number[])[1] - cy, -cz).normalize();
+        // ⚑ S422 (C-7) — in front of him, below the panels and nearer, like a monitor on a table: its glass's centre `dist`
+        //   from the eye, `downDeg` under the eye line, square to him and upright (`yawDeg` 0: his "lopsided" was the
+        //   S380 turn as much as the height). Until S422 it stood in the ring at 315°, `panel.radius` out, at the row's height.
+        const bearing = MP.bearingDeg * Math.PI / 180, down = (MP.downDeg ?? 0) * Math.PI / 180, dist = MP.dist ?? P.panel.radius;
+        const cx = dist * Math.cos(down) * Math.sin(bearing);
+        const cz = -dist * Math.cos(down) * Math.cos(bearing);
+        const cy = -dist * Math.sin(down);
+        pN.set(-cx, 0, -cz).normalize();
         pR.cross(pUp, pN);
         if (pR.length() < 1e-3) pR.set(1, 0, 0); else pR.normalize();
         pU.cross(pN, pR).normalize();
@@ -1088,8 +1053,9 @@ export function buildPointCloud(app: pc.Application, viewCamera?: () => pc.Entit
       const w = M.transformPoint(new pc.Vec3(labelCenters[i * 3], labelCenters[i * 3 + 1], labelCenters[i * 3 + 2]));
       const sc = root.getLocalScale().x;
       // S377: its world half-size, and whether the sight-line folded it this frame (tools/s377-close-check.mjs)
+      const u = M.transformVector(new pc.Vec3(labelUp[i * 3], labelUp[i * 3 + 1], labelUp[i * 3 + 2])).normalize();
       return { i, era: entries[i].era, text: entries[i].text, x: w.x, y: w.y, z: w.z, w: labelWidths[i],
-        hw: (labelWidths[i] / 2) * sc, hh: (P.labelHeight / 2) * sc, folded: labelFolded[i] === 1, receded: recedeK };
+        hw: (labelWidths[i] / 2) * sc, hh: (P.labelHeight / 2) * sc, folded: labelFolded[i] === 1, receded: recedeK, up: { x: u.x, y: u.y, z: u.z } };
     });
   };
   // ⚑ S175 review aid (read-only, like __closePanelSizes): where each panel hangs
@@ -1157,6 +1123,8 @@ export function buildPointCloud(app: pc.Application, viewCamera?: () => pc.Entit
   let fadeLevel = 0;
   let visible = false;
   let yaw = 0;
+  /** ⚑ S422 — the panels' (and the machine's) own fade, 0…1, after the stars' (`fadeLevel`) */
+  let panelsK = 0, panelsWant = 0;
   /** 0 = gathered on the ceiling, 1 = open around the seat. See `openSeconds`. */
   let openK = 0;
   /** ⚑ S163 / R3-112 — the drift's own gain: eases to 0 while the gaze rests on a
@@ -1397,6 +1365,7 @@ export function buildPointCloud(app: pc.Application, viewCamera?: () => pc.Entit
    * camera. The mesh, typed-array view and all scalar scratch are retained;
    * this adds one small dynamic-buffer upload, not entities, draws or garbage.
    */
+  const eyeInv = new pc.Mat4(), eyeL = new pc.Vec3();
   function updateBillboards(): void {
     const vertexData = labelVertexData;
     const vertexBuffer = labelMesh?.vertexBuffer;
@@ -1437,12 +1406,29 @@ export function buildPointCloud(app: pc.Application, viewCamera?: () => pc.Entit
 
     const rootM = corridor ? root.getWorldTransform() : null;
     const rs = root.getLocalScale().x;
+    // ⚑ S422 (C-2) — in a headset each label faces the EYE'S PLACE (pitch included, never roll), not the head's turn: the
+    //   labels hang above the panels and the project's own documents higher still, and an upright label 50° up was seen
+    //   from below at half its height (measured: 6–7 px letters in the mock's view, 0.58°, where it was 1.34° face on). It
+    //   does not move with the head's tilt or roll (S282's "it's a bit trippy" stands): only the seat's eye places it.
+    const faceEye = !!app.xr?.active;
+    if (faceEye) { eyeInv.copy(root.getWorldTransform()).invert(); eyeInv.transformPoint(camera.getPosition(), eyeL); }
     for (let li = 0; li < labels.length; li++) {
       const centerAt = li * 3;
       const centerX = labelCenters[centerAt];
       const centerY = labelCenters[centerAt + 1];
       const centerZ = labelCenters[centerAt + 2];
       let halfWidth = labelWidths[li] / 2;
+      let rX = rightX, rY = rightY, rZ = rightZ, uX = upX, uY = upY, uZ = upZ;
+      if (faceEye) {
+        // n: from the label to the eye; right = up × n (level); up = n × right
+        let nx = eyeL.x - centerX, ny = eyeL.y - centerY, nz = eyeL.z - centerZ;
+        const nl = Math.hypot(nx, ny, nz) || 1; nx /= nl; ny /= nl; nz /= nl;
+        const rl = Math.hypot(nz, nx);
+        if (rl > 1e-3) {
+          rX = nz / rl; rY = 0; rZ = -nx / rl;
+          uX = ny * rZ; uY = nz * rX - nx * rZ; uZ = -ny * rX;
+        }
+      }
       labelFolded[li] = 0;
       if (rootM && corridor) {
         // S167: a label on the sight-line to the machine collapses to nothing
@@ -1452,13 +1438,14 @@ export function buildPointCloud(app: pc.Application, viewCamera?: () => pc.Entit
         if (quadOnSight(lw.x, lw.y, lw.z, (labelWidths[li] / 2) * rs, halfHeight * rs, 0.03)) { halfWidth = 0; labelFolded[li] = 1; }
       }
 
+      labelUp[centerAt] = uX; labelUp[centerAt + 1] = uY; labelUp[centerAt + 2] = uZ;
       for (let corner = 0; corner < 4; corner++) {
         const horizontal = corner === 0 || corner === 3 ? -halfWidth : halfWidth;
         const vertical = corner < 2 ? halfHeight : -halfHeight;
         const vertexAt = (li * 4 + corner) * labelVertexStride + labelPositionOffset;
-        vertexData[vertexAt] = centerX + rightX * horizontal + upX * vertical;
-        vertexData[vertexAt + 1] = centerY + rightY * horizontal + upY * vertical;
-        vertexData[vertexAt + 2] = centerZ + rightZ * horizontal + upZ * vertical;
+        vertexData[vertexAt] = centerX + rX * horizontal + uX * vertical;
+        vertexData[vertexAt + 1] = centerY + rY * horizontal + uY * vertical;
+        vertexData[vertexAt + 2] = centerZ + rZ * horizontal + uZ * vertical;
       }
     }
     vertexBuffer.unlock();
@@ -1477,7 +1464,7 @@ export function buildPointCloud(app: pc.Application, viewCamera?: () => pc.Entit
   };
   const sv = new pc.Vec3();
   function shieldCrt(): void {
-    if (!crt || machineIdx < 0 || !MP || fadeLevel <= 0) return;
+    if (!crt || machineIdx < 0 || !MP || fadeLevel <= 0 || panelsK <= 0) return;
     const cam = viewCamera?.() ?? app.systems.camera?.cameras[0]?.entity;
     const f = panelFrames[machineIdx];
     if (!cam || !f) return;
@@ -1526,13 +1513,14 @@ export function buildPointCloud(app: pc.Application, viewCamera?: () => pc.Entit
     labelMat.emissive.set(ll, ll, ll);
     labelMat.opacity = level * keep;
     labelMat.update();
-    // the four panels, on the same ramp — they arrive with the sky, not after it
-    // (and never dim for the corridor: they are the reading, not the weather)
-    const pl = fadeLevel * 1.25;
+    // the four panels (and never dim for the corridor: they are the reading, not the weather)
+    // ⚑ S422 — on their own ramp now: the stars come down first, the panels come after the cards (`showPanels`)
+    const pk = panelsK * panelsK * (3 - 2 * panelsK), pf = fadeLevel * pk;
+    const pl = pf * 1.25;
     panelMat.emissive.set(pl, pl, pl);
-    panelMat.opacity = fadeLevel;
+    panelMat.opacity = pf;
     panelMat.update();
-    crt?.setFade(fadeLevel);   // S380: Daniel's CRT arrives with them
+    crt?.setFade(pf);   // S380: Daniel's CRT arrives with them
   }
 
   /**
@@ -1599,19 +1587,25 @@ export function buildPointCloud(app: pc.Application, viewCamera?: () => pc.Entit
 
   return {
     setFocus(i: number | null, button = false): void { setFocusImpl(visible ? i : null, button); },
-    show(): void {
+    show(yawDeg = 0): void {
       visible = true;
       root.enabled = true;
       openK = 0;
+      yaw = yawDeg;
+      panelsK = 0; panelsWant = 0;
+      root.setLocalEulerAngles(0, yaw, 0);
       applyOpen();
       updateBillboards();
     },
+    showPanels(on: boolean): void { panelsWant = on ? 1 : 0; },
+    get panelsShown(): boolean { return visible && panelsK > 0.5; },
     setPlayerLines(linesByEra: Record<number, string[]>): void { panelRedraw?.(linesByEra); },
     hide(): void {
       visible = false;
       root.enabled = false;
       openK = 0;
       fadeLevel = 0;
+      panelsK = 0; panelsWant = 0;
       corridor = null;
       recedeK = 0;
       applySight();   // S174: every folded star and panel back, for the next Close
@@ -1630,7 +1624,9 @@ export function buildPointCloud(app: pc.Application, viewCamera?: () => pc.Entit
       const recedeTo = corridor?.recede ? 1 : 0;
       const receding = recedeK !== recedeTo;
       if (receding) recedeK = recedeTo > recedeK ? Math.min(1, recedeK + dt / RECEDE_SECONDS) : Math.max(0, recedeK - dt / RECEDE_SECONDS);
-      if (fadeLevel < 1 || receding) {
+      const panelsMoving = panelsK !== panelsWant;
+      if (panelsMoving) panelsK = panelsWant > panelsK ? Math.min(1, panelsK + dt / P.fadeSeconds) : Math.max(0, panelsK - dt / P.fadeSeconds);
+      if (fadeLevel < 1 || receding || panelsMoving) {
         fadeLevel = Math.min(1, fadeLevel + dt / P.fadeSeconds);
         applyFade();
       }
@@ -1650,7 +1646,7 @@ export function buildPointCloud(app: pc.Application, viewCamera?: () => pc.Entit
     },
     panelAt(p0, p1, tMax = 1): number | null { return this.panelHit(p0, p1, tMax)?.i ?? null; },
     panelHit(p0, p1, tMax = 1): { i: number; at: { x: number; y: number; z: number } } | null {
-      if (!visible || panelFrames.length === 0) return null;
+      if (!visible || panelFrames.length === 0 || panelsK < 0.5) return null;   // S422: not before the panels are up
       invRoot.copy(root.getWorldTransform()).invert();
       invRoot.transformPoint(lp0.set(p0.x, p0.y, p0.z), lp0);
       invRoot.transformPoint(lp1.set(p1.x, p1.y, p1.z), lp1);
@@ -1674,7 +1670,7 @@ export function buildPointCloud(app: pc.Application, viewCamera?: () => pc.Entit
       return null;
     },
     panelSourcesAt(p0, p1, tMax = 1): number | null {
-      if (!visible || panelFrames.length === 0) return null;
+      if (!visible || panelFrames.length === 0 || panelsK < 0.5) return null;
       invRoot.copy(root.getWorldTransform()).invert();
       invRoot.transformPoint(lp0.set(p0.x, p0.y, p0.z), lp0);
       invRoot.transformPoint(lp1.set(p1.x, p1.y, p1.z), lp1);

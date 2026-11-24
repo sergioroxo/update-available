@@ -21,6 +21,10 @@
  * from S378). Two draw calls (the body, the glass) — exactly what the retired far machine (closeMonitor.ts) cost.
  *
  * Words: close_restart.json (the card's mark, years, title and `kept`; the `machine` block's hint and button — drafts).
+ *
+ * ⚑ S422 (UiB job 35 Part B, C-7) — it no longer stands in the row: it stands in front of the seat under the panels, nearer
+ * and square, like a monitor on a table (cluster.json `machinePanel` `dist` 1.6 m, `downDeg`, ×1.5): its 32 px letters are
+ * 2.4 cm there, 0.86° from the eye (at ×2.5 and 3.05 m they were 4 cm, 0.75°).
  */
 import * as pc from 'playcanvas';
 import card from '../../data/strings/close_restart.json';

@@ -1,4 +1,3 @@
-import mirrorCopy from '../../../data/strings/e3_mirror.json';
 /** 2016 documents and publication previews. Drawing only; the owner handles every press and ledger event. */
 import { px, wrapText } from '../theme/chrome';
 import { sansFor, textPx } from '../theme/fonts';
@@ -22,44 +21,8 @@ function paper(ctx: CanvasRenderingContext2D, a: SurfaceRect): void {
   px(ctx, a.x + 2, a.y + 2, a.w, a.h, P.glassEdge); px(ctx, a.x, a.y, a.w, a.h, P.white);
   px(ctx, a.x, a.y, a.w, 1, P.glassEdge);
 }
-export function drawVeraArchive(ctx: CanvasRenderingContext2D, a: SurfaceRect, compared: boolean, admin: boolean, page: number, hit: (r: SurfaceHit) => void): void {
-  const r = D.record, x = a.x + 12, w = a.w - 24;
-  px(ctx, a.x, a.y, a.w, a.h, P.sysBand);
-  px(ctx, a.x, a.y, a.w, 39, P.titleA);
-  studioFont(ctx, 18, true); ctx.fillStyle = P.titleText; ctx.fillText(D.visual.archiveBrand, x, a.y + 7);
-  studioFont(ctx, 13); ctx.fillText(D.visual.archiveTitle, a.x + a.w - 92, a.y + 11);
-  text(ctx, r.meta, x, a.y + 43, w, 10, 12, P.greyDk);
-  studioFont(ctx, 9); ctx.fillStyle = P.greyDk;
-  ctx.fillText(r.footer, a.x + a.w - 12 - ctx.measureText(r.footer).width, a.y + 45);
-  const py = a.y + 62, ph = a.h - 62 - 70, gap = 16;
-  const doc = (xx: number, ww: number, label: string, value: string): void => {
-    paper(ctx, { x: xx, y: py, w: ww, h: ph });
-    studioFont(ctx, 11, true); ctx.fillStyle = P.greyDk; ctx.fillText(label, xx + 14, py + 10);
-    const available = ph - 44, size = 13, lead = 18;
-    const fit = Math.max(1, Math.floor(available / lead));
-    studioFont(ctx, size); ctx.fillStyle = P.ink;
-    wrapText(ctx, value, ww - 28).slice(page * fit, (page + 1) * fit).forEach((line, i) => ctx.fillText(line, xx + 14, py + 34 + i * lead));
-
-  };
-  if (compared) {
-    const dw = Math.floor((w - gap) / 2);
-    doc(x, dw, r.sent, r.sentText); doc(x + dw + gap, dw, r.published, r.publishedText);
-  } else {
-    const dw = Math.min(500, w - 60); doc(x + Math.round((w - dw) / 2), dw, r.published, r.publishedText);
-  }
-  let yy = py + ph + 7;
-  yy += text(ctx, admin ? r.tag + ' · ' + D.offer.admin : r.tag, x, yy, w, 10, 12, P.greyDk);
-  text(ctx, r.reviewer, x, yy, w, 10, 12, P.greyDk);
-  const by = a.y + a.h - 30;
-  control(ctx, hit, compared ? 'vera-as-published' : 'vera-as-sent', compared ? D.visual.publishedOnly : r.sent, x, by, 132);
-  const docW = compared ? Math.floor((w - gap) / 2) : Math.min(500, w - 60);
-  studioFont(ctx, 13);
-  const fit = Math.max(1, Math.floor((ph - 44) / 18));
-  const pages = Math.ceil(Math.max(wrapText(ctx, r.publishedText, docW - 28).length, compared ? wrapText(ctx, r.sentText, docW - 28).length : 0) / fit);
-  if (page > 0) control(ctx, hit, 'vera-record-prev', mirrorCopy.previous, x + 140, by, 68);
-  if (page < pages - 1) control(ctx, hit, 'vera-record-next', mirrorCopy.next, x + 212, by, 60);
-  control(ctx, hit, 'vera-record-close', r.close, x + w - 138, by, 138);
-}
+// ⚑ S425 (UiB job 35 Part D, Act II) — `drawVeraArchive` (her record: As published / As sent, the filed tag, the mentor's note, the
+//   footer, Next, Close record) is retired; Kindredraft's memory page is graceQueueLite `drawMemoryPage`. 76d0671d holds it.
 
 /** The same story in four formats: the previews show distribution, not four unrelated menu bars. */
 export function publicationPreview(ctx: CanvasRenderingContext2D, a: SurfaceRect, kind: number, excerpt: string, sent = false): void {
@@ -116,8 +79,9 @@ export function drawRetainedCopies(ctx: CanvasRenderingContext2D, a: SurfaceRect
     if (i === 2) text(ctx, D.record.sentText.split('. ')[0] + '.', xx + 10, top + 60, cw - 20, 10, 13, P.greyDk);
     studioFont(ctx, 9, true); ctx.fillStyle = P.greyDk; ctx.fillText(D.visual.retainedStates[i], xx + 10, top + 115);
   }
-  let yy = top + 149;
-  for (const line of D.kit.receipt.slice(1)) yy += text(ctx, line, a.x + 14, yy, a.w - 28, 12, 16) + 3;
-  text(ctx, approved ? D.kit.approved : D.kit.consent, a.x + 14, yy + 3, a.w - 28, 11, 14, P.greyDk);
+  // ⚑ S426 (Act III beat 12; his 20 Nov 16-15) — one line, at the top ("Taken down from SisterSignal. The copies stay. Original
+  //   kept."): the receipt's second line ("Original retained under Terms §4.") and the consent line under the cards are retired
+  //   (s3_vera.json kit `_retiredS426`); the three copies are as built. `approved` no longer changes what is said here.
+  void approved;
   control(ctx, hit, 'vera-kit-close', D.kit.back, a.x + a.w - 170, a.y + a.h - 30, 156);
 }

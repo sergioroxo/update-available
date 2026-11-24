@@ -59,7 +59,7 @@
    { "era": "e1", "subject": "Daniel", "promised": "your first steps out of the struggle" },
    { "era": "e2", "subject": "Daniel", "promised": "your Daily Realignment, and a purity streak" },
    { "era": "e3", "subject": "Vera", "promised": "softer colours, kinder words" },
-   { "era": "e4", "subject": "Maya", "promised": "your session, restored before you arrive" }
+   { "era": "e4", "subject": "Maya", "promised": "one companion on every screen", "_retiredS424": "was \"your session, restored before you arrive\": the u4 changelog no longer says it (S423). Replaced with u4's own \"one companion on every screen\" (job 35 call 13; his answer 23 Nov: \"Yes, your suggestion seems fine\")." }
   ],
   "promisedLabel": "promised:",
   "filedLine": "entries filed: {n} · flagged: {f}",
@@ -86,9 +86,13 @@
    "back": "Back to the page before",
    "machine": "The machine's page: restart",
    "printing": "Printing…",
-   "printed": "Printed. Scroll to read it again from the top."
+   "printed": "Printed. Scroll to read it again from the top.",
+   "panels": "Close this window and look at the panels again"
   },
-  "chip": "LambyOS"
+  "chip": "LambyOS",
+  "panels": "Back to the panels",
+  "panelsShort": "The panels",
+  "_docS422": "⚑ S422 (UiB job 35 Part B, C-5; his headset run of 20 Nov at the Close: \"we should be able to go back, if you want to, to the panels\") — the machine's window, opened from the Close, has a way back to the panels in its toolbar (`panels`; `panelsShort` on a phone's narrow window, where the long one ran off its edge; its tip `tips.panels`): it closes the window and, on a screen, brings the gaze back up to the panels (app.ts `siteViewerBus.machine.panels`); in a headset the panels are already in front of him. New lines, Claude's (17 Aug rule), for his review."
  },
  "_docCome": "⚑ S163 / C-02 — the FAR face's one line (the machine stands three metres back in the sky now; the full card is drawn once the eye has come to it). Frame voice.",
  "witness": "the machine offered its restart; nothing was kept",

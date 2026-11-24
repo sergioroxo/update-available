@@ -19,19 +19,26 @@ import { playOnce } from '../../audio/tapeAudio';
 import vera from '../../../data/dialog/s3_vera.json';
 import { readHold } from '../readHold';
 import { ledger } from '../../state/ledger';
+import { reducedMotion } from '../../state/motion';
+import { ERA3 } from '../theme/era3';
 
 type Msg = { from: string; time: string; text?: string; kind?: string };
+type MirrorEvent = { id: string; time: string; from: string; text: string; photo?: boolean };
 type Rect = { x: number; y: number; w: number; h: number; id: string };
 
 const BEFORE = m.before as Msg[];
-/** ⚑ S332 — Malta in Bea's thread (s3_maiden.json `news`), her one reply, and the removals */
+/** ⚑ S332 — Malta in Bea's thread (s3_maiden.json `news`) and the removals. (⚑ S426: her one reply, "finally. about time x", is
+ *  retired — s3_maiden.json `_retiredS426`; her one act is the forward, `FORWARD_LABEL`) */
 const NEWS = m.news as Msg[];
-const REPLY = m.reply as { text: string; time: string; hint: string };
 const REMOVED_LINE = m.removedLine as string;
+/** ⚑ S426 (Act III beats 13–14) — the platform's bar over the thread while it reviews it, and when it has lost; its step label */
+const REVIEW_BAR = vera.removals.bar, REVIEW_LOST = vera.removals.lost, REVIEW_REMOVING = vera.removals.removing;
+/** ⚑ S426 (beat 14; his call 4) — her one act in the chat */
+const FORWARD_LABEL = m.group.forward;
 const VERA = 'Vera';
 const CASCADE = m.cascade as Msg[];
 type Live = Msg & { key: string };
-const LINK_VOTE = m.linkVote as { masthead: string; headline: string };   // S227 / M1: the never-drawn standfirst and tapHint are gone
+const LINK_VOTE = m.linkVote as { masthead: string; headline: string; fact: string };   // S227 / M1: the never-drawn standfirst and tapHint are gone; ⚑ S426: its fact line (call 3)
 const BACKLOG = m.backlog as { from: string; time: string; text: string; register?: string; stampCard?: string; opens?: string; thread?: { time: string; text: string }[] }[];
 const UNLOCK_HINT = (m.home as unknown as Record<string, string>).unlockHint;
 const HOME = m.home as unknown as Record<string, string>;
@@ -40,7 +47,10 @@ const HOME = m.home as unknown as Record<string, string>;
  *  with one game on it and no notifications at all, which is what makes ONE
  *  arriving an event. Every step after that is player-initiated except the
  *  cascade, which is other people. */
-type Stage = 'quiet' | 'news' | 'takeover' | 'after';
+/** ⚑ S426 (Act III) — `news` Bea's news landing (beat 11); `read` all of it landed and read: the phone waits while the platform
+ *  brings the kit (beat 12); `takeover` the platform reviewing the group, then the forwards (beats 13–14); `after` the forwards in,
+ *  the review outnumbered (the last beat). */
+type Stage = 'quiet' | 'news' | 'read' | 'takeover' | 'after';
 type Screen = 'lock' | 'home' | 'group' | 'inbox' | 'platform' | 'message' | 'walk' | 'personal' | 'notes' | 'photos' | 'photo' | 'evening' | 'article';
 /** Lambient's card, and it is the same card whichever way she got here */
 
@@ -51,12 +61,28 @@ type Screen = 'lock' | 'home' | 'group' | 'inbox' | 'platform' | 'message' | 'wa
 // ⚑ S288 (headset B: "This needs to be a little bit slower because I couldn't read what it was") — 0.45 → 0.9 s a message:
 //   still a flood, now one you can read
 const CASCADE_STEP = 0.75;
+/** ⚑ S426e (his 24 Nov) — the forwards (the same card) and the "… was added" lines may come CASCADE_STEP apart: being outnumbered is the
+ *  point. A person's own words in the cascade ("putting it in the other group as well", "deirdre", "I know.") are each given their
+ *  reading time (readHold) before anything else lands under them. */
+function cascadeWait(c: Msg | undefined): number {
+  return c && c.from !== 'system' && c.text && c.kind !== 'link' ? Math.max(CASCADE_STEP, readHold([c.text])) : CASCADE_STEP;
+}
 /** ⚑ S332 — Bea's news lands a message at a time; the removals run slower than the forwards (the outnumbering) */
 const NEWS_STEP = 1.7;
-const REMOVE_STEP = 1.5;
-/** her reply is offered, never required: after this long unpressed, the platform begins anyway (it does not wait) */
-const REPLY_WAIT = 20;
-const TAKEOVER_HOLD = 2.2;
+/** ⚑ S426 (UiB job 35 Part D, Act III beat 13; his 20 Nov 16-17: "the removal should be seen happening") — THE REMOVAL, SEEN. One
+ *  message at a time, slowly enough to watch: the platform's outline around it (OUTLINE_S, the outline stepping at OUTLINE_HZ;
+ *  still under reduced motion), "removing…" (REMOVING_S), the bubble greyed (GREY_S), then folded into "Removed by GracePlatform";
+ *  REVIEW_GAP between one message and the next. The bar is up REVIEW_LEAD before the first outline. (S332's REMOVE_STEP, a strike
+ *  every 1.5 s on the Review page, and S332's reply wait are retired: 17847974.) */
+const OUTLINE_S = 1.5, REMOVING_S = 1.5, GREY_S = 1.0, REVIEW_GAP = 1.0, OUTLINE_HZ = 3;
+/** ⚑ S426e (his 24 Nov: "I couldn't read the chat because there were too many lines of people coming") — the bar is read before the
+ *  first outline (the reading rule, 2 s + 0.4 s a word: about 6.4 s); each removal is 4 s of steps and 1 s apart (was 2.9 + 0.4) */
+const REVIEW_LEAD = readHold([vera.removals.bar]);
+/** ⚑ S426 — what the review removes, in its order: Bea's card first (news[1]), then Bea's lines (news[0], news[2]), then Susan's
+ *  (news[3]); Hanne's "read that again susan" is not about Malta in its words and stays. Then the first REVIEW_FORWARDS forwards
+ *  (Susan's, Hanne's), and it cannot keep up: the rest stay up. */
+const REVIEW_NEWS = ['n1', 'n0', 'n2', 'n3'];
+const REVIEW_FORWARDS = 2;
 /** ⚑ S219 / W1-B13 — at most one message sound per this many seconds, the repeats at a fraction of the first */
 const CASCADE_SOUND_GAP = 1.5;
 /** ⚑ S327 / T06 (his 8 Nov: "a Maiden-to-be message popped in while I pressed the testimony editor") — a held message
@@ -80,27 +106,26 @@ function newsWait(i: number): number {
   if (i <= 0) return NEWS_FIRST;
   const prev = NEWS[i - 1];
   if (!prev) return NEWS_STEP;
-  const text = prev.kind === 'link2' ? [LINK_VOTE.masthead, LINK_VOTE.headline] : prev.kind === 'link' ? [m.link.headline] : [prev.text ?? ''];
+  // ⚑ S426 — the card is read with its fact line (call 3)
+  const text = prev.kind === 'link2' ? [LINK_VOTE.masthead, LINK_VOTE.headline, LINK_VOTE.fact] : prev.kind === 'link' ? [m.link.headline] : [prev.text ?? ''];
   return Math.max(NEWS_MIN, readHold(text));
 }
-/** ⚑ S362 / H28 + H42 — Mam's unfinished reply is TYPED in (it was a block that appeared), then held: seconds in all
- *  ⚑ S368 / F08 — the held part is the reading rule's, counted from the last letter (it was 8 s in all, 3 s after typing) */
-const NOTES_TYPE_CPS = 9;
+/** ⚑ S362 / H28 + H42 — a note the piece shows her write is TYPED in (it was a block that appeared), then held: seconds in all
+ *  ⚑ S368 / F08 — the held part is the reading rule's, counted from the last letter (it was 8 s in all, 3 s after typing)
+ *  ⚑ S425 — 9 → 7 letters a second: the glass changes at most 7 times a second while it types (≤ 8 Hz; the caret is solid while
+ *  letters come, as a phone's is, and blinks only before the first and after the last) */
+const NOTES_TYPE_CPS = 7;
 type NoteEntry = { id?: string; title?: string; text: string };
 const NOTE_ENTRIES = m.notes.entries as NoteEntry[];
-/** Mam's unfinished reply (the draft the piece shows her typing after Mam's message) */
-const MAM_NOTE = NOTE_ENTRIES.find((e) => e.id === 'mam') ?? NOTE_ENTRIES[0];
+/* Mam's unfinished reply (notes.entries `mam`) — ⚑ S425 (his call 2, 23 Nov: "Mam's unfinished note is already in Vera's Notes,
+ *  under her new line. — Yes"): already in her Notes when they open, under the new note; no longer typed after Mam's message
+ *  (its MAM_NOTE handle went with that typing; 76d0671d holds it) */
 /** ⚑ S404 (UiB job 30 C2) — her newest note, above Mam's, no title: "It wasn't dependency. I was in love with her." */
 const REFUSAL_NOTE = NOTE_ENTRIES.find((e) => e.id === 'refusal') ?? null;
-/** ⚑ S404 — the breath between Mam's unfinished reply and the new note opening above it */
+/** ⚑ S404 / S425 — the breath, the new note open and empty with its caret, before her first letter */
 const REFUSAL_BREATH = 1.2;
-function typedSeconds(e: NoteEntry): number { return e.text.length / NOTES_TYPE_CPS + readHold([e.title ?? '', e.text]); }
-function notesSeconds(): number { return typedSeconds(MAM_NOTE); }
-/** ⚑ S404 — the system's word is met first: Renata's testimony is done (graceQueueLite files `e3-job:testimony`) */
-const testimonyDone = (): boolean => ledger.records.includes('e3-job:testimony');
-/** ⚑ S362 / H43 — the platform's "intervene immediately" alert holds this long before its first removal.
- *  ⚑ S368 / F04 — by the reading rule (was 4.5 s for 18 words), or until its OK (`endTakeoverAlert`) */
-const TAKEOVER_ALERT = Math.max(9, readHold([vera.removals.alertTag, vera.removals.takeoverLine, vera.removals.takeoverSub]));
+/* (⚑ S426 — the takeover's alert, "Intervening now. You do not need to do anything." held by the reading rule before the first
+ *  removal (S362/S368's TAKEOVER_ALERT), is retired: its thought is the platform's bar over the thread now. 17847974 holds it.) */
 /** ⚑ S357fr / 16-12 (his headset, 20 Nov: "why is the time flying … we should remove this idea of the time jumping"; "No, the
  *  timing flying, I hate it") — THE EVENING'S CLOCK IS A CLOCK. S368 (F05·F10) rolled the one clock (the phone's, read by the
  *  workstation's taskbar too) up to each message's authored time — 18:04 → 18:41 in 13 s, then 19:22, 20:05, 21:41, 22:51 —
@@ -113,6 +138,12 @@ const EVENING_START = '18:04';
 function clockMinutes(t: string): number { const [h, mm] = t.split(':').map(Number); return (h || 0) * 60 + (mm || 0); }
 function clockOf(min: number): string { const h = Math.floor(min / 60) % 24, mm = min % 60; return `${h}:${String(mm).padStart(2, '0')}`; }
 const CASCADE_REPEAT_VOLUME = 0.4;
+/** ⚑ S426e (his 24 Nov) — the group stays in its column (the maximised desktop chat, WIDE_*, is retired: 9974fe1f). In the thread:
+ *  NAME_ROOM keeps the first message's name under the bar (no line cut in half); nothing written in it reaches past W - RIGHT_PAD
+ *  (156 of the phone's 180): on a phone held upright the Handset Window's column is cut at the screen's edge, and about 162 of the
+ *  180 are in view (measured from the seat, 390 × 844), so every bubble, card, "Removed by GracePlatform", the bar's words, the
+ *  "removing…" tag and the forward chip end at least 6 px inside it. (As built the bubbles reached 166 and the folded lines 171.) */
+const NAME_ROOM = 8, RIGHT_PAD = 24, NAME_GAP = 8;
 
 export class PhoneE3 {
   version = 0;
@@ -166,97 +197,145 @@ export class PhoneE3 {
   constructor(private readonly opts: { onLift(): void; floppyOpen(): boolean; clock?: () => string }) {}
   private get clockText(): string { return this.clockShown; }
 
-  private evening: typeof mirrorCopy.events = [];
-  private eventQueue: typeof mirrorCopy.events = [];
+  /** ⚑ S426 — an evening message may carry a photo (S368's Orla's last did; it is retired, call 5: e3_mirror.json `_retiredS426events`) */
+  private evening: MirrorEvent[] = [];
+  private eventQueue: MirrorEvent[] = [];
   private bannerAge = READ_HOLD;
   /** ⚑ S362 / H28 — how long the message now showing is held (HOLDS) */
   private holdFor = READ_HOLD;
   /** ⚑ S327 — set every frame by the platform: nothing is open there and no other voice is speaking */
   atRest = false;
-  /** ⚑ S327 — Mam's message has landed; her unfinished reply (Notes) is shown once it has been read */
-  private notesPending = false;
-  private notesReturn: Screen = 'home';
-  private articleVote = false;
-  /** ⚑ S332 — MALTA, conducted: Bea's news begins landing in the group thread (graceQueueLite brings the window forward) */
+  /**
+   * ⚑ S332 — MALTA, conducted: Bea's news begins landing in the group thread (graceQueueLite brings the window forward).
+   * ⚑ S426 (UiB job 35 Part D, Act III beat 11, ⟨felt⟩; his 20 Nov 16-16: "I wasn't reading because it didn't allow me to read")
+   * — the thread keeps every message and scrolls; each message lands only after the one before has had its reading time (as
+   * built); the card carries its fact line and is not a link (call 3: S362's article page, conducted onto the glass for its hold,
+   * is retired, and so is opening a card at all); no reply is offered (her reply, S332, is retired). The last message read, the
+   * news is `read` and the phone waits: the platform brings the campaign kit (beat 12), then asks for the review (`startReview`).
+   * `veraDay.voted` is set once all of it has been read (the map's "Bea's news" beat; it used to be set as the news began).
+   */
   startNews(): void {
     if (this.stage !== 'quiet' || this.disconnected) return;
-    veraDay.phoneAnswered = true; veraDay.voted = true;
-    this.stage = 'news'; this.newsT = 0; this.newsN = 0; this.articleConducted = false; this.articleShown = false; this.newsPaused = false; this.banner = null;
+    veraDay.phoneAnswered = true;
+    this.stage = 'news'; this.newsT = 0; this.newsN = 0; this.newsPaused = false; this.banner = null; this.logLand('news');
     this.bump();
   }
   private newsN = 0;
   private newsT = 0;
-  /** ⚑ S362 / H28 — the article is put on the glass by the piece when its card lands (he should see it before anything moves on) */
-  private articleConducted = false;
-  private articleShown = false;
-  /** ⚑ S362 / H43 — how many of Bea's Malta messages have landed (GracePlatform's alert fires on the first) */
+  /** ⚑ S362 / H43 — how many of Bea's Malta messages have landed (⚑ S426: the room's light lifts on the card, the second) */
   get newsLanded(): number { return this.newsN; }
-  /** ⚑ S362 / H43 — set by the platform while its alert is up: the news waits (one voice at a time) */
+  /** ⚑ S426 — all of Bea's news has landed and been read: the platform may take the group back to its place and bring the kit */
+  get newsDone(): boolean { return this.stage === 'read' || this.stage === 'takeover' || this.stage === 'after'; }
+  /** ⚑ S362 / H43 — a hold on the news (one voice at a time). ⚑ S426: nothing sets it in the visit now (the PRIORITY ALERT that
+   *  held it is retired); kept for the era jump's reset */
   newsPaused = false;
   private photosFrom: Screen | null = null;
-  /** ⚑ S362 / H43 — GracePlatform's alert is up and its removals have not begun */
-  get takeoverAlert(): boolean { return this.stage === 'takeover' && this.removeT < 0; }
-  private replied = false;
-  private replyWaitT = -1;
-  private holdT = -1;
-  private removeT = 0;
+  /** ⚑ S426 — the takeover's alert is retired (its thought is the bar's): never up. Kept false for the probes that read it. */
+  get takeoverAlert(): boolean { return false; }
+  /** ⚑ S426 — her reply is retired: never offered. Kept false for the probes that read it. */
+  get replyOffered(): boolean { return false; }
   private cascadeOn = false;
   private removed = new Set<string>();
-  /** the news has all landed and her one reply is on offer */
-  get replyOffered(): boolean { return this.stage === 'news' && this.newsN >= NEWS.length && !this.replied && this.replyWaitT < REPLY_WAIT; }
+  /** ⚑ S426 — the review's clock: < 0 the wait before the next outline (the bar's lead, then REVIEW_GAP); the message in hand */
+  private reviewT = 0;
+  private reviewing: { key: string; phase: 'outline' | 'removing' | 'grey'; t: number } | null = null;
+  /** ⚑ S426 (beat 14; his call 4) — her forward: pressed, and how many of the forwards had landed when it was (it lands among them) */
+  private forwarded = false;
+  private forwardAt = 0;
   get inTakeover(): boolean { return this.stage === 'takeover' || this.stage === 'after'; }
+  /** ⚑ S426 — "↪ Forward the link" is hers while the forwards run and after (never taken away on a timer) */
+  get forwardOffered(): boolean { return (this.stage === 'after' || (this.stage === 'takeover' && this.cascadeOn)) && !this.forwarded && !this.disconnected; }
   private liveMsgs(): Live[] {
     // ⚑ S357fr / 16-12 — each at the minute it landed (a review jump that lands them all at once: the clock's minute)
     const at = (key: string): string => this.landedAt.get(key) ?? this.clockShown;
     const out: Live[] = NEWS.slice(0, this.newsN).map((n, i) => ({ ...n, time: at('n' + i), key: 'n' + i }));
-    if (this.replied) out.push({ from: VERA, time: at('v'), text: REPLY.text, key: 'v' });
-    CASCADE.slice(0, this.cascadeN).forEach((c, i) => out.push({ ...c, time: at('c' + i), key: 'c' + i }));
+    const mine = (): void => { out.push({ from: VERA, time: at('v'), kind: 'link', key: 'v' }); };
+    CASCADE.slice(0, this.cascadeN).forEach((c, i) => {
+      if (this.forwarded && i === this.forwardAt) mine();
+      out.push({ ...c, time: at('c' + i), key: 'c' + i });
+    });
+    if (this.forwarded && this.forwardAt >= this.cascadeN) mine();
     return out;
   }
-  private removalOrder(): string[] {
-    return [...NEWS.map((_, i) => 'n' + i), ...(this.replied ? ['v'] : []),
-      ...CASCADE.flatMap((c, i) => c.from === 'system' ? [] : ['c' + i])];
+  /** ⚑ S426 — what the review removes, in its order (REVIEW_NEWS, then the first REVIEW_FORWARDS forwards); never hers */
+  private reviewOrder(): string[] {
+    const forwards = CASCADE.flatMap((c, i) => c.from === 'system' ? [] : ['c' + i]).slice(0, REVIEW_FORWARDS);
+    return [...REVIEW_NEWS, ...forwards];
   }
-  private nextRemoval(): string | undefined { return this.removalOrder().find(k => !this.removed.has(k)); }
-  /** what the platform shows while it reviews the group by itself (graceQueueLite's removals page) */
-  takeoverRows(): { who: string; text: string; link: boolean; state: 'removed' | 'removing' | 'pending' | 'missed' }[] {
-    const next = this.stage === 'takeover' ? this.nextRemoval() : undefined;
-    return this.liveMsgs().filter(x => x.from !== 'system').map(x => ({
-      who: x.from, text: x.text ?? '', link: x.kind === 'link' || x.kind === 'link2',
-      state: this.removed.has(x.key) ? 'removed' : x.key === next ? 'removing' : this.stage === 'after' ? 'missed' : 'pending'
-    }));
+  /** the next message the review can reach: the first in its order not yet removed, once it has landed */
+  private nextReview(): string | undefined {
+    const live = new Set(this.liveMsgs().map(x => x.key));
+    const k = this.reviewOrder().find(x => !this.removed.has(x));
+    return k && live.has(k) ? k : undefined;
   }
-  get unreviewed(): number { return this.liveMsgs().filter(x => x.from !== 'system' && !this.removed.has(x.key)).length; }
-  private notesT = -1;
-  private notesDone = false;
-  /** ⚑ S404 (UiB job 30 C2) — her newest note: seconds into its typing (−1 when not being written), whether it is written
-   *  (then it is in the Notes for good, and filed once), and whether it waits for the testimony to be done */
+  private get reviewDone(): boolean { return !this.reviewing && this.reviewOrder().every(k => this.removed.has(k)); }
+  /** ⚑ S426 — the probes' handle: the message in the review's hand and its step, her forward, how many were removed */
+  get reviewState(): { key: string | null; phase: string | null; removed: string[]; forwarded: boolean; forwardOffered: boolean; stage: Stage } {
+    return { key: this.reviewing?.key ?? null, phase: this.reviewing?.phase ?? null, removed: [...this.removed], forwarded: this.forwarded, forwardOffered: this.forwardOffered, stage: this.stage };
+  }
+  /**
+   * ⚑ S426 (UiB job 35 Part D, Act III beat 13) — THE REVIEW, asked for by the platform once the kit is closed and the board is
+   * clear: the bar lies over the thread (REVIEW_LEAD), then the Malta messages are outlined, "removing…", greyed and folded one
+   * at a time; the forwards begin once those four are gone (beat 14). False unless the news has been read and nothing has begun.
+   */
+  /** ⚑ S426e — the probes' record of Act III's pace: each message's landing and each removal step, on the era's own clock (seconds) */
+  readonly landLog: { key: string; t: number }[] = [];
+  private logLand(key: string): void { this.landLog.push({ key, t: Math.round(this.clockSec * 10) / 10 }); }
+  startReview(): boolean {
+    if (this.stage !== 'read' || this.disconnected) return false;
+    this.logLand('review');
+    this.stage = 'takeover'; this.reviewT = reducedMotion() ? -REVIEW_LEAD / 2 : -REVIEW_LEAD; this.reviewing = null; this.bump();
+    return true;
+  }
+  /** the outline's step (it marches at OUTLINE_HZ; still under reduced motion): part of what the glass shows, so a change repaints */
+  private outlineStep(): number { return this.reviewing && !reducedMotion() ? Math.floor(this.reviewing.t * OUTLINE_HZ) % 2 : 0; }
+  /** ⚑ S404 (UiB job 30 C2) — her newest note: seconds into its conduct (−1 when not being written), and whether it is written
+   *  (then it is in the Notes for good, and filed once) */
   private refusalT = -1;
   private refusalWritten = false;
-  private refusalPending = false;
-  get conductingNotes(): boolean { return this.notesT >= 0 || this.refusalT >= 0; }
-  /** ⚑ S404 — the probes' handle: which note the piece is showing her write ('mam', 'refusal', or null) and the new one's state */
+  get conductingNotes(): boolean { return this.refusalT >= 0; }
+  /** ⚑ S404 — the probes' handle: which note the piece is showing her write ('refusal', or null) and the new one's state
+   *  (⚑ S425: Mam's unfinished reply is no longer typed — `writing` is never 'mam' — and nothing waits: `refusalPending` false) */
   get notesNow(): { writing: 'mam' | 'refusal' | null; refusalWritten: boolean; refusalPending: boolean } {
-    return { writing: this.notesT >= 0 ? 'mam' : this.refusalT >= 0 ? 'refusal' : null, refusalWritten: this.refusalWritten, refusalPending: this.refusalPending };
+    return { writing: this.refusalT >= 0 ? 'refusal' : null, refusalWritten: this.refusalWritten, refusalPending: false };
   }
-  conductNotes(): void {
-    if (this.notesDone) return;
-    this.notesDone = true; this.notesT = 0; this.notesReturn = this.screen === 'notes' ? 'home' : this.screen; this.screen = 'notes'; this.bump();
-  }
-  /** ⚑ S404 — the new note: a breath after Mam's (`chained`, the Notes already up), or the Notes brought back for it */
-  private conductRefusal(chained: boolean): void {
-    if (!REFUSAL_NOTE || this.refusalWritten || this.refusalT >= 0) return;
-    this.refusalPending = false;
-    if (!chained) { this.notesReturn = this.screen === 'notes' ? 'home' : this.screen; this.screen = 'notes'; }
-    this.refusalT = 0; this.refusalLead = chained ? REFUSAL_BREATH : 0;
+  /**
+   * ⚑ S425 (UiB job 35 Part D, Act II, storyboard beat 10, ⟨felt⟩; his 20 Nov 16-13/16-14; his call 2) — HER NOTES, ONCE. With
+   * her own struck-through 2014 words on Kindredraft's page (⚑ S426: the Handset Window stays in its own column beside it — S425
+   * brought it in over the page's right half; his 24 Nov: "misaligned and on top of another layer"), the phone opens
+   * her Notes and the newest note is typed at the top, letter by letter (`refusal`, word for word), Mam's unfinished reply and
+   * the shopping line already under it. Nothing speaks, no sound, nothing to press (its Back is withheld while it is written).
+   * The record files it once, as a gap (witness.residue), as built. Written and held its reading time, the phone goes back to its
+   * lock screen, and after a breath the next message may land there (Nuala's). Under reduced motion the note is there whole.
+   * (S327/S362/S404's two typings after Mam's message — her unfinished reply typed by itself, then this note — are retired;
+   * 76d0671d holds them.) False if there is nothing to write (already written, or the phone is gone).
+   */
+  conductMemoryNotes(): boolean {
+    if (!REFUSAL_NOTE || this.refusalWritten || this.refusalT >= 0 || this.disconnected) return false;
+    this.screen = 'notes'; this.openMessage = null; this.banner = null;
+    this.refusalT = 0; this.refusalLead = reducedMotion() ? 0 : REFUSAL_BREATH;
     this.bump();
+    return true;
   }
-  /** ⚑ S404 — seconds of the new note's conduct before its first letter (the breath after Mam's) */
+  /** ⚑ S404 — seconds of the new note's conduct before its first letter (the breath, its caret blinking in the empty note) */
   private refusalLead = 0;
-  /** ⚑ S404 — how many of the new note's letters are written (Infinity once it is) */
+  /** ⚑ S404 — how many of the new note's letters are written (Infinity once it is; whole at once under reduced motion) */
   private refusalLetters(): number {
-    if (this.refusalWritten) return Infinity;
+    if (this.refusalWritten || (this.refusalT >= 0 && reducedMotion())) return Infinity;
     return this.refusalT < 0 ? 0 : Math.max(0, Math.floor((this.refusalT - this.refusalLead) * NOTES_TYPE_CPS));
+  }
+  /** ⚑ S425 — what the glass shows of the note being written: its letters, and the caret (solid while letters come; blinking at
+   *  2 Hz before the first and after the last; none under reduced motion). The glass is redrawn only when this changes. */
+  private notesFrame(): string {
+    if (this.refusalT < 0 || !REFUSAL_NOTE) return '';
+    const n = Math.min(this.refusalLetters(), REFUSAL_NOTE.text.length);
+    return n + '|' + (this.caretShown() ? 1 : 0);
+  }
+  private caretShown(): boolean {
+    if (this.refusalT < 0 || !REFUSAL_NOTE || reducedMotion()) return false;
+    const n = this.refusalLetters();
+    if (n > 0 && n < REFUSAL_NOTE.text.length) return true;
+    return Math.floor(this.refusalT * 2) % 2 === 0;
   }
   /** ⚑ S327 — the cascade, conducted: the group thread is put on the glass while it fills (the piece takes her there) */
   showGroup(): void {
@@ -285,8 +364,6 @@ export class PhoneE3 {
     if (this.disconnected) return;
     this.screen = 'lock'; this.banner = null; this.openMessage = null; this.bump();
   }
-  /** ⚑ S368 / F04 — OK on the platform's "Intervening now" alert: the review begins (the alert's hold, ended early) */
-  endTakeoverAlert(): void { if (this.stage === 'takeover' && this.removeT < 0) { this.removeT = 0; this.bump(); } }
   private banner: { from: string; time: string; text: string } | null = null;
   bannersHidden = false;
   arrive(id: string): void {
@@ -295,18 +372,18 @@ export class PhoneE3 {
     this.eventQueue.push(e); this.deliverEvent();
   }
   /** ⚑ S327 — a message is waiting, or the last one is still being read: the platform's other voices wait for it */
-  get voiceBusy(): boolean { return this.bannerAge < this.holdFor || (this.atRest && this.eventQueue.length > 0) || this.notesPending || this.conductingNotes; }
+  get voiceBusy(): boolean { return this.bannerAge < this.holdFor || (this.atRest && this.eventQueue.length > 0) || this.conductingNotes; }
   get queued(): number { return this.eventQueue.length; }
   /** S336 — diagnosis only: why a queued message is not being delivered */
   debugState(): Record<string, unknown> {
     return { queue: this.eventQueue.map(e => e.id), bannerAge: Math.round(this.bannerAge * 10) / 10, bannersHidden: this.bannersHidden,
-      atRest: this.atRest, disconnected: this.disconnected, notesPending: this.notesPending, conductingNotes: this.conductingNotes,
+      atRest: this.atRest, disconnected: this.disconnected, conductingNotes: this.conductingNotes,
       screen: this.screen, stage: this.stage, delivered: this.evening.map(e => e.id), clock: this.clockShown,
       times: this.evening.map(e => `${e.id} ${e.time}`) };
   }
   delivered(id: string): boolean { return this.evening.some(e => e.id === id); }
   private deliverEvent(): void {
-    if (!this.eventQueue.length || this.bannerAge < this.holdFor || this.bannersHidden || !this.atRest || this.disconnected || this.notesPending || this.conductingNotes) return;
+    if (!this.eventQueue.length || this.bannerAge < this.holdFor || this.bannersHidden || !this.atRest || this.disconnected || this.conductingNotes) return;
     const raw = this.eventQueue.shift()!;
     // ⚑ S357fr / 16-12 — each message lands at the clock's own minute (it used to take the evening's next authored slot and
     //   roll the clock up to it). Orla's quiz and her stamp line came at one minute: "should be like one minute less" — the
@@ -318,7 +395,7 @@ export class PhoneE3 {
     // ⚑ S327 / T04 (his 8 Nov: "two different messages from Orla, which doesn't make a lot of sense") — ONE banner for
     //   Orla's evening: the stamp line lands in the same thread, quietly, under the quiz message
     if (e.id === 'arrival') { const st = mirrorCopy.events.find(x => x.id === 'stamp'); if (st && !this.delivered('stamp')) this.evening.push({ ...st, time: now }); }
-    if (e.id === 'decision') this.notesPending = true;
+    // (⚑ S425 — Mam's message no longer opens her Notes by itself: her one Notes moment is the memory's, beat 10)
     playOnce('phone_ping_2016.mp3'); this.bump();
   }
 
@@ -331,7 +408,7 @@ export class PhoneE3 {
   }
   get eveningClock(): string { return this.clockShown; }
   disconnected = false;
-  disconnect(): void { this.disconnected = true; this.evening = []; this.eventQueue = []; this.readMessages.clear(); veraDay.personalMessageSeen = false; this.banner = null; this.openMessage = null; this.notesT = -1; this.refusalT = -1; this.refusalPending = false; this.screen = 'lock'; this.bump(); }
+  disconnect(): void { this.disconnected = true; this.evening = []; this.eventQueue = []; this.readMessages.clear(); veraDay.personalMessageSeen = false; this.banner = null; this.openMessage = null; this.refusalT = -1; this.screen = 'lock'; this.bump(); }
   get hitRects(): Rect[] { return this.rects; }
   get unreadCount(): number { return this.inboxBadge; }   // ⚑ S357fr / 16-9: one count, the list's
   private bump(): void { this.version++; }
@@ -344,9 +421,6 @@ export class PhoneE3 {
   private groupUnread(): number { return Math.max(0, this.groupLanded() - this.groupSeen); }
   /** the thread is on her screen: what has landed is seen */
   private markGroupSeen(): void { this.groupSeen = this.groupLanded(); }
-  /** a link card is LIVE only at the stage it belongs to: Bea's bill at `first`, the vote's result at `voted`.
-   *  Every other card (the bill again once the vote is in, the forwards in the cascade) is spent. */
-  private linkSpent(_kind: string | undefined): boolean { return false; }
 
   // ── the era drives these ─────────────────────────────────────────────────
   /** ⚑ IGNORING IS NOT A WAY OUT, and this is where that is enforced. Called
@@ -364,87 +438,78 @@ export class PhoneE3 {
   tick(dt: number, visible = true): void {
     this.tickClock(dt);
     if (!this.bannersHidden) { this.bannerAge += dt; this.deliverEvent(); }
-    // Mam's message read, then — at rest — her unsent reply to it, once
-    if (this.notesPending && this.atRest && this.bannerAge >= this.holdFor && !this.bannersHidden) { this.notesPending = false; this.conductNotes(); }
-    if (this.notesT >= 0) {
-      // ⚑ S362 / H28 + H42 — the draft types itself in (NOTES_TYPE_CPS) and is then held; the hand-back waits a beat
-      const old = Math.floor(this.notesT * 10); this.notesT += dt;
-      if (this.notesT >= notesSeconds()) {
-        this.notesT = -1;
-        // ⚑ S404 — then, if the testimony has been met, a new note opens above Mam's and she writes it; else it waits
-        if (REFUSAL_NOTE && !this.refusalWritten) {
-          if (testimonyDone() && !this.disconnected) this.conductRefusal(true);
-          else this.refusalPending = true;
-        }
-        if (this.refusalT < 0) { this.screen = this.notesReturn; this.bannerAge = 0; this.holdFor = 5; }
-        this.bump();
-      }
-      else if (old !== Math.floor(this.notesT * 10)) this.bump();
-    }
-    // ⚑ S404 — the new note, waiting for the testimony: the Notes come back for it at the platform's next rest
-    if (this.refusalPending && !this.disconnected && testimonyDone() && this.atRest && this.bannerAge >= this.holdFor && !this.bannersHidden
-      && !this.notesPending && this.eventQueue.length === 0) this.conductRefusal(false);
+    // ⚑ S425 — her newest note, conducted (conductMemoryNotes): typed at ≤ 7 letters a second, the glass redrawn only when what it
+    //   shows changes; written, it is filed once (as a gap); held its reading time, the phone goes to its lock screen
     if (this.refusalT >= 0 && REFUSAL_NOTE) {
-      const old = Math.floor(this.refusalT * 10); this.refusalT += dt;
+      const before = this.notesFrame(); this.refusalT += dt;
       if (!this.refusalWritten && this.refusalLetters() >= REFUSAL_NOTE.text.length) {
         // written: it stays in her Notes, and the record files the gap, once (s3_maiden.json witness.residue)
         this.refusalWritten = true;
         if (!ledger.era3Jobs.some((j) => j.id === 'residue')) ledger.era3Jobs.push({ id: 'residue', witness: m.witness.residue });
       }
-      if (this.refusalT >= this.refusalLead + typedSeconds(REFUSAL_NOTE)) {
-        this.refusalT = -1; this.screen = this.notesReturn; this.bannerAge = 0; this.holdFor = 5; this.bump();
-      } else if (old !== Math.floor(this.refusalT * 10)) this.bump();
+      const typing = reducedMotion() ? 0 : REFUSAL_NOTE.text.length / NOTES_TYPE_CPS;
+      if (this.refusalT >= this.refusalLead + typing + readHold([REFUSAL_NOTE.title ?? '', REFUSAL_NOTE.text])) {
+        // "after its reading time the phone goes back to its lock screen" — a breath there before the next message may land
+        this.refusalT = -1; this.screen = 'lock'; this.banner = null; this.bannerAge = 0; this.holdFor = 2; this.bump();
+      } else if (this.notesFrame() !== before) this.bump();
     }
     // ⚑ S332 — MALTA, the era's own beat (conducted: the platform holds every other voice while it runs).
-    //   news: Bea's messages land one at a time; then her one reply is offered (never required).
-    //   takeover: GracePlatform removes the Malta posts by itself, then her reply; the forwards begin once the posts
-    //   are gone and land faster than it can remove them. after: the cascade is in; what it missed stays.
+    // ⚑ S426 (Act III) — news: Bea's messages land one at a time, each after the one before has been read; then `read` (the kit).
+    //   takeover: the platform's bar, then each Malta message outlined, "removing…", greyed, folded (one at a time); the forwards
+    //   begin once those are gone and land faster than it can follow: it greys the first two and cannot keep up. after: the
+    //   forwards in, the review outnumbered.
     if (!visible) return;
     if (this.stage === 'news') {
+      if (this.newsPaused) return;
+      this.newsT += dt;
       if (this.newsN < NEWS.length) {
-        // ⚑ S362 / H28 — if she opened the article herself, the news waits for her to come back from it
-        if (this.screen === 'article' && !this.articleConducted) return;
-        if (this.newsPaused) return;
         // ⚑ S357fr / 16-12 — Bea's first message no longer waits for the clock to roll up to 21:41: it lands at the clock's minute
-        this.newsT += dt;
         if (this.newsT >= newsWait(this.newsN)) {
-          this.newsT = 0; this.newsN++; this.landedAt.set('n' + (this.newsN - 1), this.clockShown);
-          // the article's hold is over: back to the thread (if she is still on it), and the next message lands under her eyes
-          if (this.articleConducted) { this.articleConducted = false; if (this.screen === 'article') { this.screen = 'group'; } }
+          this.newsT = 0; this.newsN++; this.landedAt.set('n' + (this.newsN - 1), this.clockShown); this.logLand('n' + (this.newsN - 1));
+          if (this.scrollBack > 0 && this.userScrolled) { this.scrollBack++; this.unseen++; }   // she is looking back: what she is reading stays put
           this.newsBanner(NEWS.slice(0, this.newsN));
-          // ⚑ S362 / H28 — the article is conducted: when its card lands the piece puts the page itself on the glass and holds it
-          if (NEWS[this.newsN - 1].kind === 'link2' && !this.articleShown && !this.disconnected) {
-            this.articleShown = true; this.articleConducted = true; this.articleVote = true; this.screen = 'article'; this.banner = null;
-          }
           if (this.screen === 'group') this.markGroupSeen();
           this.cascadeSound(); this.bump();
         }
         return;
       }
-      if (this.replied) { this.holdT += dt; if (this.holdT >= TAKEOVER_HOLD) { this.stage = 'takeover'; this.removeT = -TAKEOVER_ALERT; this.bump(); } return; }
-      const before = this.replyOffered;
-      this.replyWaitT = this.replyWaitT < 0 ? 0 : this.replyWaitT + dt;
-      if (before && !this.replyOffered) { this.stage = 'takeover'; this.removeT = -TAKEOVER_ALERT; this.bump(); }
+      // the last message (Hanne's) read: the news is in
+      if (this.newsT >= newsWait(NEWS.length)) { this.stage = 'read'; veraDay.voted = true; this.logLand('read'); this.bump(); }
       return;
     }
-    if (this.stage !== 'takeover') return;
-    this.removeT += dt;
-    if (this.removeT >= REMOVE_STEP) {
-      const next = this.nextRemoval();
-      if (next && this.liveMsgs().some(x => x.key === next)) { this.removed.add(next); this.removeT = 0; this.bump(); }
-      else this.removeT = REMOVE_STEP;
+    if (this.stage !== 'takeover' && this.stage !== 'after') return;
+    // the review: one message at a time, each step a repaint (the outline's march at OUTLINE_HZ; none under reduced motion)
+    if (this.reviewing) {
+      const r = this.reviewing, step = this.outlineStep();
+      r.t += dt;
+      const len = r.phase === 'outline' ? OUTLINE_S : r.phase === 'removing' ? REMOVING_S : GREY_S;
+      if (r.t >= len) {
+        if (r.phase === 'outline') { r.phase = 'removing'; r.t = 0; this.logLand(r.key + ':removing'); }
+        else if (r.phase === 'removing') { r.phase = 'grey'; r.t = 0; this.logLand(r.key + ':grey'); }
+        else { this.removed.add(r.key); this.reviewing = null; this.reviewT = -REVIEW_GAP; this.logLand(r.key + ':folded'); }
+        this.bump();
+      } else if (this.outlineStep() !== step) this.bump();
+    } else if (this.stage === 'takeover') {
+      this.reviewT += dt;
+      if (this.reviewT >= 0) {
+        const next = this.nextReview();
+        if (next) { this.reviewing = { key: next, phase: 'outline', t: 0 }; this.logLand(next + ':outline'); this.bump(); }
+        else this.reviewT = 0;
+      }
     }
-    if (!this.cascadeOn && NEWS.every((_, i) => this.removed.has('n' + i))) { this.cascadeOn = true; this.cascadeT = 0; }
+    if (!this.cascadeOn && REVIEW_NEWS.every((k) => this.removed.has(k))) { this.cascadeOn = true; this.cascadeT = 0; this.bump(); }
     if (!this.cascadeOn) return;
     this.cascadeT += dt;
-    while (this.cascadeT >= CASCADE_STEP && this.cascadeN < CASCADE.length) {
-      this.cascadeT -= CASCADE_STEP;
-      this.cascadeN++; this.landedAt.set('c' + (this.cascadeN - 1), this.clockShown); this.newsBanner(CASCADE.slice(0, this.cascadeN));
+    while (this.cascadeN < CASCADE.length && this.cascadeT >= (this.cascadeN === 0 ? CASCADE_STEP : cascadeWait(CASCADE[this.cascadeN - 1]))) {
+      this.cascadeT -= this.cascadeN === 0 ? CASCADE_STEP : cascadeWait(CASCADE[this.cascadeN - 1]);
+      this.cascadeN++; this.landedAt.set('c' + (this.cascadeN - 1), this.clockShown); this.logLand('c' + (this.cascadeN - 1)); this.newsBanner(CASCADE.slice(0, this.cascadeN));
+      if (this.scrollBack > 0 && this.userScrolled) { this.scrollBack++; this.unseen++; }
       this.cascadeSound();
       if (this.screen === 'group') this.markGroupSeen();   // it landed under her eyes
       this.bump();
     }
-    if (this.cascadeN >= CASCADE.length) {
+    if (this.stage === 'takeover' && this.cascadeN >= CASCADE.length && this.reviewDone) {
+      // the forwards in, and the review stopped where it was: "Review could not keep up."
       this.stage = 'after';
       veraDay.cascadeSeen = true;
       this.bump();
@@ -474,14 +539,8 @@ export class PhoneE3 {
   /** ⚑ S227 — the phone has moved past Bea's first card (the board may offer an update again; see graceQueueLite) */
   get pastFirst(): boolean { return this.stage !== 'quiet'; }
 
-  /** ⚑ S219 / W1-E6 (his walkthrough: "clicking the link does nothing after the sequence ends") — a press ALWAYS answers.
-   *  The live card does what it always did. A SPENT one (the bill once the vote is in, every forward in the cascade)
-   *  answers with the same sheet it gave the first time, and files nothing, lifts nothing and moves no stage: before,
-   *  it re-filed the ledger and re-fired the light on every press, and pressing the old bill in `voted` could carry the
-   *  era past the vote's own card. */
-  private openLink(kind?: string): void {
-    this.opened = true; this.articleVote = kind === 'link2'; this.screen = 'article'; this.bump();
-  }
+  /* (⚑ S426 — S219's `openLink`, a press on a card opening the article page, is retired with the page: the cards are not links,
+   *  his call 3. 17847974 holds it.) */
 
   // ── draw ─────────────────────────────────────────────────────────────────
   /**
@@ -502,15 +561,8 @@ export class PhoneE3 {
     const bannerH = 0;
     const bodyH = H - bannerH;
     ctx.save(); ctx.beginPath(); ctx.rect(0, bannerH, W, bodyH); ctx.clip(); ctx.translate(0, bannerH);
-    if (this.screen === 'article') {
-      ctx.fillStyle = PHONE.surface; ctx.fillRect(0, 0, W, bodyH);
-      const link = this.articleVote ? LINK_VOTE : m.link;
-      const y0 = statusBar(ctx, W, this.clockText), top = appBar(ctx, W, y0, link.masthead);
-      this.pushBack(y0, top);
-      phoneFont(ctx, 14, 600); ctx.fillStyle = PHONE.ink;
-      phoneWrap(ctx, link.headline, W - 20).forEach((line, i) => ctx.fillText(line, 10, top + 14 + i * 19));
-    }
-    else if (this.screen === 'evening') { this.drawEvening(ctx, W, bodyH); }
+    // (⚑ S426 — the article page, S362's conducted masthead and headline that read as a blank page, is retired: 17847974)
+    if (this.screen === 'evening') { this.drawEvening(ctx, W, bodyH); }
     else if (this.screen === 'personal') { this.drawThreadView(ctx, W, bodyH); this.pushBack(20, 62); }
     else if (this.screen === 'lock') { this.drawLock(ctx, W, bodyH); }
     else if (this.screen === 'photos' || this.screen === 'photo') { this.drawPhotos(ctx, W, bodyH); }
@@ -552,8 +604,6 @@ export class PhoneE3 {
   private openEvening(from: string): void {
     this.scrollBack = 0;
     this.eveningFrom = from; this.screen = from === m.group.name ? 'group' : 'evening';
-    // ⚑ S362 / H28 — she opened Mam's message: the Notes draft waits the whole hold again from now (it took the screen at 4 s)
-    if (from === 'Mam' && this.notesPending) this.bannerAge = 0;
     if (this.banner?.from === from) this.banner = null;   // S327: opened, the notification has done its job
     for (const e of this.evening.filter(e => e.from === from)) this.readMessages.add('evening:' + e.id);
     // ⚑ S357fr / 16-9 — her older messages from them are in the same thread (drawEvening): on the glass now, so read
@@ -722,16 +772,14 @@ export class PhoneE3 {
     let y = appBar(ctx, W, y0, HOME.fNotes);
     this.pushBack(y0, y);
     // which notes are on the glass, newest first, and how much of each is written:
-    //   · while the piece shows Mam's unfinished reply, that note alone, typing (S362);
-    //   · ⚑ S404 (UiB job 30 C2) — while it shows her new note, the new note above Mam's (written), opened empty with the
-    //     caret for a breath, then typing; nothing else;
+    //   · ⚑ S425 (beat 10; his call 2) — while the piece shows her new note, the new note at the top, opened empty with the caret
+    //     for a breath, then typing; under it, already there, Mam's unfinished reply and the shopping line (the whole list);
     //   · otherwise the Notes as she keeps them: the new note only once she has written it.
-    const caretOn = (t: number): boolean => Math.floor(t * 2) % 2 === 0;
+    //   (S362's Mam's reply typed alone after Mam's message, and S404's two-note conduct, are retired at S425.)
     const shown: { entry: NoteEntry; letters: number; caret: boolean }[] =
-      this.notesT >= 0 ? [{ entry: MAM_NOTE, letters: Math.floor(this.notesT * NOTES_TYPE_CPS), caret: caretOn(this.notesT) }]
-        : this.refusalT >= 0 && REFUSAL_NOTE ? [{ entry: REFUSAL_NOTE, letters: this.refusalLetters(), caret: caretOn(this.refusalT) },
-          { entry: MAM_NOTE, letters: Infinity, caret: false }]
-          : NOTE_ENTRIES.filter((e) => e !== REFUSAL_NOTE || this.refusalWritten).map((entry) => ({ entry, letters: Infinity, caret: false }));
+      this.refusalT >= 0 && REFUSAL_NOTE ? [{ entry: REFUSAL_NOTE, letters: this.refusalLetters(), caret: this.caretShown() },
+        ...NOTE_ENTRIES.filter((e) => e !== REFUSAL_NOTE).map((entry) => ({ entry, letters: Infinity, caret: false }))]
+        : NOTE_ENTRIES.filter((e) => e !== REFUSAL_NOTE || this.refusalWritten).map((entry) => ({ entry, letters: Infinity, caret: false }));
     for (const { entry, letters, caret } of shown) {
       y += 12;
       if (entry.title) {
@@ -871,24 +919,35 @@ export class PhoneE3 {
 
   // ⚑ S362 / H40 — the thread's type is 13 px on 17 px lines (was 11 on 14), the names above bubbles and the time stamps 10 (was 8): fewer
   //   words to a line, a taller thread, and the scroll pills (S358 / H13) carry the rest.
+  /**
+   * ⚑ S426 (UiB job 35 Part D, Act III; his 20 Nov 16-16, "I wasn't reading because it didn't allow me to read") — THE GROUP, IN ITS
+   * COLUMN. ⚑ S426e (his 24 Nov, on the group filling the monitor: "And now the messenger covers all of the screen?? What happened?")
+   * — the thread stays in the Handset Window's own column for the whole of Act III, beside GracePlatform; the maximised desktop chat
+   * (9974fe1f) is retired. What 16-16 asked for stays: it scrolls, every message is kept (none replaces the last), ▲ Earlier
+   * messages / ▼ Latest look back and come forward. Over it: the platform's bar while it reviews the group (its blue), each Malta
+   * message outlined, "removing…", greyed and folded (beat 13); "↪ Forward the link" in the composer's place (beat 14).
+   * ⚑ S426e ("fix it first as well") — NO LINE IS CUT: the list begins under the header and the bar, with room for the first
+   * message's name; the window holds whole messages only (the cut message drawn above the first, 9974fe1f, is retired); while the
+   * review is scrolling to a message in its hand the pills stand down, so a long one (Bea's first) is whole. Everything of hers and
+   * the platform's keeps RIGHT_PAD clear of the column's right edge (cut on a phone held upright). The composer's strip is kept
+   * only while the forward chip is in it, so a long message (Bea's first) is whole under the bar.
+   */
   private drawGroup(ctx: CanvasRenderingContext2D, W: number, H: number): void {
     ctx.fillStyle = PHONE.bg; ctx.fillRect(0, 0, W, H);
     const y0 = statusBar(ctx, W, this.clockText);
     let top = appBar(ctx, W, y0, m.group.name, this.membersMeta());
     this.pushBack(y0, top);
 
+    // ⚑ S426 (beat 13) — the platform's bar over the thread while it reviews it, in its blue; "Review could not keep up." once the
+    //   forwards are in (S332's "Review is still running." / "{n} items could not be reviewed" are retired)
     if (this.inTakeover) {
-      const label = this.stage === 'after'
-        ? m.outnumbered.counter.replace('{n}', String(this.unreviewed))
-        : m.outnumbered.stillWorking;
-      ctx.fillStyle = PHONE.surface;
-      ctx.fillRect(0, top, W, 18);
-      ctx.fillStyle = PHONE.hairline;
-      ctx.fillRect(0, top + 17, W, 1);
-      phoneFont(ctx, 10);
-      ctx.fillStyle = PHONE.dim;
-      ctx.fillText(label, 10, top + 4);
-      top += 18;
+      const lead = 12;
+      phoneFont(ctx, 10, 600);
+      const lines = phoneWrap(ctx, this.stage === 'after' ? REVIEW_LOST : REVIEW_BAR, W - 10 - RIGHT_PAD);
+      const bh = 6 + lines.length * lead;
+      ctx.fillStyle = ERA3.accent; ctx.fillRect(0, top, W, bh);
+      ctx.fillStyle = PHONE.surface; lines.forEach((ln, i) => ctx.fillText(ln, 10, top + 3 + i * lead));
+      top += bh;
     }
 
     const msgs: Live[] = [
@@ -897,120 +956,202 @@ export class PhoneE3 {
       ...this.liveMsgs()
     ];
 
-    // the composer's place: empty all era, except for the one reply she is offered (S332)
+    // the composer's place: empty all era; ⚑ S426 (beat 14; his call 4) — her one act, while the forwards run and after
     const cy = H - 30;
-    if (this.replyOffered) {
-      phoneFont(ctx, 12);
-      const tw = Math.ceil(ctx.measureText(REPLY.text).width);
-      const cw = Math.min(W - 20, tw + 24), cx = W - 10 - cw;
+    if (this.forwardOffered) {
+      phoneFont(ctx, 12, 600);
+      const tw = Math.ceil(ctx.measureText(FORWARD_LABEL).width);
+      const cw = Math.min(W - 10 - RIGHT_PAD, tw + 28), cx = W - RIGHT_PAD - cw;
       ctx.fillStyle = PHONE.hairline; ctx.fillRect(0, cy - 6, W, 1);
-      // ⚑ S362 / H40 — the larger type leaves no room for the word beside the bubble: it is drawn only where it fits
-      phoneFont(ctx, 10); const hw = ctx.measureText(REPLY.hint).width;
-      if (cx > 10 + hw + 8) { ctx.fillStyle = PHONE.dim; ctx.fillText(REPLY.hint, 10, cy + 6); }
       roundRect(ctx, cx, cy, cw, 24, 12, PHONE.bubbleOut);
-      phoneFont(ctx, 12); ctx.fillStyle = PHONE.surface; ctx.fillText(REPLY.text, cx + 12, cy + 6);
-      this.rects.push({ x: cx, y: cy, w: cw, h: 24, id: 'reply-bea' });
+      ctx.fillStyle = PHONE.surface; ctx.fillText(FORWARD_LABEL, cx + 14, cy + 6);
+      this.rects.push({ x: cx, y: cy, w: cw, h: 24, id: 'forward-link' });
     }
 
     // ⚑ bottom-up fill, and the guard tests the PROSPECTIVE position so the
     //   topmost bubble can never slide under the bar above it.
-    const heights = msgs.map(msg => (this.removed.has(msg.key) ? 18 : this.msgHeight(ctx, msg, W)) + 6);
-    const win = this.scrollWindow(heights, top + 4, cy - 8);
-    this.drawScrollPills(ctx, W, top, cy - 8, win);
-    const drawn: { y: number; h: number; msg: Live }[] = [];
+    // ⚑ S426e — a message that opens with its sender's name has NAME_GAP above it in its own slot, so the name sits clear of the
+    //   bubble (or the review's outline) above it (as built the name was drawn 4 px into the bubble above)
+    //   (and the message in the review's hand says whose it is, its "removing…" tag on that row)
+    const named = msgs.map((msg, i) => !this.removed.has(msg.key) && msg.from !== 'system' && msg.from !== VERA
+      && (i === 0 || msgs[i - 1].from !== msg.from || this.reviewing?.key === msg.key));
+    const heights = msgs.map((msg, i) => (this.removed.has(msg.key) ? 22 : this.msgHeight(ctx, msg, W)) + 6 + (named[i] ? NAME_GAP : 0));
+    // ⚑ S426e — the list's top: under the bar, with room for the first message's name over it (NAME_ROOM)
+    const listTop = top + 4 + NAME_ROOM, listBottom = this.forwardOffered ? cy - 8 : H - 8;
+    // ⚑ S426 (beat 13: "one message at a time, slowly enough to watch") — the review takes her to the Malta message in its hand: if
+    //   it is not whole in view, the thread scrolls to it (setting aside the fewest newer messages that keep it in view), the pills
+    //   standing down meanwhile. Once the forwards come the thread follows the newest again, and the review's marks are pushed up by
+    //   them (beat 14: it cannot keep up). The pills are hers throughout otherwise.
+    //   ⚑ S426e — only while she has not scrolled herself (then her place is kept); while the piece holds the thread up there, "▲
+    //   Earlier messages" stays and the bottom pill stands down (nothing lands below meanwhile).
+    const inHand = this.reviewing && !this.cascadeOn && !this.userScrolled ? msgs.findIndex((x) => x.key === this.reviewing!.key) : -1;
+    const held = (): boolean => inHand >= 0 && this.scrollByPiece;
+    let win = this.scrollWindow(heights, listTop, listBottom, true, !held());
+    if (inHand >= 0 && !(win.from <= inHand && inHand < win.to)) {
+      for (let end = msgs.length; end > inHand; end--) {
+        this.scrollBack = msgs.length - end;
+        win = this.scrollWindow(heights, listTop, listBottom, true, false);
+        if (win.from <= inHand) break;
+      }
+      this.scrollByPiece = this.scrollBack > 0;
+    } else if (inHand < 0 && this.scrollByPiece && !this.userScrolled) {   // the review let go: the thread follows the newest again
+      this.scrollBack = 0; this.scrollByPiece = false; win = this.scrollWindow(heights, listTop, listBottom);
+    }
+    if (this.scrollBack === 0) { this.unseen = 0; this.userScrolled = false; }
+    this.groupView = { keys: msgs.slice(win.from, win.to).map((x) => x.key), scrollBack: this.scrollBack, userScrolled: this.userScrolled, unseen: this.unseen };
+    const drawn: { y: number; msg: Live; who: boolean }[] = [];
     let y = win.y;
-    for (let i = win.from; i < win.to; i++) { drawn.push({ y, h: heights[i] - 6, msg: msgs[i] }); y += heights[i]; }
-    let lastFrom = '';
-    ctx.save(); ctx.beginPath(); ctx.rect(0, top, W, cy - 8 - top); ctx.clip();   // ⚑ S362 / H40 — a message taller than the window is clipped, not drawn over the bars
-    for (const { y: my, msg } of drawn) {
+    for (let i = win.from; i < win.to; i++) {
+      // the first whole message in view always says who wrote it (its name in the list's NAME_ROOM if it has no gap of its own)
+      drawn.push({ y: y + (named[i] ? NAME_GAP : 0), msg: msgs[i], who: named[i] || (i === win.from && msgs[i].from !== 'system' && msgs[i].from !== VERA) });
+      y += heights[i];
+    }
+    ctx.save(); ctx.beginPath(); ctx.rect(0, top, W, listBottom - top); ctx.clip();   // ⚑ S362 / H40 — nothing is drawn over the bars
+    for (const { y: my, msg, who } of drawn) {
       if (this.removed.has(msg.key)) {
         // ⚑ the platform reached into her phone: the bubble stays, emptied, in the system's grey
-        phoneFont(ctx, 10);
-        const tw = Math.min(W - 44, ctx.measureText(REMOVED_LINE).width + 16);
-        const rx = msg.from === VERA ? W - 10 - tw : 30;
+        // ⚑ S426e — whole inside the column's RIGHT_PAD (as built it reached 171 of 180: "GracePlatfo|rm" on an upright phone)
+        const room = W - RIGHT_PAD - 30;
+        phoneFont(ctx, 10); if (ctx.measureText(REMOVED_LINE).width + 14 > room) phoneFont(ctx, 9);
+        const tw = Math.min(room, Math.ceil(ctx.measureText(REMOVED_LINE).width) + 14);
+        const rx = msg.from === VERA ? W - RIGHT_PAD - tw : 30;
         roundRect(ctx, rx, my, tw, 18, 9, PHONE.hairline);
-        ctx.fillStyle = PHONE.dim; ctx.fillText(REMOVED_LINE, rx + 8, my + 4);
-        lastFrom = msg.from; continue;
+        ctx.fillStyle = PHONE.dim; ctx.fillText(REMOVED_LINE, rx + 7, my + 4);
+        continue;
       }
-      if (msg.from === VERA) { this.drawMine(ctx, msg, my, W); lastFrom = msg.from; continue; }
-      this.drawMsg(ctx, msg, my, W, msg.from !== lastFrom);
-      lastFrom = msg.from;
+      const rv = this.reviewing?.key === msg.key ? this.reviewing : null;
+      const box = msg.from === VERA ? this.drawMine(ctx, msg, my, W) : this.drawMsg(ctx, msg, my, W, who, rv?.phase === 'grey');
+      if (rv && box) this.drawReviewMark(ctx, box, rv.phase, who ? msg.from : '', W);
     }
     ctx.restore();
+    // the ways to look back, over the list's reserved strips (they stand down while the review is scrolling the thread itself)
+    this.drawScrollPills(ctx, W, top, listBottom, win, !held());
+  }
+  /** ⚑ S426 — the thread was scrolled by the review (to the message in its hand), not by her */
+  private scrollByPiece = false;
+  /** ⚑ S426e — she has scrolled up herself (▲): nothing that lands pulls her down; `unseen` messages have landed below her since */
+  private userScrolled = false;
+  private unseen = 0;
+  /** ⚑ S426e — the probes' handle on the group's view: the keys drawn (whole), her scroll, what landed unseen */
+  groupView: { keys: string[]; scrollBack: number; userScrolled: boolean; unseen: number } = { keys: [], scrollBack: 0, userScrolled: false, unseen: 0 };
+
+  /** ⚑ S426 (beat 13) — the platform's hand on a message: its outline (dashed, marching at OUTLINE_HZ; still under reduced motion),
+   *  and from the second step a "removing…" tag at the bubble's top right, both in the platform's blue */
+  private drawReviewMark(ctx: CanvasRenderingContext2D, b: { x: number; y: number; w: number; h: number }, phase: 'outline' | 'removing' | 'grey', name = '', W = 180): void {
+    if (phase === 'outline' || phase === 'removing') {
+      ctx.save();
+      ctx.strokeStyle = ERA3.accent; ctx.lineWidth = 2;
+      ctx.setLineDash([5, 3]); ctx.lineDashOffset = this.outlineStep() * 4;
+      ctx.strokeRect(Math.round(b.x - 3) + 0.5, Math.round(b.y - 1) + 0.5, Math.round(b.w + 6), Math.round(b.h + 4));   // S426e: its top clear of the name
+      ctx.restore();
+    }
+    if (phase === 'removing' || phase === 'grey') {
+      // ⚑ S426e — on the name's row, right of the name (never over it), inside the column's RIGHT_PAD
+      phoneFont(ctx, 10, 600);
+      const nameEnd = name ? b.x + 2 + Math.ceil(ctx.measureText(name).width) + 6 : b.x;
+      const lw = Math.ceil(ctx.measureText(REVIEW_REMOVING).width) + 12;
+      const tx = Math.round(Math.min(W - RIGHT_PAD - lw, Math.max(b.x + b.w - lw, nameEnd))), ty = Math.round(b.y - 12);
+      roundRect(ctx, tx, ty, lw, 15, 7, ERA3.accent);
+      ctx.fillStyle = PHONE.surface; ctx.fillText(REVIEW_REMOVING, tx + 6, ty + 2);
+    }
   }
 
-  /** ⚑ S332 — her one message in the era, on the right where her words would always have been */
-  private drawMine(ctx: CanvasRenderingContext2D, msg: Msg, y: number, W: number): void {
-    phoneFont(ctx, 13);
-    const lines = phoneWrap(ctx, msg.text ?? '', W - 62);
-    let widest = 0;
-    for (const ln of lines) widest = Math.max(widest, ctx.measureText(ln).width);
-    const bw = Math.min(W - 44, widest + 18), h = 15 + lines.length * 17, bx = W - 10 - bw;
-    bubble(ctx, bx, y, bw, h, 'out');
-    ctx.fillStyle = PHONE.surface;
-    lines.forEach((ln, i) => ctx.fillText(ln, bx + 9, y + 7 + i * 17));
+  /** ⚑ S332 — her one message in the era, on the right where her words would always have been.
+   *  ⚑ S426 (beat 14) — it is her forward now (her reply is retired): the link card on her side, edged in her colour, no words */
+  private drawMine(ctx: CanvasRenderingContext2D, msg: Msg, y: number, W: number): { x: number; y: number; w: number; h: number } {
+    const w = W - 40 - RIGHT_PAD, x = W - RIGHT_PAD - w, h = this.cardH(ctx, msg, w);
+    roundRect(ctx, x - 2, y - 2, w + 4, h + 4, 11, PHONE.bubbleOut);
+    this.drawLinkCard(ctx, x, y, w, msg, false);
+    return { x, y, w, h };
   }
 
   private msgHeight(ctx: CanvasRenderingContext2D, msg: Msg, W: number): number {
     if (msg.from === 'system') { phoneFont(ctx, 10); return 17; }
-    if (msg.kind === 'link' || msg.kind === 'link2') return 60;
+    // ⚑ S426e — a card is as tall as its whole headline (and Bea's, its fact line): nothing on it is cut (cardH)
+    if (msg.kind === 'link' || msg.kind === 'link2') return this.cardH(ctx, msg, msg.from === VERA ? W - 40 - RIGHT_PAD : W - 30 - RIGHT_PAD) + 4;
     phoneFont(ctx, 13);
-    return 15 + phoneWrap(ctx, msg.text ?? '', W - 62).length * 17;
+    return 15 + phoneWrap(ctx, msg.text ?? '', this.textW(W)).length * 17;
   }
+  /** the width a message's words wrap to (as built W - 62; ⚑ S426e: inside RIGHT_PAD, the bubble's 18 px of padding beside them) */
+  private textW(W: number): number { return W - 30 - RIGHT_PAD - 18; }
 
   private drawMsg(
-    ctx: CanvasRenderingContext2D, msg: Msg, y: number, W: number, showWho: boolean
-  ): void {
+    ctx: CanvasRenderingContext2D, msg: Msg, y: number, W: number, showWho: boolean, grey = false
+  ): { x: number; y: number; w: number; h: number } | null {
     if (msg.from === 'system') {
       // people being ADDED while it happens, in the platform's own grey note
       phoneFont(ctx, 10);
       ctx.fillStyle = PHONE.dim;
       const tw = ctx.measureText(msg.text ?? '').width;
       ctx.fillText(msg.text ?? '', Math.round((W - tw) / 2), y + 3);
-      return;
+      return null;
     }
     const bx = 30;
     if (showWho) avatar(ctx, 6, y + 2, 20, msg.from);
-    if (msg.kind === 'link' || msg.kind === 'link2') { this.drawLinkCard(ctx, bx, y, W - bx - 14, msg); return; }
+    // ⚑ S426e — a card that opens a sender's run says who sent it too (as built only a bubble did: Bea's card stood unnamed at the top)
+    if (showWho && (msg.kind === 'link' || msg.kind === 'link2')) { phoneFont(ctx, 10, 600); ctx.fillStyle = PHONE.dim; ctx.fillText(msg.from, bx + 2, y - 10); }
+    if (msg.kind === 'link' || msg.kind === 'link2') {
+      const w = W - bx - RIGHT_PAD;
+      this.drawLinkCard(ctx, bx, y, w, msg, grey);
+      return { x: bx, y, w, h: this.cardH(ctx, msg, w) };
+    }
     phoneFont(ctx, 13);
-    const lines = phoneWrap(ctx, msg.text ?? '', W - 62);
+    const lines = phoneWrap(ctx, msg.text ?? '', this.textW(W));
     let widest = 0;
     for (const ln of lines) widest = Math.max(widest, ctx.measureText(ln).width);
-    const bw = Math.min(W - bx - 14, widest + 18);
+    const bw = Math.min(W - bx - RIGHT_PAD, widest + 18);
     const h = 15 + lines.length * 17;
-    bubble(ctx, bx, y, bw, h, 'in');
+    // ⚑ S426 — greyed, the bubble is the system's grey and its words fade, before it folds
+    if (grey) roundRect(ctx, bx, y, bw, h, 9, PHONE.hairline); else bubble(ctx, bx, y, bw, h, 'in');
     if (showWho) {
       phoneFont(ctx, 10, 600);
       ctx.fillStyle = PHONE.dim;
       ctx.fillText(msg.from, bx + 2, y - 10);
     }
     phoneFont(ctx, 13);
-    ctx.fillStyle = PHONE.ink;
+    ctx.fillStyle = grey ? PHONE.faint : PHONE.ink;
     lines.forEach((ln, i) => ctx.fillText(ln, bx + 9, y + 7 + i * 17));
+    return { x: bx, y, w: bw, h };
   }
 
   /** ⚑ the pretend newspaper carrying the real law (§7.3): invented masthead,
-   *  documented act, drawn as the link preview card a messaging app makes. */
-  private drawLinkCard(
-    ctx: CanvasRenderingContext2D, x: number, y: number, w: number, msg: Msg
-  ): void {
-    // S149 — two cards: the bill (`link`), then the vote's result (`link2`), each
-    //   its own press: the stage moves on a card's dismissal, and the second
-    //   card could not be opened by pressing the first again.
+   *  documented act, drawn as the link preview card a messaging app makes.
+   *  ⚑ S426 (his call 3: "The Malta news is a card, not a link") — not a link: no press, no page. Bea's card (`link2`) carries one line
+   *  of fact under its headline, "Malta · Act LV of 2016 · passed 5 December"; the forwards' cards (`link`) are as built. Greyed while
+   *  the review removes it. (S149/S219's press and spent state are retired: 17847974.) */
+  /** ⚑ S426e (his 24 Nov: no line cut) — the card's lines at width `w`: its masthead, its whole headline, and (Bea's card) its whole fact
+   *  line; at the column's width the red square gives way to a red spine at the card's left, so the words have the width (as built
+   *  the headline was cut at two lines and the fact line at one: "Malta outlaws conversion" / "Malta · Act LV of") */
+  private cardLines(ctx: CanvasRenderingContext2D, msg: Msg, w: number): { head: string[]; fact: string[] } {
     const link = msg.kind === 'link2' ? LINK_VOTE : m.link;
-    // ⚑ S219 / W1-E6 — a spent card is drawn spent (the headline goes quiet), and a press on it still answers (openLink)
-    const spent = this.linkSpent(msg.kind);
-    roundRect(ctx, x, y, w, 56, 9, PHONE.surface);
-    roundRect(ctx, x + 6, y + 10, 36, 36, 5, spent ? PHONE.hairline : PHONE.tileLive);
-    phoneFont(ctx, 9);
-    ctx.fillStyle = PHONE.dim;
-    ctx.fillText(link.masthead, x + 48, y + 7);
-    phoneFont(ctx, 11, 600);
-    ctx.fillStyle = spent ? PHONE.dim : PHONE.ink;
-    phoneWrap(ctx, link.headline, w - 54).slice(0, 2)
-      .forEach((ln, i) => ctx.fillText(ln, x + 48, y + 21 + i * 13));
-    this.rects.push({ x, y, w, h: 56, id: msg.kind === 'link2' ? 'link2' : 'link' });
+    phoneFont(ctx, 11, 600); const head = phoneWrap(ctx, link.headline, w - 22);
+    phoneFont(ctx, 9); const fact = msg.kind === 'link2' ? phoneWrap(ctx, LINK_VOTE.fact, w - 22) : [];
+    return { head, fact };
   }
+  private cardH(ctx: CanvasRenderingContext2D, msg: Msg, w: number): number {
+    const { head, fact } = this.cardLines(ctx, msg, w);
+    return 7 + 12 + head.length * 13 + (fact.length ? 4 + fact.length * 11 : 0) + 7;
+  }
+  private drawLinkCard(
+    ctx: CanvasRenderingContext2D, x: number, y: number, w: number, msg: Msg, grey: boolean
+  ): void {
+    const link = msg.kind === 'link2' ? LINK_VOTE : m.link, { head, fact } = this.cardLines(ctx, msg, w), h = this.cardH(ctx, msg, w);
+    roundRect(ctx, x, y, w, h, 9, grey ? PHONE.hairline : PHONE.surface);
+    ctx.fillStyle = grey ? PHONE.faint : PHONE.tileLive; ctx.fillRect(x + 5, y + 7, 4, h - 14);
+    const tx = x + 15;
+    phoneFont(ctx, 9);
+    ctx.fillStyle = grey ? PHONE.faint : PHONE.dim;
+    ctx.fillText(link.masthead, tx, y + 7);
+    phoneFont(ctx, 11, 600);
+    ctx.fillStyle = grey ? PHONE.faint : PHONE.ink;
+    head.forEach((ln, i) => ctx.fillText(ln, tx, y + 19 + i * 13));
+    if (fact.length) {
+      phoneFont(ctx, 9);
+      ctx.fillStyle = grey ? PHONE.faint : PHONE.dim;
+      fact.forEach((ln, i) => ctx.fillText(ln, tx, y + 19 + head.length * 13 + 4 + i * 11));
+    }
+  }
+
 
   /** ⚑ S357fr / 16-9 (his headset, 20 Nov: "it's saying seven messages but … I cannot …") — THE INBOX'S ROWS, one model for
    *  the list and for the badge on the Messages tile. The badge used to count the backlog alone, apart from the list: it
@@ -1093,12 +1234,14 @@ export class PhoneE3 {
     if (r.id.startsWith('lock-card:')) { this.openEvening(r.id.slice(10)); this.bump(); return true; }
     switch (r.id) {
       case 'evening-banner':
-        if (this.banner?.text === m.link.headline || this.banner?.text === LINK_VOTE.headline) { this.openLink(this.banner.text === LINK_VOTE.headline ? 'link2' : 'link'); return true; }
+        // ⚑ S426 — a card's banner opens the group (the cards are not links: call 3)
+        if (this.banner?.text === m.link.headline || this.banner?.text === LINK_VOTE.headline) { this.screen = 'group'; this.openGroup(); return true; }
         if (this.banner && this.evening.some(e => e.from === this.banner!.from && e.text === this.banner!.text)) { this.openEvening(this.banner.from); }
         else { this.screen = 'group'; this.openGroup(); }
         this.bump(); return true;
-      case 'scroll-up': this.scrollBack += this.pageStep; this.bump(); return true;   // S358 / H13
-      case 'scroll-down': this.scrollBack = 0; this.bump(); return true;
+      // S358 / H13 — ⚑ S426e: she has scrolled; what lands now does not pull her down (`unseen` counts it), ▼ takes her to the bottom
+      case 'scroll-up': this.scrollBack += this.pageStep; this.userScrolled = true; this.scrollByPiece = false; this.bump(); return true;
+      case 'scroll-down': this.scrollBack = 0; this.userScrolled = false; this.unseen = 0; this.scrollByPiece = false; this.bump(); return true;
       case 'inbox-prev': this.inboxPage--; this.bump(); return true;
       case 'inbox-next': this.inboxPage++; this.bump(); return true;
       case 'personal-notification': this.openPersonalThread(); return true;
@@ -1120,11 +1263,13 @@ export class PhoneE3 {
       case 'open-photo-4': this.photosFrom = this.screen; this.photoIndex = 4; this.screen = 'photo'; this.bump(); return true;
       case 'notes': this.screen = 'notes'; this.bump(); return true;
       case 'walk': this.screen = 'walk'; this.bump(); return true;
-      case 'link': case 'link2': this.openLink(r.id); return true;
-      // ⚑ S332 — her one reply, one press. It is real and it is sent; the platform removes it a moment later.
-      case 'reply-bea':
-        if (!this.replyOffered) return true;
-        this.replied = true; this.holdT = 0; this.landedAt.set('v', this.clockShown); playOnce('phone_msg_2016.mp3'); this.bump(); return true;
+      // ⚑ S426 (beat 14; his call 4) — her forward, one press: it lands among theirs, a link with no words, and it stays (the review
+      //   never reaches it). Nothing is filed. (S332's reply, `reply-bea`, is retired: 17847974.)
+      case 'forward-link':
+        if (!this.forwardOffered) return true;
+        this.forwarded = true; this.forwardAt = this.cascadeN; this.landedAt.set('v', this.clockShown);
+        if (this.scrollBack > 0) this.scrollBack = 0;   // her own forward, seen where it lands
+        playOnce('phone_msg_2016.mp3'); this.bump(); return true;
       default:
         if (r.id.startsWith('evening:')) { this.openEvening(r.id.slice(8)); return true; }
         if (r.id.startsWith('photo-')) { this.photoIndex = Number(r.id.slice(6)); this.screen = 'photo'; this.bump(); return true; }
@@ -1153,16 +1298,18 @@ export class PhoneE3 {
       case 'home': this.screen = 'home'; this.bump(); break;
       case 'group': this.screen = 'group'; this.openGroup(); break;
       case 'inbox': this.screen = 'inbox'; this.bump(); break;
-      case 'news': this.startNews(); this.newsN = NEWS.length; this.screen = 'group'; this.bump(); break;
-      case 'reply': this.debugBeat('news'); this.pressControl('reply-bea'); break;
+      // ⚑ S426 — review aids for Act III: the news all landed and read; the review asked for (its bar up); the four Malta messages
+      //   folded and the forwards running; all of it done (the review outnumbered)
+      case 'news': this.startNews(); this.newsN = NEWS.length; this.stage = 'read'; veraDay.voted = true; this.screen = 'group'; this.bump(); break;
+      case 'review': this.debugBeat('news'); this.startReview(); this.screen = 'group'; this.bump(); break;
       case 'cascade':
-        this.debugBeat('reply'); this.stage = 'takeover';
-        NEWS.forEach((_, i) => this.removed.add('n' + i)); this.removed.add('v'); this.cascadeOn = true;
-        this.screen = 'group'; this.bump();
+        this.debugBeat('review'); this.reviewT = 0;
+        REVIEW_NEWS.forEach((k) => this.removed.add(k)); this.cascadeOn = true;
+        this.bump();
         break;
       case 'after':
         this.debugBeat('cascade');
-        this.cascadeN = CASCADE.length; this.stage = 'after';
+        this.cascadeN = CASCADE.length; this.reviewOrder().forEach((k) => this.removed.add(k)); this.reviewing = null; this.stage = 'after';
         veraDay.cascadeSeen = true;
         this.bump();
         break;
@@ -1182,7 +1329,9 @@ export class PhoneE3 {
    */
   private scrollBack = 0;
   private static readonly PILL = 20;
-  private scrollWindow(heights: number[], top: number, bottom: number): { from: number; to: number; y: number; earlier: boolean; latest: boolean } {
+  /** `reserve` (as built): room is kept above and below for the "Earlier messages" / "Latest" pills; the group wide keeps its ▲ ▼ in
+   *  a gutter at the side instead (⚑ S426) */
+  private scrollWindow(heights: number[], top: number, bottom: number, reserve = true, reserveBottom = reserve): { from: number; to: number; y: number; earlier: boolean; latest: boolean } {
     const fit = (end: number, t: number, b: number): number => {   // the first index that fits above `end`, filling up from b
       let y = b, i = end;
       while (i > 0 && y - heights[i - 1] >= t) { y -= heights[i - 1]; i--; }
@@ -1191,29 +1340,40 @@ export class PhoneE3 {
     const n = heights.length;
     this.scrollBack = Math.max(0, Math.min(this.scrollBack, Math.max(0, n - 1)));
     const latest = this.scrollBack > 0;
-    const b = latest ? bottom - PhoneE3.PILL - 2 : bottom;
+    const b = latest && reserveBottom ? bottom - PhoneE3.PILL - 2 : bottom;
     const end = n - this.scrollBack;
     let from = fit(end, top, b);
     const earlier = from > 0;
-    if (earlier) from = fit(end, top + PhoneE3.PILL + 2, b);
+    if (earlier && reserve) from = fit(end, top + PhoneE3.PILL + 2, b);
     // ⚑ S362 / H40 — with the larger type one long message (Bea's first) can be taller than the window: the newest is always drawn
     //   (its top clipped by the caller) rather than an empty thread
     if (from >= end && end > 0) from = end - 1;
     let y = b; for (let i = from; i < end; i++) y -= heights[i];
     return { from, to: end, y, earlier, latest };
   }
-  private drawScrollPills(ctx: CanvasRenderingContext2D, W: number, top: number, bottom: number, win: { from: number; to: number; earlier: boolean; latest: boolean }): void {
-    const pill = (label: string, y: number, id: string): void => {
+  private drawScrollPills(ctx: CanvasRenderingContext2D, W: number, top: number, bottom: number, win: { from: number; to: number; earlier: boolean; latest: boolean }, showLatest = true): void {
+    const pill = (label: string, y: number, id: string, up: boolean): void => {
+      // ⚑ S426 — on a band of the thread's ground, so nothing of the thread shows round it
+      ctx.fillStyle = PHONE.bg; ctx.fillRect(0, y - 3, W, PhoneE3.PILL + 2);
       phoneFont(ctx, 9);
-      const pw = Math.ceil(ctx.measureText(label).width) + 20, px0 = Math.round((W - pw) / 2);
+      // ⚑ S426e (16-16: "▲ ▼ to look back") — a drawn ▲ / ▼ before the words, so the pill says which way it goes
+      const pw = Math.ceil(ctx.measureText(label).width) + 31, px0 = Math.round((W - pw) / 2);
       roundRect(ctx, px0, y, pw, PhoneE3.PILL - 4, 8, PHONE.hairline);
-      ctx.fillStyle = PHONE.ink; ctx.fillText(label, px0 + 10, y + 3);
+      const tx = px0 + 10, ty = y + 8;
+      ctx.fillStyle = PHONE.ink; ctx.beginPath();
+      if (up) { ctx.moveTo(tx, ty + 2); ctx.lineTo(tx + 7, ty + 2); ctx.lineTo(tx + 3.5, ty - 3); }
+      else { ctx.moveTo(tx, ty - 2); ctx.lineTo(tx + 7, ty - 2); ctx.lineTo(tx + 3.5, ty + 3); }
+      ctx.closePath(); ctx.fill();
+      ctx.fillText(label, px0 + 21, y + 3);
       this.rects.push({ x: 0, y: y - 2, w: W, h: PhoneE3.PILL, id });
     };
     this.pageStep = Math.max(1, win.to - win.from - 1);
-    if (win.earlier) pill(m.group.earlier, top + 3, 'scroll-up');
-    if (win.latest) pill(m.group.latest, bottom - PhoneE3.PILL + 2, 'scroll-down');
+    if (win.earlier) pill(m.group.earlier, top + 3, 'scroll-up', true);
+    // ⚑ S426e (his 24 Nov) — scrolled up while messages land, the bottom pill says so: "New messages" (it takes her to the bottom)
+    if (win.latest && showLatest) pill(this.unseen > 0 ? m.group.newMessages : m.group.latest, bottom - PhoneE3.PILL + 2, 'scroll-down', false);
   }
+  /* (⚑ S426e — the wide group's ▲ ▼ gutter, `drawScrollArrows`, is retired with the wide group: 9974fe1f. The column's pills carry
+   *  ▲ / ▼ drawn in them.) */
   private pageStep = 1;
   private pushBack(barTop: number, barBottom: number): void {
     this.rects.push({ x: 0, y: barTop, w: 44, h: barBottom - barTop, id: 'back' });

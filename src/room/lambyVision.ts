@@ -55,6 +55,8 @@ const BADGE = { cx: 0, cy: 0.553, w: 0.17, h: 0.05, z: FRONT + 0.0062 };
 export const FACE = { top: GLASS.cy + GLASS.h / 2, bottom: KEY_Y - KEY_H / 2, cx: 0, width: 0.46 } as const;
 /** the whole set, for a press at rest and the body's press in the hand (ears and tuft included) */
 export const BOUNDS = { min: [-0.4, 0, -D / 2] as V3, max: [0.4, 0.665, FRONT + 0.012] as V3 };
+/** ⚑ S425 — the body's half-width (its glass and keys inside it; the ears outside), for a place where only an ear may leave the view */
+export const BODY_HALF_W = W / 2;
 export const KEY_POINTS: { id: SetKey; at: V3; r: number }[] = KEYS.map((k) => ({ id: k.id, at: [k.x, KEY_Y, STRIP.z] as V3, r: 0.031 }));
 
 const col = (hex: string): [number, number, number] => {
@@ -190,7 +192,9 @@ function drawDecal(c: CanvasRenderingContext2D, lit: SetKey | null, deck: DeckSt
     c.fillStyle = k.id === 'power' ? (k.id === lit ? HOME.lambFace : ERA1.paper) : ERA1.black;
     mark(c, k.id, Math.round(cx), Math.round(cy) - 1, Math.round(kh * 0.42));
     // ⚑ S396 — the key that is ON carries its lamp: ▶ green while it plays, ❚❚ amber while it is paused, ⏻ green while it is lit
-    const on = (k.id === 'play' && (deck.mode === 'play' || deck.mode === 'load')) || (k.id === 'pause' && deck.mode === 'pause') || (k.id === 'power' && deck.mode !== 'off');
+    // ⚑ S424 (16-7; storyboard beat 5: the set "arrives stopped on its first picture, ▶ lit") — and ▶ is lit while the tape waits
+    //   at its label (`ready`): the one key that starts it, the deck's own invitation; nothing plays until it is pressed
+    const on = (k.id === 'play' && (deck.mode === 'play' || deck.mode === 'load' || deck.mode === 'ready')) || (k.id === 'pause' && deck.mode === 'pause') || (k.id === 'power' && deck.mode !== 'off');
     if (on) { c.fillStyle = ERA1.black; c.fillRect(x + 7, y + 9, 26, 26); c.fillStyle = k.id === 'pause' ? WALL.accent : INSTITUTION.terminalGlow; c.fillRect(x + 10, y + 12, 20, 20); }
   }
   // ⚑ S396 — the display under the keys: a VCR's own window, its state and its counter (nothing is drawn on the glass)
