@@ -57,3 +57,27 @@ code and from the 14 pages, read on 24 Nov. Nothing was built.*
 - **Recommendation:** not now. The one place it might help is reading the headset's logs and taking screenshots during the
   quad-layer session, and the browser's own `chrome://inspect` already does that. If he wants it, it can be tried in that
   same session, with his yes before installing.
+
+## 5. His yes (24 Nov): the cable session, next headset morning
+
+His words: "Yes, let's set it up next headset session in the morning." (asked whether the Quest can be connected to a Mac
+for the MCP). The plan, in order; each step is checked before the next.
+
+**Already on the Mac (checked 24 Nov):** `adb` (Homebrew, `/opt/homebrew/bin/adb`; an adb key from July 2023, so this Mac
+has debugged a device before), Google Chrome, Meta Quest Remote Desktop. Not installed: `metavr` / `hzdb`.
+
+1. **Developer mode on the Quest** (his, on his phone): Meta Horizon app → the headset → Headset settings → Developer
+   mode on. It needs a free Meta developer organisation; if he has none, the app sends him to make one.
+2. **The cable:** a USB-C cable that carries data, Quest to Mac. In the headset: "Allow USB debugging?" → Allow (tick
+   "Always allow from this computer").
+3. **Proof it is connected:** `adb devices` lists the Quest.
+4. **The browser's console on the Mac:** Chrome → `chrome://inspect/#devices` → the Quest Browser's tab with the piece →
+   inspect. From here every error the headset sees is readable on the Mac.
+5. **The quad-layer test (T57):** the live site with `?quad=1`, in the headset, the console open on the Mac. Read why it
+   goes black or cannot enter VR; write it down; fix it in a branch; test again in the same session if time allows.
+6. **Optional, only with his yes before installing:** Meta's `metavr` (`npm install -g metavr`, then `metavr mcp install
+   claude-code`), declining telemetry; try `adb`-free screenshots and logs from the headset. Keep it only if it does
+   something `adb` + `chrome://inspect` do not.
+
+Nothing here changes the piece. Anything built from what the console shows is its own session, walked, and pushed only
+on his yes.
