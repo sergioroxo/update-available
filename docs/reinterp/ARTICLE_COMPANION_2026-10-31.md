@@ -1126,6 +1126,88 @@ half on "Displacement" (TEACHING_TAPES §9.1).
 widespread. The piece's metaphor came first, so the article should call this a convergence found after the fact, not
 a source the piece was built from.
 
+## 7w. The status tags as a negotiated standard between the AI and him (his question, 24 Nov 2026)
+
+*His questions, 24 Nov, in the orchestrator session, in order:*
+1. *"Do you think the tag system and the dossier make us both accountable and also keep track of how you viewed my
+   creative decisions?"*
+2. *"But then maybe can i state that the the confidence and tagging system on the Dossier serve as a negotiation between
+   the Ai and Me so it keeps my infered and documented stuff be present while it also adds the Ai value to that source?"*
+3. *"My main point here is not to claim who found what, but to understand if the "Dossier's status tags (documentary,
+   contested, speculative)", the "confidence level present in the era HTML, and the [VERIFY SOURCE]" marker work as a
+   negotiated standard between the AI and me, to make us both accountable for the creatvie choices but also express the
+   refusal an other negotiations. Can I state something arounf this words?"*
+
+*Asked to add it here: "add this to the article materials". The orchestrator's answer (S357gg), with the evidence
+checked in the repository that day. The question is not who found what; it is whether the three markers work as a
+shared standard.*
+
+**The answer: yes, with two adjustments.**
+
+**1. The standard binds both of them, and the build enforces it.**
+- **The Dossier's status tags.** The law was in CLAUDE.md from the first commit (12 June, written by Fable 5). It was
+  not enforced until 22 July, when a session found that nothing checked it and wrote `tools/check-spec.mjs` (ee70a2cf).
+  Its header gives the reason: "A law that is documented as enforced and isn't is worse than an unwritten one: it buys
+  confidence nobody paid for." Since then `npm test` fails if any Dossier source lacks a status
+  (documentary | contested | speculative) or a visible confidence label. The failure message names the third marker:
+  "Uncited claims carry [VERIFY SOURCE] until Sérgio checks them."
+- **The era websites' confidence lines.** Since the websites were built (S283, 1 Nov), `tools/gen_era_sites.mjs`
+  refuses every link that does not appear word for word in the document that verified it. It prints "REFUSED — links
+  not verified verbatim" and the build stops. Links still marked [VERIFY SOURCE] are left off.
+- **The count on 24 Nov:** 330 status tags in the piece's data (190 documentary, 45 contested, 95 speculative). On the
+  four websites they appear in public words: documented 106 times, disputed 22, inferred 57. `tools/check-era-sites.mjs`
+  fails if an in-house word reaches a page. So the standard has two vocabularies: a working one between the AI and him,
+  and a public one for the visitor.
+- Neither side can pass a claim without a label. The rule applies to his additions and to the models' alike.
+
+**2. The tags make refusal visible.**
+- **contested** refuses to settle a debate the work will not judge: the clinical debate is rendered with both captions.
+  On the 2026 website: "the report and its critics are documented; which is right is the debate itself".
+- **speculative** refuses to pass invention off as fact ("machine imagined, script real"). On the websites: "confidence:
+  none — this is our inference, and it says so"; "the act is the piece's invention"; "the filter is ours; the 2019
+  lenses and how some used them are documented".
+- **[VERIFY SOURCE]** holds back what neither of them has confirmed. Nothing marked with it reaches the era websites.
+- **The confidence lines speak as "we".** "Our inference", "ours", "our extrapolation": the uncertainty is owned jointly,
+  out loud, in the work itself.
+
+**3. The standard was negotiated too, not only what it governs.**
+- **The Dossier.** It began on 29 March 2026. Claude (claude.ai) offered him a choice: the archive as a place to browse,
+  or a story that cites it. He chose the story ("the archive leaks into the experience").
+- **The status words on every panel.** These came from his refusal of a model's overclaim. On 12 September a model wrote
+  "This is how conversion practices first moved online". He answered "We dont have the proof to say that"
+  (`CO_CREATION_ACCOUNT_2026-11-20.md` §3, §8).
+- **The wording.** Most of the project's laws, these included, were first written down by models from his ideas
+  (§3 of the same account).
+- **Dossier phrasing.** CLAUDE.md reserves it to him. On 3 October he handed some of it back ("You can go ahead with your
+  edits!"; §4).
+- **Shared on both sides.** The account's own reading (§11) is that the work's careful handling of evidence and its
+  status words are "genuinely shared: the ethics are his, the machinery is ours".
+
+**The two adjustments, to keep the claim accurate.**
+- **The tags record where each negotiation ended, not how it went.** "Contested" does not show who pushed for what or
+  what was refused on the way. That lives in BUILD_LOG, the design documents, the commits and the conversation archive.
+  So the tags *record* the negotiations and make them *binding*, and the archive shows how they went.
+- **They cover what the work claims, not every creative choice.** Tone, form and story sit outside the tags. But every
+  creative choice that makes a claim is labelled: an invented brand, a game or a film is marked as the piece's own.
+  "Accountable for what our creative choices claim, and how sure we are" is the precise version.
+
+**A statement he can use (drafted by the orchestrator; his edit wins):**
+> "In the piece, the Dossier's status tags (documentary, contested, speculative), the confidence levels on the era
+> websites and the [VERIFY SOURCE] marker work as a negotiated standard between the AI and me. They make us both
+> accountable for what our creative choices claim, and for how sure we are: the build refuses a claim with no status and
+> a link no one has checked. They also make refusal visible: 'contested' refuses to settle a debate the work will not
+> judge, 'speculative' refuses to pass invention off as fact, and [VERIFY SOURCE] holds back what neither of us has
+> confirmed. The tags record where each negotiation ended; how it went is kept in the project's logs and conversations."
+
+An optional last sentence, from §3 above: "The standard was itself negotiated: most of its rules were first written down
+in a model's words, from my ideas."
+
+**Do not overclaim.**
+- The enforcement is real but partial. The build checks that a label is there and that a link appears in a checked
+  document. It does not check that the label is right. That judgment stays with the people who wrote it and with him.
+- "Accountable" means traceable and refusable, not that a model bears responsibility the way he does. The ethics
+  calls stay his (CLAUDE.md).
+
 ## 8. What the article must not overclaim
 
 - **Headset and phone timing are not verified by instruments.** Every VR check here is an emulated headset in a desktop

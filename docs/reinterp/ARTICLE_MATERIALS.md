@@ -52,6 +52,7 @@ ARTICLE_COMPANION; this file only says where things are.*
 | 7l | Conley's map of safe places grounds 2016's places list; a survivor on "gender ideology fear" | 10 Nov |
 | 11 | corrections (Fable's §3.4): draw calls fixed by S396, 437 presses not ~255, the games optional, the Close since 31 Oct, the turn no longer asked; 2016's text cut; the sources fixed (job 29 B, S399) | 16 Nov |
 | 7v | the programmes' own computer analogy (1993–1995: a floppy disc titled "woman", "no file to put it in", "our mind works like a computer", memory tapes overwritten by bulk); the piece's update metaphor re-performs it (his: "amazing finding … add to the research document") | 15 Nov |
+| 7w | **the status tags as a negotiated standard between the AI and him**: the Dossier's documentary / contested / speculative, the era websites' confidence lines and [VERIFY SOURCE]; how the build enforces them (check-spec since 22 Jul, the era sites' link refusal since 1 Nov; 330 tags, public words documented / disputed / inferred); refusal made visible; the standard itself negotiated (his 12 Sep "We dont have the proof to say that"); two adjustments and a statement he can use (his question: "Can I state something arounf this words?") | 24 Nov |
 
 ## 2. Research documents (sourced; each says what was opened and what was only listed)
 
