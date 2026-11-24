@@ -4,6 +4,8 @@ STATUS: live
 
 **Approved by him, 23 Nov 2026** (typed in the orchestrator's window: a yes to each of the eight calls, his words in §5). Part D builds it (S424 onward).
 
+**Built** (24 Nov): S424 Act I, S425 Act II, S426 Act III (and the Notes' place fixed at his word), walked through both doors at 1cdb26f7. What was built, and where it differs from this page: `AS_BUILT_JOB35D_2026-11-24.md`.
+
 *Written for his yes. Part D builds it after he has read it and changed what he wants (UIB_JOB_35 Part D).
 It answers his 20 Nov headset notes 16-6, 16-7, 16-8, 16-11, 16-13 … 16-18 (HEADSET_RUN_2026-11-20 §7) and his one
 idea for all of them: **the Grace Platform is a tutorial that teaches Vera** ("it moves us a little away from being the
