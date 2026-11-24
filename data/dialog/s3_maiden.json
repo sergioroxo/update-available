@@ -10,7 +10,9 @@
   "composerHint": "Type a message",
   "composerNote": "You have not written anything here in a while.",
   "earlier": "Earlier messages",
-  "latest": "Latest"
+  "latest": "Latest",
+  "forward": "↪ Forward the link",
+  "_docS426forward": "⚑ S426 (UiB job 35 Part D, Act III beat 14; his 23 Nov call 4: \"Vera can press \\\"Forward the link\\\" herself. — yes\"): her one act in the chat, one chip where the composer is, while the forwards run and after (never taken away on a timer). Pressed, her forward lands among theirs: a link card on her side, no words, and the review never removes it. Nothing is filed (S64's law: Malta files nothing), her forward included. The storyboard's words (§3b)."
  },
  "_docBefore": "THE GROUP BEFORE ANYTHING HAPPENS. Ordinary Tuesday texture, and it has to be genuinely warm or the ending does not land. Hanne's message is the accountability mechanic rendered as friendship: she discloses a temptation rather than an act, to the group rather than to a leader, and is met with encouragement rather than correction. That is the documented shape and it is also, plainly, four women being kind to somebody having a bad night.",
  "before": [
@@ -127,15 +129,7 @@
   }
  ],
  "_docOutnumbered": "⚑ THE ONE LINE THE SOFTWARE SAYS WHEN IT LOSES, and it is administrative rather than dramatic. It does not say it failed. It says it could not get to all of them — which is the same thing, in the voice of something that has never once raised its voice.",
- "outnumbered": {
-  "counter": "{n} items could not be reviewed",
-  "stillWorking": "Review is still running."
- },
  "_docAfter": "⚑ 'YOU CAN'T UNSEE IT' (§7.2) is the beat's real ending, and it is the worst line in the era precisely because it is warm, true, and helpful. The tasks are still there, still working, still greyable, and now unusable in a way NOTHING ENFORCES. No lock, no error, no refusal — the board simply cannot be looked at the same way, and the software has no idea.",
- "after": {
-  "lambientLine1": "Everything on your board is still there.",
-  "lambientLine2": "Take the time you need with it."
- },
  "_docB13": "⚑ S209 / B13 (REVIEW_ROUND_5, ERA16-05; his ruling: visibility) — the word is said plainly ONCE, here, where no rule of the platform reaches: the Wick's own message. Everywhere the system touches, it is the word being struck out.",
  "_docBacklog": "THE ERA'S FELT LIFE AND ITS CRUELTY IN ONE INBOX (§6), and it needs no commentary at all. DESIGN LAW: the piece never makes her open them. They can be read, all of them, at any time, and NOTHING IS FILED EITHER WAY. If a player never touches this, that is also true of her. ⚑ THE WICK is an invented bar. Its birthday message is dated 14 March — Sérgio's date for her, day and month only, no year — and has been sitting unread for nine months; the second one is from today and is about nothing. ⚑ NONE OF THESE PEOPLE ARGUE WITH HER. Not one of them mentions the programme, asks her a question, or wants anything. That is the whole point of the inbox.",
  "backlog": [
@@ -256,7 +250,9 @@
  },
  "linkVote": {
   "masthead": "The Continental Wire",
-  "headline": "Malta outlaws conversion practices — unanimous vote"
+  "headline": "Malta outlaws conversion practices — unanimous vote",
+  "fact": "Malta · Act LV of 2016 · passed 5 December",
+  "_docS426fact": "⚑ S426 (Act III beat 11; his 23 Nov call 3: \"The Malta news is a card, not a link. — Yes\"): the card carries one line of fact under its headline, and it is not a link: no press, no page (the article page the piece put on the glass for 5 s, a masthead and a headline that read as a blank page, is retired; so is opening a forwarded card). Documentary: the Affirmation of Sexual Orientation, Gender Identity and Gender Expression Act, Act LV of 2016, passed unanimously on 5 December 2016, published 9 December (docs/reinterp/SOURCES_2016_FRAME_2026-11-08.md; data/dossier/links.json). The masthead stays invented."
  },
  "_docLinkVote": "⚑ S149 — THE SECOND CARD: the vote's result, shared into the thread with 'they voted.' (maltaTwo). The stage advances on the CARD's dismissal, and the second card needs its own press: this is it (`kind: 'link2'`). Same invented paper as `link`; the numbers are the public record of the vote that made it law: the Affirmation of Sexual Orientation, Gender Identity and Gender Expression Act, Act LV of 2016 (passed unanimously, 5 Dec 2016; now Chapter 567).",
  "_docS307": "S307: the built lock date is Tuesday 6 December. Bea reads news of the vote, then its unanimous result. Nuala is a former partner. No new clothing memory. Felt threads are read only, memory only, no glow or guide.",
@@ -349,10 +345,21 @@
   }
  ],
  "_docS332News": "⚑ S332 (his second answers): MALTA, in Bea's thread. The news lands in the Maiden-to-be thread on her phone, one message at a time (conducted: the Handset Window comes forward). Bea is a woman in the group who is quietly leaving the programme (her post in the group job: \"sitting it out\") and she is the one who shares it. Vera replies with ONE press (`reply`), positive. Then the system takes over GracePlatform and removes by itself: the Malta posts, then her reply (`removedLine`) — and the cascade outnumbers it. Act LV of 2016, passed 5 Dec 2016, is documented; the deletions are the piece's inference (ARTICLE_COMPANION §7g). `maltaOne` / `maltaTwo` (the morning's two-part version) are retired by this; `news` replaces them, retimed to the evening.",
- "reply": {
-  "text": "finally. about time x",
-  "time": "21:44",
-  "hint": "Reply"
+ "removedLine": "Removed by GracePlatform",
+ "_retiredS426": {
+  "reply": {
+   "text": "finally. about time x",
+   "time": "21:44",
+   "hint": "Reply"
+  },
+  "outnumbered": {
+   "counter": "{n} items could not be reviewed",
+   "stillWorking": "Review is still running."
+  },
+  "after": {
+   "lambientLine1": "Everything on your board is still there.",
+   "lambientLine2": "Take the time you need with it."
+  }
  },
- "removedLine": "Removed by GracePlatform"
+ "_retiredS426Why": "⚑ S426 (UiB job 35 Part D, Act III; storyboard 2016_SECOND_HALF §3 beats 11–14, his 23 Nov yes; 16-16/16-17/16-18): retired from the visit, word for word above — her reply to Bea, \"finally. about time x\" with its \"Reply\" hint (16-17: words put in her mouth; no reply is offered: her one act is \"↪ Forward the link\", group.forward); the count \"{n} items could not be reviewed\" and \"Review is still running.\" (16-17: confusing; the platform's bar says \"Review could not keep up.\", s3_vera.json removals.lost); Lambient's last lines \"Everything on your board is still there.\" / \"Take the time you need with it.\" (call 5: the tail is the thread holding, lit; Lambient says nothing unasked in beats 11–14). The code that said them is at 17847974 (phoneE3.ts REPLY and the takeover bar; graceQueueLite.ts LAMBIENT_AFTER1/2)."
 }

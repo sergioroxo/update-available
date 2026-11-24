@@ -45,7 +45,9 @@
       "time": "21:12",
       "from": "Nuala",
       "text": "The second mug's still on the hook. I'm not making a thing of it."
-    },
+    }
+  ],
+  "_retiredS426events": [
     {
       "id": "after",
       "time": "22:51",
@@ -54,6 +56,7 @@
       "photo": true
     }
   ],
+  "_retiredS426eventsWhy": "⚑ S426 (UiB job 35 Part D, Act III; his 23 Nov call 5: \"Orla's \\\"missed you tonight x\\\" is cut. — yes\"): Orla's last message, \"missed you tonight x\" with its photo, is no longer an event of the evening (the phone's sleep before it, and Lambient's two lines after it, went with it). The last beat before the update is the group's thread, holding, lit. Kept here word for word, out of `events` so nothing can deliver it; phoneE3's photo date and lock card still read an `after` that never comes.",
   "previous": "Previous",
   "next": "Next",
   "register": "felt",

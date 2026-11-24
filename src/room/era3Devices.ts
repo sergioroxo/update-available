@@ -1523,7 +1523,7 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
       graceQueueLite.systemModal = !!(rit?.open && rit.visible);
       graceQueueLite.updateDeferred = !!rit?.deferred;
       if (eraNow === 'e3' && !finalArmed) {
-        const gate = graceQueueLite.updateReady;   // S327: the cascade seen, Orla's last message, Lambient's line
+        const gate = graceQueueLite.updateReady;   // S327 → ⚑ S426: the review outnumbered ("Review could not keep up."), the thread held, the window back
         const clear = !phoneHeld && !graceQueueLite.busy && !desk.notebookOpen;
         if (gate && clear) {
           finalT = finalT < 0 ? 0 : finalT + dt;

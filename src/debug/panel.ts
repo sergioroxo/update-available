@@ -372,7 +372,11 @@ const E3_DEVICE_BEATS: Array<[string, string]> = [
   ['↳ ⚑ IGNORE it → Lambient comes anyway', 'phoneIgnored'],
   ['↳ the law is enacted', 'phoneVoted'],
   ['↳ ⚑⚑ THE CASCADE — it starts', 'phoneCascade'],
-  ['↳ ⚑⚑ outnumbered, and the board is still there', 'phoneAfter'],
+  ['↳ ⚑⚑ outnumbered (the phone alone)', 'phoneAfter'],
+  // ⚑ S426 (UiB job 35 Part D, Act III) — the storyboard's Malta, conducted on the monitor
+  ['⚑ S426 · Bea\'s news, the group wide in the board\'s place', 'maltaNews'],
+  ['↳ the campaign kit (URGENT, after the news)', 'maltaKit'],
+  ['↳ ⚑⚑ the review in the chat, then the forwards', 'maltaReview'],
   ['⚑ the phone · FloppySheep (home screen icon)', 'floppy'],
   ['↳ FloppySheep · running', 'floppyPlay'],
   ['↳ FloppySheep · ⚑ the finale (the song at 4:15)', 'floppyFinale'],

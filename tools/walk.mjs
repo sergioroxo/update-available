@@ -173,6 +173,14 @@ const DOOR = flag('door', 'vr') === 'here' ? 'here' : 'vr';
  *  tape watched to its end, then its body to set it back by the door. `notnow`: Not now, and the set is never touched (it
  *  stays lit by the door; the walk proves 2016 runs whole without it). */
 const HEARTWOOD = flag('heartwood', 'bring') === 'notnow' ? 'notnow' : 'bring';
+/** ⚑ S426 (UiB job 35 Part D, Act III beat 14; his 23 Nov call 4: "Vera can press \"Forward the link\" herself. — yes") —
+ *  `--forward yes|no` (default no): "↪ Forward the link", her one act in the group while the forwards run. `yes`: pressed once
+ *  (on the Handset Window, as a visitor presses it); `no`: never — the walk proves the update comes either way (storyboard §6).
+ *  `--kit down|approve`: the one kit choice (beat 12) — Take my story down, or Approve kit — then Back to today; by default
+ *  `down` with `--forward yes` and `approve` with `--forward no`, so the two doors' walks take both. (The PRIORITY ALERT's OK,
+ *  the takeover's OK, her reply to Bea and the Review page's Back are retired with what they answered.) */
+const FORWARD = flag('forward', 'no') === 'yes' ? 'yes' : 'no';
+const KIT = (() => { const k = flag('kit', ''); return k === 'approve' || k === 'down' ? k : FORWARD === 'yes' ? 'down' : 'approve'; })();
 const MAX_STEPS = Number(flag('max', 320));
 /** ⚑ S332 — `--refuse`: in 2016 the walker refuses every job (Skip, Leave it off, Don't send a script, Not this week,
  *  the kit left unapproved) and never presses a comply control, to prove the system carries the day without her. */
@@ -220,7 +228,8 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 const PREFER = [
   // ⚑ S425 (UiB job 35 Part D, Act II) — 2016's memory: Look back (never its Not now), See what you wrote, then Close (Kindredraft's
   //   Install, As sent and Close record are retired; her Notes come with her own words on the page, or over the board after Close)
-  /^vera-send$|^memory-look$|^memory-see$|^vera-kit-approve$|^vera-take-down$/i,
+  // ⚑ S426 — and her forward in the group (only ever a candidate with --forward yes: guidedAllows)
+  /^vera-send$|^memory-look$|^memory-see$|^vera-kit-approve$|^vera-take-down$|^mirror:forward-link$/i,
   /^vera-send-close$|^memory-close$|^vera-kit-close$/i,
   // ⚑ S245 — the opening film (96 s) is MANDATORY and has no Skip: Show me is the only way on, and the walker sits
   //   the whole film out (stallCap below; the scripted entrance waits for the step after it).
@@ -1027,8 +1036,12 @@ async function main() {
     if (id === 'icon-provotype-intake' && (st?.era !== 'e1' || led?.provotypes?.some(p => p.id === 'origin_intake_e1'))) return false;
     // The phone is private optional reading now. The minimum visitor never needs to press it.
     if (st?.era === 'e3') {
-      // her one reply to Bea is the only press on the phone the walk makes (it is optional: Malta runs on without it)
-      if ((t.surface === 'phone' || id.startsWith('mirror:')) && !(id === 'mirror:reply-bea' && !REFUSE)) return false;
+      // ⚑ S426 — "↪ Forward the link" is the only press on the phone the walk makes, and only with --forward yes (it is optional:
+      //   the update comes without it). Her reply to Bea (S332) is retired; ▲ ▼ on the wide group are a reader's presses.
+      if ((t.surface === 'phone' || id.startsWith('mirror:')) && !(id === 'mirror:forward-link' && FORWARD === 'yes')) return false;
+      // ⚑ S426 — the kit: one choice (--kit), then Back to today
+      if (id === 'vera-take-down' && KIT !== 'down') return false;
+      if (id === 'vera-kit-approve' && KIT !== 'approve') return false;
       if (/^win-min$|^task-restore$/.test(id)) return false;
       // ⚑ S424 — the board's This week button reopens the card she has read: a reader's press, never the way on (Begin is)
       if (id === 'week-open') return false;
@@ -2058,6 +2071,7 @@ async function main() {
     walkPolicy: GUIDED_WALK ? 'guided' : 'explore',
     door: DOOR,   // ⚑ S414 — Act III's door this walk took (--door vr|here)
     heartwood: HEARTWOOD,   // ⚑ S424 — 2016's offer of Heartwood, as this walk answered it (--heartwood bring|notnow)
+    forward: FORWARD, kit: KIT,   // ⚑ S426 — her forward in the group (--forward yes|no) and the one kit choice (--kit down|approve)
     menuCheck,   // ⚑ S417 — 2026's Menu, opened once at beat 1's answers and closed
     steps: log.length, presses: presses.length, turns,
     reachedEra: final.era, spine: final.spine,

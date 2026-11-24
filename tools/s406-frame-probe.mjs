@@ -356,6 +356,34 @@ const SCENES = {
     out.errors = errors; await page.close();
     return out;
   },
+  /** ⚑ S426 (UiB job 35 Part D, Act III beats 13–14) — the group wide in the board's place while the platform removes the news in the
+   *  chat (e3removal: the outline marching, a message greyed and folded) and while the forwards land faster than it can follow
+   *  (e3cascade: a message every 0.75 s, two forwards greyed and folded). A review aid lands there (`maltaReview`: the kit closed,
+   *  the review asked for; the walk proves the route). Today's build has no such beat: `phoneCascade` puts its takeover's
+   *  cascade up (the Review page on the board, the forwards on the Handset Window) — the "before" of e3cascade. */
+  async e3review(mode, want) {
+    const out = {};
+    const { page, cdp, errors } = await open('?reinterp=1&kiosk=0&era=3&debug=1&home=0', mode);
+    await ready(page, mode);
+    await page.waitForFunction(() => window.__camPose && window.__graceQueue?.() && window.__xrComfort, { timeout: 180000 });
+    await settle(page); await wait(2500);
+    if (mode === 'xr') await calibrate(page);
+    const built = await page.evaluate(() => {
+      const q = window.__graceQueue(); q.debugBeat('board'); q.pauseOpen = false; q.lambPriority = false; q.lambLines = null;
+      if ('maltaConduct' in q) { q.debugBeat('maltaReview'); return 'storyboard'; }
+      q.debugBeat('phoneCascade'); return 'today';
+    });
+    out.built = built;
+    if (built === 'storyboard') {
+      await page.waitForFunction(() => window.__graceQueue().phone.reviewState?.phase === 'outline', { timeout: 30000 }).catch(() => {});
+      if (want.has('e3removal')) { await throttle(cdp, true); out.e3removal = await measure(page, cdp, SECONDS); await throttle(cdp, false); }
+      await page.waitForFunction(() => window.__graceQueue().phone.cascadeOn, { timeout: 60000 }).catch(() => {});
+    } else await wait(1500);
+    if (want.has('e3cascade')) { await throttle(cdp, true); out.e3cascade = await measure(page, cdp, SECONDS); await throttle(cdp, false); }
+    out.review = await page.evaluate(() => { const q = window.__graceQueue(); return { wide: q.mirrorWide ?? null, state: q.phone.reviewState ?? null, cascadeN: q.phone.cascadeN }; });
+    out.errors = errors; await page.close();
+    return out;
+  },
   async e2(mode, want) {
     const out = {};
     const { page, cdp, errors } = await open('?reinterp=1&kiosk=0&era=2&debug=1&home=0', mode);
@@ -411,7 +439,10 @@ const ROWS = [
   { key: 'e3tvheld', scene: 'e3tv', where: '2016: the Lamby set brought (the training: beside the monitor, stopped)', optIn: true },
   { key: 'e3tvplay', scene: 'e3tv', where: '2016: the Lamby set playing (brought)', optIn: true },
   // S425: 2016's memory page with her Notes typing over its right half (only when asked: --only e3notes)
-  { key: 'e3notes', scene: 'e3notes', where: '2016: her Notes typing over the memory page', optIn: true }
+  { key: 'e3notes', scene: 'e3notes', where: '2016: her Notes typing over the memory page', optIn: true },
+  // S426: 2016's Act III, the group wide: the review removing the news, then the forwards outrunning it (--only e3removal,e3cascade)
+  { key: 'e3removal', scene: 'e3review', where: '2016: the review removing the news in the group (wide)', optIn: true },
+  { key: 'e3cascade', scene: 'e3review', where: '2016: the forwards outrunning the review (the cascade)', optIn: true }
 ].filter((r) => (!ONLY && !r.optIn) || ONLY.split(',').includes(r.key));
 
 const report = { label: LABEL, port: PORT, throttle: THROTTLE, seconds: SECONDS, at: new Date().toISOString(), rows: [] };

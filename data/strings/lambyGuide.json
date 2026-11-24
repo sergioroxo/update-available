@@ -219,34 +219,6 @@
         ],
         "act": "focus:task-0"
       },
-      "phone": {
-        "tip": "The campaign kit is on the platform. Either answer continues.",
-        "here": "The controls are below the kit.",
-        "again": "Approve the kit or return to Today.",
-        "target": [
-          "vera-kit-approve",
-          "vera-kit-close",
-          "board-back"
-        ],
-        "act": "focus:vera-kit-close"
-      },
-      "vote": {
-        "tip": "Bea's news from Malta is coming to the group.",
-        "here": "It comes to the phone, beside the platform.",
-        "again": "The news is on its way to the phone.",
-        "target": [
-          "link",
-          "link2"
-        ]
-      },
-      "cascade": {
-        "tip": "The day can stay open while the messages arrive.",
-        "here": "Today is still on the platform.",
-        "again": "The next update will arrive here.",
-        "target": [
-          "board-back"
-        ]
-      },
       "update": {
         "tip": "GracePlatform will ask about its update once more. Update now carries on.",
         "here": "The notice comes back on this screen.",
@@ -321,7 +293,38 @@
           "board-back"
         ],
         "act": "focus:task-3"
-      }
+      },
+      "_retiredS426": {
+        "vote": {
+          "tip": "Bea's news from Malta is coming to the group.",
+          "here": "It comes to the phone, beside the platform.",
+          "again": "The news is on its way to the phone.",
+          "target": [
+            "link",
+            "link2"
+          ]
+        },
+        "cascade": {
+          "tip": "The day can stay open while the messages arrive.",
+          "here": "Today is still on the platform.",
+          "again": "The next update will arrive here.",
+          "target": [
+            "board-back"
+          ]
+        },
+        "phone": {
+          "tip": "The campaign kit is on the platform. Either answer continues.",
+          "here": "The controls are below the kit.",
+          "again": "Approve the kit or return to Today.",
+          "target": [
+            "vera-kit-approve",
+            "vera-kit-close",
+            "board-back"
+          ],
+          "act": "focus:vera-kit-close"
+        }
+      },
+      "_retiredS426Why": "⚑ S426 (UiB job 35 Part D, Act III; his 23 Nov yes to the storyboard: \"Lambient says nothing unasked in beats 11–14\") — the stall hints `vote` (\"Bea's news from Malta is coming to the group.\" …) and `cascade` (\"The day can stay open while the messages arrive.\" …) are retired: the news and the removal are conducted, wide on the monitor, and nothing of Lambient's is said over the group (felt); `phone` (the kit's hint under the map's retired \"The phone\" beat) went with that beat. The kit's own hint (`vera-kit`) is kept. Help she asks for still answers with the map's hint (lambyGuide.ts)."
     },
     "e4": {
       "_docS321": "⚑ S321 — 2026 v3. One step per map beat that is not quiet (felt beats — eighteen, Mum, Dad, left, Junie — are silent: Lamby never speaks over a person). Every target id is a live rect at that step (tools/lamby-guide-test.mjs checks the shape; the tour photographs each). `act` presses navigation only, never an answer.",

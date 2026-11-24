@@ -79,8 +79,9 @@ export function drawRetainedCopies(ctx: CanvasRenderingContext2D, a: SurfaceRect
     if (i === 2) text(ctx, D.record.sentText.split('. ')[0] + '.', xx + 10, top + 60, cw - 20, 10, 13, P.greyDk);
     studioFont(ctx, 9, true); ctx.fillStyle = P.greyDk; ctx.fillText(D.visual.retainedStates[i], xx + 10, top + 115);
   }
-  let yy = top + 149;
-  for (const line of D.kit.receipt.slice(1)) yy += text(ctx, line, a.x + 14, yy, a.w - 28, 12, 16) + 3;
-  text(ctx, approved ? D.kit.approved : D.kit.consent, a.x + 14, yy + 3, a.w - 28, 11, 14, P.greyDk);
+  // ⚑ S426 (Act III beat 12; his 20 Nov 16-15) — one line, at the top ("Taken down from SisterSignal. The copies stay. Original
+  //   kept."): the receipt's second line ("Original retained under Terms §4.") and the consent line under the cards are retired
+  //   (s3_vera.json kit `_retiredS426`); the three copies are as built. `approved` no longer changes what is said here.
+  void approved;
   control(ctx, hit, 'vera-kit-close', D.kit.back, a.x + a.w - 170, a.y + a.h - 30, 156);
 }

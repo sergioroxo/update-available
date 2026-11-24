@@ -2761,7 +2761,7 @@
     ],
     [
      "Beats",
-     "16"
+     "15"
     ]
    ],
    "tabs": {
@@ -4109,9 +4109,15 @@
         "where": "Where: the workstation."
        },
        {
+        "label": "Bea’s news",
+        "opt": "",
+        "hint": "After Nuala’s message, Bea’s news from Malta comes to the group, opened wide on the monitor. ▲ ▼ look back.",
+        "where": "Where: the group, wide on the monitor."
+       },
+       {
         "label": "The campaign kit",
         "opt": "",
-        "hint": "After Nuala’s message, the campaign kit opens. Approve it or return to Today. Take my story down is optional.",
+        "hint": "After Bea’s news, the URGENT pop-in: Open the kit. Approve it, take your story down, or go back to Today.",
         "where": "Where: the workstation."
        },
        {
@@ -4121,27 +4127,15 @@
         "where": "Where: the workstation."
        },
        {
-        "label": "The phone",
+        "label": "The group, outnumbered",
         "opt": "",
-        "hint": "Her phone is mirrored beside the platform. Each finished job brings a message there.",
-        "where": "Where: the mirrored phone beside the platform."
-       },
-       {
-        "label": "The vote",
-        "opt": "",
-        "hint": "When the campaign kit closes, Bea shares the news from Malta in the group, beside the platform.",
-        "where": "Where: the mirrored phone beside the platform."
-       },
-       {
-        "label": "The group",
-        "opt": "",
-        "hint": "GracePlatform removes the messages by itself. The group forwards them faster.",
-        "where": "Where: the mirrored phone beside the platform."
+        "hint": "With the kit closed, GracePlatform removes the news from the group, one message at a time. The women forward it faster. ↪ Forward the link is hers, if she wants.",
+        "where": "Where: the group, wide on the monitor."
        },
        {
         "label": "The update",
         "opt": "",
-        "hint": "The system update follows the group’s cascade.",
+        "hint": "The system update follows once the review could not keep up.",
         "where": "Where: the workstation."
        }
       ]
