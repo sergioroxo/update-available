@@ -20,6 +20,10 @@ def pick(name, pred, last=False):
     c = [e for e in shots if pred(e)]
     if c: picks[name] = (c[-1] if last else c[0])['file']
 if which == 'after':
+    # ⚑ S426e (his 24 Nov: "there was no way to scroll") — scrolled up during the news, the "▼ New messages" pill, back at the bottom
+    pick('scroll_up', lambda e: e.get('why') == 'scroll-up')
+    pick('scroll_new-messages', lambda e: e.get('why') == 'scroll-new-messages')
+    pick('scroll_bottom', lambda e: e.get('why') == 'scroll-bottom')
     # ⚑ S426 (his 24 Nov, on S425's beat 10: "misaligned and on top of another layer") — her Notes, in the window's own column
     pick('notes_typing', lambda e: 'refTyping:part' in g(e).get('q', ''), last=True)
     pick('notes_written', lambda e: 'refTyping:all' in g(e).get('q', ''), last=True)

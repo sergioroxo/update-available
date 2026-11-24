@@ -1332,6 +1332,8 @@ async function main() {
   /** ⚑ S396 — each Lamby tape's furthest second while held, its length, whether it played to its end (the notes' `tape`) */
   const tvWatch = {};
   let heartwoodNoted = false;
+  /** ⚑ S426e — the scroll check during Bea's news (see the loop) */
+  const scrollCheck = { phase: 0, ups: 0, sawBeaFirst: false, newMessages: 0, keptPlace: false, back: false };
   const pressed = new Map();
   /**
    * ⚑ KEYED ON THE COARSE STATE, NOT ON THE FULL CONTROL SET, and run 22 is why.
@@ -1555,6 +1557,41 @@ async function main() {
       break;
     }
     if (s.silent.length) continue;
+
+    /**
+     * ⚑ S426e (his 24 Nov: "there was no way to scroll through the messages") — THE SCROLL CHECK, once, while Bea's news lands in
+     * the group (the Handset Window's column): the walker presses "▲ Earlier messages" (as a visitor does, on the window) until Bea's
+     * first line is in the drawn list again (at most three presses), waits for a message to land under her (the bottom pill then
+     * reads "▼ New messages", her place kept), and presses it back to the bottom. What it saw is noted (`scroll-check`) and goes in
+     * the walk's JSON (`scrollCheck`).
+     */
+    if (s.era === 'e3' && scrollCheck.phase < 3) {
+      const g = await page.evaluate(() => { const q = window.__graceQueue?.(); const p = q?.phone; return p ? { stage: p.stage, newsN: p.newsN, view: p.groupView, screen: p.screen } : null; }).catch(() => null);
+      const up = s.targets.find((t) => t.id === 'mirror:scroll-up'), down = s.targets.find((t) => t.id === 'mirror:scroll-down');
+      if (g && g.screen === 'group' && (g.stage === 'news' || g.stage === 'read' || g.stage === 'takeover')) {
+        if (scrollCheck.phase === 0 && g.newsN >= 3 && up && !g.view.keys.includes('n0')) {
+          scrollCheck.phase = 1;
+          scrollCheck.before = g.view.keys;
+        }
+        if (scrollCheck.phase === 1) {
+          if (g.view.keys.includes('n0') && g.view.userScrolled) { scrollCheck.phase = 2; scrollCheck.sawBeaFirst = true; scrollCheck.scrolled = g.view; scrollCheck.since = Date.now(); note('scroll-check', { what: `▲ pressed ${scrollCheck.ups}×: Bea's first line is in the drawn list (${g.view.keys.join(',')})`, era: s.era }); s = await probe(); continue; }
+          if (up && scrollCheck.ups < 3) { scrollCheck.ups++; stalls = 0; s = await press(up, s); continue; }
+          scrollCheck.phase = 3; scrollCheck.failed = 'Bea\'s first line not reached'; note('scroll-check', { what: 'FAILED: ' + scrollCheck.failed, era: s.era });
+        }
+        if (scrollCheck.phase === 2) {
+          const waited = (Date.now() - scrollCheck.since) / 1000;
+          if (down && (g.view.unseen > 0 || waited > 20)) {
+            scrollCheck.newMessages = g.view.unseen; scrollCheck.keptPlace = g.view.keys.includes('n0');
+            stalls = 0; s = await press(down, s);
+            const a = await page.evaluate(() => window.__graceQueue?.()?.phone?.groupView ?? null).catch(() => null);
+            scrollCheck.back = !!a && a.scrollBack === 0; scrollCheck.after = a?.keys ?? []; scrollCheck.phase = 3;
+            note('scroll-check', { what: `"${g.view.unseen > 0 ? 'New messages' : 'Latest'}" pressed with ${g.view.unseen} new below (her place kept: ${scrollCheck.keptPlace}); back at the bottom: ${scrollCheck.back}`, era: s.era });
+            continue;
+          }
+          await wait(1000); s = await probe(); continue;
+        }
+      }
+    }
 
     /**
      * ⚑ S394 — THE LAMBY SET (UiB job 27 B3). The piece brings the set to the visitor: Lamby's line appears in view, then the
@@ -2072,6 +2109,7 @@ async function main() {
     door: DOOR,   // ⚑ S414 — Act III's door this walk took (--door vr|here)
     heartwood: HEARTWOOD,   // ⚑ S424 — 2016's offer of Heartwood, as this walk answered it (--heartwood bring|notnow)
     forward: FORWARD, kit: KIT,   // ⚑ S426 — her forward in the group (--forward yes|no) and the one kit choice (--kit down|approve)
+    scrollCheck,   // ⚑ S426e — ▲ during Bea's news until her first line is drawn, then "▼ New messages" back to the bottom
     menuCheck,   // ⚑ S417 — 2026's Menu, opened once at beat 1's answers and closed
     steps: log.length, presses: presses.length, turns,
     reachedEra: final.era, spine: final.spine,

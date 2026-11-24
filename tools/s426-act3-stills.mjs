@@ -183,7 +183,7 @@ const sigOf = () => page.evaluate(() => {
       // ⚑ S426 — Act III: the phone's stage, the news landed, the forwards in (by fours), the removals and the one in hand, her
       //   forward, the group window's width; today's alert, reply and takeover
       ph?.stage ?? '', 'n' + (ph?.newsN ?? 0), 'c' + Math.floor((ph?.cascadeN ?? 0) / 4), 'r' + (ph?.removed?.size ?? 0),
-      ph?.reviewing ? 'rv:' + ph.reviewing.key + ':' + ph.reviewing.phase : '', ph?.forwarded ? 'fwd' : '', 'w' + (q.mirrorWide ?? 0),
+      ph?.reviewing ? 'rv:' + ph.reviewing.key + ':' + ph.reviewing.phase : '', ph?.forwarded ? 'fwd' : '', 'w' + (q.mirrorWide ?? (q.cascadeConduct ? 1 : 0)),   // S426e: w1 = the group conducted (in its column since S426e; wide at 9974fe1f)
       q.maltaAlertT >= 0 ? 'alert' : '', ph?.takeoverAlert ? 'talert' : '', ph?.replyOffered ? 'reply' : '', q.takenDown ? 'down' : '',
       q.kitApproved ? 'approved' : ''].join('|');
   }
@@ -239,6 +239,7 @@ const TRAINING = await page.evaluate(() => 'watch' in (window.__graceQueue?.() ?
 console.log('build:', TRAINING ? 'the training (S424)' : 'today');
 const started = Date.now();
 let step = 0, tvHeldAt = 0, played = false, nualaIn = false, lastTimed = 0;
+const scroll = { phase: 0, ups: 0, done: false };   // ⚑ S426e — the scroll check
 const seenAt = new Map(), done = new Set();
 const HARD_STOP = 24 * 60 * 1000;
 const moved = () => page.evaluate(() => {
@@ -280,6 +281,23 @@ while (Date.now() - started < HARD_STOP) {
   for (const id of live) if (!seenAt.has(id)) seenAt.set(id, Date.now());
   for (const id of [...seenAt.keys()]) if (!live.has(id)) seenAt.delete(id);
   const readFor = (id) => (Date.now() - (seenAt.get(id) ?? Date.now())) / 1000;
+  // ⚑ S426e — the scroll check during Bea's news (as the walker does it): ▲ until Bea's first line is drawn, then, once a message
+  //   has landed under her (the bottom pill reads "▼ New messages"), that pill back to the bottom; each moment photographed
+  if (!scroll.done) {
+    const gv = await page.evaluate(() => { const p = window.__graceQueue?.()?.phone; return p && p.groupView ? { stage: p.stage, newsN: p.newsN, view: p.groupView, screen: p.screen } : null; });
+    if (gv && gv.screen === 'group' && gv.stage === 'news') {
+      if (scroll.phase === 0 && gv.newsN >= 3 && live.has('mirror:scroll-up') && !gv.view.keys.includes('n0')) scroll.phase = 1;
+      if (scroll.phase === 1) {
+        if (gv.view.keys.includes('n0') && gv.view.userScrolled) { scroll.phase = 2; await wait(900); await shoot('scroll-up'); continue; }
+        if (live.has('mirror:scroll-up') && scroll.ups < 3) { scroll.ups++; await doPress('mirror:scroll-up', sig, 'scroll'); continue; }
+        scroll.done = true;
+      }
+      if (scroll.phase === 2 && gv.view.unseen > 0 && live.has('mirror:scroll-down')) {
+        await wait(1500); await shoot('scroll-new-messages');
+        await doPress('mirror:scroll-down', sig, 'scroll'); scroll.done = true; await wait(900); await shoot('scroll-bottom'); continue;
+      }
+    }
+  }
   // the set in her hands: (the training) ▶ once it has arrived stopped; she watches TAPE_WATCH s of it, then sets it down
   const held = /^held/.test(g.tv);
   if (held && !tvHeldAt) tvHeldAt = Date.now();
@@ -324,8 +342,10 @@ while (Date.now() - started < HARD_STOP) {
   await wait(400);
 }
 const actThree = await actThreeSummary().catch(() => null);
+// ⚑ S426e — Act III's pace: each landing and removal step on the era's clock (phoneE3 landLog)
+const landLog = await page.evaluate(() => window.__graceQueue?.()?.phone?.landLog ?? []).catch(() => []);
 console.log('ACT III', JSON.stringify(actThree));
-fs.writeFileSync(path.join(OUT, 'log.json'), JSON.stringify({ mode: MODE, view: VIEW, heartwood: HEARTWOOD, memory: MEMORY, forward: FORWARD, kit: KIT, route: ROUTE, actThree, log, errors }, null, 1));
+fs.writeFileSync(path.join(OUT, 'log.json'), JSON.stringify({ mode: MODE, view: VIEW, heartwood: HEARTWOOD, memory: MEMORY, forward: FORWARD, kit: KIT, route: ROUTE, actThree, landLog, scroll, log, errors }, null, 1));
 console.log('done', shotN, 'stills; route step', step, 'of', ROUTE.length, '; errors', errors.length, errors.slice(0, 3));
 await Promise.race([browser.close(), wait(8000)]);   // S425: a close that hangs must not hold the run (the .done file waits on it)
 process.exit(0);
