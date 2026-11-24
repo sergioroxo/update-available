@@ -81,3 +81,5 @@ has debugged a device before), Google Chrome, Meta Quest Remote Desktop. Not ins
 
 Nothing here changes the piece. Anything built from what the console shows is its own session, walked, and pushed only
 on his yes.
+
+**Added 24 Nov (S357gf), his words: "remember that we want to connect the headset to the computer and to be able to run the screenshot system of casting".** The same cable session runs the job 35 trial first: `HEADSET_TRIAL_2026-11-24.md` (the Mac follows the game with `tools/trial-watch.mjs`; headset pictures by `adb exec-out screencap`; the report by `tools/trial-report.mjs`). Then step 5 (`?quad=1`).
