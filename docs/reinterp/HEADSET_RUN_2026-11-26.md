@@ -430,3 +430,17 @@ His "it should open a specific window of the Notes app and show there" reads as:
 - What brought the set at 22:07:48.
 - Which mesh pops.
 - What "moved places" (finding 16) and "the upper player" mean.
+
+---
+
+## His answers (26 Nov, after the reading)
+
+- **The clock:** "We had already talked about removing the limitations being clock based. The clock could be the real
+  time, there is no need to have them like that" → `UIB_JOB_38_2026-11-26.md` A (read as: nothing in 2016 waits on a
+  clock that can stop; the clock she sees is the real time of day; his edit wins).
+- **LambyVision, where:** "beside the monitor" → `UIB_JOB_39_2026-11-26.md` C.
+- **The training:** "It should welcome right from the start to the turtoral of the system. Like this needs that logic
+  of someone being introduced to the system" → `UIB_JOB_40_2026-11-26.md`.
+- **The music:** "Why? What is the logic of stopping there? either the music is part of the scene or not" →
+  `UIB_JOB_38_2026-11-26.md` D (it plays through the scene; lowers under a sound of its own, never restarts).
+- Still open, no hurry: "now it's out of moved places" (finding 16) and "the upper player" (answer d): ask him.
