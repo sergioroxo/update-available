@@ -113,3 +113,8 @@ sit beside the grid, marked "in the headset, that day":
 - **F.** His Downloads folder: the camera button's `uhf_reinterp_*.png` may fill the July gap (his action).
 - **G.** The 7 June concept image in the article as it is, captioned? **My pick: yes.**
 
+**His answer to D–G (26 Nov):** "On your picks. You can build the grids, but also have the files without the grid in case
+I wish to do a diffrent design." → D yes, E add 7 Sep and 1 Nov (twelve dates), G as is. **The job delivers the loose
+files too**: every picture named `<date>_<era>_<view>.png` in one folder, beside the grids, so he can lay them out himself.
+F: his Downloads copy (`~/Pc_Simulation/From Downloads/`) fills part of June and July (sweep §8).
+

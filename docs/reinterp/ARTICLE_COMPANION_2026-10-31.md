@@ -1208,6 +1208,80 @@ in a model's words, from my ideas."
 - "Accountable" means traceable and refusable, not that a model bears responsibility the way he does. The ethics
   calls stay his (CLAUDE.md).
 
+## 7x. How it started: TransJesus and the search simulator, then the branching (his ask, 26 Nov 2026)
+
+*His words, 26 Nov, on the T63 sweep: "We should make sure we can have that information on the article, as it is relevant
+how this all started as the transjesus and than branched out". Sources: `RESEARCH_NOTE_EARLY_VERSIONS_2026-11-18.md`
+(§0-pre, §0a, §0b, §0-sweep), `T63_SWEEP_JANUARY_TO_NOW_2026-11-26.md`, the knowledge base's PRD v3.0, and
+`Trans-Jesus.md` itself (its opening read 26 Nov). Dates say what kind of date they are; [VERIFY] where they are inferred.*
+
+### The line, in eight steps
+
+1. **Before 2026: the opposite project.** His PhD proposal, *ConversionEU*, planned a non-fiction VR built from survivors'
+   testimonies, the "empathy machine" form. The songs of March 2025 ("Turn for Me", his lyrics; "Therapy of Truth", with
+   his note that AI music is "for the teaching part … about the AI usage and the potential risk") are the earliest dated
+   trace of the AI strand.
+2. **13 January 2026, one chat, two ideas** (Microsoft Copilot, his UiB account; his date). Planning his PhD, he names the
+   first two pieces for the WebVR slot: "a play on the online jesus livestreams, but now from a conversion therapy and a
+   TransJesus counter narrative", and "a 'google search simulator that promotes you to conversion therapy by suggesting
+   you info from your search'". **These are the two roots.**
+3. **26 January: TransJesus is the first idea written down.** `Trans-Jesus.md` is the oldest file of the project. It is a
+   chat model's expansion of his idea (it opens "Below is a refined, expanded … version of your Trans-Jesus Livestream
+   idea"): "a speculative livestream performance where a Trans Jesus counters the audiovisual techniques of
+   conversion-therapy propaganda", a channel called "Trans Jesus Ministries Live", copying the form of evangelical streams
+   and changing the message. Its date matches the 26 January stamp on the Copilot thread, so it is probably Copilot's
+   [VERIFY].
+4. **14 February: the search simulator becomes a computer** (ChatGPT). "I was kind of considering doing like a computer …
+   a simulator inside of a computer", with mini games inside it; an "AI Jesus that targets you"; and "Turn For Me" as a
+   swipe game where "every swipe always go[es to] the queer option": the rhetoric of failure before it had that name.
+5. **March: the branches grow as games.** JUST CHANGE™ (13–19 Mar), where the law "Maximum sugar → earned darkness" is
+   written (15 Mar); Clay and Soul; Turn For Me as a "conducted narrative", "like a directed film" (30 Mar – 5 Apr). The
+   tools multiply: Claude Code first started 2 Mar, Codex from 19 Mar, GitHub Copilot, Suno and Sonauto. On 29 March a
+   claude.ai chat writes the PC Simulator's first design document (login as targeting, three acts).
+6. **April: one shell to hold the branches.** The knowledge base's PRD v3.0 (committed 14 Apr) gathers them as
+   "applications" of one experience "styled as a retro computer/OS shell", "as if exploring a machine that holds
+   suppressed information": JUST CHANGE™, the WebSearch Simulation, **Trans Jesus Ministries Live** (§9.6, "Speculative
+   evangelical livestream. Counter-sermons, queer theology"), the **PC Simulator** (§9.8, "Three-act narrative (profile →
+   targeting → no clean exit)"), SOGICEfy and HOPE TV. Its law for all of them: "darkness is earned through compliance,
+   not announced". Lesbianka and the HOPE TV control room are built that month.
+7. **May: provotypes, then a restructure.** "provo-types (provocative prototypes)" in his words (3 May); Fruit Pie Fury
+   (from 14 May); on 16 May the games become "a collection space of mini-games"; on 3 June the "Queer Use" arcade:
+   "I Don't think we need to create a RPG".
+8. **June: the simulator takes the other branches in.** An ArenaAI trial builds a Windows 95 simulator (about 5–10 Jun
+   [VERIFY start]). On 7 June a ChatGPT concept puts both roots on one desktop: **"AI Jesus.exe"** and **"Google Simulator –
+   Surveillance Edition"**. The same evening the PC Simulator's design document and its first Claude Code session; the
+   repository on 12 June.
+
+### Where each branch went in the piece
+
+| branch (first dated) | what it became |
+|---|---|
+| TransJesus livestream (13 / 26 Jan) | **`transjesus.str`**, the birthday stream for trans youth on Maya's wall, which fills her monitor at the end of 2026: the counter-stream, in the respite register. The first idea written down is in the last era. |
+| Google search simulator (13 Jan, 14 Feb) | the 2026 search, "People also ask", the answer box; the system as a search that steers |
+| "a simulator inside of a computer" (14 Feb), the OS shell (14 Apr) | the four operating systems, 1997 → 2026; the update as the era change |
+| AI Jesus that targets you (14 Feb) | the assistant through the eras (Helpy → Aski → Sol → Ami™), Lamby, the AI host of 2026 |
+| Turn For Me, "every swipe … the queer option" (14 Feb) | the rhetoric of failure in the piece's games: the programme's game cannot be won |
+| "AI Image Changer (seeing yourself as straight)" (Mar) | the Restoration tool / the filter (2026) |
+| the songs (Mar 2025; Sonauto) | the jingles and the tapes; the AI-music finding |
+| "darkness earned" (15 Mar, 14 Apr) | the tone law: "victim side grounded ('darkness earned')" |
+| the archive (PRD, Apr) | the knowledge base behind the Dossier, the Lexicon and the Close |
+
+### What the article can say
+
+> The piece began as two speculative counter-media ideas in January 2026, a TransJesus livestream and a search
+> simulator, written down in conversation with a chat model. Over five months they branched into a family of games,
+> songs and interfaces across several AI tools, until an April plan gathered them as applications of one retro computer.
+> By June the computer had absorbed the rest. The first idea written down, the TransJesus stream, returns as the last
+> scene of the final era, where the system's own form (the livestream) is taken back.
+
+### Do not overclaim
+
+- **"Started as TransJesus" needs care:** the 13 January chat names TransJesus and the search simulator together. What
+  is true is that **TransJesus is the first idea written down** (26 Jan), and that it is the one that survives to the end.
+- `Trans-Jesus.md` is a model's expansion of his idea, not his own text; quote it as that.
+- The 13 January date is his; the share link carries 26 January. The 7 June concept is ChatGPT's picture, not a build.
+- The sister games are sister work: they share the programme, not the piece's code.
+
 ## 8. What the article must not overclaim
 
 - **Headset and phone timing are not verified by instruments.** Every VR check here is an emulated headset in a desktop

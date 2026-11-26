@@ -117,3 +117,27 @@ frames are already beside it).
   orchestrator can read, or let it in. (His action; nothing is changed by the orchestrator.)
 - **G. The 7 June concept image in the article:** as it is, captioned as a ChatGPT concept whose real marks the piece
   later removed, or cropped? **My pick: as it is, captioned.**
+
+## 8. His answers, and what came after (26 Nov, later the same day)
+
+- **D, E, G:** "On your picks. You can build the grids, but also have the files without the grid in case I wish to do a
+  diffrent design" → the sister games go in the strip, marked; 7 Sep and 1 Nov are added; the 7 Jun image is used as it
+  is, captioned. **Every picture is also delivered as a loose file**, named by date, era and view, beside the grids.
+- **F:** he copied his Downloads and screenshots to `~/Pc_Simulation/From Downloads/` (169 files; "For YUHF" 78, "For
+  JustChange" 89). For the piece it adds pictures of **9, 12, 13 and 17 June, 25 June, 5–7 July, 25 July and 30–31 July**:
+  the first build from the seat (13 Jun), an early "Restorify – the Daily Realignment" screen with Lamby (17 Jun), the
+  first 2016 room, "SisterSignal" (25 Jun), ChatGPT concepts of the rooms (5 Jul), the Lamby Rig (25 Jul). None of the
+  camera button's `uhf_reinterp_*` pictures were in it. **8–24 July still has no picture** (only the jingles of 11–12 Jul).
+  Copies: `research/article-images-2026-11-26/` (early-concepts/ also on OneDrive).
+- **The Claude session records of 27 Mar – 29 Apr** are not locked to an account: each record says
+  `transcriptUnavailable: true` and `isArchived: true`. They were local sessions, so their conversations were files on
+  this Mac, removed by Claude Code's automatic clean-up (30 days by default; the setting is 3,650 now, but the oldest
+  surviving log is 16 May). The one place they may survive is **his Time Machine disk** ("SGR_Time Machine", connected,
+  but macOS keeps it closed to the orchestrator): a backup from late April and one from mid-May, restored to a new folder.
+- **The April–May knowledge-base sessions** ran as Claude Code on the web: they can be read on claude.ai/code if he signs
+  in, in the in-app browser. **The ArenaAI conversations** likewise.
+- **Codex:** no prompt needed. The conversations are on the Mac; all 599 are now readable in
+  `research/codex-conversations-2026/` (INDEX.md by date).
+- **The article:** the start (TransJesus and the search simulator, then the branching) is written up as
+  ARTICLE_COMPANION §7x.
+
