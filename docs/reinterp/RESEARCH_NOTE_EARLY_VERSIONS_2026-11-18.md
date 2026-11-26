@@ -313,6 +313,13 @@ more data." Three read-only helpers searched the Mac; the result is `T63_SWEEP_J
 - **Earlier starts:** "provo-types" in his words on 3 May (Codex, N27); Fruit Pie Fury in Codex on 14 May (N28);
   "conducted narrative" for Turn For Me, 30 Mar–5 Apr (GitHub Copilot, N18); "Maximum sugar → earned darkness", 15 Mar (N10).
 - **Still missing:** `4346d730…jsonl` (10–30 June) is nowhere on the Mac; only Claude's memory notes from it survive (N37).
+- **Restored the same day from his Time Machine** (he restored `~/.claude/projects` from April, May and June backups to
+  `~/Pc_Simulation/From Time Machine/`): **25 Claude Code conversations, 27 March – 1 June 2026**, now readable in
+  `research/claude-conversations-restored-2026/` (INDEX.md; local). They include the 27 Mar–7 Apr JUST CHANGE / Turn For
+  Me / Who Wants to Be Converted sessions (Opus 4.6, Sonnet 4.6), Clay and Soul (10–23 Apr), Lesbianka (29 Apr), the
+  16 May restructure (29 turns) and the knowledge-base ingest (9–31 May). **`4346d730…` is not among them** (the June
+  backup predates it). Not yet read for this note: they are listed, not read.
+- **The April plan** (PRD v3.0) is set out whole, with where each module went, in `LANDSCAPE_THE_APRIL_PLAN_2026-11-26.md`.
 
 ## 0a. Added 18 Nov: earlier still, a Microsoft Copilot chat of 13 January 2026 (the PhD plan)
 
