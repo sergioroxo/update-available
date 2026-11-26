@@ -101,3 +101,34 @@ why it went black on 10 Nov. Meta's `metavr` stays optional, only with your yes 
 - `tools/trial-report.mjs`: the report. Tested on a made-up log (17/17 found).
 - If `adb exec-out screencap` turns out to give no picture of the VR view in the Quest, the cast pictures from the Mac's screen
   are the fallback (they are taken anyway).
+
+## The first run, 26 Nov 2026 (21:58–22:17, build 5d7cc91) — orchestrator S357gr
+
+*His words: "lets do the headset run later today", then "I've connected the headset", "Done". Report:
+`out/trial-2026-11-26/TRIAL_REPORT.md` (local; 247 headset pictures, 188 reads).*
+
+**How it went, technically**
+- The cable works: `adb exec-out screencap -p` gives the headset's own picture, both eyes, 4128 × 2208.
+- **`?era=3` has no VR door.** The era jumps are review mode, which skips the stars, and the stars are the only place
+  the session starts. What worked: open `?reinterp=1&debug=1`, enter VR in the stars, go through the setup, then the
+  orchestrator pressed the debug panel's `E3 2016` jump through the cable. Step 3 above is wrong; use this.
+- The Quest Browser opened an old tab of the piece (`?quad=0&xrscale=1.4`, from 10 Nov) instead of the new address, and
+  it kept running in the background; closed through the cable.
+- **`puppeteer.connect` to the Quest Browser hangs** (the browser endpoint never answers); the page's own websocket
+  answers at once. `tools/trial-watch.mjs` now talks to the page directly (default; `--puppeteer` for the old way).
+  Run it as `node --experimental-websocket --no-warnings tools/trial-watch.mjs --out … --frames adb` (Node 20).
+- With pictures every 4 s the loop reads the page about every 6 s, not every second (the 10 MB picture is slow).
+- The `?debug=1` readout is a dark plate in VR over the lower left of the monitor in every picture.
+
+**What the run reached:** 2016 from Sign in to the removal: checks 1–9 FOUND, 10–17 NOT FOUND (the ending, the update,
+the flight, 2026, the Close).
+
+**Why it stopped there (from the log and the pictures; his own account pending)**
+- After the kit (Take my story down, 22:14:25) he opened **Lesson 3 · Answer the mothers** again on the monitor
+  (22:14:33). The Malta removal **waits while a job page is open** (`graceQueueLite.ts`: the phone's clock runs only when
+  `!this.floppy.open && !this.jobOpen`), so it never began. The Start menu said "Now: The group, outnumbered"; nothing
+  said the page was holding it. He then opened the phone's game (which also pauses it), went to the phone's home, and
+  left VR at 22:17:25. A player who leaves a job page open meets no ending: a stall for his call.
+- **Frame rate in VR:** median 82; 15 of 184 reads under 72; the lowest, 57–61, while the phone's game played
+  (22:15:43–22:16:21), at only 54 draw calls (so the cost is the phone's redraw, not the draw count). Peak draws 74.
+- One console line, "Uncaught (in promise)", at 22:17:11, as he left VR.

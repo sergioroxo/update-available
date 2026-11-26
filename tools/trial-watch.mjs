@@ -85,7 +85,46 @@ function snapshot() {
   return out;
 }
 
+// ⚑ S357gr (26 Nov, first run with the Quest): puppeteer.connect to the BROWSER endpoint hung on the Quest Browser
+//   (no answer at all), while the PAGE's own websocket answers at once. `--direct` (now the default with adb) talks
+//   to the page's websocket: Runtime.evaluate for the snapshot, Runtime.consoleAPICalled / exceptionThrown for errors.
+const DIRECT = !flag('puppeteer');
+async function connectDirect() {
+  const list = await (await fetch(`http://127.0.0.1:${PORT}/json/list`)).json();
+  const t = list.find((x) => x.type === 'page' && x.url.includes(MATCH));
+  if (!t) throw new Error(`no tab with "${MATCH}" in its address (tabs: ${list.map((x) => x.url).join(' · ') || 'none'})`);
+  const ws = new WebSocket(t.webSocketDebuggerUrl);
+  await new Promise((res, rej) => { ws.onopen = res; ws.onerror = () => rej(new Error('page websocket failed')); setTimeout(() => rej(new Error('page websocket timeout')), 8000); });
+  let id = 0; const waiting = new Map();
+  ws.onmessage = (m) => {
+    const d = JSON.parse(String(m.data));
+    if (d.id && waiting.has(d.id)) { waiting.get(d.id)(d); waiting.delete(d.id); return; }
+    if (d.method === 'Runtime.consoleAPICalled' && ['error', 'warning'].includes(d.params.type)) {
+      log({ kind: 'console', level: d.params.type, text: d.params.args.map((a) => a.value ?? a.description ?? '').join(' ').slice(0, 500) });
+    } else if (d.method === 'Runtime.exceptionThrown') {
+      log({ kind: 'pageerror', text: String(d.params.exceptionDetails?.exception?.description ?? d.params.exceptionDetails?.text).slice(0, 500) });
+    }
+  };
+  let closed = false; ws.onclose = () => { closed = true; };
+  const send = (method, params = {}) => new Promise((res, rej) => {
+    if (closed) return rej(new Error('page websocket closed'));
+    const n = ++id; waiting.set(n, res); ws.send(JSON.stringify({ id: n, method, params }));
+    setTimeout(() => { if (waiting.has(n)) { waiting.delete(n); rej(new Error('evaluate timeout')); } }, 15000);
+  });
+  await send('Runtime.enable');
+  const page = {
+    url: () => t.url,
+    evaluate: async (fn) => {
+      const r = await send('Runtime.evaluate', { expression: `(${fn.toString()})()`, returnByValue: true });
+      if (r.result?.exceptionDetails) throw new Error(r.result.exceptionDetails.text);
+      return r.result?.result?.value;
+    },
+  };
+  return { browser: { disconnect: async () => { try { ws.close(); } catch { /* */ } } }, page };
+}
+
 async function connect() {
+  if (DIRECT) return connectDirect();
   const browser = await puppeteer.connect({ browserURL: `http://127.0.0.1:${PORT}`, defaultViewport: null, protocolTimeout: 15000 });
   const pages = await browser.pages();
   const page = pages.find((p) => p.url().includes(MATCH)) ?? null;
