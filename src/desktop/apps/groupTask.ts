@@ -157,7 +157,7 @@ export class GroupTask implements TaskSurface {
     if (this.by) return false;
     if (id === 'group-post') { this.finish('you'); return true; }
     if (id === 'group-refuse') {
-      const ans = refuse(D.refusedWhat);
+      const ans = refuse(D.refusedWhat, 'group');
       this.note = { line: ans.line, voice: ans.voice };
       if (ans.forced) this.finish(ans.voice);
       this.v++;

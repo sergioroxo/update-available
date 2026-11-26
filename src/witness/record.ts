@@ -16,11 +16,12 @@
  * in — the ledger never records when the room around the panel changed, and
  * this is the honest mapping from surface to decade.
  */
-import { ledger } from '../state/ledger';
+import { ledger, type Ledger } from '../state/ledger';
 import practicesData from '../../data/dossier/practices.json';
 import slice from '../../data/strings/slice.json';
 import opening from '../../data/strings/opening.json';
 import rigCopy from '../../data/strings/lamby_rig.json';
+import recommend from '../../data/dialog/s3_recommend.json';
 
 export type RecordEra = 'e1' | 'e2' | 'e3' | 'e4';
 export type Status = 'documentary' | 'contested' | 'speculative';
@@ -126,6 +127,45 @@ export const familyCheckinId = (parentId: string): string => FAMILY_CHECKIN + pa
 
 const FLAG_OUTCOMES = new Set(['abandoned', 'declined', 'dismissed', 'skipped', 'stood', 'held', 'committed', 'stoppedMidway', 'kept']);
 
+/** a 2016 job's place in Vera's file: the card (a key of practices.json), the word for what happened, flagged or not */
+export interface Era3Card { kind: string; outcome: string; flagged: boolean }
+/**
+ * ⚑ S427 (UiB job 37, T95; his 26 Nov to the sheet: "yes i agree. Yes I think the refusals should be marked too") — 2016'S
+ * JOBS, EACH UNDER ITS OWN CARD. Until S427 every `ledger.era3Jobs` entry but the residue filed under The recommendation,
+ * outcome `tagged`, whatever she did, and her refusals were not flagged (docs/reinterp/T95_2016_RECORD_SHEET_2026-11-25.md).
+ * ONE table from the entry to its card and the word for what happened (his picks, row by row). A refusal goes under the card
+ * of the job she refused (`refuse(what, job)` keeps the job on the entry), as `refused`, FLAGGED: also when Lambient or an
+ * administrator then did the job anyway — the file keeps what she did, and the witness line already says who finished it.
+ * "Flagged" is what it is for Daniel: the flag colour, first on the Close's panels, counted in "… flagged", on the receipt.
+ * The witness lines are the jobs' own, word for word.
+ */
+export const ERA3_JOB_CARD: Record<string, Era3Card> = {
+  pipeline: { kind: 'testimony', outcome: 'sent', flagged: false },                       // graceQueueLite: the corrected testimony, sent
+  places: { kind: 'places', outcome: 'added', flagged: false },                           // placesList: The Wick added
+  group: { kind: 'checkin', outcome: 'posted', flagged: false },                          // groupTask: the week's check-in (The daily check-in)
+  kit: { kind: 'testimony', outcome: 'approved', flagged: false },                        // graceQueueLite: by her, or by an administrator when she leaves it
+  'take-down': { kind: 'testimony', outcome: 'take-down requested', flagged: false },     // graceQueueLite: the story kept even so
+  recommend: { kind: 'recommendation', outcome: 'tagged', flagged: false },               // recommendTask: the one this card describes
+  'recommend:declined': { kind: 'recommendation', outcome: 'declined', flagged: true },  // recommendTask: "video left untagged"
+  'refusal:places': { kind: 'places', outcome: 'refused', flagged: true },                // lambientDesk refuse(), from placesList
+  'refusal:group': { kind: 'checkin', outcome: 'refused', flagged: true },                // … from groupTask
+  'refusal:family': { kind: 'moderation', outcome: 'refused', flagged: true },            // … from familyCalls (a mother's message)
+  'refusal:list': { kind: 'queue', outcome: 'refused', flagged: true },                   // … from graceQueueLite (a correction-list item)
+  residue: { kind: 'queue', outcome: 'residue', flagged: false }                          // phoneE3: her newest note (S404)
+};
+const RECOMMEND_DECLINED = (recommend as { witness: { declined: string } }).witness.declined;
+/** the table's row for one `era3Jobs` entry (the declined video is recommendTask's own line, as recommendTask finds it) */
+export function era3JobRow(j: { id: string; witness: string; job?: string }): string {
+  if (j.id === 'refusal') return `refusal:${j.job ?? ''}`;
+  if (j.id === 'recommend' && j.witness === RECOMMEND_DECLINED) return 'recommend:declined';
+  return j.id;
+}
+/** an entry the table does not name stays where every 2016 job was before S427, saying only that it was filed */
+export function era3JobCard(j: { id: string; witness: string; job?: string }): Era3Card {
+  return ERA3_JOB_CARD[era3JobRow(j)]
+    ?? { kind: 'recommendation', outcome: j.id === 'refusal' ? 'refused' : 'filed', flagged: j.id === 'refusal' };
+}
+
 export function recordEntries(): RecordEntry[] {
   const out: RecordEntry[] = [];
   const push = (era: RecordEra, kind: string, id: string, outcome: string, witness: string, flagged?: boolean): void => {
@@ -160,12 +200,12 @@ export function recordEntries(): RecordEntry[] {
   // ⚑ S405 (T94) — the mothers' messages, opened and answered: Moderation ("had you answer families in the platform's voice",
   //   documentary, e3_theday #8), the card that describes this job; the witness lines are familyCalls' own, word for word
   for (const c of ledger.checkins) if (c.id.startsWith(FAMILY_CHECKIN)) push('e3', 'moderation', c.id, 'answered', c.witness, false);
-  // S192 — Tag the video: the recommendation, filed as media (a practice of its own awaits his approval)
+  // ⚑ S427 (T95) — her jobs, each under its own card (ERA3_JOB_CARD). Until S427: all but the residue under The
+  //   recommendation (S195), outcome 'tagged'. (S404: her newest note, the residue, under The correction queue — the practice
+  //   whose rule gave her the word she refuses, as Daniel's sits under his messenger's — is the table's last row.)
   for (const j of ledger.era3Jobs) {
-    // ⚑ S404 (UiB job 30 C2) — her newest note, filed as a gap (phoneE3; s3_maiden.json witness.residue): under the practice
-    //   whose rule gave her the word she refuses ("Name the dependency, not the person"), as Daniel's sits under his messenger's
-    if (j.id === 'residue') { push('e3', 'queue', j.id, 'residue', j.witness, false); continue; }
-    push('e3', 'recommendation', j.id, 'tagged', j.witness, false);   // S195: The recommendation
+    const c = era3JobCard(j);
+    push('e3', c.kind, j.id, c.outcome, j.witness, c.flagged);
   }
   // ── 2026 ──
   for (const e of ledger.e4Space) {
@@ -199,11 +239,37 @@ export function entriesByEra(): Record<RecordEra, RecordEntry[]> {
   return by;
 }
 
-/** how many entries the file holds — the witness pulse watches this grow */
-export function recordCount(): number {
-  return ledger.records.length + ledger.provotypes.length + ledger.sends.length + ledger.guidance.length
-    + ledger.tapes.length + ledger.belongings.length + ledger.lamby.length + ledger.checkins.length
-    + ledger.media.length + ledger.caleb.length + ledger.era3Arrival.length + ledger.graceQueue.length
-    + ledger.comments.length + ledger.e4Space.length + ledger.updates.length + ledger.tags.length
-    + ledger.games.length + ledger.era3Jobs.length + Number(ledger.guidePersonalisation.personalised);
+/**
+ * ⚑ S427 (UiB job 37, T95) — THE COUNT IS THE FILE'S. Until S427 `recordCount()` was the ledger's lists added whole, so the
+ * map's own marks in `ledger.records` (isMapMark) and `ledger.tags` pushed the number above the entries the file lists.
+ * `ledger.tags` are mechanical classification tags, not entries: the opening profile's picks (`profile:…`, os.ts), each
+ * send's `send:<id>:<outcome>` and its extra tags (sends.ts), the IRC's `pastoral-referral` / `consent-on-file` (irc.ts) and a
+ * finished provotype's `ledgerTags`; read only by the old build's wall (intake.ts, not in the visit), listed in no file. Each
+ * goes with an act that files its own entry, so they do not count. Now the count is `recordEntries().length`, per era too.
+ *
+ * Read every frame (the pulse, app.ts; each era's file item, fileItem.ts), so it is DERIVED ONLY WHEN THE LEDGER MOVED: the
+ * check per frame is the same sum of list lengths the old count was (the lists `recordEntries()` reads), the eras reached,
+ * the personalisation and the ledger itself (a Restart replaces it), compared with the last derivation's. A swap that keeps
+ * every length (recommendTask's "left untagged" replaced by "tagged") keeps every count too.
+ */
+let seen: { ledger: Ledger | null; size: number; reached: number; personal: boolean } = { ledger: null, size: -1, reached: -1, personal: false };
+let counts: Record<RecordEra, number> & { all: number } = { e1: 0, e2: 0, e3: 0, e4: 0, all: 0 };
+function fileCounts(): Record<RecordEra, number> & { all: number } {
+  const L = ledger;
+  const size = L.records.length + L.provotypes.length + L.games.length + L.sends.length + L.guidance.length + L.tapes.length
+    + L.belongings.length + L.lamby.length + L.checkins.length + L.media.length + L.caleb.length + L.era3Arrival.length
+    + L.graceQueue.length + L.comments.length + L.era3Jobs.length + L.e4Space.length + L.updates.length;
+  const reached = L.reachedEras.length, personal = L.guidePersonalisation.personalised;
+  if (L !== seen.ledger || size !== seen.size || reached !== seen.reached || personal !== seen.personal) {
+    seen = { ledger: L, size, reached, personal };
+    const by = entriesByEra();
+    counts = { e1: by.e1.length, e2: by.e2.length, e3: by.e3.length, e4: by.e4.length, all: 0 };
+    counts.all = counts.e1 + counts.e2 + counts.e3 + counts.e4;
+  }
+  return counts;
 }
+
+/** how many entries the file holds (`recordEntries().length`) — the witness pulse watches this grow */
+export function recordCount(): number { return fileCounts().all; }
+/** how many entries one era's file holds (`entriesByEra()[era].length`), as cheaply */
+export function recordCountFor(era: RecordEra): number { return fileCounts()[era]; }

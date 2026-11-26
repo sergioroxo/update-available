@@ -5,6 +5,10 @@
  *   - lives in memory ONLY: never persisted, never transmitted
  *   - wiped on exit, idle reset, and refusal-path endings
  */
+/** ⚑ S427 (UiB job 37, T95) — the job a 2016 refusal refused: the places list (placesList.ts), the group's check-in
+ *  (groupTask.ts), a mother's message (familyCalls.ts), an item on the correction list (graceQueueLite.ts) */
+export type RefusedJob = 'places' | 'group' | 'family' | 'list';
+
 export interface Ledger {
   rootCause: { kept: { kind: 'answer' | 'memory'; text: string }[]; descents: number; keptFiled: boolean };
   /** Actual room arrivals, in memory only; constructors are not visits. */
@@ -136,7 +140,10 @@ export interface Ledger {
   /** ⚑ S372 — where each word was first met: a key of data/strings/lexicon.json `places` (the Lexicon's "You met it")
    *  and so which era's website its page links to. Memory only, like everything here. */
   lexiconWhere: Record<string, string>;
-  era3Jobs: { id: string; witness: string }[];
+  /** ⚑ 2016's jobs, each filing its own line (the ids are src/witness/record.ts `ERA3_JOB_CARD`'s). ⚑ S427 (UiB job 37,
+   *  T95) — a refusal (`id: 'refusal'`, lambientDesk.ts `refuse`) keeps the job she refused in `job`, so Vera's file puts it
+   *  under that job's card. */
+  era3Jobs: { id: string; witness: string; job?: RefusedJob }[];
   caleb: {
     id: string;
     outcome: 'replied' | 'held' | 'committed' | 'intervened' | 'dismissed' | 'restored' | 'residue';
