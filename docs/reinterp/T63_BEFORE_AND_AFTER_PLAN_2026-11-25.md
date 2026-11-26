@@ -85,3 +85,15 @@ sit beside the grid, marked "in the headset, that day":
 - **B. The ten dates:** keep them, or add or remove one? (For example, 1 Nov, the first era websites.)
 - **C. The 8 Nov headset frames (641 MB):** choose about 20 for the article and let the rest go, or keep all of them?
   **My pick: choose 20,** after the grid is made, so they are chosen against it.
+
+### His answers (26 Nov)
+
+- **A:** "Both option would be best so I can later compare" → both readings are made in full: one era through time
+  (down) **and** the whole piece on each date (across), from the same pictures.
+- **B:** "The dates look fine, and also we need to include the dates since the start of the project in January. Do like
+  a deep sweep on trying to find more data." → the ten dates stay; January to June is added before them (§3b, after
+  the sweep). The sweep was started the same day (S357gk): pictures and prototypes January–June, chats and documents
+  January–June, and every picture of the piece already taken since June, by day.
+- **C:** "Yes, We can pick after the grid I guess" → the 8 Nov headset frames stay whole until the grid exists; about
+  20 are chosen then, against it.
+
