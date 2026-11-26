@@ -443,4 +443,10 @@ His "it should open a specific window of the Notes app and show there" reads as:
   of someone being introduced to the system" → `UIB_JOB_40_2026-11-26.md`.
 - **The music:** "Why? What is the logic of stopping there? either the music is part of the scene or not" →
   `UIB_JOB_38_2026-11-26.md` D (it plays through the scene; lowers under a sound of its own, never restarts).
+- **Then, the same evening:** "I meant the real time of the day. I know this was related to the timing of the Malta
+  releasing the law but it simply doesnt work the time aspect so we just keep the day element." And: "the phone should
+  not open by itslef on the messages of the maiden … it needs to be logical. The automatic is 2026 not 2016. lets please
+  fix the logic for the 2016 flow — think of cadency of actions, ifttt - if this than that" → `UIB_JOB_38` A rewritten
+  as a fifteen-row if-this-then-that chain (nothing opens by itself; news as a notification she opens; the day kept,
+  the time dropped).
 - Still open, no hurry: "now it's out of moved places" (finding 16) and "the upper player" (answer d): ask him.
