@@ -3,6 +3,74 @@
   "disconnected": "This device is no longer supported. Phone disconnected.",
   "_docRetiredS423disconnected": "⚑ S423 (UiB job 35 Part C; his headset, 20 Nov, over the 2016 → 2026 install: \"handset window, no handset, we don't need that message\"): `disconnected` is no longer shown — it lay over the changelog, whose own last line says the same (\"- phone link: not supported\"). Kept as a research state; graceQueueLite.drawDisconnected still reads it but nothing calls it (src/room/era3Devices.ts drawWorkstation).",
   "account": "My account · activity",
+  "chain": {
+    "_docS428": "⚑ S428 (UiB job 38 A2 + B4; his 26 Nov: \"The automatic is 2026 not 2016 … think of cadency of actions, ifttt - if this than that\") — 2016'S CHAIN, NAMED. From the end of the training to the update, every step waits for something she does; this is what the Start map's Now says at each one (graceQueueLite `chainState`), with \"Take me there\" when there is a press it can make for her (the press her own would be: the notification's thread, the board, the kit). `lambientPhone` is what Lambient's taskbar button answers while the step is on her phone (it never speaks about a person's words); on the platform's own steps it answers with the step's hint. Claude's words, for his review.",
+    "mam": {
+      "label": "A message from Mam",
+      "hint": "Open Mam's message on the phone."
+    },
+    "held": {
+      "label": "Back to Today",
+      "hint": "The phone keeps its messages while a job is open. Back to Today brings them."
+    },
+    "card": {
+      "label": "A memory from 2014",
+      "hint": "Kindredraft's card is on the board: Look back, or Not now."
+    },
+    "again": {
+      "label": "A memory from 2014",
+      "hint": "Kindredraft asks once more when you come back to the board."
+    },
+    "page": {
+      "label": "Vera · 2014",
+      "hint": "Her story as it was published, then her own words. Close returns to the board."
+    },
+    "notesNotice": {
+      "label": "Her Notes",
+      "hint": "A Notes notification is on the phone. Open it."
+    },
+    "notes": {
+      "label": "Her Notes",
+      "hint": "Her Notes are open on the phone. When her line is written, Back closes them."
+    },
+    "nuala": {
+      "label": "Nuala's message",
+      "hint": "Open Nuala's message on the phone's lock screen."
+    },
+    "bea": {
+      "label": "Bea's news",
+      "hint": "The group Maiden-to-be has a new message on the phone. Open it."
+    },
+    "news": {
+      "label": "Bea's news",
+      "hint": "In the group on the phone: Bea's news from Malta, one message at a time."
+    },
+    "kit": {
+      "label": "The campaign kit",
+      "hint": "URGENT on the board: Open the kit."
+    },
+    "kitBack": {
+      "label": "The campaign kit",
+      "hint": "The campaign kit is waiting on the board. Back to Today."
+    },
+    "kitOpen": {
+      "label": "The campaign kit",
+      "hint": "Approve it, take your story down, or go back to today."
+    },
+    "review": {
+      "label": "The group, reviewed",
+      "hint": "The group has a notification on the phone: GracePlatform is reviewing it. Open the group."
+    },
+    "removal": {
+      "label": "The group, outnumbered",
+      "hint": "In the group on the phone, GracePlatform removes the news, one message at a time. The women forward it faster."
+    },
+    "end": {
+      "label": "The group, outnumbered",
+      "hint": "Review could not keep up. Forward the link if she wants, or close the group. The update follows."
+    },
+    "lambientPhone": "Nothing here needs you now. Your phone is on the right."
+  },
   "_retiredS424focus": "⚑ S424 (UiB job 35 Part D, Act I beat 1; storyboard §3: \"Retired here: the Focus mode card … This week says it\") — `focus`, `on`, `later` are the Focus mode offer, never shown since S324 (his 8 Nov: it removed the felt part); This week now says what it said (pauses.json e3: \"Messages wait until a lesson is done.\"), and the dead code that drew it is gone from graceQueueLite.ts. Kept as the record.",
   "focus": [
     "Your phone is connected. Focus mode can hold notifications while you work."

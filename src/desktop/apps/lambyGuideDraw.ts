@@ -99,7 +99,7 @@ export function drawLambyGuide(ctx: CanvasRenderingContext2D, skin: GuideEra, st
   ui.setFont(ctx, 11); ctx.fillText(copy.ui.close, x + w - 16, y + 5);
   hits.push({ id: 'lg-x', x: x + w - 23, y: y + 2, w: 21, h: 20 });
   let buttons: [string, string][];
-  if (state.text === copy.ui.nothing || state.text === decisions.helper.map) buttons = [['lg-ok', copy.ui.ok]];
+  if (state.text === copy.ui.nothing || state.text === decisions.helper.map || state.rung === 'asked') buttons = [['lg-ok', copy.ui.ok]];   // ⚑ S428: an asked line
   else if (state.rung === 'personalise') buttons = [['lg-take', copy.form.yes], ['lg-later', copy.form.no]];
   else if (state.rung === 'form') buttons = [['lg-take', copy.form.yes], ['lg-later', copy.form.no]];
   else if (state.rung === 'root') buttons = [['lg-take', copy.root.yes], ['lg-later', copy.form.no]];

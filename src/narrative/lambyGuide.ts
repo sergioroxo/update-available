@@ -4,7 +4,7 @@ import copy from '../../data/strings/lambyGuide.json';
 import decisions from '../../data/strings/cx3b.json';
 import type { MapState } from '../witness/map';
 export type GuideEra = 'e1' | 'e2' | 'e3' | 'e4';
-export type GuideRung = 'silent' | 'cue' | 'tip' | 'show' | 'again' | 'start' | 'form' | 'personalise' | 'root' | 'harbor' | 'choice' | 'tv' | 'tvcall' | 'file' | 'message' | 'remind';
+export type GuideRung = 'silent' | 'cue' | 'tip' | 'show' | 'again' | 'start' | 'form' | 'personalise' | 'root' | 'harbor' | 'choice' | 'tv' | 'tvcall' | 'file' | 'message' | 'remind' | 'asked';
 export interface GuideStep { tip: string; here?: string; again?: string; target: string[]; act?: string; noAgain?: boolean; once?: boolean }
 export interface GuideView {
   era: GuideEra; beat: string; rung: GuideRung; hidden: boolean; text: string | null;
@@ -14,6 +14,9 @@ export interface GuideView {
   frame: number; time: number;
 }
 export interface GuideInput { era: GuideEra; map: Pick<MapState, 'current' | 'quiet'>; silent: boolean; voice: boolean;
+  /** ⚑ S428 (UiB job 38 B3) — the surface takes ASKED-FOR help only: nothing is said unasked (it counts as silent for that), but a
+   *  press on the button is answered with one short line (the map's hint for the step: `ask`) */
+  askOnly?: boolean;
   personaliseOffer?: string; deferredUpdate?: boolean; formAvailable?: boolean; formOpened?: boolean; formForced?: boolean; formFiled?: boolean; rootOpened?: boolean; racketDone?: boolean; robDone?: boolean; harborDue?: boolean; tvOffer?: string; tvCall?: string; fileOffer?: string; fileTarget?: string; messageDue?: string; remindDue?: string; remindAct?: string; fillText?: (text: string) => string; idleScale?: number; startTarget?: string; reducedMotion?: boolean }
 interface StepMemory { dismissed: number; finished: boolean; offered: boolean }
 export class LambyGuide {
@@ -41,6 +44,8 @@ export class LambyGuide {
   private calling = false;
   private formWait = 0;
   private requested = false;
+  /** ⚑ S428 — the line up now was asked for (the button pressed on an ask-only surface) */
+  private asked = false;
   private input: GuideInput | null = null;
   private spec: GuideStep | undefined;
   constructor(private effects: { log: (outcome: 'begun' | 'dismissed', beat: string, countDismissal: boolean, acknowledged: boolean) => void;
@@ -84,10 +89,21 @@ export class LambyGuide {
     // ⚑ S408 — an offer whose moment has passed (the Messenger was opened from its icon; the update came back) is withdrawn
     if ((this.view.rung === 'message' && !input.messageDue) || (this.view.rung === 'remind' && !input.remindDue)) this.set('silent');
     if (this.calling && (!input.tvCall || this.view.rung !== 'tvcall')) { if (this.view.rung === 'tvcall') this.set('silent'); this.calling = false; }
+    // ⚑ S428 (UiB job 38 B3; G2, his 15 Oct: help asked for is uncapped; HEADSET_RUN answer e) — AN ASK-ONLY SURFACE (a job page, a
+    //   quiet beat beside the board): nothing is offered unasked, and nothing counts toward the cap; the button is answered with one
+    //   short line once any other voice has finished (one voice at a time). Dismissal works and is logged as everywhere.
+    if (input.askOnly && !this.calling) {
+      const show = this.asked && !input.voice;
+      if (this.view.hidden === show) { this.view.hidden = !show; this.version++; }
+      if (this.requested && !input.voice) { this.requested = false; this.ask(); }
+      this.idle = 0; if (this.view.rung === 'cue') this.set('silent');
+      return;
+    }
     const hidden = !this.calling && (input.silent || input.map.quiet || input.map.current?.era === 'close' || input.voice);
     if (hidden !== this.view.hidden) { this.view.hidden = hidden; this.version++; }
     if (hidden) {
       if (input.silent || input.map.quiet) this.requested = false;
+      if (input.silent && this.asked) { this.asked = false; this.set('silent'); }   // S428: an asked line does not outlive its surface
       this.idle = 0; if (this.view.rung === 'cue') this.set('silent'); return;
     }
     if (step === 'personalise' && !this.mem().offered && this.canOffer()) {
@@ -197,8 +213,30 @@ export class LambyGuide {
   }
   /** S284 — a requested answer that is not a beat: Lamby says one plain line (the visitor asked; it is not unsolicited) */
   tell(text: string): void { this.idle = 0; this.set('tip', text); }
+  /** ⚑ S428 — the surface she asked on has gone (she opened a job, a page, the board): a line she asked for there, or a request still
+   *  waiting for a voice to end, is not said on the next one */
+  dropAsked(): void {
+    this.requested = false;
+    if (this.asked) { this.asked = false; if (this.view.rung === 'asked') this.set('silent'); }
+  }
+  /** ⚑ S428 — the asked-for answer on an ask-only surface: one short line, the step's own (the map's hint; 2016's chain gives
+   *  Lambient's own words), and Got it. Uncapped: it is not unsolicited. */
+  private ask(): void {
+    this.idle = 0; this.asked = true;
+    this.set('asked', this.input?.map.current?.beat.hint || copy.ui.nothing);
+    if (this.view.hidden) { this.view.hidden = false; this.version++; }
+  }
   press(id: string): boolean {
     if (!id.startsWith('lg-') || !this.input) return false;
+    // ⚑ S428 (B3) — an ask-only surface: the button is answered (after any other voice), its line dismissed with Got it or ×
+    if (this.input.askOnly && !this.calling) {
+      if (id === 'lg-tray') { if (this.input.voice) this.requested = true; else this.ask(); return true; }
+      if (this.view.hidden || !this.asked) return id === 'lg-cover';
+    }
+    if (this.view.rung === 'asked' && (id === 'lg-ok' || id === 'lg-x' || id === 'lg-later')) {
+      this.effects.log('dismissed', this.view.beat, id !== 'lg-ok', id === 'lg-ok');
+      this.asked = false; this.set('silent'); this.idle = 0; return true;
+    }
     // Requested help waits for the current operable voice; it never queues across a quiet scene.
     if (id === 'lg-tray' && this.input.voice && !this.input.silent && !this.input.map.quiet) { this.requested = true; return true; }
     if (this.view.hidden) return false;

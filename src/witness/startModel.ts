@@ -34,7 +34,9 @@ export function buildStartModel(os: Partial<DesktopOS> | undefined, era: PanelEr
     steps,
     extras: extras[era].map(e => ({ ...e, on: !isSpeedrun() || extraOn(e.id), passed: extraPassed(e.id) })),
     room: steps.filter(b => b.optional && b.state !== 'done' && b.place),
-    jump: state.eras.filter(e => e.id !== 'close').map(e => ({ era: e.id as PanelEra, label: e.label, current: e.id === era }))
+    jump: state.eras.filter(e => e.id !== 'close').map(e => ({ era: e.id as PanelEra, label: e.label, current: e.id === era })),
+    /** ⚑ S428 (UiB job 38 B4) — the press "Take me there" makes for the Now, when a machine knows one (2016's chain: graceQueueLite) */
+    take: null as string | null
   };
 }
 export type StartModel = ReturnType<typeof buildStartModel>;

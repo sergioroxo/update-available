@@ -33,7 +33,7 @@ import { registerSetupHost, type LambySetup } from './setup/setup';
 import { buildStartModel } from '../witness/startModel';
 import { isSpeedrun } from '../state/cut';
 import { StartMenuMap } from './apps/startMenuMap';
-import { mapState, beatDone } from '../witness/map';
+import { mapState, beatDone, type MapState } from '../witness/map';
 import { gameMenuBus as startMenuBus } from '../state/gameMenuBus';
 import { meetWord } from '../room/lexicon';
 import { WomensTrackApp } from './apps/womensTrack';
@@ -508,6 +508,8 @@ export class DesktopOS {
   }
   /** ⚑ S219 / W1-B4 — LambyOS's Start menu (the taskbar's MENU), and the icons drawn this frame it lists */
   private startOpen = false;
+  /** ⚑ S428 (UiB job 38 B2) — a Start menu (or Shut Down's refusal) is open on this desktop: the headset's ?debug=1 plate stands aside */
+  get startMenuOpen(): boolean { return this.startOpen || this.startMap.menu || this.shutRefused; }
   private readonly startMap = new StartMenuMap();
   /** Scene position after returning from the Close; memory only, independent of its old update entry. */
   mapAtClose?: boolean;
@@ -647,7 +649,9 @@ export class DesktopOS {
   private guideLedger = ledgerGeneration;
   lambyGuidePaint: GuidePaint = { rings: [], balloon: false };
   guideIdleScale: () => number = () => 1;
-  guideExternal: (() => { silent: boolean; voice: boolean }) | null = null;
+  /** ⚑ S428 (UiB job 38 B3/B4) — a surface the OS does not own (2016's workstation) may also say that its button answers when asked
+   *  (`askOnly`), and name its own step for the guide (`beat`: the step's id and the line an asked answer says) */
+  guideExternal: (() => { silent: boolean; voice: boolean; askOnly?: boolean; beat?: { id: string; label: string; hint: string } }) | null = null;
   onGuidePress: ((id: string) => void) | null = null;
   onGuideFocus: ((id: string) => void) | null = null;
   onGuideMove: ((target: string) => void) | null = null;
@@ -709,15 +713,18 @@ export class DesktopOS {
       return v?.open ? [...(v.hits ?? []), ...(v.replyRects ?? [])] : [];
     })];
   }
-  get guideSilence(): { silent: boolean; voice: boolean } {
+  get guideSilence(): { silent: boolean; voice: boolean; askOnly: boolean } {
     const external = this.guideExternal?.();
-    return {
-      silent: !this.reinterp || this.phase !== 'desktop' || this.paused || gameMenuBus.isOpen || !!this.setup?.open
+    const own = !this.reinterp || this.phase !== 'desktop' || this.paused || gameMenuBus.isOpen || !!this.setup?.open
         || !!this.caleb?.open || this.residueDark || this.desktopReturnAt >= 0 || !!this.testimony?.playbackActive
         || !!this.irc?.open || !!this.provotype?.open || !!this.diary?.open || !!this.packet?.open || this.dossierOpen || !!this.accountability || this.yesOpen || !!this.pauseOpen
         || !!this.updateApp?.visible || !!this.sendOffer?.open || !!this.saver || this.startOpen || !!this.wotdOpen
         || this.shutRefused || this.startMap.active || !!this.netvision?.open || !!this.mediaPlayer?.open
-        || (this.desktopEra === 'e2' && this.e2Stage !== 'active') || !!external?.silent,
+        || (this.desktopEra === 'e2' && this.e2Stage !== 'active');
+    return {
+      silent: own || !!external?.silent,
+      // ⚑ S428 — the surface answers its button even where it says nothing unasked (only while the OS itself is not silent)
+      askOnly: !own && !!external?.askOnly,
       voice: this.otherVoices
         || (this.desktopEra === 'e1' && !this.lambyGuide.hasStep && !!this.guide?.activeText && (this.guideTipAt >= 0 || this.guideTipPinned))
     };
@@ -728,11 +735,18 @@ export class DesktopOS {
     return !!this.restorify?.open || !!this.toast || this.lambyOnScreen || this.readAloudPlaying || !!this.guideExternal?.()?.voice
       || voiceHeld();   // S390: the teaching TV's conducted tape holds the floor
   }
+  /** ⚑ S428 (UiB job 38 B4) — the map the guide reads: the OS's, or, where a surface names its own step (2016's chain), that step as
+   *  the current beat (its id keys the guide's tips; its hint is what an asked answer says) */
+  private guideMap(): Pick<MapState, 'current' | 'quiet'> {
+    const m = mapState(this), b = this.guideExternal?.()?.beat;
+    if (!b) return m;
+    return { current: { era: m.current?.era ?? this.desktopEra, beat: { ...(m.current?.beat ?? { done: '' }), id: b.id, label: b.label, hint: b.hint } }, quiet: m.quiet };
+  }
   private updateLambyGuide(dt: number): void {
     if (!this.reinterp) return;
     if (this.guideLedger !== ledgerGeneration) { this.lambyGuide = this.makeLambyGuide(); this.guideLedger = ledgerGeneration; }
     const before = this.lambyGuide.version;
-    const input: GuideInput = { era: this.desktopEra, map: mapState(this), ...this.guideSilence,
+    const input: GuideInput = { era: this.desktopEra, map: this.guideMap(), ...this.guideSilence,
       // ⚑ S272 (his 31 Oct: 2003's "cascade of events is bizarre because it all at the same time") — Lamby no longer
       //   offers his own personalisation over the story's request; it is a button beside the streak (Restorify)
       personaliseOffer: undefined,
@@ -1278,7 +1292,11 @@ export class DesktopOS {
       this.e2StageT = 0;
       if (!settled) { this.dirty = true; return; } // no toast, no chrome — the silence holds
     }
-    this.toast = era === 'e2' ? { title: this.eraSkin().brand, text: this.eraSkin().status, t: 8 } : { text: this.eraSkin().status, t: 6 };
+    // ⚑ S428 (UiB job 38 B3; HEADSET_RUN answer e) — no era-status toast for 2016 either: Daniel's monitor is dead from E3 on (S61), so it
+    //   was never drawn, yet it counted as a voice (`otherVoices`) until it expired; and it only expires while she faces this screen
+    //   (`screenFacing`), which in the headset at Vera's seat reads as turned away (S88's flagged hemisphere): Lambient's button went
+    //   unanswered all through 2016 in the headset mock. (It was `{ text: status, t: 6 }` for E3: 40a59042.)
+    this.toast = era === 'e2' ? { title: this.eraSkin().brand, text: this.eraSkin().status, t: 8 } : era === 'e3' ? null : { text: this.eraSkin().status, t: 6 };
     if (era === 'e2') this.eraBalloonSaid = true;
     this.dirty = true;
   }

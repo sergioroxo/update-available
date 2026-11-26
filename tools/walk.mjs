@@ -173,6 +173,8 @@ const DOOR = flag('door', 'vr') === 'here' ? 'here' : 'vr';
  *  tape watched to its end, then its body to set it back by the door. `notnow`: Not now, and the set is never touched (it
  *  stays lit by the door; the walk proves 2016 runs whole without it). */
 const HEARTWOOD = flag('heartwood', 'bring') === 'notnow' ? 'notnow' : 'bring';
+/** ⚑ S428 — when the walk began holding Lesson 2 back for Lamby's Heartwood offer (--heartwood bring) */
+const heartwoodHold = { since: null };
 /** ⚑ S426 (UiB job 35 Part D, Act III beat 14; his 23 Nov call 4: "Vera can press \"Forward the link\" herself. — yes") —
  *  `--forward yes|no` (default no): "↪ Forward the link", her one act in the group while the forwards run. `yes`: pressed once
  *  (on the Handset Window, as a visitor presses it); `no`: never — the walk proves the update comes either way (storyboard §6).
@@ -226,6 +228,8 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
  * the piece in its first ten seconds, which is what the first run did.
  */
 const PREFER = [
+  // ⚑ S428 (UiB job 38) — 2016's chain on her phone: the press it waits for (only ever a candidate when `e3Wait` names it: guidedAllows)
+  /^mirror:(?:evening-banner|lock-notice|lock-card:.+|evening:.+|notes|group|inbox|unlock|back)$/i,
   // ⚑ S425 (UiB job 35 Part D, Act II) — 2016's memory: Look back (never its Not now), See what you wrote, then Close (Kindredraft's
   //   Install, As sent and Close record are retired; her Notes come with her own words on the page, or over the board after Close)
   // ⚑ S426 — and her forward in the group (only ever a candidate with --forward yes: guidedAllows)
@@ -1036,9 +1040,22 @@ async function main() {
     if (id === 'icon-provotype-intake' && (st?.era !== 'e1' || led?.provotypes?.some(p => p.id === 'origin_intake_e1'))) return false;
     // The phone is private optional reading now. The minimum visitor never needs to press it.
     if (st?.era === 'e3') {
-      // ⚑ S426 — "↪ Forward the link" is the only press on the phone the walk makes, and only with --forward yes (it is optional:
-      //   the update comes without it). Her reply to Bea (S332) is retired; ▲ ▼ on the wide group are a reader's presses.
-      if ((t.surface === 'phone' || id.startsWith('mirror:')) && !(id === 'mirror:forward-link' && FORWARD === 'yes')) return false;
+      // ⚑ S426 — "↪ Forward the link" is a press on the phone the walk makes only with --forward yes (it is optional: the update comes
+      //   without it). Her reply to Bea (S332) is retired; ▲ ▼ on the group are a reader's presses.
+      // ⚑ S428 (UiB job 38: "The automatic is 2026 not 2016") — and since job 38 the phone is where 2016 waits for her: the walk
+      //   presses what the chain waits for there, as a visitor reaches it from what the phone shows (`e3Wait`, visitor-state.mjs):
+      //   Mam's message, the Notes notification, her Notes' Back, Nuala's message, the group's notifications, the group, and at the
+      //   end the group's Back (or, with --forward yes, the forward first). Nothing else on the phone (the physical phone in the room
+      //   included: the Handset Window is the one in view).
+      const chainPress = id.startsWith('mirror:') && Array.isArray(st.e3Wait) && st.e3Wait.includes(id)
+        && !(id === 'mirror:back' && st.e3Step === 'end' && FORWARD === 'yes' && st.e3ForwardOffered);
+      if ((t.surface === 'phone' || id.startsWith('mirror:')) && !chainPress && !(id === 'mirror:forward-link' && FORWARD === 'yes')) return false;
+      // ⚑ S428 — Lesson 2 no longer waits for Lamby's Heartwood offer, and the offer is not made once Lesson 2 is open: with
+      //   --heartwood bring the walk reads the Mentor's message first, as a visitor does, so the offer comes (at most 45 s)
+      if (HEARTWOOD === 'bring' && id === 'task-1' && !has('e3-job:places') && st.tv2016 === 'idle') {
+        heartwoodHold.since ??= Date.now();
+        if (Date.now() - heartwoodHold.since < 45000) return false;
+      }
       // ⚑ S426 — the kit: one choice (--kit), then Back to today
       if (id === 'vera-take-down' && KIT !== 'down') return false;
       if (id === 'vera-kit-approve' && KIT !== 'approve') return false;

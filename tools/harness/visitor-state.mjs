@@ -651,6 +651,30 @@ const LAP = { w: 224, h: 140 };
       //   watches it — there is nothing of hers to press on that screen until it is done
       lessonWatch: !!(q && q.watch) || (() => { const f = q?.surfaces?.get('family'); return !!(f && q?.openSurface === f && typeof f.lessonSent === 'boolean'
         && !f.lessonSent && !f.lessonMoved && !f.outcomes?.has('p_maureen')); })(),
+      // ⚑ S428 (UiB job 38) — 2016's chain: the step she is on (graceQueueLite `chainState`), and the presses on her phone (the
+      //   Handset Window's `mirror:` ids) that do what that step waits for — a notification, a message's card or row, her Notes'
+      //   Back, the group — the way a visitor would reach it from what the phone shows now. Null before the training is done.
+      e3Step: q?.chainState?.step ?? null,
+      e3Wait: (() => {
+        const c = q?.chainState, ph = q?.phone;
+        if (!c || !ph) return null;
+        const scr = ph.screen, thread = (who) => scr === 'evening' && ph.eveningFrom === who;
+        const reach = (who) => ['mirror:lock-card:' + who, 'mirror:evening:' + who, 'mirror:inbox', 'mirror:unlock', 'mirror:back'];
+        const group = ['mirror:group', 'mirror:inbox', 'mirror:unlock', 'mirror:back'];
+        switch (c.step) {
+          case 'mam': return ph.delivered('decision') && !thread('Mam') && ph.readFor('decision') < 0 ? reach('Mam') : [];
+          case 'notesNotice': return ['mirror:evening-banner', 'mirror:lock-notice', 'mirror:notes'];
+          case 'notes': return scr === 'notes' && ph.refusalWritten && !ph.conductingNotes ? ['mirror:back'] : [];
+          case 'nuala': return ph.delivered('nuala') && !thread('Nuala') && ph.readFor('nuala') < 0 ? reach('Nuala') : [];
+          case 'bea': case 'review': return ['mirror:evening-banner', 'mirror:lock-notice'];
+          case 'news': case 'removal': return scr === 'group' ? [] : group;
+          case 'end': return scr === 'group' ? ['mirror:back'] : group;
+          default: return [];
+        }
+      })(),
+      e3ForwardOffered: !!q?.phone?.forwardOffered,
+      // ⚑ S428 — 2016's Heartwood offer's moment (teachingTv): 'idle' until Lamby makes it
+      tv2016: window.__teachingTv?.()?.moments?.['2016']?.stage ?? null,
       ritualOpen: !!(os.updateApp && os.updateApp.visible),
       rawOsHits: (os.hits || []).length,
       // S269: what keeps the desktop from being idle (the spine waits on it in 1997 and 2003)

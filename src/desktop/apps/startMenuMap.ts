@@ -99,7 +99,10 @@ export class StartMenuMap {
     if (this.menu) { if (era === 'e4') this.drawMenu26(ctx, W, H, model, silent, programs); else this.drawMenu(ctx, W, H, era, model, silent, programs); }
     if (this.steps && !silent) { if (era === 'e4') this.drawSteps26(ctx, W, H, model); else this.drawSteps(ctx, W, H, era, model); }
     if (this.confirm && !silent) this.drawConfirm(ctx, W, H);
-    if (this.refused && !silent) { if (era === 'e4') this.drawRefusal26(ctx, W, H); else this.drawRefusal(ctx, W, H, era); }
+    // ⚑ S428 (UiB job 38 B1; HEADSET_RUN answer b: "shut down doesn't do anything") — THE REFUSAL IS ALWAYS DRAWN, quiet scene or
+    //   not: it is the frame's voice, and a refusal nobody sees is a dead button that also held the menu "active" (Lamby hidden)
+    //   until the next press. (It was `this.refused && !silent`: 40a59042.)
+    if (this.refused) { if (era === 'e4') this.drawRefusal26(ctx, W, H); else this.drawRefusal(ctx, W, H, era); }
     return this.hits;
   }
   /** ⚑ S417 — which of 2026's apps she may reach now (the Menu dims the rest, as the dock does) */
@@ -257,8 +260,12 @@ export class StartMenuMap {
   private drawMenu(ctx: CanvasRenderingContext2D, W: number, H: number, era: PanelEra, model: StartModel, silent: boolean, programs: Program[]): void {
     const legacy = era === 'e1' || era === 'e2', p = this.palette(era);
     const w = Math.min(legacy ? 236 : 300, W - 8), tx = legacy ? 30 : 12, tw = w - tx - 8, row = 15;
-    type Row = { text: string; id?: string; dim?: boolean; head?: boolean; hint?: boolean; title?: string };
+    type Row = { text: string; id?: string; dim?: boolean; head?: boolean; hint?: boolean; title?: string; button?: boolean };
     let rows: Row[] = [];
+    // ⚑ S428 (UiB job 38 B2; HEADSET_RUN answer b: "Leave doesn't do anything") — 2016's menu ends in a FOOT: Shut Down… and Leave…
+    //   as two buttons side by side, 26 px tall, Leave… on the right (away from Start), the menu lifted FOOT_GAP clear of the Start
+    //   button. They were the last two 15 px rows, 3 px above Start: a press a little low closed the menu on Start.
+    const foot = era === 'e3' && this.view === 'main';
     const item = (text: string, id: string, dim = false, title?: string) => rows.push({ text, id, dim, title });
     const head = (text: string) => rows.push({ text, head: true });
     if (this.view === 'jump') {
@@ -274,6 +281,9 @@ export class StartMenuMap {
       if (model.now) {
         item(model.now.label, ''); ui.setFont(ctx, 9);
         ui.wrapText(ctx, model.now.hint, tw - 10).forEach(text => rows.push({ text, hint: true }));
+        // ⚑ S428 (B4) — when the step has a press she can be taken to, the menu offers it: "Take me there" does what her own press
+        //   would (the notification's thread, the board, the kit)
+        if (model.take) rows.push({ text: S.take, id: 'sm-take', button: true });
       }
       head(S.next); model.next.forEach(b => item(b.label, '', true));
       item(S.allSteps, 'sm-allsteps', silent, silent ? S.notNow : undefined);
@@ -297,11 +307,12 @@ export class StartMenuMap {
         if (e.place) ui.wrapText(ctx, e.place, tw - 14).forEach(text => rows.push({ text, hint: true }));
       });
       item(silent ? `${S.jump} — ${S.notNow}` : S.jump, 'sm-jump', silent, silent ? S.notNow : undefined);
-      item(S.shutDown, 'sm-shut'); item(S.leave, 'sm-leave');
+      if (!foot) { item(S.shutDown, 'sm-shut'); item(S.leave, 'sm-leave'); }
     }
     // Fixed-height rows, no scrolling menus; PROGRAMS collapses above before this cap is needed.
-    const h = Math.min(H - (era === 'e4' ? 36 : 26), rows.length * row + 12);
-    const x = 3, y = era === 'e4' ? 30 : H - (era === 'e3' ? 28 : 22) - h;
+    const FOOT_H = foot ? 40 : 0, FOOT_GAP = foot ? 10 : 0;
+    const h = Math.min(H - (era === 'e4' ? 36 : 26) - FOOT_GAP - 4, rows.length * row + 12 + FOOT_H);
+    const x = 3, y = era === 'e4' ? 30 : H - (era === 'e3' ? 28 : 22) - FOOT_GAP - h;
     if (era === 'e2') {
       // ⚑ S285 (headset B, 1 Nov: "I like the new bar of inspired by XP, but the start menu … is still in the old style")
       //   — 2003's menu matches its bar: a navy frame with the start button's green along the top, white rows, and the
@@ -321,10 +332,18 @@ export class StartMenuMap {
     }
     let cy = y + 6;
     // On a long NOW hint, tighten spacing uniformly instead of hiding any required row.
-    const rh = Math.min(row, Math.floor((h - 12) / rows.length));
+    const rh = Math.min(row, Math.floor((h - 12 - FOOT_H) / rows.length));
     rows.forEach(r => {
       if (legacy && r.id === 'sm-shut') {
         ui.px(ctx, x + tx, cy, tw, 1, ERA1.grey); ui.px(ctx, x + tx, cy + 1, tw, 1, era === 'e2' ? ERA1.silver : ERA1.white);
+      }
+      if (r.button) {
+        // ⚑ S428 (B4) — Take me there: a small button on its own row, under the Now's hint
+        ui.setFont(ctx, 9); const bw = Math.ceil(ctx.measureText(r.text).width) + 20;
+        const br = { x: x + tx + 4, y: cy, w: bw, h: Math.max(12, rh - 1), id: r.id! };
+        if (era === 'e3') aero.button(ctx, br.x, br.y, br.w, br.h, r.text, { size: 9, primary: true }); else this.button(ctx, era, br, r.text);
+        if (era === 'e3') this.hits.push(br);
+        cy += rh; return;
       }
       ui.setFont(ctx, r.head || r.hint ? 9 : 10); ctx.fillStyle = r.head ? (era === 'e2' ? ERA1.titleBlue : p.accent) : r.hint && legacy ? ERA1.greyDark : r.dim || r.hint ? p.dim : p.ink;
       let text = r.head && legacy ? r.text.toUpperCase() : r.text;
@@ -334,6 +353,14 @@ export class StartMenuMap {
       if (r.id || r.title) this.hits.push({ x: x + tx, y: cy, w: tw, h: rh, id: r.dim ? 'sm-disabled' : r.id!, title: r.title });
       cy += rh;
     });
+    if (foot) {
+      const fy = y + h - FOOT_H + 8, bh = 26, bw = Math.floor((tw - 8) / 2);
+      ui.px(ctx, x + tx, fy - 6, tw, 1, p.edge);
+      aero.button(ctx, x + tx, fy, bw, bh, S.shutDown, { size: 11 });
+      aero.button(ctx, x + tx + bw + 8, fy, bw, bh, S.leave, { size: 11, primary: true });
+      this.hits.push({ x: x + tx, y: fy, w: bw, h: bh, id: 'sm-shut' });
+      this.hits.push({ x: x + tx + bw + 8, y: fy, w: bw, h: bh, id: 'sm-leave' });
+    }
   }
   private drawSteps(ctx: CanvasRenderingContext2D, W: number, H: number, era: PanelEra, model: StartModel): void {
     const p = this.palette(era), w = W - 24, x = 12, y = 6;

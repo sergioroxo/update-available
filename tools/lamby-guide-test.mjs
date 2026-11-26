@@ -139,3 +139,36 @@ assert(!polling.ready('checkin', true));
 polling.tick(.1, true);
 assert(polling.ready('checkin', true));
 console.log('System hand-offs: per-opener 20 s cap, immediate dismissal, retained actions, retry deduplication, era/exit cancellation OK.');
+
+// ⚑ S428 (UiB job 38 B3; HEADSET_RUN answer e: "I don't have Lamby here") — an ASK-ONLY surface (a 2016 job page, a quiet beat
+//   beside the board): nothing is offered unasked, however long she stalls, and nothing is counted toward the cap; the button is
+//   answered with one short line (the step's own hint), after any other voice; Got it / × dismiss it and are logged; the line does
+//   not outlive the surface (a felt page silences it).
+{
+  logs = [];
+  const asked = make();
+  const job = (extra = {}) => input('places', { era: 'e3', map: { current: { era: 'e3', beat: { id: 'places', hint: 'Add the place, or leave it off.' } }, quiet: true }, silent: true, askOnly: true, ...extra });
+  asked.tick(1000, job());
+  assert(asked.view.hidden && !asked.active, 'ask-only: nothing unasked after a long stall');
+  assert(asked.press('lg-tray'), 'ask-only: the button answers');
+  asked.tick(0, job());
+  assert(asked.active && !asked.view.hidden && asked.view.rung === 'asked', 'ask-only: an asked line is up');
+  assert.equal(asked.view.text, 'Add the place, or leave it off.', 'ask-only: the step\'s own line');
+  assert(asked.press('lg-ok')); asked.tick(0, job());
+  assert(!asked.active && asked.view.hidden, 'ask-only: Got it dismisses it');
+  assert.equal(logs.at(-1)[0], 'dismissed', 'ask-only: the dismissal is logged');
+  // a voice first (one voice at a time): the press is answered when it ends
+  assert(asked.press('lg-tray') === true); asked.press('lg-x');
+  asked.tick(0, job({ voice: true })); assert(asked.press('lg-tray')); asked.tick(0, job({ voice: true }));
+  assert(asked.view.hidden, 'ask-only: it waits for the other voice');
+  asked.tick(0, job()); assert(asked.active && asked.view.rung === 'asked', 'ask-only: answered once the voice ends');
+  // a felt page (silent, not askable): the line goes, and the button there answers nothing
+  asked.tick(0, input('places', { era: 'e3', map: { current: { era: 'e3', beat: { id: 'places' } }, quiet: true }, silent: true }));
+  assert(!asked.active && asked.view.hidden, 'a felt page: the asked line goes');
+  assert(!asked.press('lg-tray'), 'a felt page: the button answers nothing');
+  // nothing it said counted toward the cap: an unasked tip still comes on an ordinary board
+  const fresh = make();
+  for (let n = 0; n < 12; n++) { fresh.tick(0, job()); fresh.press('lg-tray'); fresh.tick(0, job()); fresh.press('lg-ok'); }
+  assert.equal(fresh.offersLeft('e3'), copy.timing.capPerEra, 'ask-only: asked lines are uncapped and spend nothing of the cap');
+}
+console.log('Ask-only surfaces (S428): no unasked balloons; the button answers once any voice ends; Got it / × logged; silenced on a felt page; uncapped.');

@@ -680,9 +680,9 @@ const RITUAL_OFFSET = {
 const CORRECTION_IDS = new Set((queue.corrections as { id: number }[]).map(c => c.id));
 const TOTAL_CORRECTIONS = (queue.submissions as { corrections: number[] }[])
   .reduce((n, s) => n + s.corrections.filter(id => CORRECTION_IDS.has(id)).length, 0);
-/** s of ordinary quiet, with the gate met and nothing open, before the notice —
- *  long enough that it plainly is not a response to the player's press. */
-const FINAL_GAP = 6;
+/* (⚑ S428 (UiB job 38 A2 row 15) — S149's FINAL_GAP, six seconds of quiet with nothing open before the notice, is retired: the
+ *  notice answers her act — forwarding the link once the review could not keep up, or closing the group after it — and comes at once.
+ *  40a59042 holds it.) */
 void TOTAL_CORRECTIONS;   // S149: no longer the era's trigger (see tick); kept for the review probes
 
 /** ⚑ THE ONE TOUCH: how far in front of the eye the picture hangs once the
@@ -1243,8 +1243,6 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
 
   let arrived = false;
   let eraNow: EraKey = 'e1';
-  /** s of quiet accumulated since the correction list was exhausted */
-  let finalT = -1;
   let finalArmed = false;
 
   // ── ⚑ THE VISOR (S76) ─────────────────────────────────────────────────────
@@ -1522,13 +1520,12 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
       const rit = eraNow === 'e3' ? e4Bridge()?.update() : null;
       graceQueueLite.systemModal = !!(rit?.open && rit.visible);
       graceQueueLite.updateDeferred = !!rit?.deferred;
-      if (eraNow === 'e3' && !finalArmed) {
-        const gate = graceQueueLite.updateReady;   // S327 → ⚑ S426: the review outnumbered ("Review could not keep up."), the thread held, the window back
-        const clear = !phoneHeld && !graceQueueLite.busy && !desk.notebookOpen;
-        if (gate && clear) {
-          finalT = finalT < 0 ? 0 : finalT + dt;
-          if (finalT >= FINAL_GAP) { finalArmed = true; e4Bridge()?.armFinal(); }
-        }
+      // ⚑ S428 (UiB job 38 A2 row 15; his 26 Nov: "The automatic is 2026 not 2016") — the gate is her act at the end (graceQueueLite
+      //   `updateReady`: the link forwarded, or the group closed, once "Review could not keep up." has been on her glass), and the notice
+      //   comes at once, over whatever is open on the workstation (it is the system's). Only her notebook in her hand holds it (a felt
+      //   object: it waits for her to put it down). (S149's six clear seconds and its open-job / phone-in-hand gate: 40a59042.)
+      if (eraNow === 'e3' && !finalArmed && graceQueueLite.updateReady && !desk.notebookOpen) {
+        finalArmed = true; e4Bridge()?.armFinal();
       }
       driveVisor(dt);
       // S61: the arrival (dark → boot → install → sign-in) is the only thing

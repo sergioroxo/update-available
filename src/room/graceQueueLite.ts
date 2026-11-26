@@ -122,6 +122,7 @@ import { px, setFont, wrapText } from '../desktop/theme/chrome';
 import * as aero from '../desktop/theme/era3';
 import { PHONE } from '../desktop/theme/phone';
 import { readHold } from '../desktop/readHold';
+import { reducedMotion } from '../state/motion';
 import { textPx } from '../desktop/theme/fonts';
 /** S358 / H08 — the references' leading (10 px type): 11 read as lines laid on each other from the seat */
 const REFS_LEAD = 13;   // S349: the Handset Window's bar is the phone's idiom
@@ -142,7 +143,7 @@ import { Screensaver, SAVER_SECONDS } from '../desktop/apps/screensaver';
 import { pauseWords, wayBackLine } from '../narrative/pauses';
 import pauseCopy from '../../data/strings/pauses.json';
 import { isSpeedrun, extraOn, markExtraPassed } from '../state/cut';
-import { buildStartModel } from '../witness/startModel';
+import { buildStartModel, type StartModel } from '../witness/startModel';
 import { stepTargets, drawGlow } from '../witness/pathGlow';
 import { StartMenuMap } from '../desktop/apps/startMenuMap';
 import { gameMenuBus } from '../state/gameMenuBus';
@@ -248,8 +249,8 @@ const CORRECTIONS = new Map((q.corrections as CorrectionDef[]).map(c => [c.id, c
  *  a story to its end and another (a story, or any job — Annette's family calls among them). 1 gave the era's
  *  lesbian story about a minute. */
 const MALTA_AFTER_TASKS = 2;
-/** ⚑ S362 / H41 — how long the kit's URGENT pop-in waits before the platform opens the kit itself (the story has to move on) */
-const KIT_POPIN_AUTO = 22;
+/* (⚑ S428 — S362's KIT_POPIN_AUTO, 22 s after which the platform opened the kit itself, is retired: in 2016 nothing on the monitor
+ *  opens by itself (his 26 Nov: "The automatic is 2026 not 2016"); the kit opens on her press. 40a59042 holds it.) */
 /* (⚑ S426 — S362/S368's PRIORITY ALERT over the desk as Bea's news landed, `maltaAlertHold` and `MALTA_ALERT_AFTER`, is retired with
  *  the alert: storyboard beat 13. 17847974 holds them.) */
 /** ⚑ S399 — the room's light lifts once the news link has landed (s3_maiden.json `news[1]`, Bea's link) */
@@ -260,31 +261,24 @@ const MALTA_LIFT_AFTER = 2;
  *  ×1.07, a touch larger than the old wide view's type, at one width. */
 export const MIRROR_W = 200;
 const MIRROR_GAP = 4;
-/** ⚑ S382 — how long the platform stays down on the bare desktop before it comes back by itself */
-const MINIMISED_RETURN_SECONDS = 30;
+/* (⚑ S428 — S382's MINIMISED_RETURN_SECONDS, 30 s after which a minimised window came back by itself, and its return whenever the
+ *  platform brought something forward, are retired: nothing on the monitor opens by itself. The taskbar button brings it back; the
+ *  phone beside it keeps its notifications; the Start map's "Take me there" restores it. 40a59042 holds them.) */
 const MIRROR_PHONE_H = 310;
 /** ⚑ S369 — the disconnected notice on the Handset Window's place holds its reading time */
 const DISCONNECT_SECONDS = Math.max(3, readHold(mirrorCopy.disconnected) + 0.6);
-/** ⚑ S368 / F01·F11 — Malta's conducted thread waits for a clear board: this long with no card, job, pop-in or Lambient line up */
-const MALTA_CLEAR_SECONDS = 1.5;
-/** ⚑ S368 / F05 — after the cascade, the group thread holds this long before the phone goes to sleep (the block settles, readable)
- *  ⚑ S426 (the last beat, his call 5) — the thread holds this long, lit, in its column, the links up, nothing speaking; then the conduct
- *  ends with the thread still on the glass (no sleep, no Orla, no Lambient) and the update may come (TAIL_AFTER_SECONDS, then
- *  era3Devices' six clear seconds) */
-const TAIL_HOLD_SECONDS = 8;
-const TAIL_AFTER_SECONDS = 2;
+/* (⚑ S428 (UiB job 38 A2) — the conducted Act III's clocks are retired: MALTA_CLEAR_SECONDS (1.5 s of clear board, then Bea's news and
+ *  later the review opened the group by themselves), the 40 s failsafe that put cards away for it, TAIL_HOLD_SECONDS (8) and
+ *  TAIL_AFTER_SECONDS (2) before the update. Each of those steps waits for her press now. 40a59042 holds them.) */
 /* (⚑ S426e, his 24 Nov on the group filling the monitor: "And now the messenger covers all of the screen?? What happened?" — the
  *  Handset Window no longer opens wide or maximises for the group: Act III stays in its own column. MIRROR_WIDE_* and `mirrorWide`
  *  are retired; 9974fe1f holds them.) */
-/** ⚑ S425 (storyboard beat 8) — after Not now, the memory card comes back (Look back alone) once the board has been this quiet */
-const MEMORY_AGAIN_SECONDS = 6;
-/** ⚑ S425 (beat 10) — the breath on the board before the Notes come, when she closed the page before they did */
-const MEMORY_CLOSED_BREATH = 2;
+/* (⚑ S428 — S425's MEMORY_AGAIN_SECONDS (6 quiet seconds, then the memory card again) and MEMORY_CLOSED_BREATH (2 s, then her Notes
+ *  opened by themselves) are retired: after Not now the card comes back the next time she returns to the board (A2 row 5b), and
+ *  closing the memory page puts a Notes notification on her phone (row 6). 40a59042 holds them.) */
 /* (⚑ S426, his 24 Nov on S425's Notes still: "you can clearly see that it is misaligned and on top of another layer. send the fix" —
  *  S425's slide of the Handset Window over the memory page's right half, MIRROR_SLIDE_STEPS / MIRROR_SLIDE_HZ, is retired: the
  *  window stays in its own column for her Notes. e3c5ce36 holds it.) */
-/** ⚑ S425 — her own words as she sent them (ownCut.runs), read by the reading rule before the Notes come in beside them */
-const OWN_WORDS = vera.ownCut.runs.map((r) => r.t).join('');
 /** ⚑ S227 — the Speedrun Version (src/state/cut.ts): Lambient sends her straight to Annette, and ONE finished job lights
  *  the phone (his 2026-10-10: "to speed up the narrative"). Read when asked, never at module load: the front door may
  *  choose the cut after this file is imported. */
@@ -306,9 +300,9 @@ const FOUR_JOBS = ['testimony', 'places', 'family', 'group'];
 const LESSONS = ['testimony', 'places', 'family'];
 /** ⚑ S424 — Lesson 1's first rule (Soften the term): Lambient makes this cut itself, in front of her ("Watch") */
 const LESSON_FIRST = 1;
-/** ⚑ S424 — if Heartwood's offer has not settled this long after Lesson 1, on a quiet board, Lesson 2 lights anyway: the
- *  disc is not mandatory, and nothing may hold the training on it (the offer normally comes within ~10 s) */
-const HEARTWOOD_FAILSAFE = 30;
+/* (⚑ S428 (UiB job 38 A2 row 3, A3) — Lesson 2 no longer waits for Heartwood's offer to be answered or let go: finishing a lesson
+ *  opens the next. S424's HEARTWOOD_FAILSAFE (30 s, then Lesson 2 lit anyway) is retired with that wait; the offer is not made once
+ *  she has opened Lesson 2 (app.ts). 40a59042 holds them.) */
 
 type Outcome = 'applied' | 'skipped';
 /** ⚑ S386 — the five cuts Renata's film takes: the subtitle's word, the other hand, the second cup, the photograph, the
@@ -386,6 +380,11 @@ const ARRIVAL = (updates as unknown as {
 }).e3_arrival;
 
 const MALTA = d.phone.malta;
+/** ⚑ S428 — 2016's chain, named (the Start map's Now, Lambient's asked line): e3_mirror.json `chain` */
+const CHAIN = (mirrorCopy as unknown as { chain: Record<string, { label: string; hint: string }> & { lambientPhone: string } }).chain;
+/** ⚑ S428 — whose messages the chain waits on (their threads are opened by "Take me there") */
+const MAM_FROM = mirrorCopy.events.find((e) => e.id === 'decision')?.from ?? 'Mam';
+const NUALA_FROM = mirrorCopy.events.find((e) => e.id === 'nuala')?.from ?? 'Nuala';
 const LAMBIENT = q.lambient as unknown as Record<string, string>;
 /** ⚑ "YOU CAN'T UNSEE IT" (§7.2) — the two lines Lambient says once the block
  *  has been outnumbered, and they are the worst lines in the era precisely
@@ -477,7 +476,24 @@ export class GraceQueueLite {
 
   get guideSilent(): boolean { return this.kitPopin || this.personalQuiet || this.veraPage === 'record' || veraDay.quiet || this.startMap.active || this.phoneInHand || this.pauseOpen || !!this.saver
     || ['dark', 'boot', 'install'].includes(this.mode) || this.mode === 'list' || this.playing; }
+  /**
+   * ⚑ S428 (UiB job 38 B3; HEADSET_RUN answer e: "I don't have Lamby here"; G2, his 15 Oct: help asked for is uncapped) — LAMBIENT'S
+   * TASKBAR BUTTON STAYS ON EVERY OPERABLE SURFACE: the board, every job page, the bare desktop, and beside the Handset Window
+   * whatever it shows (and, as before, the sign-in and Lambient's question). `guideSilent` above now silences only what Lambient says
+   * UNASKED; this says where its button is drawn and answers a press (one short line: `chainState.lambient`, or the map's hint). Never
+   * on the felt page the platform itself shows (her 2014 memory), never under the system's notice, the lock screen or the Start menu,
+   * and never while the machine is dark or booting. Its balloon is drawn on the
+   * platform's side of the monitor, never over the Handset Window: Lambient's voice never lands over a person's words.
+   */
+  get guideAskable(): boolean {
+    return ['signin', 'consent', 'board', 'done', 'list'].includes(this.mode) && this.veraPage !== 'record'
+      && !this._systemModal && !this.saver && !this.startMap.active;
+  }
+  /** ⚑ S428 — asked-for help only: the button answers, nothing is said unasked */
+  get guideAskOnly(): boolean { return this.guideAskable && this.guideSilent; }
   private lambPriority = false;
+  /** ⚑ S428 — the surface Lambient's asked line belongs to */
+  private guideSurface = '';
   private lambHoldT = 0;
   private lambSequence = 0;
   get guideVoice(): boolean { return this.lambPriority; }
@@ -489,10 +505,8 @@ export class GraceQueueLite {
       && !this.kitPopin && !this.phone.voiceBusy && this.phone.queued === 0 && !this.floppy.open && !this.lambyGuide?.active;
   }
   /** ⚑ S424 — set each frame by app.ts: 2016's Heartwood offer (after Lesson 1) has been answered, let go, or will not be
-   *  made. Lesson 2 lights once it has (or after HEARTWOOD_FAILSAFE on a quiet board). True where there is no Lamby set. */
+   *  made. ⚑ S428: read by nothing in the chain now (Lesson 2 no longer waits for it); kept for the probes that print it. */
   heartwoodSettled = true;
-  private heartwoodWaitT = 0;
-  private heartwoodForced = false;
   /** ⚑ S424 — review aids (?debug=1 jumps) open any lesson; the visit never sets this */
   private lessonsFree = false;
   /** ⚑ S424 — Lesson 1's "Watch": Lambient's line (`intro`), its own cut being made (`cut`), its teaching line held for its
@@ -521,6 +535,9 @@ export class GraceQueueLite {
    *  words (a thread, the inbox, the group). It used to stay quiet after ANY press there until the next press on the
    *  platform, which is most of why "where is our guide?" (T25) had no answer: the tray was simply not drawn. */
   get personalQuiet(): boolean { return this.wickConducting || this.deskConducting || this.phone.conductingNotes || this.memoryForward || (this.mirrorReading && this.phone.quietReading) || this.phone.personalOpen || this.phoneInHand || this.cascadeConduct; }
+  /** ⚑ S428 — the group's news or its review is running on her phone (was S426's conducted flag; it is the phone's own state now). The
+   *  platform's music keeps its stops on it (D, the music, is S429's) and Lambient says nothing unasked while it runs. */
+  private get cascadeConduct(): boolean { return this.phone.groupRunning; }
   private armPersonalNotice(): void {
     if (this.personalArmed) return;
     // ⚑ S327 / T32 — the Wick card rises once at sign-in (era3Devices, four seconds). ⚑ S332: Orla's message no longer
@@ -531,7 +548,6 @@ export class GraceQueueLite {
    *  the testimony editor") — the evening's other messages, in the order she EARNS them: each finished thing (a story,
    *  the send, its receipt, her own record) earns the next, and the phone holds it until the platform is at rest. */
   private earnedJobs = new Set<string>();
-  private offerWaitT = 0;
   /** ⚑ S337 — GracePlatform's own music (tools/make_graceloop.py; his 9 Nov). The platform's voice: it plays under the
    *  work and stops for anything that is a person's (the Story Record, her phone brought forward or a thread being
    *  read), for the pause menu, the screensaver, the games, and from the moment the update starts installing. */
@@ -559,6 +575,18 @@ export class GraceQueueLite {
   }
   private kitWaitT = 0;
   private kitWarned = false;
+  /** ⚑ S428 — the kit has been asked for once (Bea's news read) */
+  private kitAsked = false;
+  /** ⚑ S428 (A2 row 4) — the memory card is due: the training done, Mam's message opened and read, nothing of Act II begun */
+  private get memoryDue(): boolean {
+    return this.fourJobsDone && !veraDay.recordOpened && !this.memoryCard && !this.memoryDeclined && this.phone.readDone('decision')
+      && !this.wickBanPending && !this.wickConducting && !this.deskConducting;
+  }
+  /** ⚑ S428 — the board is in front of her with nothing over it: no job, page, card, pop-in, menu, lock screen; the window up */
+  private get boardPlain(): boolean {
+    return (this.mode === 'board' || this.mode === 'done') && !this.veraPage && !this.openSurface && !this.pauseOpen && !this.minimised
+      && !this.saver && !this.startMap.active && !this.kitPopin && !this.memoryCard && !this._systemModal;
+  }
   private lastDt = 0;
   private earn(id: string): void { this.phone.arrive(id); }
   /** ⚑ S332 — the four jobs, finished (a job finished for her by Lambient or an administrator counts: it is done) */
@@ -566,8 +594,8 @@ export class GraceQueueLite {
     if (id === 'testimony') return this.subComplete(SUBMISSIONS[0]) && veraDay.distributed;
     return this.surfaces.get(id)?.complete() ?? false;
   }
-  /** a job (or a story) is open on the platform: Malta's conducted clock waits for the board */
-  private get jobOpen(): boolean { return this.mode === 'list' || !!this.openSurface; }
+  /* (⚑ S428 — `jobOpen`, which paused Malta's conducted clock while a job was open (HEADSET_RUN answer a, the stall), is retired:
+   *  nothing a visitor opens pauses the group. 40a59042.) */
   /** ⚑ S399 (job 29 B1) — the jobs ON the board, finished: the default visit's board holds the testimony and the places list
    *  (s3_queue.json `startersSpeedrun`); the family calls and the group join it only through "The other jobs" or ?cut=full
    *  ⚑ S403 (job 30 B1) — the family calls are back on the default board ("Answer the mothers"); only the group waits behind
@@ -586,11 +614,8 @@ export class GraceQueueLite {
   /** ⚑ S327 / T07 — the cascade, conducted: the Handset Window is brought forward over the board while the group fills
    *  ⚑ S426 (Act III) — the group is conducted twice, in the Handset Window's own column (⚑ S426e: never wide): Bea's news (beat 11,
    *  `maltaConduct` 'news') and the review with the forwards and the last beat (beats 13–14, 'review'); the kit comes between */
-  private cascadeConduct = false;
-  private maltaConduct: 'news' | 'review' | null = null;
-  private tailT = -1;
-  /** ⚑ S426 — the last beat held and the window back in its column: seconds since (the update may come after TAIL_AFTER_SECONDS) */
-  private afterT = -1;
+  /* (⚑ S428 — `cascadeConduct` is a getter on the phone's state now (above); S426's `maltaConduct`, `tailT` and `afterT` are retired
+   *  with the conducted Act III: 40a59042.) */
   /** ⚑ S327 / T07 — set each frame by era3Devices: the update notice is on this screen (nothing under it may glow or
    *  speak), and whether it has been deferred (Remind me later) */
   private _systemModal = false;
@@ -606,9 +631,10 @@ export class GraceQueueLite {
    *  ⚑ S426 (UiB job 35 Part D, Act III; storyboard: "The update · the review was outnumbered") — the update's cause is the
    *  review outnumbered: the forwards in, "Review could not keep up.", the thread held (TAIL_HOLD_SECONDS) and the window back in
    *  its column, TAIL_AFTER_SECONDS since. (Orla's last message and Lambient's closing pair are retired, his call 5.) */
-  get updateReady(): boolean {
-    return !this.veraPage && this.afterT >= TAIL_AFTER_SECONDS && !this.lambPriority && !this.cascadeConduct && !this.pauseOpen && !this.phone.voiceBusy && this.phone.queued === 0;
-  }
+  /** ⚑ S428 (UiB job 38 A2 row 15) — the update's cause is still the review outnumbered ("Review could not keep up."), and it comes
+   *  on her act: she forwards the link once it has, or she closes the group after it has been on her glass (phoneE3 `endAnswered`).
+   *  era3Devices arms the notice at once (FINAL_GAP is retired). */
+  get updateReady(): boolean { return this.phone.endAnswered !== null; }
   private clearPersonalNotice(): void {
     this.personalNotice = false; this.personalDesktop = false;
     this.rects = this.rects.filter(r => !r.id.startsWith('personal-'));
@@ -664,24 +690,22 @@ export class GraceQueueLite {
    *  (Look back · Not now), 'again' (after Not now, Look back alone), or null. (Was `storyOffer`, the Install card with its typed
    *  DRAFT box: retired, 76d0671d holds it.) */
   private memoryCard: 'offer' | 'again' | null = null;
-  /** she said Not now (it works once); the quiet board seconds since, toward the card's return */
+  /** she said Not now (it works once); ⚑ S428: whether she has left the board since (the card comes back on her return: row 5b) */
   private memoryDeclined = false;
-  private memoryQuietT = 0;
+  private memoryLeft = false;
   /** ⚑ S425 (beat 9) — seconds the memory page has shown its current face (the published story, or her own words: `recordSent`) */
   private memoryT = 0;
-  /** ⚑ S425 (beat 10, felt) — her Notes: 'idle' (not yet due), 'wait' (her words have their reading time, or the page was closed:
-   *  a breath), 'notes' (her Notes open in the Handset Window's own column — ⚑ S426; S425 slid it over the page — the note typing and held), 'lock' (the phone's lock screen,
-   *  Nuala's message landing and read), 'done' (the window back in its column). */
-  private memoryStage: 'idle' | 'wait' | 'notes' | 'lock' | 'done' = 'idle';
-  private memoryStageT = 0;
+  /** ⚑ S425 (beat 10, felt) — her Notes. ⚑ S428 (UiB job 38 A2 rows 6–9), each stage on her act: 'idle' (the memory page not yet
+   *  closed), 'notice' (she closed it: the Notes notification is on her phone), 'notes' (she opened it: her Notes, her line typing
+   *  and written), 'lock' (she closed them: the phone locked, Nuala's message lands there and is read), 'done' (Nuala's message
+   *  read: the group's notification is on her phone). (S425's 'wait', the breath after which the Notes opened by themselves, is
+   *  retired: 40a59042.) */
+  private memoryStage: 'idle' | 'notice' | 'notes' | 'lock' | 'done' = 'idle';
   /** ⚑ S362 / H41 — the campaign kit's URGENT pop-in is up (it opens the kit; if left, the platform opens it after KIT_POPIN_AUTO) */
   private kitPopin = false;
   private kitPopinT = 0;
-  /** ⚑ S368 / F01·F11 — the kit is closed and Malta's conducted thread waits for a clear board (see update())
-   *  ⚑ S426 — what waits for the clear board: Bea's news (after Nuala's message) or the review (after the kit) */
-  private maltaPending: 'news' | 'review' | null = null;
-  private maltaClearT = 0;
-  private maltaWaitT = 0;
+  /* (⚑ S428 — S368/S426's `maltaPending` (Bea's news or the review waiting for a clear board) and its two clocks are retired: each
+   *  comes as a notification on her phone and runs when she opens the group. 40a59042.) */
   private kitApproved = false;
   private takenDown = false;
   private sendReceipt = false;
@@ -872,6 +896,16 @@ export class GraceQueueLite {
   private readonly startPanel = new StartPanel('e3');
   private readonly startMap = new StartMenuMap();
   private get startMapSilent(): boolean { return this.personalQuiet || this.phoneInHand || this.playing; }
+  /** ⚑ S428 (UiB job 38 B4) — 2016's Start model: the map's, with the chain's step as the Now (and its "Take me there") once the
+   *  training is done (`chainState`) */
+  private startModel(): StartModel {
+    const model = buildStartModel(undefined, 'e3'), c = this.chainState;
+    if (!c) return model;
+    const base = model.now ?? { id: '', label: '', hint: '', state: 'current' as const, optional: false, place: '', where: '' };
+    return { ...model, now: { ...base, id: 'chain:' + c.step, label: c.label, hint: c.hint }, take: c.take ? 'sm-take' : null };
+  }
+  /** ⚑ S428 (B2) — the Start menu (or its refusal) is open: the headset's ?debug=1 plate stands aside while it is (app.ts) */
+  get startMenuOpen(): boolean { return this.startMap.menu || this.startMap.refused; }
   private startPanelCalm(): boolean {
     if (this.personalQuiet || this.veraPage || this.startMap.active || this.minimised || this.saver || this.pauseOpen || this.phoneInHand || this.openSurface || !this.guideReady('start-panel')) return false;
     if (this.mode === 'signin') return true;
@@ -907,13 +941,17 @@ export class GraceQueueLite {
       this.lambHoldT += dt; if (this.lambHoldT >= Math.max(10, readHold(this.lambLines ?? []))) { this.lambPriority = false; this.lambLines = null; this.bump(); }
     }
     this.guideWait.tick(dt, !!this.lambyGuide?.active);
+    // ⚑ S428 (B3) — a line she asked Lambient for belongs to the surface she asked on: a new page, job or board drops it
+    const surface = `${this.mode}|${this.openSurface?.id ?? ''}|${this.veraPage ?? ''}|${this.minimised}`;
+    if (surface !== this.guideSurface) { this.guideSurface = surface; this.lambyGuide?.dropAsked(); }
     // ⚑ S327 / T06 — ONE VOICE AT A TIME. The phone may deliver only while the platform is at rest: nothing open on it,
     //   no Lambient line, no card, no guide balloon, no conducted beat, no system notice.
     // ⚑ S332 — and not in the one frame between Renata's last rule and the send page the platform is about to open
     // ⚑ S425 — and her memory page, once it is still (her Notes have come): Nuala's message lands on it, the kit may come over it
-    this.phone.atRest = (this.mode === 'signin' || ((this.mode === 'board' || this.mode === 'done') && (!this.veraPage || this.memoryPageStill) && !this.openSurface
+    // ⚑ S428 — a minimised window is at rest too (her phone beside it still brings its news; nothing brings the window back)
+    this.phone.atRest = (this.mode === 'signin' || ((this.mode === 'board' || this.mode === 'done') && !this.veraPage && !this.openSurface
       && !(this.subComplete(SUBMISSIONS[0]) && !veraDay.distributed)))
-      && !this.lambPriority && !this.pauseOpen && !this.saver && !this.startMap.active && !this.minimised
+      && !this.lambPriority && !this.pauseOpen && !this.saver && !this.startMap.active
       && !this.wickConducting && !this.deskConducting && !this.cascadeConduct && !this._systemModal
       && !voiceHeld();   // ⚑ S390 — and not while the teaching TV's conducted tape holds the floor (the phone waits, then delivers)
     // ⚑ S336 — the guide no longer holds the phone back. The full entrance walk deadlocked here: the guide balloon came
@@ -926,10 +964,8 @@ export class GraceQueueLite {
     //   platform at rest). So the window comes back by itself the moment the platform brings something forward — a page,
     //   a card, the send, Malta — or after MINIMISED_RETURN_SECONDS on the bare desktop: the shift's software keeps the
     //   room. The button and the title bar's minimise work exactly as before; this only ends a wait nobody chose.
-    if (this.minimised) {
-      this.minimisedT += dt;
-      if (this.platformWants() !== this.minimisedWant || this.minimisedT >= MINIMISED_RETURN_SECONDS) { this.minimised = false; this.bump(); }
-    }
+    // (⚑ S428 — the window no longer comes back by itself: S382's return after 30 s, or when the platform brought something forward,
+    //  is retired. The taskbar's button and the Start map's "Take me there" bring it back. 40a59042.)
     if (this.personalDesktop && !this.phone.personalOpen) { this.personalDesktop = false; this.bump(); }
     if (this.phoneInHand || this.phone.personalSeen) {
       if (this.personalNotice) { this.personalNotice = false; this.bump(); }
@@ -953,50 +989,21 @@ export class GraceQueueLite {
       //   S424; 0b3d81ce holds the last code that said them.
     }
     this.updateWatch(dt);
-    this.updateHeartwood(dt);
-    this.updateMemory(dt);   // ⚑ S425 — Act II: the memory card, the page, her Notes
+    this.updateMemory(dt);   // ⚑ S425 — Act II: the memory card, the page, her Notes · ⚑ S428: each on her act (A2 rows 4–9)
     if (this.mode === 'dark') {
       const before = this.idleT;
       this.idleT += dt;
       if (e3SpinnerStep(this.idleT) !== e3SpinnerStep(before)) this.bump();
     }
-    // ⚑ S368 / F01·F11 — MALTA WAITS FOR A CLEAR BOARD. Leaving the kit used to open the group thread on the Handset Window
-    //   the same frame, over whatever card was up ("This week" with its Close half hidden: F01). Now the thread is conducted
-    //   only once no card, job, pop-in or Lambient line has been up for MALTA_CLEAR_SECONDS. A card left open for 40 s is
-    //   put away first (read by then), so nothing can hold the era forever and nothing opens on top of it.
-    // ⚑ S426 (Act III) — twice: Bea's news after Nuala's message (it may come over her still memory page: the evening comes), and
-    //   the review after the kit
-    if (this.maltaPending) {
-      const cardUp = this.pauseOpen || this.lambPriority || this.kitPopin || !!this.memoryCard || this.startPanel.open || this.startMap.active;
-      // S369 (the after-run: a lock-screen message replaced by the thread 2.3 s after it landed) — and the phone's own last
-      //   message has had its reading time
-      const clear = (this.mode === 'board' || this.mode === 'done') && (!this.veraPage || this.memoryPageStill) && !this.openSurface && !this.saver && !cardUp
-        && !this.phone.voiceBusy;
-      this.maltaClearT = clear ? this.maltaClearT + dt : 0;
-      this.maltaWaitT += dt;
-      if (this.maltaWaitT > 40 && cardUp && !this.veraPage && !this.openSurface) { this.pauseOpen = false; this.lambPriority = false; this.lambLines = null; this.startPanel.close(); this.startMap.close(); this.bump(); }
-      if (this.maltaClearT >= MALTA_CLEAR_SECONDS) { const next = this.maltaPending; this.maltaPending = null; if (next === 'news') this.beginMaltaConduct(); else this.beginReview(); }
-    }
-    // ⚑ S332 (the S329 entrance walk: kit → another job → Malta never came, 0 rects) — MALTA WAITS FOR THE BOARD. Its
-    //   conducted clock (Bea's news, the takeover, the cascade) only runs while no job is open; a job opened during it
-    //   pauses it, and it resumes the moment she is back on the board. The board's tiles stay pressable throughout.
-    this.phone.tick(dt, (this.phoneInHand || this.mirrorAvailable) && !this.floppy.open && !this.jobOpen); // ⚑ the cascade's own clock, and the only one on the phone
-    // ⚑ S426 (beat 11 → 12) — the news read, the group goes back to its column, quiet; then the kit (updateConnections)
-    if (this.maltaConduct === 'news' && this.phone.newsDone) {
-      this.maltaConduct = null; this.cascadeConduct = false; this.mirrorReading = false; this.kitPending = true; this.kitWaitT = 0; this.bump();
-    }
-    // ⚑ S327 / T07 — THE TAIL, one voice at a time. ⚑ S426 (beat 14, the last beat; his call 5) — the forwards in and the review
-    //   outnumbered ("Review could not keep up."), the thread holds, lit, the links up, ten members, nothing speaking, for
-    //   TAIL_HOLD_SECONDS; then the window goes back to its column with the thread still on it; then — `updateReady` — the update.
-    //   (S368's tail after it — the phone's sleep, Orla's "missed you tonight x" with its photo, Lambient's "Everything on your
-    //   board is still there." / "Take the time you need with it." — is retired: 17847974 holds it.) Nothing here waits on a
-    //   press, and nothing here is a timer she must beat.
-    if (this.phone.broken) {
-      if (this.cascadeConduct) {
-        this.tailT = this.tailT < 0 ? 0 : this.tailT + dt;
-        if (this.tailT >= TAIL_HOLD_SECONDS) { this.cascadeConduct = false; this.maltaConduct = null; this.mirrorReading = false; this.bump(); }
-      } else this.afterT = this.afterT < 0 ? 0 : this.afterT + dt;
-    }
+    // ⚑ S428 (UiB job 38 A2, rows 9–15; HEADSET_RUN answer a: "It felt stuck") — ACT III ON HER ACTS. S368/S426's conducted Act III
+    //   (Bea's news and then the review opening the group by themselves after 1.5 s of clear board, the 40 s failsafe, the tail's
+    //   held seconds) is retired; 40a59042 holds it. Each step now comes as a notification on her phone, and runs when she opens
+    //   the group. The phone's own clock (the news landing, the review's steps, the forwards) runs whatever she opens or plays — a
+    //   job, a finished lesson, the phone game, a minimised window (`visible` only says whether its glass is the phone's, not the
+    //   game's: the last of Bea's news is read on it).
+    this.phone.tick(dt, !this.floppy.open);
+    // ⚑ S426 (beat 11 → 12) — the news read: the kit comes (updateConnections), once (⚑ S428: no conduct to end)
+    if (this.phone.newsDone && !this.kitAsked) { this.kitAsked = true; this.kitPending = true; this.kitWaitT = 0; this.bump(); }
     if (this.arrivalT >= 0) {
       this.arrivalT += dt;
       const want: Mode = this.arrivalT < this.bootSeconds ? (this.arrivalT < DARK_SECONDS ? 'dark' : 'boot')
@@ -1077,8 +1084,7 @@ export class GraceQueueLite {
     if (this.jobDone(id)) return 'done';
     if (i === 0 || this.lessonsFree) return 'lit';
     if (!this.jobDone(LESSONS[i - 1])) return 'locked';
-    // Lesson 2 also waits for Heartwood's offer (Lesson 1's reading) to be answered or let go
-    if (i === 1 && !this.heartwoodSettled && !this.heartwoodForced) return 'locked';
+    // (⚑ S428 — Lesson 2 no longer also waits for Heartwood's offer: finishing a lesson opens the next, A2 row 3)
     return 'lit';
   }
   /** the board's index of the lesson that is lit now (-1: none) */
@@ -1094,17 +1100,11 @@ export class GraceQueueLite {
     const i = this.litLessonIndex();
     if (i >= 0) this.openTask(i); else this.bump();
   }
-  /** ⚑ S424 — the failsafe on Heartwood's offer: Lesson 1 done, the offer not settled, a quiet board, for
-   *  HEARTWOOD_FAILSAFE seconds — Lesson 2 lights anyway (written to the console once, for diagnosis) */
-  private updateHeartwood(dt: number): void {
-    if (this.heartwoodSettled || this.heartwoodForced || !this.jobDone('testimony')) { this.heartwoodWaitT = 0; return; }
-    const quiet = this.mode === 'board' && !this.veraPage && !this.openSurface && !this.pauseOpen && !this.phone.voiceBusy && this.phone.queued === 0 && !this.lambyGuide?.active;
-    this.heartwoodWaitT = quiet ? this.heartwoodWaitT + dt : 0;
-    if (this.heartwoodWaitT >= HEARTWOOD_FAILSAFE) {
-      this.heartwoodForced = true; this.bump();
-      console.warn('[e3] heartwood failsafe: Lesson 2 lit without the offer settling');
-    }
-  }
+  /* (⚑ S428 — S424's `updateHeartwood`, the 30 s failsafe that lit Lesson 2 when Heartwood's offer had not settled, is retired with
+   *  that wait: 40a59042.) */
+  /** ⚑ S428 — Lesson 2 (the places list) has been opened: Lamby's Heartwood offer, which "goes with this lesson", is not made after
+   *  it (app.ts, the 2016 set's `due`) */
+  placesOpened = false;
   /**
    * ⚑ S424 (16-6, his 20 Nov: "instead of just us playing, the system is the Lambian teaching us how to correct the
    * content"; storyboard beat 2) — LESSON 1 · WATCH. Renata's editor opens on the first rule, Soften the term, and Lambient
@@ -1200,10 +1200,11 @@ export class GraceQueueLite {
    *  platform opens the kit itself if it is left) and Kindredraft's draft (types itself in). Both redraw only when they change. */
   private updatePopins(dt: number): void {
     // ⚑ S425 — the kit's pop-in may also come over her memory page, once that page is still (beat 10 done: "the evening still comes")
-    const onBoard = this.mode === 'board' && !this.openSurface && (!this.veraPage || this.memoryPageStill) && !this.minimised;
+    const onBoard = this.mode === 'board' && !this.openSurface && !this.veraPage && !this.minimised;
     if (this.kitPopin && onBoard) {
+      // ⚑ S428 — it flashes until she opens it (still under reduced motion); it no longer opens the kit itself (KIT_POPIN_AUTO retired)
       const b = Math.floor(this.kitPopinT * 2); this.kitPopinT += dt;
-      if (this.kitPopinT >= KIT_POPIN_AUTO) this.openKit(); else if (b !== Math.floor(this.kitPopinT * 2)) this.bump();
+      if (!reducedMotion() && b !== Math.floor(this.kitPopinT * 2)) this.bump();
     }
   }
   /** ⚑ S399 (job 29 B1: "Malta and the light lifting" is a kept beat) — THE LIFT, re-attached. Its only call on a visitor's path
@@ -1223,28 +1224,18 @@ export class GraceQueueLite {
    * the thread keeps every message while it speaks (phoneE3). If her memory page is still open, the evening closes it (it would
    * otherwise come back under the group's window). Once the news has been read the window goes back and the kit comes.
    */
-  private beginMaltaConduct(): void {
-    if (this.veraPage === 'record') { this.veraPage = null; this.mode = 'board'; veraDay.recordClosed = true; veraDay.quiet = false; this.phone.bannersHidden = false; }
-    this.armMalta();
-    this.phone.startNews();
-    if (this.floppy.open) this.floppy.closeGame();
-    this.cascadeConduct = true; this.maltaConduct = 'news'; this.tailT = -1; this.mirrorMin = false; this.mirrorReading = true;
-    this.phone.showGroup(); this.lambPriority = false; this.lambLines = null;
-    this.bump();
-  }
+  /* (⚑ S428 — `beginMaltaConduct`'s body — closing her memory page, closing the game, opening the group on the Handset Window by
+   *  itself — is retired: 40a59042. Bea's news comes as the group's notification (phoneE3 `noticeNews`, updateMemory) and runs when
+   *  she opens the group.) */
   /**
    * ⚑ S426 (Act III beat 13; his 20 Nov 16-17: "the removal should be seen happening") — THE REVIEW, once the kit is closed and the
    * board is clear: the group is put on the Handset Window again, and the platform reviews it in the chat (phoneE3 `startReview`: its bar, each Malta
    * message outlined, "removing…", greyed and folded; then the forwards, faster than it can follow — beat 14). Lambient says
    * nothing. (S332's PRIORITY ALERT, the takeover's alert and the Review page on the board are retired: 17847974.)
    */
-  private beginReview(): void {
-    if (!this.phone.startReview()) return;
-    if (this.floppy.open) this.floppy.closeGame();
-    this.cascadeConduct = true; this.maltaConduct = 'review'; this.tailT = -1; this.mirrorMin = false; this.mirrorReading = true;
-    this.phone.showGroup(); this.lambPriority = false; this.lambLines = null;
-    this.bump();
-  }
+  /* (⚑ S428 — `beginReview`'s body — closing the game and opening the group by itself once the board was clear — is retired:
+   *  40a59042. Leaving the kit puts the group's notification on her phone (phoneE3 `noticeReview`); the review runs when she opens the
+   *  group (phoneE3 `openGroup` → `startReview`), and nothing she opens or plays pauses it.) */
   private openKit(): void {
     // ⚑ S425 — opened over her still memory page: that page is closed by it (the evening came while she was there)
     if (this.veraPage === 'record') { veraDay.recordClosed = true; veraDay.quiet = false; this.phone.bannersHidden = false; }
@@ -1265,36 +1256,87 @@ export class GraceQueueLite {
       this.bump();
     }
     if (this.fourJobsDone && !ledger.records.includes('e3-jobs-done')) ledger.records.push('e3-jobs-done');
-    // ⚑ S425 (storyboard beat 8) — the training done and Mam's message read (its reading time held by the phone's voice): Kindredraft's
-    //   memory card, over the board. Once only; after Not now it comes back by itself (`updateMemory`), Look back alone.
-    if (this.fourJobsDone && !veraDay.recordOpened && !this.memoryCard && !this.memoryDeclined && this.phone.delivered('decision')
-      && this.phone.queued === 0 && !this.phone.voiceBusy
-      && !this.wickBanPending && !this.wickConducting && !this.deskConducting) { this.memoryCard = 'offer'; this.bump(); }
-    // ⚑ S336 — A FAILSAFE, because the full entrance walk stalled here twice (four jobs done, the board in 'done', the
-    //   offer of her own record never armed): if the day has been sitting still with every job done for 8 s, the offer
-    //   comes anyway. Whatever was holding it (a queued message that never got its quiet moment, a ban that never got its
-    //   cue) must not be able to end the era. The blockers are written to the console once, for diagnosis.
-    if (this.fourJobsDone && !veraDay.recordOpened && !this.memoryCard && !this.memoryDeclined && !this.jobOpen && !this.veraPage
-      && !this.phone.voiceBusy && this.phone.queued === 0 && !this.wickConducting && !this.deskConducting) {
-      // only truly idle time counts: messages still arriving, or the card still rising, are the day moving on
-      this.offerWaitT += this.lastDt;
-      if (this.offerWaitT > 12) {
-        console.warn('[e3] offer failsafe ' + JSON.stringify({ voiceBusy: this.phone.voiceBusy, wickBanPending: this.wickBanPending,
-          wickConducting: this.wickConducting, mode: this.mode, phone: this.phone.debugState() }));
-        this.wickBanPending = false; this.memoryCard = 'offer'; this.offerWaitT = 0; this.bump();
-      }
-    } else this.offerWaitT = 0;
-    if (this.kitPending) { this.kitWaitT += this.lastDt; if (this.kitWaitT > 10 && !this.kitWarned) { this.kitWarned = true;
+    // ⚑ S425 (storyboard beat 8) — Kindredraft's memory card, over the board. ⚑ S428 (UiB job 38 A2 row 4): it comes when she is on
+    //   the board with the training done AND Mam's message opened and read (its reading time from when she opened it: phoneE3
+    //   `readDone`), the phone quiet. Once; after Not now it comes back the next time she returns to the board (`updateMemory`).
+    //   (S336's 12 s failsafe, `offerWaitT`, is retired: the card waits on her act, and every gate here is hers or a reading time.
+    //   40a59042 holds it.)
+    if (this.memoryDue && this.boardPlain && this.phone.queued === 0 && !this.phone.voiceBusy) { this.memoryCard = 'offer'; this.bump(); }
+    if (this.kitPending) { this.kitWaitT += this.lastDt; if (this.kitWaitT > 10 && !this.kitWarned && this.boardPlain) { this.kitWarned = true;
       console.warn('[e3] kit waiting ' + JSON.stringify({ wickConducting: this.wickConducting, phone: this.phone.debugState() })); } }
     // ⚑ S386 (job 24 A1) — S382's mug moment removed: her message read, the kit comes (the notebook in her hand still holds it)
     // ⚑ S426 (beat 12; his call 8) — the kit comes after Bea's news: the news read and the group back in its column, the board at rest
-    if (this.kitPending && this.phone.newsDone && !this.cascadeConduct && !this.phone.voiceBusy && this.phone.atRest && !this.wickConducting && !this.deskConducting) {
+    // ⚑ S428 (row 11) — she has read the last of Bea's messages (phoneE3 'read'); it pops in when she is on the board
+    if (this.kitPending && this.phone.newsDone && !this.phone.voiceBusy && this.phone.atRest && !this.minimised && !this.wickConducting && !this.deskConducting) {
       // ⚑ S362 / H41 (his headset, 10 Nov, 21:11: the campaign kit "should arrive as a pop-in marked urgent") — it pops in, in the
       //   platform's own voice, and opens from there; it no longer takes the whole screen by itself
       this.kitPending = false; this.mode = 'board'; this.kitPopin = true; this.kitPopinT = 0; playOnce('lambient_chime.mp3'); this.bump();
     }
     // (⚑ S426 — S332's Review page on the board while the platform removed the news, `removalsShown`, is retired: the removal is
     //  seen in the chat, phoneE3; 17847974)
+  }
+
+  /**
+   * ⚑ S428 (UiB job 38 A2 + B4; his 26 Nov: "think of cadency of actions, ifttt - if this than that"; HEADSET_RUN finding 40) — 2016'S
+   * CHAIN, NAMED. From the end of the training to the update, the step she is on, in plain words (e3_mirror.json `chain`): what the
+   * Start map's Now says (never a beat she cannot see happening), what Lambient's taskbar button answers (`lambient`: on a step that is
+   * on her phone, one line that never speaks about a person's words), and the one press "Take me there" makes for her (`take`): the
+   * press her own would be — the notification, the thread, the board, the kit. Null before the training is done (the map's own beats
+   * say where she is) and once the update has been asked for. Read only: deriving it changes nothing.
+   */
+  get chainState(): { step: string; label: string; hint: string; lambient: string; take: string | null } | null {
+    if (!this.fourJobsDone || !['board', 'done', 'list'].includes(this.mode) || this.phone.endAnswered) return null;
+    const p = this.phone, glass = (screen: string): boolean => p.screenNow === screen && !this.floppy.open;
+    const C = CHAIN as Record<string, { label: string; hint: string }>;
+    const at = (key: string, take: string | null, onPhone: boolean): { step: string; label: string; hint: string; lambient: string; take: string | null } =>
+      ({ step: key, label: C[key].label, hint: C[key].hint, lambient: onPhone ? CHAIN.lambientPhone : C[key].hint, take });
+    const offBoard = !this.boardPlainBut();
+    const stage = p.stageNow;
+    if (stage === 'after') return at('end', glass('group') ? null : 'group', true);
+    if (stage === 'takeover') return at('removal', glass('group') ? null : 'group', true);
+    if (p.noticeId === 'review') return at('review', 'notice', true);
+    if (this.veraPage === 'kit') return at('kitOpen', null, false);
+    if (this.kitPopin) return offBoard ? at('kitBack', 'board', false) : at('kit', 'kit', false);
+    if (this.kitPending) return at('kitBack', 'board', false);
+    if (stage === 'news' || stage === 'read') return p.newsWaiting ? at('bea', 'notice', true) : at('news', glass('group') ? null : 'group', true);
+    if (this.memoryStage === 'lock' || this.memoryStage === 'done') {
+      if (!p.delivered('nuala') && p.queued > 0 && !p.atRest) return at('held', 'board', false);
+      const reading = glass('evening') && p.readFor('nuala') >= 0;
+      return at('nuala', p.delivered('nuala') && !reading ? 'evening:' + NUALA_FROM : null, true);
+    }
+    if (this.memoryStage === 'notes') return at('notes', glass('notes') ? null : 'notes', true);
+    if (this.memoryStage === 'notice') return at('notesNotice', 'notice', true);
+    if (this.veraPage === 'record') return at('page', null, false);
+    if (this.memoryCard) return at('card', offBoard ? 'board' : null, false);
+    if (this.memoryDeclined && !veraDay.recordOpened) return at('again', 'again', false);
+    if (this.memoryDue) return at('card', 'board', false);
+    if (!p.readDone('decision')) {
+      if (!p.delivered('decision') && p.queued > 0 && !p.atRest) return at('held', 'board', false);
+      const reading = glass('evening') && p.readFor('decision') >= 0;
+      return at('mam', p.delivered('decision') && !reading ? 'evening:' + MAM_FROM : null, true);
+    }
+    return null;
+  }
+  /** the board in front of her, ignoring the two cards the chain itself puts there (the memory card, the kit's pop-in) */
+  private boardPlainBut(): boolean {
+    return (this.mode === 'board' || this.mode === 'done') && !this.veraPage && !this.openSurface && !this.pauseOpen && !this.minimised && !this.saver;
+  }
+  /** ⚑ S428 (B4) — "Take me there": the press her own would be, for the step she is on (`chainState.take`). It never presses an answer
+   *  for her (Look back, Approve, Forward): only the way to the thing that waits. */
+  takeMeThere(): void {
+    const t = this.chainState?.take;
+    if (!t) return;
+    if (t === 'board' || t === 'kit' || t === 'again') {
+      this.minimised = false; this.pauseOpen = false; this.startPanel.close();
+      if (this.mode === 'list') { this.storyDone = false; this.backToBoard(); }
+      if (t === 'kit' && this.kitPopin) this.openKit();
+      if (t === 'again' && this.memoryDeclined && !this.memoryCard && !veraDay.recordOpened) { this.memoryCard = 'again'; this.memoryLeft = false; }
+    } else {
+      if (this.floppy.open) this.floppy.closeGame();
+      if (t === 'notice') this.phone.pressNotice(); else this.phone.pressControl(t);
+      this.mirrorReading = true; this.phoneV++;
+    }
+    this.bump();
   }
 
   /** ⚑ S208 / A2 (REVIEW_ROUND_5, ERA16-01) — ANY finished job moves the day on, not only the testimony: the board
@@ -1813,6 +1855,7 @@ export class GraceQueueLite {
     this.chipReturn = null;
     if (mounted) {
       if (t.id === 'recommend') meetWord('brokenness', 'e3-keywords');   // S209 / P7-47 — the house keywords
+      if (t.id === 'places') this.placesOpened = true;   // ⚑ S428 — Heartwood's offer goes with this lesson: not made after it opens
       this.openSurface = mounted;
       this.mode = 'list';
       this.bump();
@@ -1873,15 +1916,10 @@ export class GraceQueueLite {
   /** the window goes to the taskbar, and comes back from it. */
   toggleMinimised(): void {
     this.clearPersonalNotice(); this.phone.closePersonalThread(); this.minimised = !this.minimised;
-    if (this.minimised) { this.minimisedT = 0; this.minimisedWant = this.platformWants(); }
     this.bump();
   }
-  /** ⚑ S382 — what the platform has up or is about to bring forward; a change while minimised brings the window back */
-  private platformWants(): string {
-    return [this.mode, this.veraPage ?? '', this.kitPopin, this.memoryCard, this.maltaPending, this.cascadeConduct, this.pauseOpen, this.subComplete(SUBMISSIONS[0]) && !veraDay.distributed].join('|');
-  }
-  private minimisedT = 0;
-  private minimisedWant = '';
+  /* (⚑ S428 — S382's `platformWants` and the minimised clock, `minimisedT` / `minimisedWant`, are retired with the window's return by
+   *  itself: 40a59042.) */
 
   /** APPLY / SKIP — the only two verbs this era has. Both file; neither is
    *  weighted, tinted or answered. The counter only ever counts `applied`,
@@ -1968,7 +2006,7 @@ export class GraceQueueLite {
   /** the phone lights on the desk. ⚑ S149: and Lambient says so, once — the era's
    *  voice for the beat (NARRATIVE_FLOW 2016 #6, R3-81): the phone is the way the
    *  era ends now, so the player must be told it exists and that it can be put down. */
-  armMalta(): void {
+  armMalta(quiet = false): void {
     if (!veraDay.recordClosed) return;
     markExtraPassed('work');
     if (this.maltaArrived) return;
@@ -1977,7 +2015,7 @@ export class GraceQueueLite {
     this.maltaAt = this.maltaWork;   // S227: the return that brings the phone brings no update
     // the phone lights only after the two pieces of work (B15), whichever path armed it: the map's beat is ticked here
     if (!ledger.records.includes('e3-two-jobs')) ledger.records.push('e3-two-jobs');
-    playOnce('phone_ping_2016.mp3');   // S141: the phone lights on the desk
+    if (!quiet) playOnce('phone_ping_2016.mp3');   // S141: the phone lights on the desk · ⚑ S428: the group's notification makes its own sound
     this.phoneV++;
     this.bump();
   }
@@ -2119,7 +2157,7 @@ export class GraceQueueLite {
       const S = startCopy.desktop.startMenu;
       aero.button(ctx, 3, H - 25, 51, 22, S.button, { size: 10 });
       this.rects.unshift({ x: 3, y: H - 25, w: 51, h: 22, id: 'start-menu' });
-      const nav = this.startMap.draw(ctx, platformW, H, 'e3', buildStartModel(undefined, 'e3'), this.startMapSilent || this.pauseOpen);
+      const nav = this.startMap.draw(ctx, platformW, H, 'e3', this.startModel(), this.startMapSilent || this.pauseOpen);
       if (nav.length) { this.rects = [...nav, ...this.rects.filter(r => r.id === 'start-menu' || r.id === 'whattodo')]; this.covers = []; }
     }
 
@@ -2129,7 +2167,10 @@ export class GraceQueueLite {
     //   under the system's update notice nothing of the platform's may glow or point (T07: "the highlight boxes from
     //   the previous panel")
     this.lambyGuidePaint = { rings: [], balloon: false };
-    if (this.lambyGuide && !this.startMap.active && !this.guideSilent && !this._systemModal && !this.phone.voiceBusy) this.lambyGuidePaint = drawLambyGuide(ctx, 'e3', this.lambyGuide.view, this.rects, { w: platformW, h: H });
+    // ⚑ S428 (UiB job 38 B3; HEADSET_RUN answer e) — its button is drawn on every operable surface (`guideAskable`): the board, every
+    //   job page, the bare desktop, whatever the Handset Window shows beside it; while the scene is quiet only a press on it is
+    //   answered (`guideAskOnly`). (It was hidden whenever a job was open, the phone was read or a felt beat ran: 40a59042.)
+    if (this.lambyGuide && this.guideAskable) this.lambyGuidePaint = drawLambyGuide(ctx, 'e3', this.lambyGuide.view, this.rects, { w: platformW, h: H });
     if (this.guideFocus && !this.guideSilent && !this.guideVoice && !this._systemModal) {
       const r = this.rects.find(r => r.id === this.guideFocus!.id);
       if (r) drawGuidePointer(ctx, r, { x: platformW - 172, y: H - 24 }, ERA3.accent, 0);
@@ -2392,68 +2433,50 @@ export class GraceQueueLite {
   private turnMemory(): void {
     if (this.veraPage !== 'record' || this.recordSent) return;
     this.recordSent = true; this.memoryT = 0;
-    if (this.memoryStage === 'idle') { this.memoryStage = 'wait'; this.memoryStageT = 0; }
     this.bump();
   }
-  /** ⚑ S425 — Close on the memory page: back to the board. If her Notes have not come yet they still come, over the board. */
+  /** ⚑ S425 — Close on the memory page: back to the board. ⚑ S428 (UiB job 38 A2 row 6) — and a Notes notification on her phone (her
+   *  Notes no longer open by themselves after a breath; she opens them, row 7). */
   private closeMemory(): void {
     if (this.veraPage !== 'record') return;
     this.veraPage = null; this.mode = 'board';
     veraDay.recordClosed = true; veraDay.quiet = false;
-    if (this.memoryStage === 'idle') { this.memoryStage = 'wait'; this.memoryStageT = 0; }
     this.phone.bannersHidden = false;
+    if (this.memoryStage === 'idle') { this.memoryStage = 'notice'; this.phone.noticeNotes(); }
     this.bump();
   }
-  /** ⚑ S425 — the memory page is open and still: her Notes have come and gone (or are on the lock screen). The phone may deliver to it
-   *  and the kit's pop-in may come over it ("if she leaves it open, the evening still comes"). */
-  private get memoryPageStill(): boolean { return this.veraPage === 'record' && (this.memoryStage === 'lock' || this.memoryStage === 'done'); }
-  /** ⚑ S425 — the Handset Window is out of its column, or her Notes are on it: a felt beat (nothing speaks, glows or plays) */
+  /* (⚑ S428 — S425's `memoryPageStill` (the memory page left open while the evening came over it) is retired: her Notes come only
+   *  once she has closed it. 40a59042.) */
+  /** ⚑ S425 — her Notes are on her phone (or its lock screen, Nuala's message landing): a felt beat (nothing speaks, glows or plays)
+   *  ⚑ S428: from her opening the Notes to Nuala's message read */
   private get memoryForward(): boolean { return this.memoryStage === 'notes' || this.memoryStage === 'lock'; }
   /** ⚑ S425 — the memory's clock (Act II, beats 8–10), each step on the one before it, nothing on a timer she must beat */
   private updateMemory(dt: number): void {
-    // beat 8 — Not now works once: the card comes back with Look back alone at the board's next quiet moment
+    // beat 8 — Not now works once. ⚑ S428 (A2 row 5b): the card comes back, Look back alone, the next time she RETURNS to the board
+    //   (she has left it — a job, a card, the menu, the window put down — and is back on it), not after quiet seconds
     if (this.memoryDeclined && !this.memoryCard && !veraDay.recordOpened) {
-      const quiet = (this.mode === 'board' || this.mode === 'done') && !this.veraPage && !this.openSurface && !this.pauseOpen && !this.saver
-        && !this.startMap.active && !this.minimised && !this.lambPriority && !this.kitPopin && !this.phone.voiceBusy && this.phone.queued === 0;
-      this.memoryQuietT = quiet ? this.memoryQuietT + dt : 0;
-      if (this.memoryQuietT >= MEMORY_AGAIN_SECONDS) { this.memoryCard = 'again'; this.memoryQuietT = 0; this.bump(); }
+      if (!this.boardPlain) this.memoryLeft = true;
+      else if (this.memoryLeft && !this.phone.voiceBusy) { this.memoryCard = 'again'; this.memoryLeft = false; this.bump(); }
     }
-    // beat 9 — the published story read, the page turns by itself to her own words (the piece takes her there)
+    // beat 9 — the published story read, the page turns by itself to her own words (the piece takes her there; A2 row 5 kept as built)
     if (this.veraPage === 'record') {
       this.memoryT += dt;
       if (!this.recordSent && this.memoryT >= readHold([vera.record.publishedText])) this.turnMemory();
     }
-    // beat 10 — her Notes, once her own words have had their reading time on the page (or a breath on the board, if she closed it)
-    if (this.memoryStage === 'wait') {
-      this.memoryStageT += dt;
-      const onPage = this.veraPage === 'record' && this.recordSent;
-      const breath = onPage ? readHold([OWN_WORDS]) : MEMORY_CLOSED_BREATH;
-      const clear = (onPage || ((this.mode === 'board' || this.mode === 'done') && !this.veraPage && !this.openSurface))
-        && !this.pauseOpen && !this.saver && !this.startMap.active && !this.minimised && !this._systemModal && !this.kitPopin
-        && !this.phone.voiceBusy && this.phone.queued === 0 && !this.floppy.open && !voiceHeld();
-      if (!clear && !onPage) this.memoryStageT = Math.min(this.memoryStageT, breath - 0.5);
-      if (clear && this.memoryStageT >= breath) {
-        // her Notes open in the Handset Window, in its own column (⚑ S426: it no longer comes over the page); the newest note types
-        //   at the top (phoneE3)
-        this.memoryStage = 'notes'; this.memoryStageT = 0; this.mirrorMin = false; this.mirrorReading = false;
-        this.lambPriority = false; this.lambLines = null; this.lambyGuide?.press('lg-x'); this.startPanel.close();
-        this.phone.bannersHidden = false;
-        if (!this.phone.conductMemoryNotes()) { this.memoryStage = 'lock'; this.phone.sleep(); this.earn('nuala'); }
-        this.bump();
-      }
+    // beats 10–11 — ⚑ S428 (A2 rows 6–9): each on her act. Closing the page put the Notes notification on her phone (`closeMemory`).
+    if (this.memoryStage === 'notice') {
+      // row 7 — she opened it (the notification, or the Notes app): her Notes, and her line typing there (phoneE3)
+      if (this.phone.conductingNotes || this.phone.notesClosed || this.phone.noticeId !== 'notes') { this.memoryStage = 'notes'; this.bump(); }
     } else if (this.memoryStage === 'notes') {
-      // written and held, the phone goes back to its lock screen (phoneE3); then Nuala's message lands there, as built
-      if (!this.phone.conductingNotes) { this.memoryStage = 'lock'; this.memoryStageT = 0; this.earn('nuala'); this.bump(); }
+      // row 8 — her line written, she closed the Notes: the phone locked; Nuala's message lands there, after a breath (phoneE3)
+      if (this.phone.notesClosed) { this.memoryStage = 'lock'; this.earn('nuala'); this.bump(); }
     } else if (this.memoryStage === 'lock') {
-      this.memoryStageT += dt;
-      if (this.phone.delivered('nuala') && !this.phone.voiceBusy) {
-        // Nuala's message read: the window goes back to its column; then, the board clear, Bea's news (⚑ S426: Act III beat 11 —
-        //   the kit used to come here; it comes after the news now, his call 8)
-        this.memoryStage = 'done'; this.maltaPending = 'news'; this.maltaClearT = 0; this.maltaWaitT = 0;
+      // row 9 — she opened Nuala's message and it has had its reading time: the group's notification, Bea's first line in it
+      if (this.phone.readDone('nuala') && !this.phone.conductingNotes) {
+        this.memoryStage = 'done'; this.armMalta(true); this.phone.noticeNews();
         this.bump();
       }
     }
-    // (⚑ S426 — the window no longer moves for her Notes: they open in its own column, as the phone's own screen does)
   }
   /** ⚑ S425 — the probes' handle on Act II (read-only) */
   get memoryState(): Record<string, unknown> {
@@ -2566,7 +2589,7 @@ export class GraceQueueLite {
     // ⚑ S426 — sized to its one line now ("GracePlatform chose your story."; was 156 px for the three-line wait)
     studioFont(ctx, 13); const urgent = wrapText(ctx, k.urgentLine, Math.min(380, c.w - 32) - 28).slice(0, 4);
     const w = Math.min(380, c.w - 32), h = 30 + 14 + urgent.length * 18 + 14 + 28 + 10, x = c.x + Math.floor((c.w - w) / 2), y = c.y + 50;
-    const flash = Math.floor(this.kitPopinT * 2) % 2 === 0;
+    const flash = reducedMotion() || Math.floor(this.kitPopinT * 2) % 2 === 0;   // ⚑ S428: still under reduced motion
     this.cover('urgent', x - 2, y - 2, w + 6, h + 7);   // S406 / H2: the URGENT card's whole face is its press (below)
     px(ctx, x + 4, y + 5, w, h, ERA3.greyDk); px(ctx, x, y, w, h, ERA3.white);
     px(ctx, x - 2, y - 2, w + 4, 2, ERA3.alarm); px(ctx, x - 2, y + h, w + 4, 2, ERA3.alarm); px(ctx, x - 2, y - 2, 2, h + 4, ERA3.alarm); px(ctx, x + w, y - 2, 2, h + 4, ERA3.alarm);
@@ -3830,7 +3853,7 @@ export class GraceQueueLite {
     // ⚑ S425 (Act II) — the memory: Look back, Not now (once; logged), See what you wrote, Close
     if (vh?.id === 'memory-look') { this.openMemory(); return; }
     if (vh?.id === 'memory-notnow') {
-      this.memoryCard = null; this.memoryDeclined = true; this.memoryQuietT = 0;
+      this.memoryCard = null; this.memoryDeclined = true; this.memoryLeft = false;
       if (!ledger.records.includes('e3-memory-notnow')) ledger.records.push('e3-memory-notnow');
       this.bump(); return;
     }
@@ -3860,7 +3883,10 @@ export class GraceQueueLite {
       // ⚑ S368 / F01·F11 — …but no longer in the same frame: the thread waits for a clear board (update(), beginMaltaConduct)
       // ⚑ S426 (Act III beat 13; his call 8) — the news came before the kit: leaving the kit, the REVIEW is what waits for the clear
       //   board (beginReview): the group on the Handset Window again, the platform removing the news in the chat, the forwards outrunning it
-      this.armMalta(); this.maltaPending = 'review'; this.maltaClearT = 0; this.maltaWaitT = 0;
+      // ⚑ S428 (UiB job 38 A2 row 12) — …and since job 38, nothing opens: leaving the kit puts a notification from the group on her phone,
+      //   "GracePlatform is reviewing this group", and the review runs when she opens the group (row 13; phoneE3). 40a59042 holds the
+      //   conducted `maltaPending = 'review'`.
+      this.armMalta(true); this.phone.noticeReview();
       this.bump(); return;
     }
     this.boardQuietT = 0;
@@ -3870,8 +3896,9 @@ export class GraceQueueLite {
     //   Back). With a third tile on the default board, "Answer the mothers" sits under Close. The visible button wins.
     const r = (this.pauseOpen ? this.rects.find(rr => (rr.id === 'pause-close' || rr.id === 'week-begin') && hit(rr, x, y)) : undefined) ?? this.rects.find(rr => hit(rr, x, y));
     if (!r) { if (this.startMap.menu) { this.startMap.close(); this.bump(); } return; }
-    const model = buildStartModel(undefined, 'e3');
+    const model = this.startModel();
     if (r.id === 'account-activity') { this.startMap.close(); this.openRecordFromChip(); return; }
+    if (r.id === 'sm-take') { this.startMap.close(); this.takeMeThere(); return; }   // ⚑ S428 (B4)
     if (r.id === 'start-menu') { this.lambyGuide?.press('lg-x'); this.pauseOpen = false; this.startMap.toggle(); this.bump(); return; }
     if (r.id === 'whattodo' && !this.startMapSilent) { this.startMap.close(); this.startPanel.toggle(); this.bump(); return; }
     if (this.startMap.press(r.id, model, this.startMapSilent || this.pauseOpen)) { this.bump(); return; }
@@ -4058,22 +4085,28 @@ export class GraceQueueLite {
         this.phone.debugBeat('after');
         this.phoneV++; this.bump();
         break;
-      // ⚑ S426 (Act III) — review aids: the board after the memory, then Bea's news conducted; the kit's pop-in (the news read);
-      //   the review conducted (the kit closed). Each lands where play lands it; the walk proves the route.
+      // ⚑ S426 (Act III) — review aids. ⚑ S428: each lands where play lands it on the new chain — the group's notification with Bea's
+      //   first line (`maltaNews`, row 9); the news read and the kit's pop-in (`maltaKit`, row 11); the kit closed and the review's
+      //   notification on the phone (`maltaReview`, row 12); the group opened and the review running (`maltaReviewRun`, row 13). The
+      //   walk proves the route.
       case 'maltaNews':
         this.debugBeat('board'); this.pauseOpen = false; this.lambPriority = false; this.lambLines = null;
         for (const id of FOUR_JOBS) this.earnedJobs.add(id);
         veraDay.recordOpened = true; veraDay.recordClosed = true; this.memoryStage = 'done';
-        this.beginMaltaConduct();
+        this.armMalta(true); this.phone.noticeNews();
+        this.bump();
         break;
       case 'maltaKit':
         this.debugBeat('maltaNews'); this.phone.debugBeat('news');
-        this.cascadeConduct = false; this.maltaConduct = null; this.mirrorReading = false;
+        this.mirrorReading = false; this.kitAsked = true;
         this.kitPending = false; this.mode = 'board'; this.kitPopin = true; this.kitPopinT = 0; this.bump();
         break;
       case 'maltaReview':
         this.debugBeat('maltaKit'); this.kitPopin = false; veraDay.kitClosed = true; this.kitApproved = true;
-        this.beginReview();
+        this.phone.noticeReview(); this.bump();
+        break;
+      case 'maltaReviewRun':
+        this.debugBeat('maltaReview'); this.phone.pressControl('evening-banner'); this.phoneV++; this.bump();
         break;
       case 'floppy': case 'floppyPlay': case 'floppyFinale': case 'floppyOver':
         this.floppy.debugBeat(beat); break;

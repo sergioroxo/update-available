@@ -370,6 +370,8 @@ const SCENES = {
     if (mode === 'xr') await calibrate(page);
     const built = await page.evaluate(() => {
       const q = window.__graceQueue(); q.debugBeat('board'); q.pauseOpen = false; q.lambPriority = false; q.lambLines = null;
+      // ⚑ S428 — since job 38 the review waits for her to open the group: `maltaReviewRun` lands with the group opened and it running
+      if ('chainState' in q) { q.debugBeat('maltaReviewRun'); return 'storyboard'; }
       if ('maltaConduct' in q) { q.debugBeat('maltaReview'); return 'storyboard'; }
       q.debugBeat('phoneCascade'); return 'today';
     });

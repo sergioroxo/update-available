@@ -134,9 +134,14 @@ const REFUSAL_BREATH = 1.2;
  *  lands: nothing waits for the clock, nothing on the glass is from a time the clock has not reached, and the clock never
  *  leaps. (The authored times in e3_mirror.json `slots`/`events` and s3_maiden.json `news`/`cascade`/`reply` are no longer
  *  read for the evening; Deirdre's group's morning, `before`, keeps its own.) */
-const EVENING_START = '18:04';
+/* (⚑ S428 — S357fr's EVENING_START, '18:04', is retired: the clock is the visitor's own time of day now, below. 40a59042 holds it.) */
+/** ⚑ S428 (UiB job 38 A1; his 26 Nov: "I meant the real time of the day. I know this was related to the timing of the Malta releasing
+ *  the law but it simply doesnt work the time aspect so we just keep the day element") — THE CLOCK IS THE VISITOR'S OWN TIME OF DAY,
+ *  read from the device it runs on (no network, nothing stored). The day stays Tuesday 6 December 2016 (era3_devices.json lockDate).
+ *  Every message is still stamped with the minute it lands (S357fr), and nothing in the story waits on the clock. */
+function nowMinutes(): number { const d = new Date(); return d.getHours() * 60 + d.getMinutes(); }
 function clockMinutes(t: string): number { const [h, mm] = t.split(':').map(Number); return (h || 0) * 60 + (mm || 0); }
-function clockOf(min: number): string { const h = Math.floor(min / 60) % 24, mm = min % 60; return `${h}:${String(mm).padStart(2, '0')}`; }
+function clockOf(min: number): string { const w = ((Math.floor(min) % 1440) + 1440) % 1440, h = Math.floor(w / 60), mm = w % 60; return `${h}:${String(mm).padStart(2, '0')}`; }
 const CASCADE_REPEAT_VOLUME = 0.4;
 /** ⚑ S426e (his 24 Nov) — the group stays in its column (the maximised desktop chat, WIDE_*, is retired: 9974fe1f). In the thread:
  *  NAME_ROOM keeps the first message's name under the bar (no line cut in half); nothing written in it reaches past W - RIGHT_PAD
@@ -217,9 +222,92 @@ export class PhoneE3 {
   startNews(): void {
     if (this.stage !== 'quiet' || this.disconnected) return;
     veraDay.phoneAnswered = true;
-    this.stage = 'news'; this.newsT = 0; this.newsN = 0; this.newsPaused = false; this.banner = null; this.logLand('news');
+    this.stage = 'news'; this.newsT = 0; this.newsN = 0; this.newsPaused = false; this.banner = null; this.newsHeld = false; this.logLand('news');
     this.bump();
   }
+  /**
+   * ⚑ S428 (UiB job 38 A2, rows 9–10; his 26 Nov: "the phone should not open by itslef on the messages of the maiden … The automatic
+   * is 2026 not 2016") — BEA'S NEWS COMES AS A NOTIFICATION. Opening Nuala's message brings it (graceQueueLite, once her message has
+   * had its reading time): Bea's first message lands in the group and the phone shows it the way a 2016 phone does, a banner (the
+   * lock screen's card) with the group's name and her first line, and one sound. Nothing opens. When she opens the group (the
+   * notification, or the group from Messages), the rest of the news runs, each message after the one before has had its reading
+   * time (`newsWait`, the fiction's own time, unchanged).
+   */
+  noticeNews(): void {
+    if (this.stage !== 'quiet' || this.disconnected) return;
+    this.stage = 'news'; this.newsT = 0; this.newsN = 1; this.newsPaused = false; this.newsHeld = true; this.banner = null;
+    this.landedAt.set('n0', this.clockShown); this.logLand('news'); this.logLand('n0');
+    this.notify('bea', m.group.name, `${NEWS[0].from}: ${NEWS[0].text ?? ''}`);
+  }
+  /** ⚑ S428 — the news waits for her to open the group (row 10): the first message is in, the rest are not written yet */
+  private newsHeld = false;
+  /** ⚑ S428 — the last of Bea's news on her glass, seconds (its reading time counts only while the group is in front of her: row 11) */
+  private newsReadT = 0;
+  /**
+   * ⚑ S428 (rows 6, 9, 12) — THE PHONE'S OWN NOTIFICATION: news the chain brings that is not a person's message — her Notes, the
+   * group's first line of Bea's news, the platform's review. It is drawn the way a message's is (a banner over the screen she is on,
+   * a card on the lock screen; the phone's own colours), it sounds once (phone_ping_2016, the sound every message makes), and it
+   * stays until she opens it. Opening it does what opening that app would: the Notes, the group. Nothing opens by itself.
+   */
+  private notice: { id: 'notes' | 'bea' | 'review'; from: string; text: string; time: string } | null = null;
+  private notify(id: 'notes' | 'bea' | 'review', from: string, text: string): void {
+    this.notice = { id, from, text, time: this.clockShown };
+    playOnce('phone_ping_2016.mp3'); this.bump();
+  }
+  /** the notification waiting to be opened, if any (graceQueueLite's chain, the Start map, the probes) */
+  get noticeId(): 'notes' | 'bea' | 'review' | null { return this.notice?.id ?? null; }
+  /** ⚑ S428 — the stage of the group's evening (graceQueueLite's chain, the probes; read only) */
+  get stageNow(): Stage { return this.stage; }
+  /** ⚑ S428 (B4) — the Start map's "Take me there" on a waiting notification: the press her own on it would be */
+  pressNotice(): void { this.openNotice(); }
+  /** she opened the waiting notification (its banner or card, or the app it names): what opening that app does */
+  private openNotice(): void {
+    const n = this.notice;
+    if (!n) return;
+    this.notice = null;
+    if (n.id === 'notes') { if (!this.conductMemoryNotes()) { this.screen = 'notes'; this.bump(); } return; }
+    this.screen = 'group'; this.openGroup();
+  }
+  /** ⚑ S428 (row 6) — closing the memory page puts this on the phone: a Notes notification (her unfinished note's first line) */
+  noticeNotes(): void {
+    if (this.disconnected || this.refusalWritten || this.notice?.id === 'notes') return;
+    const mam = NOTE_ENTRIES.find((e) => e.id === 'mam');
+    this.notify('notes', HOME.fNotes, mam?.text ?? '');
+  }
+  /** ⚑ S428 (row 12) — leaving the kit puts this on the phone: from the group, "GracePlatform is reviewing this group" */
+  noticeReview(): boolean {
+    if (this.stage !== 'read' || this.disconnected || this.notice?.id === 'review') return false;
+    this.reviewDue = true;
+    this.notify('review', m.group.name, vera.removals.notice);
+    return true;
+  }
+  /** ⚑ S428 — the review is asked for and waits for her to open the group (row 13) */
+  private reviewDue = false;
+  /** ⚑ S428 (row 15) — the end, answered: she forwarded the link once the review could not keep up, or closed the group after
+   *  it had been on her glass (graceQueueLite arms the update on it) */
+  endAnswered: 'forward' | 'close' | null = null;
+  /** ⚑ S428 — "Review could not keep up." has been on her glass (the group in front of her once the forwards were in) */
+  private endSeen = false;
+  get endOnGlass(): boolean { return this.endSeen; }
+  /** ⚑ S428 (row 8) — she closed her Notes once her line was written: the phone locked (graceQueueLite then earns Nuala's message) */
+  notesClosed = false;
+  /** ⚑ S428 (row 9) — when she opened each of tonight's messages (era seconds), for its reading time */
+  private readAt = new Map<string, number>();
+  /** seconds since she opened message `id` (−1: not opened) */
+  readFor(id: string): number { const at = this.readAt.get(id); return at === undefined ? -1 : this.clockSec - at; }
+  /** she has opened message `id` and it has had its reading time since (the reading rule; never less than its hold) */
+  readDone(id: string): boolean {
+    const e = this.evening.find((x) => x.id === id);
+    return !!e && this.readFor(id) >= Math.max(HOLDS[id] ?? READ_HOLD, readHold(e.text ?? ''));
+  }
+  /** ⚑ S428 — the screen the phone shows (graceQueueLite's chain and the probes; read only) */
+  get screenNow(): string { return this.screen; }
+  /** ⚑ S428 — the news has begun and waits for her to open the group, or runs */
+  get newsWaiting(): boolean { return this.stage === 'news' && this.newsHeld; }
+  /** ⚑ S428 — the group's news or its review is running (the platform's music keeps its old stops on this: S429's part) */
+  get groupRunning(): boolean { return (this.stage === 'news' && !this.newsHeld) || this.stage === 'takeover'; }
+  /** ⚑ S428 — the review has been asked for (the notification is up, or she has opened the group and it runs or has run) */
+  get reviewAsked(): boolean { return this.reviewDue || this.stage === 'takeover' || this.stage === 'after'; }
   private newsN = 0;
   private newsT = 0;
   /** ⚑ S362 / H43 — how many of Bea's Malta messages have landed (⚑ S426: the room's light lifts on the card, the second) */
@@ -312,11 +400,13 @@ export class PhoneE3 {
    */
   conductMemoryNotes(): boolean {
     if (!REFUSAL_NOTE || this.refusalWritten || this.refusalT >= 0 || this.disconnected) return false;
-    this.screen = 'notes'; this.openMessage = null; this.banner = null;
+    this.screen = 'notes'; this.openMessage = null; this.banner = null; this.notesConducted = true;
     this.refusalT = 0; this.refusalLead = reducedMotion() ? 0 : REFUSAL_BREATH;
     this.bump();
     return true;
   }
+  /** ⚑ S428 — her note was typed in front of her (the chain's Notes): her first ‹ after it is written closes them (row 8) */
+  private notesConducted = false;
   /** ⚑ S404 — seconds of the new note's conduct before its first letter (the breath, its caret blinking in the empty note) */
   private refusalLead = 0;
   /** ⚑ S404 — how many of the new note's letters are written (Infinity once it is; whole at once under reduced motion) */
@@ -343,15 +433,19 @@ export class PhoneE3 {
     this.screen = 'group'; this.openMessage = null; this.banner = null; this.markGroupSeen(); veraDay.phoneAnswered = true; this.bump();
   }
   private eveningFrom = '';
-  /** ⚑ S357fr / 16-12 — what the glass and the taskbar read: EVENING_START plus the minutes the era has run, one a minute */
-  private clockShown = EVENING_START;
+  /** ⚑ S357fr / 16-12 — what the glass and the taskbar read. ⚑ S428: the visitor's own time of day (it was EVENING_START plus the
+   *  minutes the era had run) */
+  private clockShown = clockOf(nowMinutes());
+  /** seconds the era has run on its own update loop (the probes' log and the reading holds count on it, never the story) */
   private clockSec = 0;
   /** ⚑ S357fr / 16-12 — the minute each of the group's live messages landed ('n' + i Bea's news, 'v' her reply, 'c' + i the
    *  cascade), so the thread shows the clock's own time for each, never an authored one ahead of it */
   private landedAt = new Map<string, string>();
   private tickClock(dt: number): void {
+    const before = Math.floor(this.clockSec);
     this.clockSec += dt;
-    const shown = clockOf(clockMinutes(EVENING_START) + Math.floor(this.clockSec / 60));
+    if (Math.floor(this.clockSec) === before) return;   // the device's clock is read once a second, the glass redrawn when the minute turns
+    const shown = clockOf(nowMinutes());
     if (shown !== this.clockShown) { this.clockShown = shown; this.bump(); }
   }
   /** ⚑ S357fr / 16-12 — the camera roll's dates; Orla's last photo is dated the minute her message landed */
@@ -378,7 +472,7 @@ export class PhoneE3 {
   debugState(): Record<string, unknown> {
     return { queue: this.eventQueue.map(e => e.id), bannerAge: Math.round(this.bannerAge * 10) / 10, bannersHidden: this.bannersHidden,
       atRest: this.atRest, disconnected: this.disconnected, conductingNotes: this.conductingNotes,
-      screen: this.screen, stage: this.stage, delivered: this.evening.map(e => e.id), clock: this.clockShown,
+      screen: this.screen, stage: this.stage, delivered: this.evening.map(e => e.id), clock: this.clockShown, notice: this.notice?.id ?? null,
       times: this.evening.map(e => `${e.id} ${e.time}`) };
   }
   delivered(id: string): boolean { return this.evening.some(e => e.id === id); }
@@ -391,7 +485,7 @@ export class PhoneE3 {
     const now = this.clockShown, last = this.evening[this.evening.length - 1];
     const e = { ...raw, time: raw.id === 'arrival' ? clockOf(Math.max(clockMinutes(now) - 1, last ? clockMinutes(last.time) : 0)) : now };
     // ⚑ S368 / F08 — each message is held at least by the reading rule (2 s + 0.4 s a word), never less than S362's HOLDS
-    this.evening.push(e); this.banner = e; this.bannerAge = 0; this.holdFor = Math.max(HOLDS[e.id] ?? READ_HOLD, readHold(e.text ?? ''));
+    this.evening.push(e); this.banner = e; this.bannerFromGroup = false; this.bannerAge = 0; this.holdFor = Math.max(HOLDS[e.id] ?? READ_HOLD, readHold(e.text ?? ''));
     // ⚑ S327 / T04 (his 8 Nov: "two different messages from Orla, which doesn't make a lot of sense") — ONE banner for
     //   Orla's evening: the stamp line lands in the same thread, quietly, under the quiz message
     if (e.id === 'arrival') { const st = mirrorCopy.events.find(x => x.id === 'stamp'); if (st && !this.delivered('stamp')) this.evening.push({ ...st, time: now }); }
@@ -403,12 +497,14 @@ export class PhoneE3 {
     const e = messages[messages.length - 1];
     if (this.screen === 'group') { this.banner = null; this.bump(); return; }   // S327: it is landing on the open thread
     // ⚑ S357fr / 16-12 — it has just landed: the banner says the clock's minute, not the message's authored one
-    if (e) this.banner = { from: e.from, time: this.clockShown, text: e.text ?? (e.kind === 'link2' ? LINK_VOTE.headline : e.kind === 'link' ? m.link.headline : '') };
+    if (e) { this.banner = { from: e.from, time: this.clockShown, text: e.text ?? (e.kind === 'link2' ? LINK_VOTE.headline : e.kind === 'link' ? m.link.headline : '') }; this.bannerFromGroup = true; }
     this.bump();
   }
+  /** ⚑ S428 — the banner up is the group's (its news or a forward landing while she was elsewhere): opening the group clears it */
+  private bannerFromGroup = false;
   get eveningClock(): string { return this.clockShown; }
   disconnected = false;
-  disconnect(): void { this.disconnected = true; this.evening = []; this.eventQueue = []; this.readMessages.clear(); veraDay.personalMessageSeen = false; this.banner = null; this.openMessage = null; this.refusalT = -1; this.screen = 'lock'; this.bump(); }
+  disconnect(): void { this.disconnected = true; this.evening = []; this.eventQueue = []; this.readMessages.clear(); veraDay.personalMessageSeen = false; this.banner = null; this.notice = null; this.openMessage = null; this.refusalT = -1; this.screen = 'lock'; this.bump(); }
   get hitRects(): Rect[] { return this.rects; }
   get unreadCount(): number { return this.inboxBadge; }   // ⚑ S357fr / 16-9: one count, the list's
   private bump(): void { this.version++; }
@@ -447,20 +543,24 @@ export class PhoneE3 {
         this.refusalWritten = true;
         if (!ledger.era3Jobs.some((j) => j.id === 'residue')) ledger.era3Jobs.push({ id: 'residue', witness: m.witness.residue });
       }
-      const typing = reducedMotion() ? 0 : REFUSAL_NOTE.text.length / NOTES_TYPE_CPS;
-      if (this.refusalT >= this.refusalLead + typing + readHold([REFUSAL_NOTE.title ?? '', REFUSAL_NOTE.text])) {
-        // "after its reading time the phone goes back to its lock screen" — a breath there before the next message may land
-        this.refusalT = -1; this.screen = 'lock'; this.banner = null; this.bannerAge = 0; this.holdFor = 2; this.bump();
-      } else if (this.notesFrame() !== before) this.bump();
+      // ⚑ S428 (UiB job 38 A2, rows 7–8) — written, the line stays on her glass and the Notes stay open: her ‹ closes them (it was
+      //   S425's reading hold and then the lock screen by itself). The typing is the fiction's own time, unchanged.
+      if (this.refusalWritten) { this.refusalT = -1; this.bump(); }
+      else if (this.notesFrame() !== before) this.bump();
     }
     // ⚑ S332 — MALTA, the era's own beat (conducted: the platform holds every other voice while it runs).
     // ⚑ S426 (Act III) — news: Bea's messages land one at a time, each after the one before has been read; then `read` (the kit).
     //   takeover: the platform's bar, then each Malta message outlined, "removing…", greyed, folded (one at a time); the forwards
     //   begin once those are gone and land faster than it can follow: it greys the first two and cannot keep up. after: the
     //   forwards in, the review outnumbered.
-    if (!visible) return;
+    // ⚑ S428 (UiB job 38 A2, rows 10–14; HEADSET_RUN answer a, "It felt stuck") — the group's news and the platform's review run on
+    //   whatever she opens or plays: a job, a finished lesson opened again, the phone game, a minimised window. Their messages land
+    //   in the thread and on the badge, and wait there for her. (`if (!visible) return;` froze both: 40a59042.) Only the last of
+    //   Bea's news needs her eyes: its reading time counts while the group is on her glass (row 11).
+    const onGlass = visible && this.screen === 'group';
+    if (this.stage === 'after' && onGlass && !this.endSeen) { this.endSeen = true; this.bump(); }
     if (this.stage === 'news') {
-      if (this.newsPaused) return;
+      if (this.newsPaused || this.newsHeld) return;
       this.newsT += dt;
       if (this.newsN < NEWS.length) {
         // ⚑ S357fr / 16-12 — Bea's first message no longer waits for the clock to roll up to 21:41: it lands at the clock's minute
@@ -473,8 +573,9 @@ export class PhoneE3 {
         }
         return;
       }
-      // the last message (Hanne's) read: the news is in
-      if (this.newsT >= newsWait(NEWS.length)) { this.stage = 'read'; veraDay.voted = true; this.logLand('read'); this.bump(); }
+      // the last message (Hanne's) read: the news is in (⚑ S428: its reading time counted while the group is in front of her)
+      if (onGlass) this.newsReadT += dt;
+      if (this.newsReadT >= newsWait(NEWS.length)) { this.stage = 'read'; veraDay.voted = true; this.logLand('read'); this.bump(); }
       return;
     }
     if (this.stage !== 'takeover' && this.stage !== 'after') return;
@@ -609,7 +710,9 @@ export class PhoneE3 {
     // ⚑ S357fr / 16-9 — her older messages from them are in the same thread (drawEvening): on the glass now, so read
     for (const b of BACKLOG.filter(b => b.from === from)) this.readMessages.add(b.from + b.time);
     if (from === m.personalMessage.from) { this.readMessages.add('personal'); veraDay.personalMessageSeen = true; }
-    if (this.screen === 'group') this.markGroupSeen();
+    // ⚑ S428 (row 9) — when she opened each message: its reading time counts from here
+    for (const e of this.evening.filter(e => e.from === from)) if (!this.readAt.has(e.id)) this.readAt.set(e.id, this.clockSec);
+    if (this.screen === 'group') { this.openGroup(); return; }
     this.bump();
   }
   /** ⚑ S327 — ONE thread per person: what she already had from them (the backlog) above what arrived tonight, the
@@ -653,18 +756,22 @@ export class PhoneE3 {
   }
   private get bannerPhoto(): boolean { return this.evening.some(e => e === this.banner && e.photo === true); }
   private drawBanner(ctx: CanvasRenderingContext2D, W: number): void {
-    if (!this.banner || this.bannersHidden) return;
+    // ⚑ S428 — the phone's own notification (her Notes, the group's news, the review) is a banner like a message's, and it is the
+    //   one drawn while it waits; it keeps the minute it came in
+    const b = this.notice ?? this.banner;
+    if (!b || this.bannersHidden) return;
     if (this.screen === 'lock') return;   // S330: the lock screen shows its messages as stacked cards (drawLock)
     phoneFont(ctx, 12);
     const x = 6, y = 22, w = W - 12;
-    const lines = phoneWrap(ctx, this.banner.text, w - 20).slice(0, 3);
-    const h = 32 + lines.length * 16 + (this.bannerPhoto ? 78 : 0);
+    const lines = phoneWrap(ctx, b.text, w - 20).slice(0, 3);
+    const photo = !this.notice && this.bannerPhoto;
+    const h = 32 + lines.length * 16 + (photo ? 78 : 0);
     roundRect(ctx, x, y + 1, w, h, 10, PHONE.dim);   // a hairline shadow under the card
     roundRect(ctx, x, y, w, h, 10, PHONE.surface);
-    ctx.fillStyle = PHONE.ink; phoneFont(ctx, 12, 600); ctx.fillText(this.banner.from, x + 10, y + 8);
-    phoneFont(ctx, 10); ctx.fillStyle = PHONE.dim; ctx.fillText(this.clockShown, x + w - 36, y + 8);
+    ctx.fillStyle = PHONE.ink; phoneFont(ctx, 12, 600); ctx.fillText(b.from, x + 10, y + 8);
+    phoneFont(ctx, 10); ctx.fillStyle = PHONE.dim; ctx.fillText(this.notice ? this.notice.time : this.clockShown, x + w - 36, y + 8);
     phoneFont(ctx, 12); ctx.fillStyle = PHONE.ink; lines.forEach((line, i) => ctx.fillText(line, x + 10, y + 28 + i * 16));
-    if (this.bannerPhoto) {
+    if (photo) {
       this.photoSprites ??= makeE3PhotoSprites(m.cameraRoll.busText); ctx.drawImage(this.photoSprites[4], x + 10, y + 32 + lines.length * 16, 72, 72);
     }
     this.rects.unshift({ x, y, w, h, id: 'evening-banner' });
@@ -686,6 +793,17 @@ export class PhoneE3 {
     });
     const cards = [...byFrom.values()].sort((a, b) => b.last - a.last).slice(0, 3);
     let y = top;
+    // ⚑ S428 — the phone's own notification waiting is the newest card, on top (her press on it opens what it names)
+    if (this.notice) {
+      phoneFont(ctx, 12); const lines = phoneWrap(ctx, this.notice.text, W - 40).slice(0, 2);
+      const h = 30 + lines.length * 16;
+      roundRect(ctx, 10, y, W - 20, h, 8, PHONE.surface);
+      ctx.fillStyle = PHONE.ink; phoneFont(ctx, 12, 600); ctx.fillText(this.notice.from, 20, y + 7);
+      phoneFont(ctx, 10); ctx.fillStyle = PHONE.dim; ctx.fillText(this.notice.time, W - 48, y + 8);
+      phoneFont(ctx, 12); ctx.fillStyle = PHONE.ink; lines.forEach((line, i) => ctx.fillText(line, 20, y + 26 + i * 16));
+      this.rects.push({ x: 10, y, w: W - 20, h, id: 'lock-notice' });
+      y += h + 6;
+    }
     for (const c of cards) {
       phoneFont(ctx, 12); const lines = phoneWrap(ctx, c.text, W - 40).slice(0, 2);
       if (c.photo) lines.push(HOME.photoLine ?? 'Photo');
@@ -1233,7 +1351,10 @@ export class PhoneE3 {
     const r = { id };
     if (r.id.startsWith('lock-card:')) { this.openEvening(r.id.slice(10)); this.bump(); return true; }
     switch (r.id) {
+      // ⚑ S428 — the phone's own notification (her Notes, the group's news, the review): its banner or its lock-screen card
+      case 'lock-notice': this.openNotice(); return true;
       case 'evening-banner':
+        if (this.notice) { this.openNotice(); return true; }
         // ⚑ S426 — a card's banner opens the group (the cards are not links: call 3)
         if (this.banner?.text === m.link.headline || this.banner?.text === LINK_VOTE.headline) { this.screen = 'group'; this.openGroup(); return true; }
         if (this.banner && this.evening.some(e => e.from === this.banner!.from && e.text === this.banner!.text)) { this.openEvening(this.banner.from); }
@@ -1248,12 +1369,21 @@ export class PhoneE3 {
       case 'unlock': this.screen = 'home'; this.bump(); return true;
       case 'notification': this.screen = 'group'; this.openGroup(); return true;
       case 'group': this.screen = 'group'; this.openGroup(); return true;
+      // ⚑ S428 (row 7) — the Notes app opened while her Notes notification waits is that notification opened
+      case 'notes': if (this.notice?.id === 'notes') { this.openNotice(); return true; } this.screen = 'notes'; this.bump(); return true;
       case 'inbox':
         this.screen = 'inbox';
         // The optional inbox never files a reading event.
         this.bump(); return true;
       // S158: the chat goes back to Messages; S177: so does an open message
-      case 'back': if (this.screen === 'photo') { this.screen = 'photos'; this.bump(); return true; } if (this.screen === 'photos' && this.photosFrom) { this.screen = this.photosFrom; this.photosFrom = null; this.bump(); return true; } this.screen = this.screen === 'group' || this.screen === 'message' || this.screen === 'evening' || this.screen === 'article' || this.personalOpen ? 'inbox' : 'home'; this.openMessage = null; this.bump(); return true;
+      case 'back':
+        // ⚑ S428 (row 8) — her note written, her ‹ closes the Notes: the phone locks (Nuala's message lands there, graceQueueLite)
+        if (this.screen === 'notes' && this.notesConducted && this.refusalWritten && !this.notesClosed) {
+          this.notesClosed = true; this.screen = 'lock'; this.banner = null; this.bannerAge = 0; this.holdFor = 2; this.bump(); return true;
+        }
+        // ⚑ S428 (row 15) — "Review could not keep up." seen, closing the group is one of her two ways on (the update follows)
+        if (this.screen === 'group' && this.endSeen && !this.endAnswered) this.endAnswered = 'close';
+        if (this.screen === 'photo') { this.screen = 'photos'; this.bump(); return true; } if (this.screen === 'photos' && this.photosFrom) { this.screen = this.photosFrom; this.photosFrom = null; this.bump(); return true; } this.screen = this.screen === 'group' || this.screen === 'message' || this.screen === 'evening' || this.screen === 'article' || this.personalOpen ? 'inbox' : 'home'; this.openMessage = null; this.bump(); return true;
       case 'platform': this.screen = 'platform'; this.bump(); return true;
       case 'photos-prev': this.photoPage--; this.bump(); return true;
       case 'photos-next': this.photoPage++; this.bump(); return true;
@@ -1261,13 +1391,13 @@ export class PhoneE3 {
       // ⚑ S362 / H45 — from a message about a photo: the camera roll, and Back returns to the thread it came from
       case 'open-photos': this.photosFrom = this.screen; this.photoPage = 0; this.screen = 'photos'; this.bump(); return true;
       case 'open-photo-4': this.photosFrom = this.screen; this.photoIndex = 4; this.screen = 'photo'; this.bump(); return true;
-      case 'notes': this.screen = 'notes'; this.bump(); return true;
       case 'walk': this.screen = 'walk'; this.bump(); return true;
       // ⚑ S426 (beat 14; his call 4) — her forward, one press: it lands among theirs, a link with no words, and it stays (the review
       //   never reaches it). Nothing is filed. (S332's reply, `reply-bea`, is retired: 17847974.)
       case 'forward-link':
         if (!this.forwardOffered) return true;
         this.forwarded = true; this.forwardAt = this.cascadeN; this.landedAt.set('v', this.clockShown);
+        if (this.stage === 'after' && !this.endAnswered) this.endAnswered = 'forward';   // ⚑ S428 (row 15): the update follows
         if (this.scrollBack > 0) this.scrollBack = 0;   // her own forward, seen where it lands
         playOnce('phone_msg_2016.mp3'); this.bump(); return true;
       default:
@@ -1300,7 +1430,7 @@ export class PhoneE3 {
       case 'inbox': this.screen = 'inbox'; this.bump(); break;
       // ⚑ S426 — review aids for Act III: the news all landed and read; the review asked for (its bar up); the four Malta messages
       //   folded and the forwards running; all of it done (the review outnumbered)
-      case 'news': this.startNews(); this.newsN = NEWS.length; this.stage = 'read'; veraDay.voted = true; this.screen = 'group'; this.bump(); break;
+      case 'news': this.startNews(); this.newsN = NEWS.length; this.stage = 'read'; veraDay.voted = true; this.screen = 'group'; this.notice = null; this.newsHeld = false; this.bump(); break;
       case 'review': this.debugBeat('news'); this.startReview(); this.screen = 'group'; this.bump(); break;
       case 'cascade':
         this.debugBeat('review'); this.reviewT = 0;
@@ -1464,6 +1594,12 @@ export class PhoneE3 {
     this.scrollBack = 0;
     this.markGroupSeen();
     veraDay.phoneAnswered = true;
+    // ⚑ S428 (rows 10 and 13) — opening the group, however she opens it (its notification, its lock card, Messages), starts what
+    //   waits there: the rest of Bea's news, or the platform's review. Its notification has done its job.
+    if (this.notice && (this.notice.id === 'bea' || this.notice.id === 'review')) this.notice = null;
+    if (this.bannerFromGroup) { this.banner = null; this.bannerFromGroup = false; }
+    if (this.newsHeld) { this.newsHeld = false; this.newsT = 0; }
+    if (this.reviewDue) { this.reviewDue = false; this.startReview(); }
     this.bump();
   }
 

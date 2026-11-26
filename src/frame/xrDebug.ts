@@ -10,6 +10,8 @@ import { fontFor, monoFor, VENDORED, type FaceEra } from '../desktop/theme/fonts
 
 export interface XrDebugSource {
   lines(): string[];
+  /** ⚑ S428 (UiB job 38 B2) — the plate stands aside while this is true (a Start menu is open: its last rows are under the plate's corner) */
+  hide?(): boolean;
 }
 
 /** ⚑ S373 — THE FONT PROBE (his 12 Nov headset test: 1997's text was a thin typewriter face on the Quest, a heavy mono on
@@ -68,7 +70,7 @@ export function mountXrDebug(app: pc.AppBase, head: pc.Entity, source: XrDebugSo
   plate.enabled = false;
   let wait = 0, last = '';
   app.on('update', (dt: number) => {
-    plate.enabled = !!app.xr?.active;
+    plate.enabled = !!app.xr?.active && !source.hide?.();
     if (!plate.enabled || (wait -= dt) > 0) return;
     wait = 0.5;
     const lines = source.lines(), text = lines.join('\n');

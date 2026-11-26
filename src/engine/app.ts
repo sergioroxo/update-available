@@ -1073,7 +1073,10 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
         if (tape === '1997') return false;
         // ⚑ S424 (UiB job 35 Part D, Act I beat 5) — 2016's OFFER is due once Lesson 1 is done and the Mentor's message (its
         //   answer) has landed; `quiet` then waits for that message's reading time and a board at rest
-        if (tape === '2016') return os.era === 'e3' && ledger.records.includes('e3-job:testimony') && !!era3Devices?.debugQueue().phone.delivered('mentor');
+        // ⚑ S428 (UiB job 38 A2 row 3) — and not once Lesson 2 has been opened: Lesson 2 no longer waits for the offer, and the offer's
+        //   words ("goes with this lesson") are not said after it
+        if (tape === '2016') return os.era === 'e3' && ledger.records.includes('e3-job:testimony') && !!era3Devices?.debugQueue().phone.delivered('mentor')
+          && !era3Devices?.debugQueue().placesOpened;
         // ⚑ S412 (UiB job 33 Part A; 26-4, 26-5) — 2026's set has no moment of its own any more: the parents' course comes
         //   through Mum's email, and only if Maya presses its link (os.e4.browser.onHedge → TeachingTvs.bringBeside). Dad's read
         //   no longer sends it (his: "a course for parents, so it doesn't make sense that the father would send it").
@@ -1325,7 +1328,15 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       if (scriptedBusy()) return { silent: true, voice: false };
       // ⚑ S390 — the teaching TV's conducted tape holds the floor: Lamby (and 1997's side-line) wait for it
       if (voiceHeld()) return { silent: false, voice: true };
-      if (os.era === 'e3') return { silent: queueGuide?.guideSilent ?? true, voice: queueGuide?.guideVoice ?? false };
+      // ⚑ S428 (UiB job 38 B3/B4) — 2016: silent for what Lambient says unasked as before, but its button answers wherever it is drawn
+      //   (`askOnly`); from the end of the training the chain names the step (its id keys the tips: the memory card and the kit keep
+      //   theirs; an asked answer says the step's Lambient line)
+      if (os.era === 'e3') {
+        const c = queueGuide?.chainState;
+        const beat = c ? { id: c.step === 'card' ? 'vera-install' : c.step.startsWith('kit') ? 'vera-kit' : 'chain-' + c.step, label: c.label, hint: c.lambient } : undefined;
+        // one voice at a time: Lambient's own lane, and her phone while a message is being read or her line types
+        return { silent: (queueGuide?.guideSilent ?? true) || !queueGuide?.guideAskable, voice: (queueGuide?.guideVoice ?? false) || !!queueGuide?.phone.voiceBusy, askOnly: !!queueGuide?.guideAskOnly, beat };
+      }
       if (os.era === 'e4') {
         const active = os.lambyGuide.active;
         if (active && !guideAtLaptop && os.e4?.stage === 'closed') os.e4.browser.onFace?.('monitor');   // S328: L lives in the monitor's taskbar (no move if she is already facing it)
@@ -1552,7 +1563,9 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       // ⚑ S398 (job 29 A8) — the text-size card for his Quest session: one line at 0.6°, 0.8°, 1.0° and 1.2°, one metre ahead
       if (runtimeQuery().get('textcard') === '1') mountTextSizeCard(app, camera);
       // ⚑ S270 — the debug panel's read-only half, in the headset (his: "I cannot see the debug panel inside of the VR")
-      mountXrDebug(app, camera, { lines: () => {
+      // ⚑ S428 (UiB job 38 B2; HEADSET_RUN answer b: "the debug plate covers the Start corner") — the plate stands aside while a Start
+      //   menu is open, so Shut Down… and Leave… are never under it
+      mountXrDebug(app, camera, { hide: () => (os.era === 'e3' && !!queueGuide?.startMenuOpen) || os.startMenuOpen, lines: () => {
         const c = xrComfort.status(), f = (n: number) => n.toFixed(2), h = camera.getLocalPosition();
         return [`build ${BUILD_STAMP}`,   // S349 / T12: which build the headset loaded
           `${os.era} · ${os.inDesktop ? "desktop" : "screen"} · ${spine?.step ?? "-"}`,

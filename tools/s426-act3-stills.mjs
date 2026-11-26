@@ -236,6 +236,9 @@ const press = async (id) => {
 };
 
 const TRAINING = await page.evaluate(() => 'watch' in (window.__graceQueue?.() ?? {}));
+// ⚑ S428 (UiB job 38) — 2016's chain waits for her on the phone now (visitor-state `e3Wait`): pressed as a visitor would; the memory
+//   page is closed before Nuala's message (it comes after her Notes)
+const CHAIN = await page.evaluate(() => 'chainState' in (window.__graceQueue?.() ?? {}));
 console.log('build:', TRAINING ? 'the training (S424)' : 'today');
 const started = Date.now();
 let step = 0, tvHeldAt = 0, played = false, nualaIn = false, lastTimed = 0;
@@ -312,7 +315,7 @@ while (Date.now() - started < HARD_STOP) {
       && !(id === 'lg-take@call' && live.has('lg-later@call') && HEARTWOOD === 'notnow') && !(id === 'lg-later@call' && HEARTWOOD === 'bring')
       && !(id === 'memory-notnow' && MEMORY !== 'notnow') && !(id === 'memory-look' && MEMORY === 'notnow' && !done.has('memory-notnow') && live.has('memory-notnow'))
       && !(id === 'memory-see' && MEMORY === 'wait')
-      && !(id === 'memory-close' && !nualaIn)
+      && !(id === 'memory-close' && !nualaIn && !CHAIN)
       && !(id === 'vera-record-close' && !done.has('vera-as-sent'))
       // ⚑ S426 — the one kit choice (--kit), Back to today after it; her forward only with --forward yes
       && !(id === 'vera-take-down' && KIT !== 'down') && !(id === 'vera-kit-approve' && KIT !== 'approve')
@@ -320,6 +323,9 @@ while (Date.now() - started < HARD_STOP) {
       && !(id === 'mirror:forward-link' && FORWARD !== 'yes'));
     if (!nualaIn) nualaIn = await page.evaluate(() => !!window.__graceQueue?.()?.phone?.delivered?.('nuala') && !window.__graceQueue?.()?.phone?.voiceBusy);
     if (ctx && !(held && played)) { if (await doPress(ctx[0], sig, 'context')) { done.add(ctx[0]); continue; } }
+    const chainId = CHAIN && !(held && played) && (s.e3Wait || []).find((id) => live.has(id) && readFor(id) >= 2
+      && !(id === 'mirror:back' && s.e3Step === 'end' && s.e3ForwardOffered && typeof FORWARD !== 'undefined' && FORWARD === 'yes'));
+    if (chainId && await doPress(chainId, sig, 'chain')) continue;
     if (!held || !played || (Date.now() - tvHeldAt) / 1000 >= TAPE_WATCH) {
       // a step for the other build is passed over
       while (step < ROUTE.length && ROUTE[step][2] && (ROUTE[step][2] === 'old') === TRAINING) step++;
