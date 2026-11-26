@@ -208,6 +208,9 @@ report.route = { step, of: ROUTE.length, seconds: Math.round((Date.now() - start
 console.log('route step', step, 'of', ROUTE.length, 'in', report.route.seconds, 's');
 await shot(`00_update-notification_${WAY}`);
 
+// the update's notice sits over the platform and takes the press: "Remind me later" (it works once) clears it for the file
+report.remindLater = await doPress('remind-later', 'file');
+await wait(1500);
 // ── the video: on no board of the visit, so through its own surface ──
 report.video = await page.evaluate((way) => {
   const t = window.__graceQueue().surfaces.get('recommend');
@@ -244,6 +247,25 @@ const found = await page.evaluate(() => {
 });
 await wait(500);
 await shot(`02_menu-your-file-2016_${WAY}`);
+// …then one window further down (its top line brought down whole), then the end of the file (its last buttons whole)
+const menuPane = `(() => { const h = [...document.querySelectorAll('div')].find((e) => e.textContent?.trim() === '2016 · Vera');
+  let el = h?.parentElement; while (el && !(el.scrollHeight > el.clientHeight + 4 && /auto|scroll/.test(getComputedStyle(el).overflowY))) el = el.parentElement; return el; })()`;
+await page.evaluate(`(() => { const el = ${menuPane}; if (!el) return false;
+  el.scrollTop += el.clientHeight - 90;
+  const top = el.getBoundingClientRect().top;
+  const cut = [...el.querySelectorAll('div, p, button')].filter((d) => d.children.length === 0)
+    .find((d) => { const r = d.getBoundingClientRect(); return r.top < top + 2 && r.bottom > top + 2; });
+  if (cut) el.scrollTop -= Math.ceil(top - cut.getBoundingClientRect().top) + 4;
+  return true; })()`);
+await wait(400);
+await shot(`02b_menu-your-file-2016_${WAY}`);
+await page.evaluate(`(() => { const el = ${menuPane}; if (!el) return; el.scrollTop = el.scrollHeight;
+  const top = el.getBoundingClientRect().top;   // and the line cut by the top edge brought down whole (the foot has room for it)
+  const cut = [...el.querySelectorAll('div, p, button')].filter((d) => d.children.length === 0)
+    .find((d) => { const r = d.getBoundingClientRect(); return r.top < top + 2 && r.bottom > top + 2; });
+  if (cut) el.scrollTop -= Math.ceil(top - cut.getBoundingClientRect().top) + 4; })()`);
+await wait(400);
+await shot(`02c_menu-your-file-2016_${WAY}`);
 report.menu = { opened, found, text: await page.evaluate(() => {
   const h = [...document.querySelectorAll('div')].find((e) => e.textContent?.trim() === '2016 · Vera');
   const p = h?.parentElement; if (!p) return '';
@@ -287,10 +309,22 @@ const geo = await page.evaluate(() => {
 });
 if (geo && i16 >= 0) {
   await page.mouse.move(geo.x, geo.y);
+  // the paper's line i sits at the window's top + 16 + i × LH − scroll (machine.ts): the blank line above 2016's block at the top
   const LH = Math.round((geo.info.vp.w < 700 ? 16 : 19) * 1.38);
-  const target = Math.min(geo.info.maxScroll, Math.max(0, (i16 - 1) * LH));
-  await page.mouse.wheel({ deltaY: (target - geo.info.scroll) * geo.scale });
-  await wait(900);
+  const target = Math.min(geo.info.maxScroll, Math.max(0, (i16 - 1) * LH + 10));
+  const scrollNow = () => page.evaluate(() => window.__siteViewer.dom.info().scroll);
+  // one wheel notch to learn how far a CSS pixel moves the paper (and to stop the paper following the printer), then the rest
+  const s0 = await scrollNow();
+  await page.mouse.wheel({ deltaY: -120 }); await wait(300);
+  const s1 = await scrollNow();
+  const perPx = s0 !== s1 ? (s0 - s1) / 120 : 1;
+  for (let k = 0; k < 3; k++) {
+    const now = await scrollNow();
+    if (Math.abs(now - target) < 2) break;
+    await page.mouse.wheel({ deltaY: (target - now) / perPx }); await wait(400);
+  }
+  report.receiptScroll = { target, landed: await scrollNow(), perPx, LH, i16 };
+  await wait(600);
 }
 await shot(`03_receipt-2016_${WAY}`);
 report.receipt = { pressed: rp, lines: lines.length, block2016: lines.slice(Math.max(0, i16), lines.indexOf('', i16 + 1) > 0 ? lines.indexOf('', i16 + 1) : i16 + 8) };
