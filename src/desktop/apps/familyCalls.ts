@@ -171,7 +171,7 @@ export class FamilyCallsApp implements TaskSurface {
   private refuseReply(): void {
     const p = this.current();
     if (this.outcomes.has(p.id)) return;
-    const ans = refuse(`family: ${p.from}`);
+    const ans = refuse(`family: ${p.from}`, 'family');
     this.note = { line: ans.line, voice: ans.voice };
     if (ans.forced) {
       const r = REPLIES.find(rr => rr.id === f.forcedReply) ?? REPLIES[0];

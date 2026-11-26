@@ -1901,7 +1901,7 @@ export class GraceQueueLite {
     //   administrator does. Only on Renata (job 1): the other stories keep their plain Skip (Noa's two captions must
     //   stay unresolved, and nothing may force one of them).
     if (outcome === 'skipped' && sub.id === 1) {
-      const ans = refuse(`list: renata (${item.rule.toLowerCase()})`);
+      const ans = refuse(`list: renata (${item.rule.toLowerCase()})`, 'list');
       this.deskNote = { line: ans.line, voice: ans.voice };
       if (!ans.forced) { this.bump(); return; }
       outcome = 'applied'; forcedBy = ans.voice;

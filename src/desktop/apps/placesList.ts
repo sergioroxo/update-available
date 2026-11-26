@@ -158,7 +158,7 @@ export class PlacesListApp implements TaskSurface {
     if (this.by) return false;
     if (id === 'places-add') { this.finish('you'); return true; }
     if (id === 'places-refuse') {
-      const ans = refuse(P.refusedWhat);
+      const ans = refuse(P.refusedWhat, 'places');
       this.note = { line: ans.line, voice: ans.voice };
       if (ans.forced) this.finish(ans.voice);
       this.v++;

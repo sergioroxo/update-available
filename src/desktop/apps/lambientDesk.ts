@@ -13,7 +13,7 @@
 import q from '../../../data/dialog/s3_queue.json';
 import { px, setFont, wrapText } from '../theme/chrome';
 import { ERA3, tag } from '../theme/era3';
-import { ledger } from '../../state/ledger';
+import { ledger, type RefusedJob } from '../../state/ledger';
 
 const R = (q as unknown as { refusal: {
   lines: string[]; lambientTag: string; adminTag: string;
@@ -31,14 +31,16 @@ export type Voice = 'lambient' | 'admin';
 export type DeskNote = { line: string; voice: Voice };
 export type RefusalAnswer = DeskNote & { forced: boolean };
 
-/** she refused `what` (a witness label from data). Returns what Lambient says and whether the job is now done for her. */
-export function refuse(what: string): RefusalAnswer {
+/** she refused `what` (a witness label from data). Returns what Lambient says and whether the job is now done for her.
+ *  ⚑ S427 (UiB job 37, T95) — `job` is the job she refused; it is kept on the entry, so her file puts the refusal under that
+ *  job's card, flagged (src/witness/record.ts `ERA3_JOB_CARD`). The witness line is unchanged. */
+export function refuse(what: string, job: RefusedJob): RefusalAnswer {
   const n = ++deskRefusals.n;
   const forced = n >= 3;
   const voice: Voice = n >= 4 ? 'admin' : 'lambient';
   const line = R.lines[Math.min(n, R.lines.length) - 1];
   const tpl = !forced ? R.witnessAsked : voice === 'admin' ? R.witnessAdmin : R.witnessLambient;
-  ledger.era3Jobs.push({ id: 'refusal', witness: tpl.replace('{what}', what) });
+  ledger.era3Jobs.push({ id: 'refusal', witness: tpl.replace('{what}', what), job });
   return { line, voice, forced };
 }
 
