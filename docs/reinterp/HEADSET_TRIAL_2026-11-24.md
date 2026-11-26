@@ -133,8 +133,8 @@ the flight, 2026, the Close).
 
 **His voice:** `~/Pc_Simulation/Audio from HEadset/26 NOV/Headset run 26NOV_clock.tsv` (his own transcription, 17 min 17 s).
 Its clock is 490 s late (checked twice against the log: "Send to network" = `era3Jobs:pipeline` 22:06:59; "Maureen
-encourage patience" = `p_maureen` 22:11:04), so the report is built with `--voice-offset -490`. A reader is going
-through each of his remarks with the pictures; the findings follow here.
+encourage patience" = `p_maureen` 22:11:04), so the report is built with `--voice-offset -490`. The reading of all
+44 remarks with the pictures: `HEADSET_RUN_2026-11-26.md`.
 - **Frame rate in VR:** median 82; 15 of 184 reads under 72; the lowest, 57–61, while the phone's game played
   (22:15:43–22:16:21), at only 54 draw calls (so the cost is the phone's redraw, not the draw count). Peak draws 74.
 - One console line, "Uncaught (in promise)", at 22:17:11, as he left VR.
