@@ -449,4 +449,5 @@ His "it should open a specific window of the Notes app and show there" reads as:
   fix the logic for the 2016 flow — think of cadency of actions, ifttt - if this than that" → `UIB_JOB_38` A rewritten
   as a fifteen-row if-this-then-that chain (nothing opens by itself; news as a notification she opens; the day kept,
   the time dropped).
-- Still open, no hurry: "now it's out of moved places" (finding 16) and "the upper player" (answer d): ask him.
+- **Closed (26 Nov):** "out of moved places" (finding 16): "Dont remember", dropped. "The upper player" (answer d): "nothing
+  because it was jsut my partner talking", not a remark about the piece, dropped.
