@@ -140,4 +140,8 @@ frames are already beside it).
   `research/codex-conversations-2026/` (INDEX.md by date).
 - **The article:** the start (TransJesus and the search simulator, then the branching) is written up as
   ARTICLE_COMPANION §7x.
+- **Later the same day:** his Time Machine restore gave back 25 Claude Code conversations of 27 Mar – 1 Jun
+  (`research/claude-conversations-restored-2026/`), and his ArenaAI sign-in let a read-only helper file 74 Arena
+  conversations (`research/arenaai-conversations-2026/`). The simulator trial is the Agent session of **5 June** (the
+  research note, §0-sweep). For the strip before the grid, its build (`surviving-sogice 5/`, 10 Jun) is the June cell.
 

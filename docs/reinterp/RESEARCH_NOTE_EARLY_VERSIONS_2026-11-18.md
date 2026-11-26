@@ -320,6 +320,16 @@ more data." Three read-only helpers searched the Mac; the result is `T63_SWEEP_J
   16 May restructure (29 turns) and the knowledge-base ingest (9–31 May). **`4346d730…` is not among them** (the June
   backup predates it). Not yet read for this note: they are listed, not read.
 - **The April plan** (PRD v3.0) is set out whole, with where each module went, in `LANDSCAPE_THE_APRIL_PLAN_2026-11-26.md`.
+- **The ArenaAI history, read 26 Nov** (he signed in; a read-only helper): **74 conversations, 8 April – 12 November**,
+  including 20 Agent-mode sessions not in the sidebar, in `research/arenaai-conversations-2026/` (INDEX.md, FINDINGS.md;
+  local). **The PC-simulator trial is found:** Agent session `019e99e1-bec4…`, created **5 June 2026, 22:22 UTC**, turns
+  to about 10 June. His first prompt (checked): "recreate the experience of logging into a computer that would take you
+  through a simulated narrative experience of SOGICE", with "a Google simulator", "a bit of AI Jesus" and mini arcade
+  games, for VR and browser. The agent proposed one canvas mapped onto a CRT in a dark WebXR room. This is **the
+  simulator's first build, two days before the first Claude session (7 June)**. Also there: the Queer Use Arcade brief
+  (5 Jun), "the player becomes the perpetrator" (6 Jun), the HopeRestored messenger (11 Jun), and later design runs
+  (Maya's room turned in place, Aug; the final act, 8 Aug). The helper called 8 Aug "the earliest statement of the
+  title": **wrong**, the title was locked on 12 June (commit 209645f4).
 
 ## 0a. Added 18 Nov: earlier still, a Microsoft Copilot chat of 13 January 2026 (the PhD plan)
 
