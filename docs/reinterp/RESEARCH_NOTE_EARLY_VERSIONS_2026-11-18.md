@@ -291,6 +291,29 @@ or copy) with the date read: shared links can be deleted or changed.*
 his Copilot list that touch the project (titles seen, not opened, e.g. one on the 2026 model landscape); the ArenaAI
 outputs from R9, if they were saved. (The "WebXR experience on Claude" chat is now R14.)
 
+## 0-sweep. Added 26 Nov: the deep sweep (T63)
+
+*His ask, 26 Nov: "include the dates since the start of the project in January. Do like a deep sweep on trying to find
+more data." Three read-only helpers searched the Mac; the result is `T63_SWEEP_JANUARY_TO_NOW_2026-11-26.md`, and the
+38 new rows (N1–N38, with paths, dates and what kind of date) are in `research/t63-sweep-2026-11-26/sweep-B-records-jan-jun.md`
+(local). Nothing above is changed; these corrections stand beside it:*
+
+- **§0 and §6.1** ("no Claude conversations about this project before 16 May"): Claude Code was first started on this
+  Mac on **2 March 2026**, and the Claude desktop app holds **records of 15 Claude Code sessions, 27 March to 29 April**
+  (titles, models, dates; **no transcripts**), e.g. 27 Mar "Merge two game projects into single HTML" (Opus 4.6). So:
+  no *transcript* before 16 May, not no conversation. (Checked by the orchestrator, 26 Nov.)
+- **§6.2** (where the April–May knowledge-base sessions ran): **Claude Code on the web**, two sessions, 22 Apr–6 May,
+  111 commits (N23; the ids are in the commit messages).
+- **The name and the shell are April's:** the knowledge base's PRD v3.0, committed 14 Apr 2026, names the module
+  "PC Simulator": "Three-act narrative (profile → targeting → no clean exit)" (checked, §9.8).
+- **Codex conversations exist from 19 March 2026** (about 60 before 13 June): a source this register had no row for.
+- **The ArenaAI trial of the simulator ran about 5–10 June** (`ArenaIbefore.rtf`, saved 10 Jun; start [VERIFY]); the
+  "19 March" in `PROJECT_TIMELINE_FOR_ARTICLE` Phase 0.5 is a copied file's date.
+- **R3:** the Sonauto finding is written by 18–19 March, `evidence.html` exists by 16 May (N11, N29).
+- **Earlier starts:** "provo-types" in his words on 3 May (Codex, N27); Fruit Pie Fury in Codex on 14 May (N28);
+  "conducted narrative" for Turn For Me, 30 Mar–5 Apr (GitHub Copilot, N18); "Maximum sugar → earned darkness", 15 Mar (N10).
+- **Still missing:** `4346d730…jsonl` (10–30 June) is nowhere on the Mac; only Claude's memory notes from it survive (N37).
+
 ## 0a. Added 18 Nov: earlier still, a Microsoft Copilot chat of 13 January 2026 (the PhD plan)
 
 *Not Claude's history: a Microsoft 365 Copilot chat ("Copilot Chat (Basic)", his UiB work account) that he shared and

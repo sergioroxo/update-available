@@ -37,6 +37,15 @@ dates.** Each picture gets one line saying what changed and whose words moved it
 **Before the repository (7 Jun – 5 Jul):** the early versions were chats, not builds
 (`RESEARCH_NOTE_EARLY_VERSIONS_2026-11-18.md`). They become a row of words only, unless pictures from then are found.
 
+### 3b. January to June, and what the sweep changed (26 Nov)
+
+The sweep (`T63_SWEEP_JANUARY_TO_NOW_2026-11-26.md`) found no picture of the piece before 7 June. So January to June
+becomes **a strip before the grid**, one cell per month: words for January and February, the sister games for March to
+May (if he says yes, question D), and the piece's own first pictures for 1–12 June (the 7 Jun concept, the 10 Jun ArenaAI
+build, the 12 Jun moodboard). Two changes to §5: **the pilot starts with the 13 Jun build kept in the backup**
+(`~/Documents/YUHF-research-archive/project-backup-2026-06-13/`, no rebuild needed), and **10 July needs a working old
+build most**, because no picture of it exists.
+
 ## 4. The views (the same for every cell)
 
 1. **From the seat:** what a visitor sees, monitor and all.
@@ -96,4 +105,11 @@ sit beside the grid, marked "in the headset, that day":
   January–June, and every picture of the piece already taken since June, by day.
 - **C:** "Yes, We can pick after the grid I guess" → the 8 Nov headset frames stay whole until the grid exists; about
   20 are chosen then, against it.
+
+### The sweep's four questions (26 Nov; in `T63_SWEEP_JANUARY_TO_NOW_2026-11-26.md` §7)
+
+- **D.** The sister games for March–May in the strip, marked "sister work"? **My pick: yes.**
+- **E.** Extra dates? **My pick: add 7 Sep and 1 Nov.**
+- **F.** His Downloads folder: the camera button's `uhf_reinterp_*.png` may fill the July gap (his action).
+- **G.** The 7 June concept image in the article as it is, captioned? **My pick: yes.**
 
