@@ -129,6 +129,7 @@ the flight, 2026, the Close).
   `!this.floppy.open && !this.jobOpen`), so it never began. The Start menu said "Now: The group, outnumbered"; nothing
   said the page was holding it. He then opened the phone's game (which also pauses it), went to the phone's home, and
   left VR at 22:17:25. A player who leaves a job page open meets no ending: a stall for his call.
+  **His word, 26 Nov: "It felt stuck".** Confirmed as a stall.
 - **Frame rate in VR:** median 82; 15 of 184 reads under 72; the lowest, 57–61, while the phone's game played
   (22:15:43–22:16:21), at only 54 draw calls (so the cost is the phone's redraw, not the draw count). Peak draws 74.
 - One console line, "Uncaught (in promise)", at 22:17:11, as he left VR.
