@@ -44,6 +44,9 @@ export interface XrInput {
   /** ⚑ S430 / UiB job 39 B — controllers only (a `tracked-pointer` source with no hand): each grip's centre, and whether any of
    *  its buttons is touched or pressed (a finger or thumb on it: it is in a hand). Match my table reads these, never a hand. */
   controllers(): { at: pc.Vec3; touched: boolean }[];
+  /** ⚑ S435 / UiB job 40 C4 — a controller is present now (a `tracked-pointer` source with no hand, in a hand or laid down and still
+   *  tracked): the hands' line that waits for a balloon is never said once one is picked up (app.ts `handsLine`) */
+  controllerIn(): boolean;
   /** S270g / VR-08 — 'own' or 'programme': the programme redraws the visitor's hands while the visor is on */
   setStyle(style: 'own' | 'programme'): void;
   /** ⚑ S345 / T29 — the room thing the app's aim names this frame (physical point), or null: the ray ends on it */
@@ -387,6 +390,7 @@ export function mountXrInput(app: pc.Application, opts: {
       }
       return out;
     },
+    controllerIn: () => !!xr?.active && controllerIn(),
     controllers(): { at: pc.Vec3; touched: boolean }[] {
       const out: { at: pc.Vec3; touched: boolean }[] = [];
       if (!xr?.active) return out;

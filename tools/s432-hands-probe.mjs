@@ -27,6 +27,14 @@
  *   card97      the 1997 call card (armed: review aid), the line up beside it: the plate against the card, in the view
  *   e3balloon   2016 played by presses to the Heartwood offer (Lambient's balloon on the glass), the line up: the plate against it
  *   close       the Close's message cards, the line up: the plate against the card's plate
+ * ⚑ S435 (UiB job 40 Part C, item 4; his "okay" to job 36's call: the line waits for a balloon) — card97 and e3balloon now press while
+ * the balloon is up and the line WAITS (after; before: it showed at once); the plate's place beside the card / balloon is still measured,
+ * the line put on the plate by the review aid (`__xrFrame.notice`), for a balloon that comes while the line is up. And three new runs:
+ *   e3wait      2016's Heartwood offer (Lambient's balloon) up, a hand's pinch on nothing: no line while the balloon is up; the offer is
+ *               let go (its 16 s) and the line comes right after, for its 8 s
+ *   e3answer    the same offer, the hand's pinch ON Not now (the press answers the balloon): the balloon goes and the line comes right after
+ *   e3pickup    the same offer, a hand's pinch on nothing (the line waits), then a controller picked up (no press): the offer is let go and
+ *               the line never shows
  * A press is proved by reaching the desktop (os.handleClick wrapped: its pixel recorded), Start at (28, 373) of the 512 × 384 desktop,
  * aimed through the glass's own plane. The 120 s stretch is real time (the app's own clock summed beside it).
  * Writes <out>/s432_<run>_<build>.json; with --shots the stills (2560 × 1440).
@@ -556,7 +564,12 @@ try {
     const P = await q(() => { const h = window.__app.root.findByName('camera'), E = h.getPosition(); return [E.x + 0.1, E.y + 1.5, E.z - 0.2]; });
     await S((P) => window.__s432.pinch('R', P), P);
     const r = await read(), still = await q(() => !!window.__teachingTv().call.shown);
-    check('K1', 'a hand press on nothing: the line shows, the card still up', shownLine(r) && still, { read: r, card: still });
+    // ⚑ S435 — the line waits while Lamby's card (the guide's balloon in the room) is up; before S435 it showed beside it
+    if (BUILD === 'before') check('K1', 'a hand press on nothing: the line shows, the card still up', shownLine(r) && still, { read: r, card: still });
+    else check('K1', 'a hand press on nothing while the card is up: the press is taken, the line waits (not on the plate)', !isLine(r) && r.shown !== LINE && still, { read: r, card: still });
+    // the plate's place beside the card is still measured (a balloon may come while the line is up): the line put on the plate by
+    //   the review aid
+    if (BUILD !== 'before') { await q((t) => window.__xrFrame.notice(t, 8), LINE); await q(() => { window.__app.update(0.05); window.__app.update(0.05); }); await wait(300); }
     const geo = await S(([EH, EV]) => {
       const s = window.__s432, tvd = window.__teachingTv(), plate = window.__xrFrame.hintShown(), c = plate?.corners;
       const card = window.__app.root.findByName(tvd.call.entity);
@@ -596,7 +609,12 @@ try {
     await S((P) => window.__s432.pinch('R', P), P);
     const r = await read();
     const still = await q(() => { const qq = window.__graceQueue(); return { balloon: !!qq?.lambyGuidePaint?.balloon, box: qq?.lambyGuidePaint?.box ?? null }; });
-    check('B1', "a hand press on nothing: the line shows, Lambient's balloon still up", shownLine(r) && still.balloon, { read: r, balloon: still });
+    // ⚑ S435 — the line waits while Lambient's balloon is up; before S435 it showed beside it
+    if (BUILD === 'before') check('B1', "a hand press on nothing: the line shows, Lambient's balloon still up", shownLine(r) && still.balloon, { read: r, balloon: still });
+    else check('B1', "a hand press on nothing while Lambient's balloon is up: the line waits (not on the plate)", !isLine(r) && r.shown !== LINE && still.balloon, { read: r, balloon: still });
+    // the plate's place beside the balloon is still measured (a balloon may come while the line is up): the line put on the plate by
+    //   the review aid
+    if (BUILD !== 'before') { await q((t) => window.__xrFrame.notice(t, 8), LINE); await q(() => { window.__app.update(0.05); window.__app.update(0.05); }); await wait(300); }
     const geo = await S(([box, EH, EV]) => {
       const s = window.__s432, app = window.__app, plate = window.__xrFrame.hintShown(), c = plate?.corners;
       const ws = app.root.findByName('era3-device-workstation');
@@ -609,6 +627,90 @@ try {
     // (the balloon lies on the monitor's glass by design: only the plate's own overlaps count)
     check('B1-clear', "the plate covers no part of Lambient's balloon nor the monitor", ['seat −10', 'seat 0', 'seat −20'].every((k) => !geo[k].overlaps.some((o) => o.includes('plate'))), geo);
     await shot('01', 'line-with-lambient-balloon-2016');
+  }
+
+  // ══ e3wait · e3answer · e3pickup (⚑ S435: the line waits for a balloon) ══════════════════════════════════════════════════════
+  if (RUN === 'e3wait' || RUN === 'e3answer' || RUN === 'e3pickup') {
+    ({ browser, page, errors } = await launch3(PORT, { mode: 'xr', scale: SHOTS ? 2 : 1, width: 1280, height: 720 }));
+    await page.evaluate(() => { window.__appClock = 0; window.__app.on('update', (dt) => { window.__appClock += dt; }); });
+    await S(INSTALL);
+    await fovStill();
+    const OFFER = 'Session Two of Heartwood';
+    let reached = await playTo(page, view, (s) => !!s?.guide?.text?.startsWith(OFFER) || (s?.lessons?.[0] === 'done' && s.mode === 'board' && !s.job && !s.page && !s.week),
+      { limit: 200, log: (m) => say(m), heartwood: 'none' });
+    for (let i = 0; i < 120 && !reached?.guide?.text?.startsWith(OFFER); i++) {
+      const tg = new Set((await targets(page, view)).map((t) => t.id));
+      if (reached?.guide?.balloon && !reached.guide.text?.startsWith(OFFER)) { for (const id of ['lg-ok', 'lg-later', 'lg-x']) if (tg.has(id)) { await routePress(page, view, id); break; } }
+      await ff(page, 0.5);
+      reached = await e3(page);
+    }
+    /** Lambient's balloon on the glass, and the offer's moment */
+    const balloon = () => q(() => { const qq = window.__graceQueue(), m = window.__teachingTv()?.moments?.['2016'];
+      return { up: !!qq?.lambyGuidePaint?.balloon && !!window.__os.lambyGuide?.active, text: window.__os.lambyGuide?.active ? window.__os.lambyGuide.view.text : null, box: qq?.lambyGuidePaint?.box ?? null,
+        stage: m?.stage ?? null, answer: m?.answer ?? null, later: (qq?.rects || []).find((r) => r.id === 'lg-later') ?? null }; });
+    const at = await balloon();
+    check('W0', "2016's Heartwood offer reached by presses: Lambient's balloon on the glass", at.up && !!at.text?.startsWith(OFFER), at);
+    // the Quest switches to hands: the controller out, a hand in
+    await q(() => window.__app.xr.input.fire('remove', window.__controller));
+    await S(() => window.__s432.addHand('R'));
+    await wait(600);
+    const ceiling = await q(() => { const h = window.__app.root.findByName('camera'), E = h.getPosition(); return [E.x + 0.1, E.y + 1.5, E.z - 0.2]; });
+    if (RUN === 'e3answer') {
+      // the hand's first press ANSWERS the balloon: a pinch on Not now (its rect on the workstation's glass, 676 × 390 logical px)
+      const P = await S((r) => { const c = window.__s432.rectOn('era3-device-workstation', r, 676, 390, true); return [0, 1, 2].map((i) => c.reduce((a, v) => a + v[i], 0) / 4); }, at.later);
+      const t0 = await q(() => performance.now());
+      await S((P) => window.__s432.pinch('R', P), P);
+      const b1 = await balloon(), r1 = await read();
+      step('A1 the first hand press: a pinch on Not now', { balloon: b1, read: r1 });
+      check('A1', 'the pinch on Not now answers the balloon (it goes, the offer declined)', !b1.up && b1.answer === 'declined', { balloon: b1 });
+      // the line already up at the reading after the pinch: photographed while it shows, then timed from that reading
+      let ud;
+      if (shownLine(r1)) {
+        await q(() => window.__s432.look(0, -10));
+        await shot('01', 'line-after-not-now-2016');
+        ud = { upAfter: +((r1.t - t0) / 1000).toFixed(2), upFor: await lineUpFor(r1.t) };
+      } else ud = await upThenDown(LINE, t0);
+      step('A2 the line', ud);
+      check('A2', BUILD === 'before' ? 'the line (before: up at once)' : 'the balloon gone, the line comes right after (≤ 1 s) and stays its 8 s',
+        ud.upAfter != null && ud.upAfter <= 1.0 && ud.upFor != null && ud.upFor >= 7.5 && ud.upFor <= 9.5, ud);
+    } else {
+      // a hand's pinch on nothing (the ceiling): the press is taken, the offer is not answered
+      const t0 = await q(() => performance.now());
+      await S((P) => window.__s432.pinch('R', P), ceiling);
+      const b1 = await balloon(), r1 = await read();
+      step('W1 the first hand press: a pinch on nothing, the balloon up', { balloon: b1, read: r1 });
+      if (BUILD === 'before') check('W1', 'before S435: the line shows at once, over the balloon', shownLine(r1) && b1.up, { balloon: b1.up, read: r1 });
+      else check('W1', 'the balloon up: the line waits (not on the plate, not the waiting notice)', b1.up && !isLine(r1) && r1.shown !== LINE, { balloon: b1.up, read: r1 });
+      if (BUILD !== 'before') { await q(() => window.__s432.look(0, -10)); await shot('01', 'balloon-up-line-waits-2016'); }
+      if (RUN === 'e3pickup') {
+        // a controller picked up while the line waits (the Quest switches back): a source with no hand, no button pressed
+        await S((n) => window.__s432.addPad(n), 'R');
+        step('P1 a controller picked up (no press)', { read: await read() });
+      }
+      // watch while the balloon is up, then on until it is let go (its 16 s), then 12 s more: when the line comes, how long it stays
+      const samples = []; let goneAt = null, upAt = null, downAt = null;
+      for (let i = 0; i < 300; i++) {
+        const b = await balloon(), r = await read(), clock = await q(() => window.__appClock);
+        samples.push({ t: +((r.t - t0) / 1000).toFixed(2), app: +clock.toFixed(1), balloon: b.up, answer: b.answer, shown: r.shown === LINE ? 'LINE' : r.shown, hintNow: r.hintNow === LINE ? 'LINE' : r.hintNow });
+        if (goneAt == null && !b.up) goneAt = r.t;
+        if (upAt == null && r.shown === LINE) { upAt = r.t; if (RUN === 'e3wait' && BUILD !== 'before') { await q(() => window.__s432.look(0, -10)); await shot('02', 'line-after-balloon-2016'); } }
+        if (upAt != null && downAt == null && r.shown !== LINE) downAt = r.t;
+        if (downAt != null) break;
+        if (goneAt != null && r.t - goneAt > 12000) break;
+        await wait(150);
+      }
+      const whileUp = samples.filter((x) => x.balloon);
+      const res = { balloonGoneAfter: goneAt == null ? null : +((goneAt - t0) / 1000).toFixed(2), answer: samples.at(-1)?.answer, lineUpAfterBalloon: upAt != null && goneAt != null ? +((upAt - goneAt) / 1000).toFixed(2) : null,
+        lineUpFor: upAt != null && downAt != null ? +((downAt - upAt) / 1000).toFixed(2) : null, samplesWhileUp: whileUp.length, lineWhileUp: whileUp.filter((x) => x.shown === 'LINE').length };
+      result.wait = { ...res, samples: samples.filter((x, i) => i === 0 || x.balloon !== samples[i - 1].balloon || x.shown !== samples[i - 1].shown || i === samples.length - 1) };
+      step('W2 the balloon, then the line', res);
+      if (BUILD !== 'before') {
+        check('W2', 'no line on the plate while the balloon is up', whileUp.length > 0 && res.lineWhileUp === 0, res);
+        check('W3', 'the offer let go: the balloon closes by itself (16 s)', res.balloonGoneAfter != null && res.answer === 'let-go', res);
+        if (RUN === 'e3wait') check('W4', 'the balloon gone, the line comes right after (≤ 1 s) and stays its 8 s', res.lineUpAfterBalloon != null && res.lineUpAfterBalloon <= 1.0 && res.lineUpFor != null && res.lineUpFor >= 7.5 && res.lineUpFor <= 9.5, res);
+        else check('W4', 'a controller picked up while it waited: the line never shows (12 s watched after the balloon)', upAt == null && samples.every((x) => x.hintNow !== 'LINE'), res);
+      } else check('W2', 'before S435: the line was already up (no wait)', null, res);
+    }
   }
 
   // ══ close ═════════════════════════════════════════════════════════════════════════════════════════════════════════════════

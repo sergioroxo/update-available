@@ -21,16 +21,18 @@ const IPHONE_UA = 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleW
 /** the look-mode the page was launched in: 'desktop' (a mouse), 'xr' (the headset mock: a controller ray and its trigger), 'phone' (a tap) */
 let MODE = 'desktop';
 
-export async function launch(port, { width = 1280, height = 720, scale = 1, query = '', mode = 'desktop', hidePlate = true, init = null } = {}) {
+export async function launch(port, { width = 1280, height = 720, scale = 1, query = '', mode = 'desktop', hidePlate = true, init = null, touch = null } = {}) {
   MODE = mode;
-  if (mode === 'phone') { width = 390; height = 844; }
+  // ⚑ S435 — `touch` (mode 'phone' only): another touch shape, { width, height, dsf, ua } (a tablet upright or sideways, a phone
+  //   held sideways); without it the upright phone as before (390 × 844 at 3×: 1170 × 2532)
+  if (mode === 'phone') { width = touch?.width ?? 390; height = touch?.height ?? 844; }
   const browser = await puppeteer.launch({
     executablePath: process.env.CHROME || '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome', headless: true, timeout: 180000, protocolTimeout: 900000,
     args: ['--no-sandbox', '--enable-unsafe-swiftshader', '--use-gl=angle', '--autoplay-policy=no-user-gesture-required', '--disable-audio-output'],
     defaultViewport: { width, height, deviceScaleFactor: scale }
   });
   const page = await browser.newPage();
-  if (mode === 'phone') await page.emulate({ userAgent: IPHONE_UA, viewport: { width, height, deviceScaleFactor: 3, isMobile: true, hasTouch: true, isLandscape: false } });
+  if (mode === 'phone') await page.emulate({ userAgent: touch?.ua ?? IPHONE_UA, viewport: { width, height, deviceScaleFactor: touch?.dsf ?? 3, isMobile: true, hasTouch: true, isLandscape: width > height } });
   const errors = [];
   page.on('pageerror', (e) => errors.push(String(e).slice(0, 240)));
   page.on('console', (m) => { if (m.type() === 'error') errors.push(m.text().slice(0, 240)); });

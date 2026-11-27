@@ -408,13 +408,24 @@ if (result.checks.find((c) => c.id === 'reach')?.ok && RUN !== 'xr-letgo') {
       await look(facing.yaw + turn, facing.pitch); await shot('02b', 'set-beside-turned');
       await look(0, -10);
     } else {
+      // ⚑ S435 (UiB job 40 C3) — on a phone the view is taken to the set beside the monitor (a conducted turn): measured once it rests
+      //   (tools/s435-probe.mjs measures the phone and the tablets frame by frame, precisely)
+      if (MODE === 'phone') for (let i = 0; i < 120 && (await q(() => !!window.__camPose?.().driven)); i++) await ff(page, 0.1);
       const g = await flatGeo();
       result.flatGeo = g;
-      check('C3-flat', 'computer / phone: the set where it stood before this job (S424/S425: beside or above, never over the monitor or the Handset Window)', !g.overMonitorGlass && !g.overHandset, g);
+      if (MODE === 'phone') check('C3-flat', 'phone (S435): the set to the LEFT of the monitor, the view taken to it; never over the Handset Window', g.fitted?.band === 'left' && !g.overHandset && g.set.x0 >= 0 && g.set.x1 <= view.width, g);
+      else check('C3-flat', 'computer: the set where it stood before this job (S424/S425: beside, never over the monitor or the Handset Window)', !g.overMonitorGlass && !g.overHandset, g);
       await shot('02', 'set-beside');
     }
     // ── C4: she continues — a lesson opens: the set goes back ──
     const before4 = await state();
+    // ⚑ S435 — on a phone the view is at the set: she drags back to the monitor (a touch drag to the right turns the view right) first
+    if (MODE === 'phone') for (let i = 0; i < 6; i++) {
+      const t = await find('task-1'); if (t && t.pt[0] >= 4 && t.pt[0] <= view.width - 4) break;
+      await page.touchscreen.touchStart(view.width * 0.2, view.height * 0.75);
+      for (let j = 1; j <= 8; j++) { await page.touchscreen.touchMove(view.width * 0.2 + j * 15, view.height * 0.75); await wait(30); }
+      await page.touchscreen.touchEnd(); await ff(page, 0.2);
+    }
     const opened = await (async () => { for (const id of ['task-1', 'task-0']) { const t = await find(id); if (t) { if (MODE === 'xr' && INPUT !== 'controller') await routePress(page, view, id); else await routePress(page, view, id); return id; } } return null; })();
     await ff(page, 2.5);
     const after4 = await state();
