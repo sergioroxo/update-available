@@ -110,6 +110,14 @@ One more thing to do on purpose, after the eight above:
 
 Job 39's own list, with your calls: `HEADSET_CHECKLIST_JOB39_2026-11-27.md`.
 
+## Added by job 36 (27 Nov): one more check
+
+| check | the Mac finds it by | what only your eye can judge |
+|---|---|---|
+| 36-A The line that asks for a controller | the controllers and hands the headset reports, and the line on the plate (`hintNow()`) | during a film, put both controllers down and wait a minute: nothing appears; press something with your hand: the line shows once; do it again: nothing |
+
+Job 36's own list: `HEADSET_CHECKLIST_JOB36_2026-11-27.md`.
+
 ## After
 
 1. I stop the recorder and make the report: `node tools/trial-report.mjs --out out/trial-2026-11-24 --voice "<your _clock.tsv>"`.
