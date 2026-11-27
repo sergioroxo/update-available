@@ -58,12 +58,20 @@ export function mountXrComfort(app: pc.Application, rig: pc.Entity, head: pc.Ent
   // ⚑ S270b (his: "I'm on top of the backrest of the armchair… I want to put my elbows on the table") — the authored
   //   eye is the BROWSER camera's, set back 0.45 m from the desk edge so a flat screen frames the monitor. A seated
   //   head in the headset leans in: the eye the head is mapped to sits 0.15 m further forward, over the seat.
+  // ⚑ S430 (UiB job 39 A; his 26 Nov: "on top of the chair instead of the middle of the chair") — LEAN STAYS, after a Recentre as at
+  //   every seat. Measured (tools/s430-headset-probe.mjs): Vera's chair runs x −4.854 (front) … −4.355 (back), its middle −4.605,
+  //   its cushion at 0.449 m; LEAN puts the eye at −4.550, 5.5 cm behind the middle, 0.71 m over the cushion — a seated eye.
+  //   Without it the eye is at −4.400, 4.5 cm inside the chair's back: on top of the backrest, his own 28 Oct complaint. What put
+  //   him "on top of the chair" on 26 Nov was Recentre taking the head as it was when the menu opened (6 cm low, 7 cm back once
+  //   he sat up, in the emulated run of his gesture) and that head's turn — both fixed above (seatFacing, restingHead).
   const LEAN = 0.15;
   // ⚑ S270g / VR-04 — the desk meets the visitor's own table: a vertical shift of the whole presentation space, kept
   //   through re-seats and re-forms (the table does not move when the head does). Set by matchDesk().
   let lift = 0;
-  /** the authored desk sits this far below the authored eye in every room (Room 1: eye 1.16, desk top 0.74) */
-  const DESK_BELOW_EYE = 0.42;
+  /** the authored desk sits this far below the authored eye in every room. ⚑ S430 (UiB job 39 B): 0.41, measured — the three
+   *  desks are one model, its top at 0.750 m in every room (tools/s430-headset-probe.mjs), the eye at 1.16. It said 0.42 (from
+   *  Room 1's old box desk, top 0.74), so Match my table put every desk 1 cm above the visitor's table. */
+  const DESK_BELOW_EYE = 0.41;
   // ⚑ S407 (UiB job 32, E2) — the table is kept where it IS (its physical height), not as a lift relative to the seat: Match
   //   my table can now be done in the setup, in the stars, before the seat is taken again at the arrival (E3, `reseat`), and a
   //   lift kept relative to the old seat would have carried the head's change of height between the two onto the desk. A
@@ -81,19 +89,57 @@ export function mountXrComfort(app: pc.Application, rig: pc.Entity, head: pc.Ent
   const matrix = () => {
     stage.setLocalPosition(physicalMap.getTranslation()); stage.setLocalRotation(new pc.Quat().setFromMat4(physicalMap));
   };
+  /**
+   * ⚑ S430 (UiB job 39 A; his headset, 26 Nov, 22:00:20: "it has a very horrible fade that we need to fix … it recentered the view
+   * lopsided … on top of the chair instead of the middle of the chair"). THE SEAT'S OWN FACING. Every re-seat (Recentre, the
+   * Quest's own long press, entering the headset, the arrival, a head that stood up) now turns the room to the SEAT'S OWN
+   * DIRECTION — the tracked space's forward, which the rig carries (level, from the seat it was placed at) and which only the
+   * headset's own recentre moves (to where the visitor faces when they hold the Meta button). Never the head's turn of the
+   * moment: Recentre took the head's yaw when the menu opened, so a menu opened looking at the left wrist (the Menu tab) or
+   * at the Handset Window turned the whole room by that much. The probe's numbers (tools/s430-headset-probe.mjs): head turned
+   * 35° at the menu → the room 35° round; now 0°.
+   */
+  const seatFacing = (): pc.Quat => level(rig.getRotation());
+  /**
+   * ⚑ S430 — AND THE HEAD'S RESTING PLACE, not its place at the moment the menu opened. Opening the menu is a movement (a look
+   * down at the left wrist, a lean towards the panel): his debug plate read the head 5 cm forward and 4 cm aside of its seat at
+   * that moment, and the emulated run of the same gesture lands the eye 9 cm off (6 cm high, 7 cm back over the backrest —
+   * "on top of the chair"). So the head is sampled while it sits (12 a second, the last 4 s, menu shut, nothing re-forming),
+   * and Recentre takes the median of the samples from before the gesture began (older than 0.6 s at the menu's opening).
+   * Fewer than six samples (the menu opened at once): the head as it is.
+   */
+  const SAMPLES = 48, SAMPLE_EVERY = 1 / 12, GESTURE = 0.6;
+  const samples = Array.from({ length: SAMPLES }, () => ({ t: -1e9, p: new pc.Vec3() }));
+  let sampleNext = 0, sampleClock = 0, sampleT = 0;
+  const forgetSamples = (): void => { for (const s of samples) s.t = -1e9; };
+  const restingHead = (): pc.Vec3 => {
+    const old = samples.filter((s) => s.t > sampleT - 4 && s.t < sampleT - GESTURE);
+    if (old.length < 6) return head.getPosition().clone();
+    const mid = (k: 'x' | 'y' | 'z'): number => { const v = old.map((s) => s.p[k]).sort((a, b) => a - b); return v[Math.floor(v.length / 2)]; };
+    return new pc.Vec3(mid('x'), mid('y'), mid('z'));
+  };
   // ⚑ S268 (his: "how can I recenter if it forces me to look to the panel, it always makes it worse") — the menu's
-  //   Recentre uses the head as it was when the menu OPENED, before the visitor turned to the panel
-  const menuHead = { p: new pc.Vec3(), yaw: 0, held: false };
+  //   Recentre uses the head as it was BEFORE the menu opened, before the visitor turned to the panel (S430: its resting place)
+  const menuHead = { p: new pc.Vec3(), held: false };
   gameMenuBus.onChange((open) => {
-    if (open && app.xr?.active) { menuHead.p.copy(head.getPosition()); menuHead.yaw = yawOf(head.getRotation()); menuHead.held = true; }
+    if (open && app.xr?.active) { menuHead.p.copy(restingHead()); menuHead.held = true; }
     if (!open) menuHead.held = false;
   });
+  let recentres = 0, resets = 0;
+  /**
+   * ⚑ S430 — RECENTRE IS A CUT (his no-fades rule, 15 Nov; the run's frame 220020 was a double exposure of two rooms). The
+   * mapping changes in the frame the row is pressed, with no morph: no frame of the room is ever blended with another. The
+   * eye still goes LEAN in from the seat's authored eye (below: kept — the measured chair puts LEAN's eye over its middle).
+   */
   function calibrate() {
-    // Physical head pose is untouched. Map the seated head to the authored eye.
-    const p = menuHead.held ? menuHead.p : head.getPosition(), yaw = menuHead.held ? menuHead.yaw : yawOf(head.getRotation());
-    calibration.setTRS(p.clone(), new pc.Quat().setFromEulerAngles(0, yaw, 0), pc.Vec3.ONE);
-    calibrationPending = true; calibrated = true; elapsed = 0; committed = false;
-    for (const f of xrRecentred) f(p.clone(), yaw);
+    // Physical head pose is untouched. Map the seated head to the authored eye, facing the seat's own direction.
+    const p = menuHead.held ? menuHead.p.clone() : restingHead(), facing = seatFacing();
+    fixed.setTRS(p, facing, pc.Vec3.ONE);
+    if (tableBelowHead !== null) { tableY = p.y - tableBelowHead; tableBelowHead = null; }
+    calibrationPending = false; calibrated = true; updateMapping(); recentres++;
+    // a re-form already under way (a send's) lands from the new seat, not the one it photographed
+    if (elapsed >= 0 && !committed) pendingFixed.copy(fixed);
+    for (const f of xrRecentred) f(p.clone(), yawOf(facing));
   }
   // ⚑ S268 (his: "The Meta recenter system of long press… should work here") — the headset's own recentre re-origins
   //   the reference space and fires 'reset'; any calibration made before it is stale, so the mapping goes back to the
@@ -103,8 +149,10 @@ export function mountXrComfort(app: pc.Application, rig: pc.Entity, head: pc.Ent
   //   showed the room from the ceiling until a press). So the seat is taken from the head itself, a moment after the
   //   reset, once the pose has caught up; the same happens on entering VR, so nothing waits for a press.
   let seatIn = -1, offFor = 0;
+  // ⚑ S430 — the seat's own facing (seatFacing), never the head's turn: after the Quest's own recentre the space's forward IS
+  //   where he faced when he held the button, so its re-seat lands exactly as the menu's Recentre does
   const seatFromHead = (): void => {
-    fixed.setTRS(head.getPosition().clone(), new pc.Quat().setFromEulerAngles(0, yawOf(head.getRotation()), 0), pc.Vec3.ONE);
+    fixed.setTRS(head.getPosition().clone(), seatFacing(), pc.Vec3.ONE);
     if (tableBelowHead !== null) { tableY = head.getPosition().y - tableBelowHead; tableBelowHead = null; }   // S407: re-origined
     calibrated = true; calibrationPending = false; updateMapping();
   };
@@ -112,14 +160,14 @@ export function mountXrComfort(app: pc.Application, rig: pc.Entity, head: pc.Ent
     if (tableY !== null) tableBelowHead = lastHeadY - tableY;   // S407: the table, by its distance below the head before
     rig.setLocalPosition(authored.getLocalPosition()); rig.setLocalRotation(level(authored.getLocalRotation()));
     fixed.setTRS(rig.getPosition().clone(), rig.getRotation().clone(), pc.Vec3.ONE);
-    calibrationPending = false; updateMapping(); seatIn = 0.15;
+    calibrationPending = false; updateMapping(); seatIn = 0.15; resets++; forgetSamples();
   };
   app.xr?.on('start', () => {
     const space = (app.xr as unknown as { _referenceSpace?: typeof resetSpace })._referenceSpace ?? null;
     resetSpace?.removeEventListener('reset', onSpaceReset); resetSpace = space; space?.addEventListener('reset', onSpaceReset);
   });
   app.xr?.on('end', () => {
-    resetSpace?.removeEventListener('reset', onSpaceReset); resetSpace = null;
+    resetSpace?.removeEventListener('reset', onSpaceReset); resetSpace = null; forgetSamples();
     if (tableY !== null) { tableBelowHead = lastHeadY - tableY; tableY = null; }   // S407: a new session has a new space
   });
   function tick(dt: number) {
@@ -146,6 +194,12 @@ export function mountXrComfort(app: pc.Application, rig: pc.Entity, head: pc.Ent
     offFor = off ? offFor + dt : 0;
     if (offFor > 1.5) { offFor = 0; seatFromHead(); }
     lastHeadY = head.getPosition().y;   // S407: the table's distance below the head, should the space be re-origined
+    // S430: where the head sits (sampled only while it is seated: menu shut, nothing re-forming, no flight)
+    sampleT += dt;
+    if (calibrated && !gameMenuBus.isOpen && elapsed < 0 && !following && (sampleClock -= dt) <= 0) {
+      sampleClock = SAMPLE_EVERY;
+      const s = samples[sampleNext]; s.t = sampleT; s.p.copy(head.getPosition()); sampleNext = (sampleNext + 1) % SAMPLES;
+    }
     // The menu remains above an unobscured, paused world; the dissolve resumes with the story.
     if (gameMenuBus.isOpen) { if (elapsed >= 0) morph.hide(); return; }
     // ⚑ S348 / UiB job 7 (his 9 Nov final word: the headset flies over the house like the computer) — while an era
@@ -219,15 +273,20 @@ export function mountXrComfort(app: pc.Application, rig: pc.Entity, head: pc.Ent
     //   identity (baked in room coordinates), and hang every batch from the stage, its bounds following it.
     const batcher = app.batcher as unknown as Batcher | null;
     if (batcher) {
+      guard(batcher);
       for (const g of moved) batcher.markGroupDirty(g);
       if (batcher._dirtyGroups.length) { app.root.syncHierarchy(); batcher.updateAll(); }
     }
     matrix();
-    // ⚑ S270b (his: "if I turn around, it just jumps into the stars… the racket and the Game Boy floating in space") —
-    //   a static batch's mesh has no bounds of its own (built from raw streams), so letting the engine derive them put
-    //   every wall at the floor's centre and culled it whenever that point left the view. The batch keeps its true
-    //   bounds in room coordinates; for the draw they are carried into the presentation space, and put back after.
-    if (batcher) for (const b of batcher._batchList) {
+    if (batcher) carryBounds(batcher);
+    placed = true;
+  });
+  // ⚑ S270b (his: "if I turn around, it just jumps into the stars… the racket and the Game Boy floating in space") —
+  //   a static batch's mesh has no bounds of its own (built from raw streams), so letting the engine derive them put
+  //   every wall at the floor's centre and culled it whenever that point left the view. The batch keeps its true
+  //   bounds in room coordinates; for the draw they are carried into the presentation space, and put back after.
+  const carryBounds = (batcher: Batcher): void => {
+    for (const b of batcher._batchList) {
       const mi = b.meshInstance;
       if (!mi) continue;
       if (mi.node !== stage) mi.node = stage;
@@ -235,8 +294,33 @@ export function mountXrComfort(app: pc.Application, rig: pc.Entity, head: pc.Ent
       if (!box) { box = new pc.BoundingBox(); physicalBounds.set(b, box); }
       box.setFromTransformedAabb(b._aabb, physicalMap); mi._aabb = box;
     }
-  });
+  };
+  /**
+   * ⚑ S430 (UiB job 39 E; his headset, 26 Nov: "a lot of popping in and popping out elements when I move my head") — THE ENGINE'S
+   * OWN REBUILD, WITH THE ROOM PUT BACK FIRST. The engine rebuilds dirty batch groups once more inside its render, after every
+   * 'prerender' listener (`app.render`: prerender → syncHierarchy → batcher.updateAll). By then the room is placed in the
+   * headset's space, so a group dirtied after the rebuild above (by anything later in the frame) was baked in HEADSET space and,
+   * from the next frame on, carried into it a second time: the probe (tools/s430-headset-probe.mjs, E "late") measured all 48 of
+   * 2016's batches drawn away from their props by the whole room shift, until the next rebuild. So while the room is placed
+   * (`placed`, prerender → postrender) a rebuild the engine would make there runs with the room put back to room coordinates,
+   * and the room is placed again after it. With nothing dirty it is the engine's own call (no extra hierarchy pass). (A dynamic
+   * batch's bounds, which that call refreshes in headset space every frame, are read as such by the seat's cull: seatCull.ts.)
+   * Nothing found in 2016 at the seat dirties a group that late, so this is a hole closed, not proven to be his popping — the
+   * A/B in his next run (`?nobatch=1`, `?noseatcull=1`) is what can say.
+   */
+  let placed = false, guarded: Batcher | null = null;
+  const guard = (batcher: Batcher): void => {
+    if (guarded === batcher) return;
+    guarded = batcher;
+    const raw = batcher.updateAll.bind(batcher);
+    batcher.updateAll = (): void => {
+      if (!placed || !batcher._dirtyGroups.length) { raw(); return; }
+      identity(); app.root.syncHierarchy(); raw();
+      matrix(); app.root.syncHierarchy(); carryBounds(batcher);
+    };
+  };
   app.on('postrender', () => {
+    placed = false;
     identity();
     const batcher = app.batcher as unknown as Batcher | null;
     if (batcher) for (const b of batcher._batchList) if (b.meshInstance) b.meshInstance._aabb = b._aabb;
@@ -248,8 +332,9 @@ export function mountXrComfort(app: pc.Application, rig: pc.Entity, head: pc.Ent
   const physicalPoint = (p: pc.Vec3): pc.Vec3 => physicalMap.transformPoint(p);
   const logicalPoint = (p: pc.Vec3): pc.Vec3 => app.xr?.active ? logicalMap.transformPoint(p) : p.clone();
   /** VR-04: put the desk top at this physical height (a fingertip on a real table). Returns the shift applied. */
+  let tables = 0;
   const matchDesk = (y: number): number => {
-    tableY = y; tableBelowHead = null; updateMapping();   // S407: the table's own height, kept through every re-seat
+    tableY = y; tableBelowHead = null; updateMapping(); tables++;   // S407: the table's own height, kept through every re-seat
     return lift;
   };
   /**
@@ -266,10 +351,15 @@ export function mountXrComfort(app: pc.Application, rig: pc.Entity, head: pc.Ent
   const reseat = (): void => {
     if (!app.xr?.active || !active) return;
     menuHead.held = false;
-    seatFromHead();
+    seatFromHead(); forgetSamples();
   };
   const stageYaw = (): number => yawOf(new pc.Quat().setFromMat4(physicalMap));
-  return { authored, calibrate, reseat, logicalRay, physicalPoint, logicalPoint, matchDesk, stageYaw,
+  /** ⚑ S430 — the eye a seated head is mapped to (the authored seat, LEAN in), in room coordinates, and the seat's facing */
+  const seatEye = (): { eye: pc.Vec3; yaw: number } => {
+    const facing = level(authored.getLocalRotation());
+    return { eye: authored.getLocalPosition().clone().add(facing.transformVector(new pc.Vec3(0, 0, -LEAN))), yaw: yawOf(facing) };
+  };
+  return { authored, calibrate, reseat, logicalRay, physicalPoint, logicalPoint, matchDesk, stageYaw, seatEye,
     get deskLift() { return lift; },
     setWorldReady(ready: boolean) { worldReady = ready; },
     /** Available to the existing debug-only global; deterministic transition review, not a runtime input. */
@@ -278,7 +368,7 @@ export function mountXrComfort(app: pc.Application, rig: pc.Entity, head: pc.Ent
     /** S348 — follow the authored seat every frame (an era change's flight), or stop following */
     setFollow(on: boolean) { following = on; },
     get following() { return following; },
-    status: () => ({ active, calibrated, elapsed, cuts, worldReady, shift: physicalMap.getTranslation().toArray(), shiftYaw: yawOf(new pc.Quat().setFromMat4(physicalMap)),
+    status: () => ({ active, calibrated, elapsed, cuts, worldReady, recentres, resets, tables, lean: LEAN, shift: physicalMap.getTranslation().toArray(), shiftYaw: yawOf(new pc.Quat().setFromMat4(physicalMap)),
       batchesOnStage: ((app.batcher as unknown as { _batchList?: { meshInstance: { node: pc.GraphNode } | null }[] } | null)?._batchList ?? []).filter(b => b.meshInstance?.node === stage).length,
       batches: ((app.batcher as unknown as { _batchList?: unknown[] } | null)?._batchList ?? []).length, authored: authored.getLocalPosition().toArray(), head: head.getLocalPosition().toArray(), rig: rig.getPosition().toArray() }) };
 }

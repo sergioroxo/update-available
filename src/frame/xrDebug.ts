@@ -12,6 +12,8 @@ export interface XrDebugSource {
   lines(): string[];
   /** ⚑ S428 (UiB job 38 B2) — the plate stands aside while this is true (a Start menu is open: its last rows are under the plate's corner) */
   hide?(): boolean;
+  /** ⚑ S430 — the seated eye and the seat's facing, in room coordinates: the plate rests in the room below the desk's edge */
+  seat?(): { eye: pc.Vec3; yaw: number };
 }
 
 /** ⚑ S373 — THE FONT PROBE (his 12 Nov headset test: 1997's text was a thin typewriter face on the Quest, a heavy mono on
@@ -54,23 +56,46 @@ export function eyeBufferReadout(app: pc.AppBase, head: pc.Entity): string[] {
     `px/deg ${avg.toFixed(1)} avg · ${ctr.toFixed(1)} centre`];
 }
 
-let plateMounted = false;
+/** ⚑ S430 — the plate's mesh instance: it is one draw a view only when it was drawn (it rests in the room now, mostly out of view) */
+let plateMi: pc.MeshInstance | null = null;
 export function mountXrDebug(app: pc.AppBase, head: pc.Entity, source: XrDebugSource): void {
-  plateMounted = true;
   const W = 512, H = 420;
   const canvas = document.createElement('canvas'); canvas.width = W; canvas.height = H;
   const ctx = canvas.getContext('2d')!;
   const tex = makeScreenTexture(app, canvas, true);
   const plate = makeScreenEntity('xr-debug', tex, 0.32, 0.2625, true);
+  plateMi = plate.render?.meshInstances[0] ?? null;
   const layer = new pc.Layer({ name: 'XR debug', clearDepthBuffer: true });
   app.scene.layers.pushTransparent(layer); head.camera!.layers = [...head.camera!.layers, layer.id];
   plate.render!.layers = [layer.id];
   // S271 (the 31 Oct cast: the plate sat over the helper's tooltip and window text) — lower and further left, still readable
+  // ⚑ S430 (UiB job 39 F; HEADSET_RUN_2026-11-26: "the dark see-through plate over the lower left of the monitor in every frame";
+  //   221659/221705 it hid Shut Down… and Leave…) — OFF THE MONITOR. Head-locked, the plate went wherever the eyes went, so it lay
+  //   over whatever he looked at, the monitor above all. It rests in the ROOM now, below the desk's front edge: 0.62 m under the
+  //   seated eye and 0.24 m out from it, turned up to the eye (69° down, 0.66 m away; its top edge 58° down, under the lower
+  //   edge of a Quest 3's view while he looks at the monitor); a look down into the lap reads it. It hangs from the headset's room space (`xr-world`, so the room's
+  //   own placement carries it) and follows the seat from room to room. Without a seat (no comfort), it is head-locked as before.
+  const PLATE_OUT = 0.24, PLATE_DOWN = 0.62;
+  const placeInRoom = (): boolean => {
+    const stage = app.root.findByName('xr-world'), seat = source.seat?.();
+    if (!stage || !seat) return false;
+    if (plate.parent !== stage) { plate.parent?.removeChild(plate); stage.addChild(plate); }
+    const r = seat.yaw * Math.PI / 180, fwd = new pc.Vec3(-Math.sin(r), 0, -Math.cos(r));
+    const at = seat.eye.clone().add(fwd.mulScalar(PLATE_OUT)); at.y -= PLATE_DOWN;
+    // its face (+Y) to the eye, its top (−Z) up the slope: the frame's own plate grammar (xrFrame), tipped back
+    const n = seat.eye.clone().sub(at).normalize();
+    const up = new pc.Vec3(0, 1, 0).sub(n.clone().mulScalar(n.y)).normalize();
+    const right = new pc.Vec3().cross(up, n);
+    const m = new pc.Mat4().set([right.x, right.y, right.z, 0, n.x, n.y, n.z, 0, -up.x, -up.y, -up.z, 0, 0, 0, 0, 1]);
+    plate.setLocalPosition(at); plate.setLocalRotation(new pc.Quat().setFromMat4(m));
+    return true;
+  };
   head.addChild(plate); plate.setLocalPosition(-0.27, -0.35, -0.8); plate.setLocalEulerAngles(90, 0, 0);
   plate.enabled = false;
   let wait = 0, last = '';
   app.on('update', (dt: number) => {
     plate.enabled = !!app.xr?.active && !source.hide?.();
+    if (plate.enabled && !placeInRoom() && plate.parent !== head) { plate.parent?.removeChild(plate); head.addChild(plate); plate.setLocalPosition(-0.27, -0.35, -0.8); plate.setLocalEulerAngles(90, 0, 0); }
     if (!plate.enabled || (wait -= dt) > 0) return;
     wait = 0.5;
     const lines = source.lines(), text = lines.join('\n');
@@ -107,6 +132,6 @@ export function sceneDrawCalls(app: pc.AppBase): { raw: number; views: number; s
   const raw = app.stats.drawCalls.total;
   const list = (app.xr as unknown as { views?: { list?: unknown[] } } | undefined)?.views?.list;
   const views = app.xr?.active && list?.length ? list.length : 1;
-  const plate = app.xr?.active && plateMounted ? 1 : 0;   // the debug plate, when there is one: one draw per view
+  const plate = app.xr?.active && plateMi?.visibleThisFrame ? 1 : 0;   // the debug plate, when it was drawn: one draw per view
   return { raw, views, scene: Math.max(0, Math.round(raw / views) - plate) };
 }

@@ -1599,7 +1599,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       // ⚑ S270 — the debug panel's read-only half, in the headset (his: "I cannot see the debug panel inside of the VR")
       // ⚑ S428 (UiB job 38 B2; HEADSET_RUN answer b: "the debug plate covers the Start corner") — the plate stands aside while a Start
       //   menu is open, so Shut Down… and Leave… are never under it
-      mountXrDebug(app, camera, { hide: () => (os.era === 'e3' && !!queueGuide?.startMenuOpen) || os.startMenuOpen, lines: () => {
+      mountXrDebug(app, camera, { hide: () => (os.era === 'e3' && !!queueGuide?.startMenuOpen) || os.startMenuOpen, seat: () => xrComfort.seatEye(), lines: () => {
         const c = xrComfort.status(), f = (n: number) => n.toFixed(2), h = camera.getLocalPosition();
         return [`build ${BUILD_STAMP}`,   // S349 / T12: which build the headset loaded
           `${os.era} · ${os.inDesktop ? "desktop" : "screen"} · ${spine?.step ?? "-"}`,
@@ -6551,7 +6551,18 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
         fov: camera.camera?.fov
       }),
       sends: sendRt?.ids,
-      onSend: (id, outcome) => sendRt?.fire(id, outcome)
+      onSend: (id, outcome) => sendRt?.fire(id, outcome),
+      // ⚑ S430 (UiB job 39 F) — the review's own door into the headset, at whatever seat the route has set (`?era=3`: 2016's)
+      enterVr: {
+        available: () => !!xr?.isAvailable(pc.XRTYPE_VR) && !xr.active,
+        start: () => {
+          if (!camera.camera || !xr || xr.active) return;
+          xr.start(camera.camera, pc.XRTYPE_VR, pc.XRSPACE_LOCAL, {
+            ...quadSessionOptions(),
+            callback: (error) => { if (error) console.warn('[debug] Enter VR refused:', error); }
+          });
+        }
+      }
     });
   }
 

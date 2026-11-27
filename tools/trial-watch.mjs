@@ -81,6 +81,10 @@ function snapshot() {
     out.xr = !!a?.xr?.active;
   } catch { /* */ }
   try { out.cam = w.__camPose?.() ?? null; } catch { /* */ }
+  // ⚑ S430 (UiB job 39) — the headset's own acts, read-only: the menu's Recentre and the Quest's own (the space's reset), Match my
+  //   table (xrComfort's counters), and which A/B the address asks for (?nobatch=1 / ?noseatcull=1, the popping test)
+  try { const c = w.__xrComfort?.status?.(); if (c) out.xrc = { recentres: c.recentres ?? null, resets: c.resets ?? null, tables: c.tables ?? null, lift: +(w.__xrComfort.deskLift ?? 0).toFixed(3) }; } catch { /* */ }
+  try { const q = new URLSearchParams(location.search); out.ab = q.get('nobatch') === '1' ? 'nobatch' : q.get('noseatcull') === '1' ? 'noseatcull' : 'normal'; } catch { /* */ }
   out.url = location.search;
   return out;
 }
@@ -169,7 +173,7 @@ async function main() {
       if (s.newBeats.length) ev.beats = s.newBeats;
       if (s.newClose.length) ev.close = s.newClose;
       if (Object.keys(ev).length) log({ kind: 'event', ...ev, era: s.era, phone: s.phone });
-      log({ kind: 'tick', era: s.era, phone: s.phone, fps: s.fps, ms: s.ms, draws: s.draws, xr: s.xr, cam: s.cam });
+      log({ kind: 'tick', era: s.era, phone: s.phone, fps: s.fps, ms: s.ms, draws: s.draws, xr: s.xr, cam: s.cam, xrc: s.xrc, ab: s.ab });
       if (s.draws) peak.draws = Math.max(peak.draws, s.draws);
       if (s.fps && s.xr) peak.minFps = Math.min(peak.minFps, s.fps);
       if (now - lastStatus > 15000) {

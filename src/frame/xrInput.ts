@@ -41,6 +41,9 @@ export interface XrInput {
   palms(): pc.Vec3[];
   /** ⚑ S343 / T11 — tracked hands only (a controller is never a palm on the desk mouse) */
   handPalms(): pc.Vec3[];
+  /** ⚑ S430 / UiB job 39 B — controllers only (a `tracked-pointer` source with no hand): each grip's centre, and whether any of
+   *  its buttons is touched or pressed (a finger or thumb on it: it is in a hand). Match my table reads these, never a hand. */
+  controllers(): { at: pc.Vec3; touched: boolean }[];
   /** S270g / VR-08 — 'own' or 'programme': the programme redraws the visitor's hands while the visor is on */
   setStyle(style: 'own' | 'programme'): void;
   /** ⚑ S345 / T29 — the room thing the app's aim names this frame (physical point), or null: the ray ends on it */
@@ -357,6 +360,17 @@ export function mountXrInput(app: pc.Application, opts: {
       for (const src of wands.keys()) {
         if (!src.hand?.tracking) continue;
         const m = src.hand.getJointById('middle-finger-metacarpal'); if (m) out.push(m.getPosition().clone());
+      }
+      return out;
+    },
+    controllers(): { at: pc.Vec3; touched: boolean }[] {
+      const out: { at: pc.Vec3; touched: boolean }[] = [];
+      if (!xr?.active) return out;
+      for (const src of wands.keys()) {
+        if (src.hand || src.targetRayMode !== pc.XRTARGETRAY_POINTER) continue;
+        const g = src.getPosition?.(); if (!g) continue;
+        const touched = (src.gamepad?.buttons ?? []).some((b) => b.touched || b.pressed);
+        out.push({ at: g.clone(), touched });
       }
       return out;
     },

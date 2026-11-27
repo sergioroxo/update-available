@@ -190,9 +190,13 @@ export function mountSeatCull(app: pc.AppBase, room: RoomHandles, enabled = true
       topoFrame = app.frame;
       topo = readTopology();
       // a static batch's own bounds are kept in room coordinates (xrComfort swaps the instance's for the draw)
+      // ⚑ S430 (UiB job 39 E) — a DYNAMIC batch's are not: the engine refreshes them every frame from its props as they are drawn,
+      //   in the headset's space (an era change's palette, batching.ts). Read as room coordinates they put the batch metres off
+      //   wherever the presentation space is far from the room (a session begun in the stars). Its instance's own bounds are those
+      //   same live ones, which the line below carries back to the room, as for any unbatched mesh.
       batchAabb.clear();
-      const list = (app.batcher as unknown as { _batchList?: { meshInstance: pc.MeshInstance | null; _aabb: pc.BoundingBox }[] } | null)?._batchList ?? [];
-      for (const b of list) if (b.meshInstance) batchAabb.set(b.meshInstance, b._aabb);
+      const list = (app.batcher as unknown as { _batchList?: { meshInstance: pc.MeshInstance | null; _aabb: pc.BoundingBox; dynamic?: boolean }[] } | null)?._batchList ?? [];
+      for (const b of list) if (b.meshInstance && !b.dynamic) batchAabb.set(b.meshInstance, b._aabb);
     }
     last.camera = cameraComponent.entity?.name ?? '';
     last.faces = { W: topo?.faces.W.kind ?? 'unknown', E: topo?.faces.E.kind ?? 'unknown' };

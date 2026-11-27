@@ -1,7 +1,7 @@
 /** ⚑ S270g — THE HEADSET'S OWN LAYER (docs/reinterp/VR_AS_A_LAYER_2026-10-31.md; his: "build VR-04, VR-05, VR-08 and
  *  VR-06"). Four things only a headset can do, built on the comfort mapping (xrComfort) and the frame (xrFrame):
  *
- *  VR-04  the desk meets the visitor's table — a fingertip held still on a real table sets the desk height.
+ *  VR-04  the desk meets the visitor's table — a controller laid still on a real table sets the desk height (S430: never a hand).
  *  VR-05  Lamby in the room — 1997 a creature that hops out of the monitor onto the desk; 2003 a desk toy riding the
  *         monitor; 2016 a badge beside the phone; 2026 no body, a soft light at the monitor's top-right corner (S328: the laptop is gone; L's tray is in the monitor's taskbar). Shown only while the
  *         guide's balloon is (so every guide law holds: ≤5 unsolicited, never felt or respite, dismissal logged);
@@ -24,7 +24,7 @@ export interface XrLayerDeps {
     logicalPoint(p: pc.Vec3): pc.Vec3; matchDesk(tableY: number): number; stageYaw(): number;
     readonly calibrated: boolean; readonly busy: boolean; readonly authored: pc.Entity;
   };
-  input: { points(): pc.Vec3[]; palms(): pc.Vec3[]; handPalms?(): pc.Vec3[]; setStyle(style: 'own' | 'programme'): void; stick?(): { x: number; y: number } };
+  input: { points(): pc.Vec3[]; palms(): pc.Vec3[]; handPalms?(): pc.Vec3[]; controllers?(): { at: pc.Vec3; touched: boolean }[]; setStyle(style: 'own' | 'programme'): void; stick?(): { x: number; y: number } };
   /** VR-01 — the 1997/2003 desk: the mouse prop, the desktop's pointer, and where a desktop pixel is on the glass */
   mouse: {
     active(): boolean; prop(): pc.Entity | null;
@@ -150,7 +150,23 @@ export function mountXrLayer(app: pc.AppBase, deps: XrLayerDeps): XrLayer {
   };
 
   // ── VR-04 the table ──
-  const TABLE_GRACE = 3, TABLE_HOLD = 1.5;
+  /**
+   * ⚑ S430 (UiB job 39 B; his headset, 26 Nov: "it's out of place because it's too high … we need to certify that is using the
+   * controller instead of the hands"). ONLY A CONTROLLER, LYING STILL ON THE TABLE, COUNTS. The old match took the first tracked
+   * point (a fingertip, or a controller's grip) held still 0.2–0.85 m under the eye: a hand or a held controller resting in the
+   * lap set the desk, and a controller's grip — its centre, inside the handle — sits above the table it rests on, so the desk
+   * came out high by that much (4 cm in the probe), and 1 cm more from the desk constant (xrComfort DESK_BELOW_EYE).
+   * Now: a `tracked-pointer` source with no hand (xrInput `controllers()`), none of its buttons touched (laid down, let go: a
+   * thumb on its rest or a finger on its trigger means it is held), still within TABLE_STILL for TABLE_HOLD. The table's surface
+   * is its grip less GRIP_ABOVE_TABLE. A hand is never read, whatever it does. The other controller stays in the other hand, so
+   * the headset does not switch to hands (its own setting) while one is down.
+   * ⚑ GRIP_ABOVE_TABLE is an estimate, not a measurement: the WebXR grip's origin is the centre of the fist round the handle, and
+   * a Touch Plus controller laid on a table rests on its handle and ring of buttons with that point about 3 cm up. Only his Quest
+   * can say: if the desk lands a little high or low after the match, this is the number to move.
+   * ⚑ The headset's own table (WebXR plane detection, "use the camera") is NOT built: it asks the visitor for a permission, and
+   * the piece never requests one (CLAUDE.md).
+   */
+  const TABLE_GRACE = 3, TABLE_HOLD = 1.5, TABLE_STILL = 0.004, GRIP_ABOVE_TABLE = 0.03;
   let table: { t: number; hist: { t: number; p: pc.Vec3 }[][] } | null = null;
   let offered = false;
   const tickTable = (dt: number): void => {
@@ -166,15 +182,17 @@ export function mountXrLayer(app: pc.AppBase, deps: XrLayerDeps): XrLayer {
     // ⚑ S271 (his 31 Oct: "Okay, no, that's too fast. I wasn't even able to try") — the hand that pressed the menu row
     //   was still, so it was taken at once. The first 3 s only ask; then a fingertip must stay still for 1.5 s.
     if (table.t < TABLE_GRACE) return;
-    const eyeY = head.getPosition().y;
-    deps.input.points().forEach((p, i) => {
-      const h = (table!.hist[i] ??= []);
-      h.push({ t: table!.t, p }); while (h.length && table!.t - h[0].t > TABLE_HOLD) h.shift();
-      if (!table || table.t - h[0].t < TABLE_HOLD - 0.05) return;
-      const still = h.every((s) => s.p.distance(p) < 0.012);
-      const below = eyeY - p.y;
-      if (still && below > 0.2 && below < 0.85) { deps.comfort.matchDesk(p.y); table = null; deps.frame.notice(deps.strings.done, 4); }
-    });
+    const eyeY = head.getPosition().y, pads = deps.input.controllers?.() ?? [];
+    if (pads.length !== table.hist.length) table.hist = pads.map(() => []);   // a controller came or went: start again
+    for (let i = 0; i < pads.length; i++) {
+      const { at, touched } = pads[i], h = table.hist[i];
+      if (touched) { h.length = 0; continue; }   // in a hand
+      h.push({ t: table.t, p: at }); while (h.length && table.t - h[0].t > TABLE_HOLD) h.shift();
+      if (table.t - h[0].t < TABLE_HOLD - 0.05) continue;
+      const still = h.every((s) => s.p.distance(at) < TABLE_STILL);
+      const below = eyeY - at.y;
+      if (still && below > 0.2 && below < 0.85) { deps.comfort.matchDesk(at.y - GRIP_ABOVE_TABLE); table = null; deps.frame.notice(deps.strings.done, 4); return; }
+    }
   };
 
   // ── VR-06 the dollhouse: REMOVED (S346, his ruling 9 Nov: "we just remove the dollhouse, we add that to the research").
