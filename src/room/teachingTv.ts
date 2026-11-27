@@ -1302,20 +1302,30 @@ export class TeachingTv {
     c.fillStyle = this.spec.style === 'vcr' ? L.blue : L.panel; c.fillRect(pic.x, pic.y, pic.w, pic.h);
     c.textAlign = 'center'; c.textBaseline = 'middle';
     const cx = pic.x + pic.w / 2, cy = pic.y + pic.h / 2;
+    // ⚑ S435b (the coordinator, his 24 Nov rule on the stills) — each leader line keeps a margin inside its card: 2016's title
+    //   "Heartwood · Session Two: The Roots" at 42 px ran from the card's left edge to its right in every look. A line wider
+    //   than its room is set smaller until it fits; the sizes below stay as they were wherever they already fit.
+    const fit = (text: string, px: number, room: number): void => {
+      let s = Math.round(px * k); c.font = this.font(s);
+      while (s > 8 && c.measureText(text).width > room) { s -= 1; c.font = this.font(s); }
+    };
     if (this.spec.style === 'vcr') {
-      c.font = this.font(Math.round(30 * k)); c.fillStyle = L.dim; c.fillText(lines[0], cx, cy - 90 * k);
-      c.font = this.font(Math.round(46 * k)); c.fillStyle = L.ink; c.fillText(lines[1], cx, cy - 20 * k);
-      c.font = this.font(Math.round(30 * k)); c.fillStyle = L.accent; c.fillText(lines[2], cx, cy + 46 * k);
+      const room = pic.w - 96 * k;
+      fit(lines[0], 30, room); c.fillStyle = L.dim; c.fillText(lines[0], cx, cy - 90 * k);
+      fit(lines[1], 46, room); c.fillStyle = L.ink; c.fillText(lines[1], cx, cy - 20 * k);
+      fit(lines[2], 30, room); c.fillStyle = L.accent; c.fillText(lines[2], cx, cy + 46 * k);
     } else if (this.spec.style === 'dvd') {
       c.fillStyle = ERA3.glass; const bw = Math.round(700 * k), bh = Math.round(290 * k); c.fillRect(cx - bw / 2, cy - bh / 2, bw, bh);
       c.fillStyle = ERA3.accent; c.fillRect(cx - bw / 2, cy - bh / 2, bw, 8);
-      c.font = this.font(Math.round(32 * k)); c.fillStyle = ERA3.greyDk; c.fillText(lines[0], cx, cy - 80 * k);
-      c.font = this.font(Math.round(40 * k)); c.fillStyle = ERA3.accent; c.fillText(lines[1], cx, cy - 18 * k);
-      c.font = this.font(Math.round(42 * k)); c.fillStyle = ERA3.ink; c.fillText(lines[2], cx, cy + 56 * k);
+      const room = bw - 64 * k;
+      fit(lines[0], 32, room); c.fillStyle = ERA3.greyDk; c.fillText(lines[0], cx, cy - 80 * k);
+      fit(lines[1], 40, room); c.fillStyle = ERA3.accent; c.fillText(lines[1], cx, cy - 18 * k);
+      fit(lines[2], 42, room); c.fillStyle = ERA3.ink; c.fillText(lines[2], cx, cy + 56 * k);
     } else {
       // 2026: Dad's share line, and his words ("Watch this. All of it." stays, on the set's screen)
-      c.font = this.font(Math.round(36 * k)); c.fillStyle = L.dim; c.fillText(lines[0], cx, cy - 46 * k);
-      c.font = this.font(Math.round(60 * k)); c.fillStyle = L.ink; c.fillText(lines[1], cx, cy + 40 * k);
+      const room = pic.w - 96 * k;
+      fit(lines[0], 36, room); c.fillStyle = L.dim; c.fillText(lines[0], cx, cy - 46 * k);
+      fit(lines[1], 60, room); c.fillStyle = L.ink; c.fillText(lines[1], cx, cy + 40 * k);
     }
     c.textAlign = 'left';
   }
