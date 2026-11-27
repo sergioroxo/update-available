@@ -138,30 +138,35 @@ export class PlacesListApp implements TaskSurface {
     //   graceQueueLite drawSurface), at the left, over nothing. At the area's right foot it lay over the Trending panel's last line
     //   ("The Continental Wire"), and neither column has a free foot for it: the left one ends 48 px under the rule's last button, the
     //   right one in the Trending panel.
-    this.backAt = this.by ? { x: a0.x, y: a0.y - 28, w: 160 } : null;
+    // ⚑ S429b (G4; it touched the title bar above and the heading below) — the same size and place as the Back to Today every lesson
+    //   page has in that row while it runs (graceQueueLite drawSurface: 96 × 18), lit blue now that the lesson is done
+    this.backAt = this.by ? { x: a0.x, y: a0.y - 28, w: 96, h: 18 } : null;
     // ── the list ───────────────────────────────────────────────────────────────
     setFont(ctx, 10); ctx.fillStyle = ERA3.greyDk; ctx.fillText(P.listHeading, rx, a.y);
     setFont(ctx, 9); ctx.fillStyle = ERA3.grey; ctx.fillText(P.listSub, rx, a.y + 14);
     let ly = a.y + 30;
     const row = (label: string, state: 'on' | 'proposed' | 'new'): void => {
       const t = state === 'proposed' ? P.proposed : state === 'new' && this.by ? doneByLabel(this.by) : '';
-      const h = t ? 34 : 22;   // a row with a tag carries it on its own line, under the place
+      // ⚑ S429b (G3; "Reading group · Thursdays, the librar" was cut at its row's right edge, in 5185e4f1 already) — a place too long
+      //   for its row takes a second line, as a tagged row carries its tag on one; nothing is cut and no word changes
+      setFont(ctx, 10);
+      const lines = wrapText(ctx, label, rw - 18);
+      const h = 10 + lines.length * 12 + (t ? 12 : 0);   // one line, no tag: 22; one line and a tag: 34 (as built)
       px(ctx, rx, ly, rw, h, state === 'proposed' ? ERA3.sysBand : ERA3.white);
       px(ctx, rx, ly, 3, h, state === 'proposed' ? ERA3.amber : ERA3.alarm);
-      setFont(ctx, 10); ctx.fillStyle = state === 'proposed' ? ERA3.greyDk : ERA3.ink;
-      ctx.save(); ctx.beginPath(); ctx.rect(rx, ly, rw - 4, h); ctx.clip();
-      ctx.fillText(label, rx + 10, ly + 5);
-      if (t) { setFont(ctx, 8); ctx.fillStyle = state === 'new' ? ERA3.alarm : ERA3.greyDk; ctx.fillText(t, rx + 10, ly + 20); }
-      ctx.restore();
+      ctx.fillStyle = state === 'proposed' ? ERA3.greyDk : ERA3.ink;
+      lines.forEach((ln, i) => ctx.fillText(ln, rx + 10, ly + 5 + i * 12));
+      if (t) { setFont(ctx, 8); ctx.fillStyle = state === 'new' ? ERA3.alarm : ERA3.greyDk; ctx.fillText(t, rx + 10, ly + 8 + lines.length * 12); }
       ly += h + 4;
     };
     for (const l of P.list) row(l, 'on');
     row(P.newRow, this.by ? 'new' : 'proposed');
-    drawTrending(ctx, rx, ly + 8, rw, a.y + a.h - ly - 46);   // the foot stays clear for the finished job's way back
+    // (⚑ S429 — the foot no longer keeps 46 px for the finished lesson's way back: it is in the page's top row, `backSlot`)
+    drawTrending(ctx, rx, ly + 8, rw, a.y + a.h - ly - 12);
   }
 
-  private backAt: { x: number; y: number; w: number } | null = null;
-  backSlot(): { x: number; y: number; w: number } | null { return this.backAt; }
+  private backAt: { x: number; y: number; w: number; h?: number } | null = null;
+  backSlot(): { x: number; y: number; w: number; h?: number } | null { return this.backAt; }
 
   press(id: string): boolean {
     if (this.by) return false;

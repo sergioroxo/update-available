@@ -2206,7 +2206,7 @@ export class GraceQueueLite {
     // ⚑ S428 (UiB job 38 B3; HEADSET_RUN answer e) — its button is drawn on every operable surface (`guideAskable`): the board, every
     //   job page, the bare desktop, whatever the Handset Window shows beside it; while the scene is quiet only a press on it is
     //   answered (`guideAskOnly`). (It was hidden whenever a job was open, the phone was read or a felt beat ran: 40a59042.)
-    if (this.lambyGuide && this.guideAskable) this.lambyGuidePaint = drawLambyGuide(ctx, 'e3', this.lambyGuide.view, this.rects, { w: platformW, h: H }, [], pageLines, [...pathIds]);
+    if (this.lambyGuide && this.guideAskable) this.lambyGuidePaint = drawLambyGuide(ctx, 'e3', this.lambyGuide.view, this.rects, { w: platformW, h: H }, [], pageLines, [...pathIds], this.guideKeepOut);
     if (this.guideFocus && !this.guideSilent && !this.guideVoice && !this._systemModal) {
       const r = this.rects.find(r => r.id === this.guideFocus!.id);
       if (r) drawGuidePointer(ctx, r, { x: platformW - 172, y: H - 24 }, ERA3.accent, 0);
@@ -2295,8 +2295,10 @@ export class GraceQueueLite {
     const hits = phoneRects.map(r => ({ ...r, x: px0 + r.x * scale, y: py + r.y * scale, w: r.w * scale, h: r.h * scale, id: `mirror:${r.id}` }));
     this.rects.unshift(...hits);
   }
+  /** ⚑ S429b (G2) — the open job's drawn presses (pressable or not this moment): Lambient's balloon keeps off them */
+  guideKeepOut: { x: number; y: number; w: number; h: number; id: string }[] = [];
   private drawSurfaceContent(ctx: CanvasRenderingContext2D, W: number, H: number): void {
-    this.rects = []; this.covers = [];
+    this.rects = []; this.covers = []; this.guideKeepOut = [];
     // S61 — the arrival owns the WHOLE panel: no wallpaper, no taskbar, no
     // window chrome. A machine that is off or booting has no desktop yet, and
     // drawing one behind the boot text is the exact "already running" lie this
@@ -2865,14 +2867,16 @@ export class GraceQueueLite {
     //   the register law keeps the assistant off them. Its lines wait for the board.
 
     surface.draw(ctx, area, r => this.rects.push(r));
+    this.guideKeepOut = surface.keepOut?.() ?? [];   // ⚑ S429b (G2) — its drawn presses, for Lambient's balloon to keep off
     // ⚑ S283 (headset B, 1 Nov: "you press from the waiting, you read it, and then it suggests a reply, and then it should
     //   be a button down there going says back to today") — a finished job ends in the way back, at the foot of the
     //   column, where the reading ends (the small one at the top stays: leaving half-way is always allowed)
     if (this.doneT >= 0) {
-      // ⚑ S429 (UiB job 38 C2) — where the job keeps a clear place for it (`backSlot`: Lesson 2's left column foot), it sits there
+      // ⚑ S429 (UiB job 38 C2) — where the job keeps a clear place for it (`backSlot`: Lesson 2's own top row), it sits there
       const slot = surface.backSlot?.() ?? null;
-      const bw = slot?.w ?? 160, bh = 26, bx = slot?.x ?? area.x + area.w - bw, by = slot?.y ?? area.y + area.h - bh - 4;
-      aero.button(ctx, bx, by, bw, bh, this.boardBackLabel(), { primary: true, size: 11 });
+      const bw = slot?.w ?? 160, bh = slot?.h ?? 26, bx = slot?.x ?? area.x + area.w - bw, by = slot?.y ?? area.y + area.h - bh - 4;
+      // ⚑ S429b (G4) — a slot that gives its height takes the small button's type too (Lesson 2: the top row's 96 × 18, lit)
+      aero.button(ctx, bx, by, bw, bh, this.boardBackLabel(), slot?.h ? { primary: true } : { primary: true, size: 11 });
       this.rects.push({ x: bx, y: by, w: bw, h: bh, id: 'board-back' });
     }
     // ⚑ S345 / T52 — the mark sits top right, on the back button's row: at the foot it touched the family job's

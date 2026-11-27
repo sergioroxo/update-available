@@ -61,6 +61,14 @@ await q(() => {
   window.__drawn = null;
   proto.fillText = function (t, x, y, mw) {
     if (window.__drawn && this.canvas === window.__era3Devices?.()?.workstation) window.__drawn.push(String(t));
+    if (window.__drawnAt && this.canvas === window.__era3Devices?.()?.workstation) {   // S429b: where (logical px), for G2
+      const m = this.getTransform(), k = this.canvas.width / 676, w = this.measureText(String(t)).width;
+      const size = Number(/(\d+(?:\.\d+)?)px/.exec(this.font)?.[1] ?? 11), bl = this.textBaseline;
+      const top = bl === 'top' || bl === 'hanging' ? y : bl === 'middle' ? y - size * 0.6 : y - size;
+      const x0 = this.textAlign === 'center' ? x - w / 2 : this.textAlign === 'right' || this.textAlign === 'end' ? x - w : x;
+      window.__drawnAt.push({ s: String(t), x0: (m.a * x0 + m.e) / k, x1: (m.a * (x0 + w) + m.e) / k, y: (m.d * y + m.f) / k,
+        g0: (m.d * (top + size * 0.1) + m.f) / k, g1: (m.d * (top + size) + m.f) / k });
+    }
     return mw === undefined ? orig.call(this, t, x, y) : orig.call(this, t, x, y, mw);
   };
 });
@@ -70,7 +78,9 @@ const drawnWords = async () => {
   return q(() => { const d = window.__drawn || []; window.__drawn = null; return d; });
 };
 // ── pixels ──
-/** the Handset Window's phone (its own 2× canvas): the largest band of full-width rows of the thread's ground inside [y0, y1) (logical) */
+/** the Handset Window's phone (its own 2× canvas): the largest band of full-width rows of the thread's ground inside [y0, y1) (logical).
+ *  ⚑ S429b — at most 30 px passes: whole lines only (G1) leave up to a line and its gap of bare thread at the list's edge; the band he
+ *  saw was 74–81 px */
 const phoneBand = (y0, y1) => q(({ y0, y1 }) => {
   const g = window.__graceQueue(), cv = g.mirrorCanvas; if (!cv) return null;
   const c = cv.getContext('2d'), s = cv.width / 180, d = c.getImageData(0, 0, cv.width, cv.height).data, W = cv.width;
@@ -136,7 +146,10 @@ const asked = async (where, expect, still = null) => {
     if (!box || !text) return { box, text };
     const ui = await import('/src/desktop/theme/chrome.ts'), c = document.createElement('canvas').getContext('2d');
     ui.setFont(c, 11); const n = ui.wrapText(c, text, box.w - 36).length;
-    return { box, text, lines: n };
+    const re = /^(board-back|vera-send|vera-send-close|apply|skip|places-add|places-refuse|family-reply-|family-refuse|consent-|week-begin|pause-close|memory-|kit-popin-open|vera-kit|vera-take)/;
+    // the page's presses as published, and (Lesson 3 while Lambient shows how) its replies as drawn: read off the job itself
+    const buttons = G.rects.filter((r) => re.test(r.id)).map((r) => ({ id: r.id, x: Math.round(r.x), y: Math.round(r.y), w: Math.round(r.w), h: Math.round(r.h) }));
+    return { box, text, lines: n, buttons };
   });
   if (!g.box) { check('F2', `Lambient's balloon on ${where}`, false, 'no balloon'); return; }
   const fit = g.box.h - (49 + g.lines * 15);
@@ -150,27 +163,35 @@ const asked = async (where, expect, still = null) => {
       const c = o.getContext('2d'); c.drawImage(cv, 0, 0); c.strokeStyle = '#ff00ff'; c.lineWidth = 1; c.strokeRect(b.x * s + 0.5, b.y * s + 0.5, b.w * s, b.h * s); return o.toDataURL('image/png'); }, g.box);
     fs.writeFileSync(path.join(SHOTS, `ws_balloon-${where.replace(/[^a-z0-9]+/gi, '-')}_${MODE}.png`), Buffer.from(png.split(',')[1], 'base64'));
   }
-  const cut = await q((b) => {
-    const cv = window.__era3Devices().workstation, s = cv.width / 676, c = cv.getContext('2d');
-    const X0 = Math.round(b.x * s), X1 = Math.round((b.x + b.w) * s), Y0 = Math.max(0, Math.round((b.y - 24) * s)), Y1 = Math.min(cv.height, Math.round((b.y + b.h + 24) * s));
-    const d = c.getImageData(0, Y0, cv.width, Y1 - Y0).data, ink = (x, y) => { const i = ((y - Y0) * cv.width + x) * 4; return 0.3 * d[i] + 0.59 * d[i + 1] + 0.11 * d[i + 2] < 140; };
-    // a row of WORDS: dark in at least three separate places along it (a list row's coloured spine or a rule is one dark run)
-    const words = (y, x0, x1) => { let n = 0, was = false; for (let x = x0; x < x1; x++) { const k = ink(x, y); if (k && !was) n++; was = k; } return n >= 3; };
-    const rowInk = (y, x0, x1) => { for (let x = x0; x < x1; x++) if (ink(x, y)) return true; return false; };
-    const across = (edge) => { const e = Math.round(edge * s); return words(e - 1, X0 + 2, X1 - 2) && words(e, X0 + 2, X1 - 2) ? 1 : 0; };
-    // a run of ink rows through the edge: ink in the row just above AND the row at the edge, inside the balloon's width
-    const top = across(b.y), foot = across(b.y + b.h);
-    let side = 0;
-    for (let y = Math.round(b.y * s) + 2; y < Math.round((b.y + b.h) * s) - 2; y++) {
-      const L = Math.round(b.x * s);
-      if (rowInk(y, Math.max(0, L - 4), L) && rowInk(y, L, L + 4)) side++;
-    }
+  // the page's own lines as it writes them (the balloon put away): a line crossing its top or foot, or crossing its side, is cut
+  const cut = await q(async (b) => {
+    window.__drawnAt = []; window.__graceQueue().bump?.();
+    await new Promise((r) => setTimeout(r, 350));
+    const L = window.__drawnAt.filter((l) => l.s.trim() && l.x1 - l.x0 > 1 && l.y < 390 - 28); window.__drawnAt = null;
+    const inX = (l) => l.x1 > b.x + 1 && l.x0 < b.x + b.w - 1, inY = (l) => l.g1 > b.y && l.g0 < b.y + b.h;
+    const thru = (l, e) => l.g0 < e - 0.5 && l.g1 > e + 0.5;
+    const top = L.filter((l) => inX(l) && thru(l, b.y)).map((l) => l.s), foot = L.filter((l) => inX(l) && thru(l, b.y + b.h)).map((l) => l.s);
+    const side = L.filter((l) => inY(l) && (l.x0 < b.x - 0.5 && l.x1 > b.x + 0.5)).map((l) => l.s);
     return { top, foot, side };
   }, g.box);
+  // ⚑ S429b (G2) — the presses the page asks for (its sends, replies, adds, leaves, Back to Today, the cards' answers): none under it.
+  //   Read twice: the buttons it publishes, and the words of its buttons as drawn (Lesson 3's replies are drawn, not yet pressable,
+  //   while Lambient shows how)
+  const labels = await q(async () => {
+    const fam = (await import('/data/dialog/s3_family.json')).default;
+    const L = [...(fam.replies ?? []).map((r) => r.label), fam.app?.noReplyLabel].filter(Boolean);
+    window.__drawnAt = []; window.__graceQueue().bump?.();
+    await new Promise((r) => setTimeout(r, 350));
+    const d = window.__drawnAt; window.__drawnAt = null;
+    return d.filter((w) => w.s.length > 3 && L.some((l) => l.startsWith(w.s))).map((w) => ({ id: 'label:' + w.s, x: Math.round(w.x0), y: Math.round(w.g0), w: Math.round(w.x1 - w.x0), h: Math.round(w.g1 - w.g0) }));
+  });
+  const under = [...g.buttons, ...labels].filter((r) => r.x < g.box.x + g.box.w && r.x + r.w > g.box.x && r.y < g.box.y + g.box.h + 6 && r.y + r.h > g.box.y);
+  check('G2', `on ${where} the balloon lies over none of the page's presses`, under.length === 0, under.length ? `over ${[...new Set(under.map((r) => r.id))].join(', ')}` : `clear of ${[...new Set([...g.buttons, ...labels].map((r) => r.id))].join(', ') || '(none on the page)'}`);
   if (expect) check('F2', `on ${where} the asked line speaks to it`, g.text === expect, `"${g.text}"`);
   else check('F2', `on ${where} the asked line`, null, `"${g.text}"`);
   check('F2', `on ${where} the balloon fits its words`, fit <= 1, `h ${g.box.h} for ${g.lines} lines (${fit} px of band)`);
-  check('F2', `on ${where} the balloon's edges cut no line of the page`, cut.top + cut.foot === 0 && cut.side === 0, `a line through its top ${cut.top}, its foot ${cut.foot}; rows with words both sides of its left side ${cut.side}; it sits at x ${g.box.x}, y ${g.box.y}, ${g.box.w} × ${g.box.h}`);
+  check('F2', `on ${where} the balloon's edges cut no line of the page`, !cut.top.length && !cut.foot.length && !cut.side.length,
+    `lines through its top [${cut.top.join(' | ')}], its foot [${cut.foot.join(' | ')}], its side [${cut.side.join(' | ').slice(0, 120)}]; it sits at x ${g.box.x}, y ${g.box.y}, ${g.box.w} × ${g.box.h}`);
   result[`balloon_${where}`] = g;
   return g;
 };
@@ -194,12 +215,43 @@ const scrollUp = async () => {
   }
   return (await tryPress('mirror:scroll-up')) ? '▲' : 'no ▲';
 };
+/** ⚑ S429b (G1) — what a scrolled thread leaks, read off the Handset Window's phone: runs of dark (ink) rows shorter than 5 px (a hidden
+ *  line's descenders, drawn faint at the list's edge: a whole line of words is 7 px or more), and runs of rows of bare bubble (#e7e7ec at x 40) with no ink in them
+ *  longer than 16 px (an empty strip of bubble: inside a bubble the most between words is its 12 px padding) */
+const threadLeaks = (y0, y1) => q(({ y0, y1 }) => {
+  const cv = window.__graceQueue().mirrorCanvas; if (!cv) return null;
+  const s = cv.width / 180, c = cv.getContext('2d'), Y0 = Math.round(y0 * s), Y1 = Math.round(y1 * s);
+  const d = c.getImageData(0, Y0, cv.width, Y1 - Y0).data, W = cv.width;
+  const lum = (x, y) => { const i = ((y - Y0) * W + x) * 4; return 0.3 * d[i] + 0.59 * d[i + 1] + 0.11 * d[i + 2]; };
+  const bub = (x, y) => { const i = ((y - Y0) * W + x) * 4; return Math.abs(d[i] - 0xe7) + Math.abs(d[i + 1] - 0xe7) + Math.abs(d[i + 2] - 0xec) < 10; };
+  // any mark darker than the bubble's and the thread's grounds (231, 242): a tail at the list's edge is drawn faint, antialiased
+  const inkRow = (y) => { for (let x = Math.round(8 * s); x < Math.round(156 * s); x++) if (lum(x, y) < 205) return true; return false; };
+  const frags = [], strips = [], runs = [];
+  let run = 0, bare = 0;
+  for (let y = Y0; y < Y1; y++) {
+    const ink = inkRow(y);
+    if (ink) run++; else { if (run > 0) runs.push([y - run, y]); run = 0; }
+    if (!ink && bub(Math.round(40 * s), y)) bare++; else { if (bare > 16 * s) strips.push(Math.round(bare / s)); bare = 0; }
+  }
+  if (run > 0) runs.push([Y1 - run, Y1]);
+  if (bare > 16 * s) strips.push(Math.round(bare / s));
+  // a short run of ink with nothing within 2 px of it is a fragment (an i's dot or an apostrophe sits a pixel from its own line)
+  runs.forEach(([a, b], i) => {
+    if (b - a >= 5 * s) return;
+    const near = (runs[i - 1] && a - runs[i - 1][1] <= 2 * s) || (runs[i + 1] && runs[i + 1][0] - b <= 2 * s);
+    if (!near) frags.push(Math.round(a / s));
+  });
+  return { frags, strips };
+}, { y0, y1 });
 const threadCheck = async (what) => {
   await ff(page, 0.3); await wait(400);
   const v = await q(() => { const p = window.__graceQueue().phone; return { tv: p.threadView ?? null, gv: p.groupView, screen: p.screen }; });
   const top = v.tv ? v.tv.vTop : 70, bottom = v.tv ? v.tv.vBottom : 300;
   const band = await phoneBand(top, bottom);
-  return { ...v, band };
+  const leaks = await threadLeaks(top, bottom);
+  if (what) check('G1', `${what}: no hidden line's tails, no empty strip of bubble`, !!leaks && leaks.frags.length === 0 && leaks.strips.length === 0,
+    leaks ? `ink fragments at y ${leaks.frags.join(', ') || '-'}; bare bubble strips ${leaks.strips.join(', ') || '-'} px` : 'no phone');
+  return { ...v, band, leaks };
 };
 
 // ═══ 2016, by presses ═══
@@ -244,6 +296,20 @@ await dismiss();
 await tryPress('places-add'); await ff(page, 1);
 { const r = await q(() => { const G = window.__graceQueue(); const backs = G.rects.filter((x) => x.id === 'board-back').sort((a, b) => b.w * b.h - a.w * a.h); return { back: backs[0] ?? null, W: G.mirrorAvailable ? 676 - 180 - 6 : 676 }; });
   check('C2', 'Lesson 2 finished: Back to Today clear of the Trending panel', !!r.back && r.back.x + r.back.w < r.W * 0.56, r.back ? `x ${Math.round(r.back.x)}–${Math.round(r.back.x + r.back.w)}, y ${Math.round(r.back.y)} (the right column begins at about ${Math.round(r.W * 0.56)})` : 'none'); }
+{ // ⚑ S429b (G3) — every place's words whole in its row (none drawn past the row's right edge); (G4) Back to Today's size and gaps
+  const r = await q(() => ({ back: window.__graceQueue().rects.filter((x) => x.id === 'board-back').sort((a, b) => b.w * b.h - a.w * a.h)[0] ?? null }));
+  const reading = await q(async () => (JSON.stringify((await import('/data/dialog/s3_places.json')).default).match(/"(Reading group[^"]*)"/) ?? [])[1] ?? 'Reading group');
+  const at = await q(async () => { window.__drawnAt = []; window.__graceQueue().bump?.(); await new Promise((r) => setTimeout(r, 350)); const d = window.__drawnAt; window.__drawnAt = null; return d; });
+  const i0 = at.findIndex((w) => w.s.startsWith('Reading group'));
+  const drawnReading = i0 < 0 ? [] : at[i0].s === reading ? [at[i0]] : [at[i0], at[i0 + 1]].filter(Boolean);
+  // the row's right edge is the platform's content edge (its window 490 px wide, 18 px in): nothing written past it
+  const right = 490 - 18;
+  check('G3', 'Lesson 2: "Reading group · Thursdays, the library annexe" whole in its row (wrapped, not cut)',
+    drawnReading.map((w) => w.s).join(' ') === reading && drawnReading.every((w) => w.x1 <= right),
+    `drawn as ${drawnReading.map((w) => `"${w.s}" (ends at x ${Math.round(w.x1)})`).join(' + ')}; the row ends at x ${right}`);
+  const b = r.back;
+  check('G4', 'Lesson 2 finished: Back to Today the size of every lesson page\'s (96 × 18), in the top row', !!b && Math.round(b.w) === 96 && Math.round(b.h) === 18, b ? `${Math.round(b.w)} × ${Math.round(b.h)} at y ${Math.round(b.y)}` : 'none');
+}
 await shot('07', 'lesson2-done');
 await tryPress('board-back'); await ff(page, 12);
 await bannerCheck('after Lesson 2');
@@ -253,13 +319,13 @@ if (await tryPress('task-0')) { await ff(page, 0.5); await asked('a finished les
 // ── Orla's thread (C1) ──
 if (await tryPress('mirror:lock-card:Orla', 'mirror:evening-banner')) {
   await ff(page, 1);
-  const a = await threadCheck();
+  const a = await threadCheck('Orla\'s thread at rest');
   await shot('08', 'orla-rest');
   const how = await scrollUp();
-  const b = await threadCheck();
-  check('C1', `Orla's thread at rest: no blank band`, a.band && a.band.band <= 24, `largest empty band ${a.band?.band} px at y ${a.band?.at}`);
+  const b = await threadCheck('Orla\'s thread scrolled up');
+  check('C1', `Orla's thread at rest: no blank band`, a.band && a.band.band <= 30, `largest empty band ${a.band?.band} px at y ${a.band?.at}`);
   check('C1', `Orla's thread scrolled (${how}): it moved`, (b.tv?.O ?? 0) !== (a.tv?.O ?? 0) || b.gv?.scrollBack !== a.gv?.scrollBack, `O ${a.tv?.O} → ${b.tv?.O}`);
-  check('C1', `Orla's thread scrolled: no blank band`, b.band && b.band.band <= 24, `largest empty band ${b.band?.band} px at y ${b.band?.at}`);
+  check('C1', `Orla's thread scrolled: no blank band`, b.band && b.band.band <= 30, `largest empty band ${b.band?.band} px at y ${b.band?.at}`);
   await shot('09', 'orla-up');
   await tryPress('mirror:scroll-down'); await tryPress('mirror:back'); await tryPress('mirror:back'); await ff(page, 1);
 } else check('C1', 'Orla\'s thread', null, 'not reachable here');
@@ -290,6 +356,7 @@ if ((await e3(page)).card) await tryPress('memory-look');
 await ff(page, 0.5);
 const closeEdge = () => q(() => { const r = window.__graceQueue().rects.find((x) => x.id === 'memory-close'); return r ? { x: Math.round(r.x), right: Math.round(r.x + r.w) } : null; });
 const c1 = await closeEdge();
+if (await q(() => ['evening', 'group'].includes(window.__graceQueue().phone.screen))) await threadCheck('Mam\'s thread beside the memory page');
 await shot('12', 'memory-published');
 await ff(page, 40);
 const c2 = await closeEdge();
@@ -299,6 +366,7 @@ await shot('13', 'memory-turned');
 // ── row 6: the Notes banner over Mam's thread (F1), the Start menu's foot (F4) ──
 await tryPress('memory-close'); await ff(page, 0.5);
 await bannerCheck('of her Notes', true);
+if (await q(() => ['evening', 'group'].includes(window.__graceQueue().phone.screen))) await threadCheck('Mam\'s thread under the Notes banner');
 await shot('14', 'banner-notes');
 if (await tryPress('start-menu')) {
   await ff(page, 0.2); await wait(400);
@@ -322,6 +390,7 @@ await tryPress('mirror:evening-banner', 'mirror:lock-notice'); await ff(page, 15
 await tryPress('mirror:back'); await ff(page, 4);
 await tryPress('mirror:lock-card:Nuala'); await ff(page, 12);
 await bannerCheck('from Maiden-to-be (Bea)', true);
+if (await q(() => ['evening', 'group'].includes(window.__graceQueue().phone.screen))) await threadCheck('Nuala\'s thread under Bea\'s banner');
 await shot('16', 'banner-bea');
 
 // ── rows 10–11: the group (C1) ──
@@ -329,17 +398,17 @@ await tryPress('mirror:evening-banner', 'mirror:lock-notice');
 await playTo(page, view, (s) => s.phone?.stage === 'read' || s.kitPopin, { log: () => {}, limit: 60 });
 if ((await q(() => window.__graceQueue().phone.screenNow ?? window.__graceQueue().phone.screen)) !== 'group') await tryPress('mirror:evening-banner', 'mirror:lock-notice', 'mirror:lock-card:Maiden-to-be');
 await ff(page, 0.5);
-{ const a = await threadCheck();
+{ const a = await threadCheck('Bea\'s group at rest');
   await shot('17', 'group-rest');
   const how = await scrollUp();
-  const b = await threadCheck();
-  check('C1', 'Bea\'s group at rest: no blank band', a.band && a.band.band <= 24, `largest empty band ${a.band?.band} px at y ${a.band?.at}`);
+  const b = await threadCheck('Bea\'s group scrolled up');
+  check('C1', 'Bea\'s group at rest: no blank band', a.band && a.band.band <= 30, `largest empty band ${a.band?.band} px at y ${a.band?.at}`);
   check('C1', `Bea's group scrolled (${how}): it moved`, (b.tv?.O ?? 0) !== (a.tv?.O ?? 0) || b.gv?.scrollBack !== a.gv?.scrollBack, `O ${a.tv?.O} → ${b.tv?.O}; scrollBack ${a.gv?.scrollBack} → ${b.gv?.scrollBack}`);
-  check('C1', 'Bea\'s group scrolled: no blank band', b.band && b.band.band <= 24, `largest empty band ${b.band?.band} px at y ${b.band?.at}`);
+  check('C1', 'Bea\'s group scrolled: no blank band', b.band && b.band.band <= 30, `largest empty band ${b.band?.band} px at y ${b.band?.at}`);
   await shot('18', 'group-up');
   // ▲ by press too (touch's way, on every look-mode), and ▼ back
-  const up = await tryPress('mirror:scroll-up'); const c = await threadCheck();
-  check('C1', 'Bea\'s group: ▲ by press goes back, no blank band', !!up && c.band && c.band.band <= 24, `pressed ${!!up}; band ${c.band?.band} px; keys ${c.gv?.keys?.join(',')}`);
+  const up = await tryPress('mirror:scroll-up'); const c = await threadCheck('Bea\'s group after ▲');
+  check('C1', 'Bea\'s group: ▲ by press goes back, no blank band', !!up && c.band && c.band.band <= 30, `pressed ${!!up}; band ${c.band?.band} px; keys ${c.gv?.keys?.join(',')}`);
   if (SHOTS) await shot('19', 'group-up-press');
   const down = await tryPress('mirror:scroll-down'); const d = await threadCheck();
   check('C1', 'Bea\'s group: ▼ back to the newest', !!down && d.gv?.scrollBack === 0, `pressed ${!!down}; scrollBack ${d.gv?.scrollBack}`);

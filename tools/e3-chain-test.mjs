@@ -113,12 +113,15 @@ pressId('places-add'); run(1);
 assert.equal(q.guidePageLine, GP.done, 'F2: on a finished lesson\'s page the asked line says it is done');
 // ⚑ S429 (C2) — the finished lesson's Back to Today sits at the foot of the left column, clear of the Trending panel on the right
 { const back = draw().filter((r) => r.id === 'board-back').sort((a, b) => b.w * b.h - a.w * a.h)[0];
-  assert.ok(back && back.x + back.w < W * 0.6, `C2: Back to Today in the left column (x ${back?.x}–${back ? back.x + back.w : '?'})`); }
+  assert.ok(back && back.x + back.w < W * 0.6, `C2: Back to Today in the left column (x ${back?.x}–${back ? back.x + back.w : '?'})`);
+  // ⚑ S429b (G4) — the size of every lesson page's Back to Today, in that row (it touched the title bar and the heading at 160 × 26)
+  assert.ok(back && back.w === 96 && back.h === 18, `G4: Lesson 2's Back to Today is 96 × 18 (${back?.w} × ${back?.h})`); }
 pressId('board-back'); run(10);
 assert.ok(P.delivered('arrival') && P.screen === 'lock', 'row 3: Orla\'s message arrived as a notification; the phone did not open');
 pressId('task-2');
 // ⚑ S429 (C3) — Lambient answers Maureen in its own time, and the same moment the screen is on Annette, its note saying so plainly
 { const fam = q.surfaces.get('family'); let n = 0;
+  draw(); assert.ok(fam.keepOut().length >= 4, 'G2: Lesson 3 hands its replies to Lambient\'s balloon to keep off, while Lambient shows how');
   while (!fam.lessonSent && n++ < 200) run(0.1);
   assert.ok(fam.lessonSent, 'C3: Lambient sent Maureen\'s reply');
   assert.equal(fam.current().id, 'p_annette', 'C3: at once on Annette (no 2.4 s held on Maureen)');

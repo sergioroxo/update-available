@@ -202,15 +202,25 @@ function withoutText(real: CanvasRenderingContext2D): CanvasRenderingContext2D {
     set(t, k, v) { return Reflect.set(t, k, v, t); }
   });
 }
-/** ⚑ S429 (C1) — the real context with ONLY its words: shapes, pictures and fills are left out (a thread's words are drawn through it
- *  between whole lines, after its bubbles and cards were drawn to the list's own edges) */
-function onlyText(real: CanvasRenderingContext2D): CanvasRenderingContext2D {
-  const keep = new Set(['fillText', 'strokeText', 'measureText', 'save', 'restore', 'translate', 'scale', 'setTransform', 'getTransform', 'resetTransform']);
+/* (⚑ S429b — `onlyText`, S429's words-only pass clipped to the whole lines' band, is retired: a hidden line's descenders leaked through
+ *  that clip. `wholeLinesOnly` below draws each line whole or not at all. 3fa9452d.) */
+/** ⚑ S429b (G1; the coordinator's look at S429's frames: "the descenders of a line hidden above show as one or two grey dots") — the
+ *  real context drawing ONLY whole lines between `a` and `b`: a line's glyph band (as `textBoxes` measures it) inside them is drawn,
+ *  any other line is not drawn at all, its descenders with it; shapes and pictures are left out (drawn by the shapes' pass) */
+function wholeLinesOnly(real: CanvasRenderingContext2D, a: number, b: number): CanvasRenderingContext2D {
+  const keep = new Set(['measureText', 'save', 'restore', 'translate', 'scale', 'setTransform', 'getTransform', 'resetTransform']);
+  const text = (k: 'fillText' | 'strokeText') => (s: string, x: number, y: number, mw?: number): void => {
+    const size = Number(/(\d+(?:\.\d+)?)px/.exec(real.font)?.[1] ?? 12), bl = real.textBaseline;
+    const top = bl === 'top' || bl === 'hanging' ? y : bl === 'middle' ? y - size * 0.6 : y - size;
+    if (Math.floor(top + size * 0.1) < a || Math.ceil(top + size) > b) return;
+    if (mw === undefined) real[k](s, x, y); else real[k](s, x, y, mw);
+  };
   return new Proxy(real, {
     get(t, k) {
+      if (k === 'fillText' || k === 'strokeText') return text(k);
       const v = Reflect.get(t, k, t) as unknown;
       if (typeof v !== 'function') return v;
-      return typeof k === 'string' && keep.has(k) ? (v as (...a: unknown[]) => unknown).bind(t) : () => undefined;
+      return typeof k === 'string' && keep.has(k) ? (v as (...q: unknown[]) => unknown).bind(t) : () => undefined;
     },
     set(t, k, v) { return Reflect.set(t, k, v, t); }
   });
@@ -1625,20 +1635,43 @@ export class PhoneE3 {
     const toScreen = (b: TextBox): TextBox => ({ y0: b.y0 - f.O + f.vTop, y1: b.y1 - f.O + f.vTop });
     const on = boxes.map(toScreen);
     const { a: c0, b: c1 } = snapBetweenLines(on, f.vTop, f.vBottom);
-    // the bubbles, cards and pictures run to the list's own edges (a scrolled thread shows them going on under its bars, never a band
-    //   of bare ground); the words are drawn only between whole lines
+    // ⚑ S429b (G1; "a hidden line draws nothing at all, descenders included … a bubble with no whole line on view is not drawn; a
+    //   bubble's visible part ends with the padding of its last whole line") — EACH MESSAGE AS MUCH AS ITS WHOLE LINES. A message with no
+    //   whole line on view draws nothing (no empty bubble, no tails); one cut by the list's edge shows its bubble, card or picture only
+    //   to EDGE_PAD past its first and last whole lines; its words are drawn line by line, a line whole or not at all (S429's clip of the
+    //   words, through which a hidden line's descenders leaked, and its bubbles run to the list's edges: 3fa9452d)
+    const EDGE_PAD = 5;
     const r0 = this.rects.length;
-    const pass = (c: CanvasRenderingContext2D, a: number, b: number): void => {
-      ctx.save(); ctx.beginPath(); ctx.rect(0, a, W, b - a); ctx.clip();
-      items.forEach((it, i) => { const y = f.vTop + cum[i] - f.O; if (y + it.h < a - 24 || y > b + 24) return; it.draw(c, y); });
+    items.forEach((it, i) => {
+      const y = f.vTop + cum[i] - f.O;
+      if (y + it.h < f.vTop - 24 || y > f.vBottom + 24) return;
+      const own = on.filter((_b, k) => boxes[k].i === i), seen = own.filter((b) => b.y0 >= c0 && b.y1 <= c1);
+      if (own.length && !seen.length) return;
+      // its bubble (or card) is drawn only around its own words: a message cut by the list's edge whose bubble words are all hidden
+      //   (only its name above, or its time under, on view) shows those lines alone, no strip of empty bubble
+      const big = Math.max(0, ...own.map((b) => b.y1 - b.y0)), main = seen.filter((b) => b.y1 - b.y0 >= big - 1);
+      const cutAbove = own.some((b) => b.y0 < c0), cutBelow = own.some((b) => b.y1 > c1);
+      const shapes = !(cutAbove || cutBelow) || main.length > 0;
+      const top = cutAbove && main.length ? Math.max(f.vTop, Math.min(...main.map((b) => b.y0)) - EDGE_PAD) : f.vTop;
+      const bot = cutBelow && main.length ? Math.min(f.vBottom, Math.max(...main.map((b) => b.y1)) + EDGE_PAD) : f.vBottom;
+      if (shapes) {
+        ctx.save(); ctx.beginPath(); ctx.rect(0, top, W, Math.max(0, bot - top)); ctx.clip();
+        it.draw(withoutText(ctx), y);
+        ctx.restore();
+      }
+      const k0 = this.rects.length;
+      ctx.save(); ctx.beginPath(); ctx.rect(0, f.vTop, W, f.vBottom - f.vTop); ctx.clip();
+      it.draw(wholeLinesOnly(ctx, c0, c1), y);
       ctx.restore();
-    };
-    pass(withoutText(ctx), f.vTop, f.vBottom);
-    const r1 = this.rects.length;
-    pass(onlyText(ctx), c0, c1);
-    this.rects.length = r1;
+      this.rects.length = k0;
+      // what it publishes, only where it is drawn
+      for (let k = r0; k < this.rects.length; k++) if (this.rects[k].y < top || this.rects[k].y + this.rects[k].h > bot) {
+        const r = this.rects[k], y0 = Math.max(r.y, top), y1 = Math.min(r.y + r.h, bot);
+        this.rects[k] = y1 - y0 > 4 ? { ...r, y: y0, h: y1 - y0 } : { ...r, h: 0 };
+      }
+    });
     // its own presses, only where it is drawn
-    const added = this.rects.splice(r0).flatMap((r) => { const y0 = Math.max(r.y, f.vTop), y1 = Math.min(r.y + r.h, f.vBottom); return y1 - y0 > 4 ? [{ ...r, y: y0, h: y1 - y0 }] : []; });
+    const added = this.rects.splice(r0).filter((r) => r.h > 4);
     this.rects.push(...added);
     this.threadWhole = items.filter((_it, i) => {
       const own = on.filter((_b, k) => boxes[k].i === i);

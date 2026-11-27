@@ -128,6 +128,11 @@ export class FamilyCallsApp implements TaskSurface {
     }
   }
 
+  /** ⚑ S429b (G2) — the replies and "Don't send a script" as drawn, pressable or not (while Lambient shows how, they are drawn and
+   *  not yet hers): Lambient's balloon keeps off them (graceQueueLite → lambyGuideDraw) */
+  private drawnPresses: { x: number; y: number; w: number; h: number; id: string }[] = [];
+  keepOut(): { x: number; y: number; w: number; h: number; id: string }[] { return this.drawnPresses; }
+
   version(): number { return this.v; }
   private bump(): void { this.v++; }
 
@@ -346,6 +351,7 @@ export class FamilyCallsApp implements TaskSurface {
     //   lights a moment before it is sent, and stays lit on her row as the one that was sent
     const watching = p.id === 'p_maureen' && !this.lessonSent && !this.lessonMoved && !this.outcomes.has(p.id);
     const chosen = (watching && this.lessonT >= FamilyCallsApp.LIGHT_AT) || this.lessonBy.has(p.id) ? this.lessonReply?.id : undefined;
+    this.drawnPresses = [];
     REPLIES.forEach((r, i) => {
       const bx = readX + (i % 2) * (bw + 10);
       const by = verbsY + 22 + Math.floor(i / 2) * (bh + 6);
@@ -354,6 +360,7 @@ export class FamilyCallsApp implements TaskSurface {
       setFont(ctx, 10); ctx.fillStyle = lit ? ERA3.white : done ? ERA3.grey : ERA3.ink;
       wrapText(ctx, r.label, bw - 12).forEach((line, n) => ctx.fillText(line, bx + 6, by + 4 + n * 12));
       if (!done && !watching) hit({ x: bx, y: by, w: bw, h: bh, id: 'family-reply-' + r.id });
+      this.drawnPresses.push({ x: bx, y: by, w: bw, h: bh, id: 'family-reply-' + r.id });
     });
 
     // ⚑ and the row that is always available and never labelled as a refusal:
@@ -361,6 +368,7 @@ export class FamilyCallsApp implements TaskSurface {
     const hy = verbsY + 22 + Math.ceil(REPLIES.length / 2) * (bh + 6) + 4;
     if (!this.complete()) aero.button(ctx, readX, hy, readW, bh, f.app.noReplyLabel, { disabled: done || watching, size: 10 });
     if (!done && !watching) hit({ x: readX, y: hy, w: readW, h: bh, id: 'family-refuse' });
+    if (!this.complete()) this.drawnPresses.push({ x: readX, y: hy, w: readW, h: bh, id: 'family-refuse' });
 
     if (this.complete()) {
       setFont(ctx, 12); ctx.fillStyle = ERA3.titleText;

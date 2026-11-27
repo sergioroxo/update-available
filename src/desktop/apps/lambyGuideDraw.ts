@@ -39,7 +39,7 @@ export function drawGuidePointer(ctx: CanvasRenderingContext2D, r: GuideHit, fro
 export const guideBody = { inRoom: false };
 /** ⚑ S429 (UiB job 38 F2) — a line of text on the page under a balloon (logical px): the balloon's edges keep out of it */
 export interface PageLine { x0: number; x1: number; y0: number; y1: number }
-export function drawLambyGuide(ctx: CanvasRenderingContext2D, skin: GuideEra, state: GuideView, hits: GuideHit[], size = { w: 512, h: 384 }, remoteActions: string[] = [], pageLines: PageLine[] = [], protect: string[] = []): GuidePaint {
+export function drawLambyGuide(ctx: CanvasRenderingContext2D, skin: GuideEra, state: GuideView, hits: GuideHit[], size = { w: 512, h: 384 }, remoteActions: string[] = [], pageLines: PageLine[] = [], protect: string[] = [], keepOut: GuideHit[] = []): GuidePaint {
   const out: GuidePaint = { rings: [], balloon: false };
   if (state.era !== skin) return out;
   const W = size.w, H = size.h, tx = W - (skin === 'e3' ? 182 : 108), ty = H - 20;
@@ -81,16 +81,19 @@ export function drawLambyGuide(ctx: CanvasRenderingContext2D, skin: GuideEra, st
   // ⚑ S429 (F2; "its edges slice the page's lines": "Youth drop-in · Quay Street" across its top, the Trending item across its foot,
   //   and words under its left side) — 2016's balloon never cuts a line of the page under it in half: no line crosses its top or its
   //   foot, and none crosses its left or right side. It may cover whole lines. It keeps to the right of the platform, over the
-  //   taskbar's Lambient; it moves up or down (at most 90 px from where it stood) and, where the page's columns need it, narrows (to
-  //   248, 224 or 200 px). Of the places it may take, in this order: it never lies over the press the step waits for (`protect`: the
+  //   taskbar's Lambient; it moves up or down and, where the page's columns need it, narrows (to 260…200 px). Of the places it may take, in this order: it never lies over the press the step waits for (`protect`: the
   //   path's own controls, its own pointer's), then it cuts no line, then it leaves the page's other controls whole (a button cut in half
   //   by its edge last of all, one it covers next), then the nearest, the widest, a little clear of the lines before touching them.
-  //   An UNASKED line (a tip after a stall) keeps off the step's own press, because a visitor who has not asked may press it through
-  //   the balloon at any moment (the consent card's Allow lay under one); a line she ASKED for is read first and put away with Got it,
-  //   so for it a clean edge comes first and only its own pointer's target is kept clear.
+  //   ⚑ S429b (G2; the coordinator: "an asked balloon must not hide the press its own line names" — Lesson 1's "Send to the network",
+  //   Lesson 3's replies, a finished lesson's Back to Today) — ONE RULE, asked or not: it never lies over the step's own press
+  //   (`protect`, its pointer's targets) or over any BUTTON of the page (a press that small is always one a line might name: the
+  //   lessons' sends, replies, adds and leaves, Back to Today, the cards' answers). It may cover whole lines of text, a picture, a
+  //   tile or a list row. It looks over the whole height of the page for that place, nearest first. (S429 kept clear of the step's
+  //   press for unasked lines only: 3fa9452d.)
   if (skin === 'e3' && pageLines.length) {
-    const guard = new Set([...(state.rung === 'asked' ? [] : protect), ...state.targets]);
-    const controls = hits.filter((r) => !r.id.startsWith('lg-') && !r.id.startsWith('mirror') && r.w * r.h < W * H * 0.2);
+    const guard = new Set([...protect, ...state.targets]);
+    const controls = [...hits.filter((r) => !r.id.startsWith('lg-') && !r.id.startsWith('mirror') && r.w * r.h < W * H * 0.2), ...keepOut.map((r) => ({ ...r, id: 'keep:' + r.id }))];
+    const isButton = (r: GuideHit): boolean => guard.has(r.id) || r.id.startsWith('keep:') || (r.w * r.h <= 6000 && r.h <= 40 && !r.id.startsWith('task-') && !r.id.startsWith('family-sel'));
     const linesCut = (xx: number, ww: number, yy: number, hh: number, M: number): number => {
       // the tail under its foot (6 × 6, toward Lambient's tray) lies over the page too: a line under it is cut by it
       const tl = Math.max(xx + 8, Math.min(xx + ww - 8, tx + 7)), tr = tl + 6;
@@ -106,15 +109,14 @@ export function drawLambyGuide(ctx: CanvasRenderingContext2D, skin: GuideEra, st
     const pinnedTop = pointing && y === 26;
     let best: { score: number; w: number; x: number; y: number; h: number } | null = null;
     for (const M of [2, 0]) {
-      for (const [k, ww] of [w, 248, 224, 200].filter((v, i, a) => v <= w && a.indexOf(v) === i).entries()) {
+      for (const [k, ww] of [w, 260, 248, 236, 224, 212, 200].filter((v, i, a) => v <= w && a.indexOf(v) === i).entries()) {
         const hh = heightFor(ww), xx = W - ww - 4, base = pinnedTop ? 26 : H - 22 - hh - 70, lo = 26, hi = H - 22 - hh - 8;
-        for (let d = -90; d <= 90; d++) {
-          const yy = base + d;
-          if (yy < lo || yy > hi) continue;
+        for (let yy = lo; yy <= hi; yy++) {
+          const d = yy - base;
           let guarded = 0, cut = 0, covered = 0;
           for (const r of controls) {
             if (r.x >= xx + ww || r.x + r.w <= xx || r.y >= yy + hh + 6 || r.y + r.h <= yy) continue;
-            if (guard.has(r.id)) guarded++;
+            if (isButton(r)) guarded++;
             else if (r.x >= xx && r.x + r.w <= xx + ww && r.y >= yy && r.y + r.h <= yy + hh) covered++; else cut++;
           }
           const score = guarded * 1e9 + linesCut(xx, ww, yy, hh, M) * 1e6 + cut * 1e5 + covered * 1e4 + (M ? 0 : 5000) + Math.abs(d) * 10 + k;

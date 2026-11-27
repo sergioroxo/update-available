@@ -77,7 +77,11 @@ export interface TaskSurface {
   /** ⚑ S429 (UiB job 38 C2; his 26 Nov: "the back to today button is on top of the trending panel") — where a finished job's big
    *  way back sits, when the job has a clear place for it (the left-hand x, top y and width; the button is 26 tall). Asked after
    *  `draw`. Without it the button sits at the foot of the area's right, where nothing of most jobs lies. */
-  backSlot?(): { x: number; y: number; w: number } | null;
+  backSlot?(): { x: number; y: number; w: number; h?: number } | null;   // ⚑ S429b: and its height (26 if not given)
+
+  /** ⚑ S429b (G2) — presses the job has drawn that a balloon must not lie over, pressable now or not (Lesson 3's replies while
+   *  Lambient shows how) */
+  keepOut?(): { x: number; y: number; w: number; h: number; id: string }[];
 
   /** ⚑ SHE PUT IT DOWN. Optional, and it exists because a job could not tell
    *  the difference between "finished" and "walked away from" — `board-back` is
