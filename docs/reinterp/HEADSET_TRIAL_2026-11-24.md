@@ -118,6 +118,20 @@ Job 39's own list, with your calls: `HEADSET_CHECKLIST_JOB39_2026-11-27.md`.
 
 Job 36's own list: `HEADSET_CHECKLIST_JOB36_2026-11-27.md`.
 
+## Added by job 40 (27 Nov): four more checks, one for a phone
+
+| check | the Mac finds it by | what only your eye can judge |
+|---|---|---|
+| 40-A The welcome: introduced to GracePlatform | Sign in to the welcome's end | does it feel like being introduced to the system? each step waits for your press; the card never lies over a tile |
+| 40-B The lessons as the training's steps | the welcome's end to step 4 done | each lesson says its step, what it teaches and NOW: you always know what to do |
+| 40-B3 Bea's Malta card: a preview | the phone on the preview | a preview you can read, and Back to where you were |
+| 40-C4 Hands: the line waits for a balloon | the balloon closing, then the hands line | no line while Lambient's balloon is up; it comes right after |
+
+16-8 (This week) now starts at the welcome's end. Not on the Mac's list (it follows the headset, not a phone):
+**2016 on a phone: Bring it — the view turns to the set beside the monitor, and back when you open a lesson.**
+
+Job 40's own list, with your calls: `HEADSET_CHECKLIST_JOB40_2026-11-27.md`.
+
 ## After
 
 1. I stop the recorder and make the report: `node tools/trial-report.mjs --out out/trial-2026-11-24 --voice "<your _clock.tsv>"`.
