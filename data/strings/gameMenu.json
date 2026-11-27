@@ -122,7 +122,7 @@
  "xrHow": "Point and pull the trigger to press, or touch a button with your fingertip. A controller's grip, away from a device, opens the menu. Without a controller, pinch to press.",
  "controlsHeadsetLines": [
   "Turn your head to look around the room. You never walk.",
-  "Point with a controller and pull the trigger to press. Without one, pinch your thumb and finger.",
+  "Point with a controller and pull the trigger to press. Without one, pinch.",
   "Near a screen or handheld button, touch it with your fingertip.",
   "Point at a marker on the floor and press to move there.",
   "Grip a handheld, or pinch and hold, to carry it. Release to put it back.",
@@ -146,7 +146,7 @@
  "xrDeskOffer": "Sitting at a table? Open the Menu and choose Match my table.",
  "_docS407xrDeskOffer": "⚑ S407 (UiB job 32, E2) — `xrDeskOffer` is no longer shown: its banner ran into the CRT and was cut off (his headset 20 Nov, frame 212627), and Match my table is offered in the setup's How to look window now (setup.json look `table`). Kept for the record.",
  "xrHandsOnly": "This works best with a controller. Pick one up, or pinch your thumb and finger to press.",
- "_docS432xrHands": "⚑ S432 (UiB job 36, T96; his 26 Nov: \"Yes on the controllers as the intended means of interaction, with hands as backup\") — `xrHandsOnly` is the one line on the frame's plate the first time a hand presses (a pinch or a fingertip) while no controller is present: 8 s, once a visit, never on the headset's own switch to hands (a film watched with the controllers down stays bare; src/engine/app.ts `handsLine`). The lines that teach pressing name the trigger first: `xrHow` (was: 'Point and pinch, or pull the trigger, to press, or touch a button with your fingertip. A controller's grip, away from a device, opens the menu.'), `controlsHeadsetLines[1]` (was: 'Point and pull the trigger, or pinch, to press.'), `xrSeat` (was: 'Sit comfortably. To press: point and pinch, pull the trigger, or touch it with a fingertip.'). Claude's words; his edit wins.",
+ "_docS432xrHands": "⚑ S432 (UiB job 36, T96; his 26 Nov: \"Yes on the controllers as the intended means of interaction, with hands as backup\") — `xrHandsOnly` is the one line on the frame's plate the first time a hand presses (a pinch or a fingertip) while no controller is present: 8 s, once a visit, never on the headset's own switch to hands (a film watched with the controllers down stays bare; src/engine/app.ts `handsLine`). The lines that teach pressing name the trigger first: `xrHow` (was: 'Point and pinch, or pull the trigger, to press, or touch a button with your fingertip. A controller's grip, away from a device, opens the menu.'), `controlsHeadsetLines[1]` (was: 'Point and pull the trigger, or pinch, to press.') (S432b: the brief's \"Without one, pinch your thumb and finger.\" left \"finger.\" alone on a second line in the Controls view, so it ends \"Without one, pinch.\"; the thumb and finger are named in `xrHandsOnly`), `xrSeat` (was: 'Sit comfortably. To press: point and pinch, pull the trigger, or touch it with a fingertip.'). Claude's words; his edit wins.",
  "highlightsOn": "Navigation highlights: on",
  "highlightsOff": "Navigation highlights: off"
 }
