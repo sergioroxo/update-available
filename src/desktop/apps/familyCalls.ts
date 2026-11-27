@@ -254,18 +254,25 @@ export class FamilyCallsApp implements TaskSurface {
     });
   }
 
+  /** ⚑ S433 (UiB job 40) — the lesson's moment, for its NOW line: 'watch' while Lambient answers Maureen (nothing of hers to press),
+   *  'turn' when Annette is hers, 'done' once both are answered */
+  nowMoment(): string {
+    if (this.complete()) return 'done';
+    const p = this.current();
+    return p.id === 'p_maureen' && !this.lessonSent && !this.lessonMoved && !this.outcomes.has(p.id) ? 'watch' : 'turn';
+  }
+
   // ── the open job ─────────────────────────────────────────────────────────
   draw(ctx: CanvasRenderingContext2D, area0: TaskArea, hit: (r: TaskHit) => void): void {
     // ⚑ S403 (job 30 B1) — ONE LINE AT THE TOP says what the job is, across the whole window: "Mothers write when a
     //   daughter stops coming home. You answer for the ministry." It replaces the role line under the list (and the unused
     //   `sub`), so the screen says what it is before the first name is read. Everything under it moves down by its height.
-    // ⚑ S424 — the lesson's heading over it ("Lesson 3 · Answer the mothers")
-    setFont(ctx, 12); ctx.fillStyle = ERA3.accent;
-    ctx.fillText(f.app.lessonHeading, area0.x, area0.y);
+    // (⚑ S424's heading "Lesson 3 · Answer the mothers" over it is retired at S433: the lesson's head, drawn by the workstation over
+    //  this area, carries the training's step, what it teaches and the NOW line. s3_family.json `lessonHeading` kept.)
     setFont(ctx, 11); ctx.fillStyle = ERA3.titleText;
     const introLines = wrapText(ctx, f.app.intro, area0.w).slice(0, 2);
-    introLines.forEach((ln, i) => ctx.fillText(ln, area0.x, area0.y + 16 + i * 14));
-    const introH = 16 + introLines.length * 14 + 8;
+    introLines.forEach((ln, i) => ctx.fillText(ln, area0.x, area0.y + i * 14));
+    const introH = introLines.length * 14 + 4;
     const area = { ...area0, y: area0.y + introH, h: area0.h - introH };
     const listW = 170;
     const gap = 14;

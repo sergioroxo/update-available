@@ -65,10 +65,13 @@ export class PlacesListApp implements TaskSurface {
     ctx.restore();
   }
 
+  /** ⚑ S433 (UiB job 40) — the lesson's moment, for its NOW line ("Add The Wick, or leave it off." / "Back to Today, for step 4.") */
+  nowMoment(): string { return this.by ? 'done' : 'turn'; }
+
   draw(ctx: CanvasRenderingContext2D, a0: TaskArea, hit: (r: TaskHit) => void): void {
-    // ⚑ S424 (UiB job 35 Part D, Act I beat 6) — the lesson's heading ("Lesson 2 · The places list") over the job
-    setFont(ctx, 12); ctx.fillStyle = ERA3.accent; ctx.fillText(P.lessonHeading, a0.x, a0.y);
-    const a = { ...a0, y: a0.y + 18, h: a0.h - 18 };
+    // (⚑ S424's heading "Lesson 2 · The places list" over the job is retired at S433: the lesson's head, drawn by the workstation
+    //  over this area, carries the training's step, what it teaches and the NOW line. s3_places.json `lessonHeading` kept.)
+    const a = a0;
     const GAP = 16;
     const leftW = Math.floor(a.w * 0.56), rx = a.x + leftW + GAP, rw = a.x + a.w - rx;
     // ── the member's post (felt: bare) ─────────────────────────────────────────
@@ -114,11 +117,13 @@ export class PlacesListApp implements TaskSurface {
     const py = cardY + cardH + 12, ph = a.y + a.h - py;
     px(ctx, a.x, py, leftW, ph, ERA3.glassHi);
     px(ctx, a.x, py, leftW, 1, ERA3.glassEdge);
-    setFont(ctx, 13); ctx.fillStyle = ERA3.titleText; ctx.fillText(P.rule, a.x + 10, py + 9);
+    // ⚑ S433 (UiB job 40; HEADSET_RUN finding 24: "the lesson's one ask is not the loudest thing on the page") — the rule's own title
+    //   ("Add the place to the list", s3_places.json `rule`) is retired from the panel: the lesson's NOW row says the ask, loudest, at
+    //   the top of the page. The panel keeps Lambient's lesson and the two answers.
     setFont(ctx, 11); ctx.fillStyle = ERA3.greyDk;
     const why = wrapText(ctx, P.ruleWhy, leftW - 20);
-    why.forEach((ln, i) => ctx.fillText(ln, a.x + 10, py + 28 + i * 13));
-    const ny = py + 34 + why.length * 13;
+    why.forEach((ln, i) => ctx.fillText(ln, a.x + 10, py + 10 + i * 13));
+    const ny = py + 14 + why.length * 13;
     const note = this.note ?? { line: P.teach, voice: 'lambient' as Voice };
     noteBand(ctx, a.x + 6, ny - 4, leftW - 12, 44);
     drawLambientNote(ctx, a.x + 12, ny + 2, leftW - 24, note);

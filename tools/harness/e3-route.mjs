@@ -5,6 +5,9 @@
  * `window.__app.update(0.1)` s × 10 times in one go (the engine clamps a frame to 0.1 s; nothing is rendered meanwhile, every
  * per-frame clock in the piece advances exactly as in play).
  *
+ * ⚑ S433 (UiB job 40) — and since job 40 Sign in opens GracePlatform's welcome: playTo presses each card's Next (`welcome-next`) and
+ * answers Lambient's question inside it; on a build without the welcome there is no such target and nothing changes.
+ *
  * `playTo(page, goal)` is goal-driven, so it runs on the build before job 38 (5185e4f1: the conducted chain opens things by itself)
  * and after it (the chain waits for her): at each step it presses what a visitor would press next — sign in, Allow, Begin, the
  * lessons' own controls, a message's notification, Look back, Close, the Notes, Nuala's card, the group — and lets the fiction's
@@ -74,6 +77,7 @@ export const e3 = (page) => page.evaluate(() => {
   const c = q.chainState ?? null;
   return {
     mode: q.mode, page: q.veraPage ?? null, job: q.openSurface?.id ?? (q.mode === 'list' ? 'testimony' : null), week: !!q.pauseOpen,
+    welcome: q.welcomeStep ?? null,   // ⚑ S433 — GracePlatform's welcome (the training's step 1): 'hello' … 'record', or null
     watch: !!q.watch, storyDone: !!q.storyDone, minimised: !!q.minimised, card: q.memoryCard ?? null, declined: !!q.memoryDeclined,
     memoryStage: q.memoryStage, kitPopin: !!q.kitPopin, kitApproved: !!q.kitApproved, takenDown: !!q.takenDown,
     phone: p ? { screen: p.screen, stage: p.stage, notice: p.noticeId ?? (p.notice?.id ?? null), banner: p.banner ? `${p.banner.from}: ${p.banner.text}`.slice(0, 60) : null,
@@ -129,6 +133,8 @@ export async function playTo(page, view, goal, { limit = 400, log = () => {}, he
     if (s.guide?.balloon && (await go('lg-ok') || await go('lg-later') || await go('lg-x'))) continue;
     if (s.update) { await ff(page, 1); continue; }
     if (s.mode === 'signin') { if (await go('signin')) continue; }
+    // ⚑ S433 (UiB job 40) — the welcome: Show me around / Next on each card; Lambient's question inside it is answered Allow below
+    if (s.welcome && s.welcome !== 'consent') { if (await go('welcome-next')) continue; }
     if (s.mode === 'consent') { if (await go('consent-allow')) continue; }
     if (s.week) { if (await go('week-begin') || await go('pause-close')) continue; }
     if (s.page === 'record') { if (await go('memory-close')) continue; await ff(page, 2); continue; }

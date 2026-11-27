@@ -309,7 +309,8 @@ const OS_BEATS: BeatRow[] = [
 const E3_DEVICE_BEATS: Array<[string, string]> = [
   ['⚑ the arrival · the IDLE screen (what it does while you fly)', 'idle'],
   ['⚑ the arrival · wake → boot → install GracePlatform', 'arrival'],
-  ['⚑⚑ sign in → LAMBIENT ASKS (the initiation)', 'consent'],
+  ['⚑⚑ sign in → GRACEPLATFORM\'S WELCOME (training step 1, S433)', 'welcome'],
+  ['⚑⚑ the welcome → LAMBIENT ASKS (the initiation)', 'consent'],
   ['↳ Allow — permissions granted', 'consentAllow'],
   ['↳ ⚑ Not now — and it stays anyway', 'consentDecline'],
   ['⚑ sign in → THE BOARD (the day, as tiles)', 'board'],

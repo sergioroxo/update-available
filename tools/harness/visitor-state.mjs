@@ -663,6 +663,9 @@ const LAP = { w: 224, h: 140 };
       //   Handset Window's `mirror:` ids) that do what that step waits for — a notification, a message's card or row, her Notes'
       //   Back, the group — the way a visitor would reach it from what the phone shows now. Null before the training is done.
       e3Step: q?.chainState?.step ?? null,
+      // ⚑ S433 (UiB job 40) — GracePlatform's welcome, the training's step 1: the step it is on ('hello' … 'record'), or null. Its one
+      //   press is `welcome-next` (and Lambient's question inside it, `consent-allow` / `consent-decline`)
+      e3Welcome: q?.welcomeStep ?? null,
       e3Wait: (() => {
         const c = q?.chainState, ph = q?.phone;
         if (!c || !ph) return null;
