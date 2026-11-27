@@ -510,6 +510,13 @@ export class GraceQueueLite {
       && !this.pauseOpen && !this.saver && !this.startMap.active && !this.minimised && !this._systemModal
       && !this.kitPopin && !this.phone.voiceBusy && this.phone.queued === 0 && !this.floppy.open && !this.lambyGuide?.active;
   }
+  /** ⚑ S431 (UiB job 39 C; his headset run: "if I continue it should just go back to their space") — the page she has open on the
+   *  platform: '' on the board at rest; a lesson (the list's open job) or another page (the send, the record, the kit) otherwise. A new
+   *  one opening is the story moving on: the Lamby set she brought goes back to its place (app.ts `page2016`, TeachingTvs.update). */
+  get pageKey(): string {
+    if (this.mode !== 'list' && !this.veraPage) return '';
+    return `${this.mode}:${this.openSurface?.id ?? (this.mode === 'list' ? 'testimony' : '')}:${this.veraPage ?? ''}`;
+  }
   /** ⚑ S424 — set each frame by app.ts: 2016's Heartwood offer (after Lesson 1) has been answered, let go, or will not be
    *  made. ⚑ S428: read by nothing in the chain now (Lesson 2 no longer waits for it); kept for the probes that print it. */
   heartwoodSettled = true;
@@ -647,7 +654,33 @@ export class GraceQueueLite {
   }
   private ownVersion = 0;
   private highlightPreference = false;
-  get version(): number { return this.ownVersion + this.surfaceVersion() + this.phoneVersion + (this.lambyGuide?.version ?? 0); }
+  get version(): number {
+    // ⚑ S430 (UiB job 39 D) — while the game is on its own plane (`gameOnOwnPlane`), the workstation does not follow its frames
+    const phone = this.phoneV + this.phone.version + (this.gameOnOwnPlane ? this.gamePlaneStamp : this.floppy.version);
+    return this.ownVersion + this.surfaceVersion() + phone + (this.lambyGuide?.version ?? 0);
+  }
+  /**
+   * ⚑ S430 (UiB job 39 D; his headset, 26 Nov, 22:15:37–22:16:39: "the frames per second are about 58") — THE GAME ON ITS OWN
+   * SMALL PLANE. The phone game is drawn in the Handset Window, which is part of the workstation's canvas: every frame of the game
+   * (30 a second) redrew the whole platform and re-sent the whole screen — 2704 × 1560 at ×4 in a headset, 16.9 MB, with its mip
+   * chain — and the Quest fell from 80 to 57–61 frames a second at only 54 draws. Now era3Devices lays the game's frames on a small
+   * plane of its own exactly over the Handset Window's phone (360 × 720, no mip chain: the screens' `'film'` texture), and while it
+   * does the workstation ignores the game's clock (`version` above). The workstation still draws the game under the plane (the
+   * frame it last drew), and the presses still go through the workstation's own hits (`mirrorBox`): nothing about play changes.
+   */
+  gameOnOwnPlane = false;
+  private gamePlaneStamp = 0;
+  setGamePlane(on: boolean): void {
+    if (on === this.gameOnOwnPlane) return;
+    this.gameOnOwnPlane = on; this.gamePlaneStamp = this.floppy.version;
+  }
+  /** ⚑ S430 — where the workstation last drew the game (logical px of its canvas), or null: the game's plane lies exactly there */
+  get gameRect(): { x: number; y: number; w: number; h: number } | null {
+    const b = this.mirrorBox;
+    if (!b || !this.mirrorDrewGame || !this.floppy.open) return null;
+    return { x: b.x, y: b.y, w: Math.floor(180 * b.scale), h: Math.floor(360 * b.scale) };
+  }
+  private mirrorDrewGame = false;
   /** the phone's own counter — the caret blink must not re-upload the workstation */
   private phoneV = 0;
 
@@ -2267,7 +2300,7 @@ export class GraceQueueLite {
   /** ⚑ S429 (C1) — the headset's thumbstick: the thread on her phone's glass (the Handset Window's, or in her hand) */
   phoneStick(y: number): void { if (!this.floppy.open && this.mirrorAvailable) this.phone.stick(y); }
   private drawMirror(ctx: CanvasRenderingContext2D, W: number, H: number): void {
-    this.mirrorBox = null;
+    this.mirrorBox = null; this.mirrorDrewGame = false;
     if (!this.mirrorAvailable) return;
     // ⚑ S358 / H07 (his headset, 10 Nov: "Handset Window · 7" read as Windows 7, then as a countdown, and counted
     //   messages he could not see; and the name showed twice) — the taskbar keeps the program as a 2016 bar does: an
@@ -2311,7 +2344,7 @@ export class GraceQueueLite {
     const mctx = this.mirrorCanvas.getContext('2d')!;
     mctx.setTransform(SS, 0, 0, SS, 0, 0);
     let phoneRects: Rect[];
-    if (this.floppy.open) { this.floppy.draw(mctx, 180, phoneH); phoneRects = this.floppy.rects; }
+    if (this.floppy.open) { this.floppy.draw(mctx, 180, phoneH); phoneRects = this.floppy.rects; this.mirrorDrewGame = true; }
     else phoneRects = this.phone.drawMirrored(mctx, phoneW, phoneH);
     const scale = Math.min((w - 8) / phoneW, (h - 29) / phoneH);
     const px0 = Math.round(x + (w - phoneW * scale) / 2), py = 27;

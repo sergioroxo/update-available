@@ -36,6 +36,7 @@ import { xrRects, xrTarget, xrOutline, type XrRect, type XrResolve } from '../fr
  * fragments have already migrated and arrived, per u3's own line).
  */
 import * as pc from 'playcanvas';
+import { runtimeQuery } from '../edition';
 import { makeScreenTexture, makeScreenEntity, xrCanvasScale } from '../engine/screenTexture';
 import { ledger } from '../state/ledger';
 import { setEra3Lift, type EraKey } from './cluster';
@@ -1226,6 +1227,43 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
     }
   }
   add('phone', LOGICAL.phone, (ctx, w, h) => graceQueueLite.drawPhone(ctx, w, h), { versionOf: () => graceQueueLite.phoneVersion });
+  /**
+   * ⚑ S430 (UiB job 39 D; his headset, 26 Nov: 57–61 fps while the phone game played, 80 once he left it) — THE GAME'S OWN PLANE.
+   * A small screen of its own (360 × 720: the Handset Window's phone at the ×2 it is drawn at, no mip chain — `'film'`), a child
+   * of the workstation's glass 1.5 mm in front of it, laid exactly over the rect where the workstation last drew the game
+   * (graceQueueLite `gameRect`). Each of the game's frames is drawn and sent here; the workstation keeps the frame it drew and is
+   * not re-sent (graceQueueLite `gameOnOwnPlane`). It stands aside whenever anything could lie over the Handset Window (the
+   * update's notice, install and restart; 2026's send offer): then the workstation draws the game itself, as before. Presses go
+   * to the workstation's own hits behind it, unchanged. One draw call while the game is open.
+   */
+  const GAME_SS = 2, GAME_LIFT = 0.0015;
+  /** ROLLBACK / the headset's A/B: `?gameplane=0` — the workstation draws every frame of the game again, as before S430 */
+  const GAME_PLANE = runtimeQuery().get('gameplane') !== '0';
+  const gameCanvas = document.createElement('canvas'); gameCanvas.width = 180 * GAME_SS; gameCanvas.height = 360 * GAME_SS;
+  const gameCtx = gameCanvas.getContext('2d')!;
+  const gameTex = makeScreenTexture(app, gameCanvas, 'film');
+  const gamePlane = makeScreenEntity('era3-device-game', gameTex, 1, 1);
+  gamePlane.enabled = false;
+  const gameHost = screens.find((x) => x.name === 'workstation');
+  gameHost?.entity.addChild(gamePlane);
+  let gameDrawn = -1;
+  const placeGame = (rit: { open?: boolean } | null | undefined): void => {
+    const r = GAME_PLANE && gameHost && eraNow === 'e3' && gameHost.entity.enabled && !rit?.open && !e4Bridge()?.sendOfferActive() ? graceQueueLite.gameRect : null;
+    graceQueueLite.setGamePlane(!!r);
+    if (!r || !gameHost) { gamePlane.enabled = false; gameDrawn = -1; return; }
+    const W = gameHost.logical.w, H = gameHost.logical.h;
+    gamePlane.setLocalPosition((r.x + r.w / 2) / W - 0.5, GAME_LIFT, (r.y + r.h / 2) / H - 0.5);
+    gamePlane.setLocalScale(r.w / W, 1, r.h / H);
+    const v = graceQueueLite.floppy.version;
+    if (v !== gameDrawn) {
+      gameDrawn = v;
+      gameCtx.setTransform(1, 0, 0, 1, 0, 0); gameCtx.clearRect(0, 0, gameCanvas.width, gameCanvas.height);
+      gameCtx.setTransform(GAME_SS, 0, 0, GAME_SS, 0, 0);
+      graceQueueLite.floppy.draw(gameCtx, 180, 360);
+      gameTex.upload();
+    }
+    gamePlane.enabled = true;
+  };
   // ⚑ 2026-09-12 — the stream: drawn by the ball, on while the Commons is on
   add('stream', LOGICAL.stream, (ctx, w, h) => {
     const sh = e4Bridge()?.shell();
@@ -1542,6 +1580,7 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
       if (eraNow !== 'e3' && graceQueueLite.floppy.open) graceQueueLite.floppy.closeGame();
       graceQueueLite.phoneInHand = phoneHeld;   // S226 — Lambient waits while the phone (and Bea) is in her hand
       graceQueueLite.update(dt);
+      placeGame(rit);   // S430: before the workstation is redrawn below, so it never follows a frame the plane shows
       tickWick(dt, eraNow);
       desk.tick(dt, eraNow);
       if (eraNow === 'e3' && graceQueueLite.inboxLiftPending) {

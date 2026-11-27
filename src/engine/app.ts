@@ -855,6 +855,17 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   let carryingVisor = false;         // S270g / VR-08 — the visor in a hand, on its way to the face
   let carryingPhone = false, phoneBuzzSeen = 0;   // S270h / VR-03 — Vera's phone in a hand
   let xrLayer: XrLayer | null = null;
+  /**
+   * ⚑ S432 / UiB job 36 (T96; his 26 Nov: "Yes on the controllers as the intended means of interaction, with hands as backup",
+   * and: "it is only when the controller is put down and or the battery dies, if not than it will just keep poping up every
+   * minute due to a person just laying their conrtroller while a video is playing") — ONE LINE WHEN A HAND PRESSES WITHOUT A
+   * CONTROLLER. The headset's own switch to hands shows nothing (a film watched with the controllers down stays bare); the first
+   * press made with a hand while no controller is present (xrInput `onPressBy` 'hand-alone') makes `xrHandsOnly` due, and it goes
+   * up on the frame's plate for 8 s as soon as the plate is free (the menu, the site window, another notice: one voice at a time;
+   * held before the eyes, the notice keeps its time: xrFrame.setHeld). The press itself works as before. Once a visit, in memory
+   * only (a Restart is a reload: a new visit). A controller's trigger or grip takes it down at once (or, still due, unasks it).
+   */
+  let handsLine: 'unsaid' | 'due' | 'said' = 'unsaid';
   // ⚑ S269 — the frame helper's desktop line ("Esc opens the menu.") has no Esc in a headset; it says the headset's way
   // ⚑ S270b (his: "the menu tab low on your right, it's still like appearing, it doesn't leave") — said for 12 s, once
   let xrMenuHintLeft = 12;
@@ -1132,6 +1143,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       call: (_tape, text) => { tvCallText = text ?? undefined; os.dirty = true; },
       callOpen: () => os.lambyGuide.view.rung === 'tvcall' && os.lambyGuide.active,
       guidePress: (id) => { os.lambyGuide.press(id); os.dirty = true; },
+      letGo: () => { os.lambyGuide.letGo(); os.dirty = true; },   // ⚑ S431: 2016's offer left unanswered closes itself, logged as a let-go
       // ⚑ S425 — on a computer, 2016's set brought beside the monitor turns the look (as little as it takes) so the set can stand
       //   large enough to read at the monitor's left, the monitor whole; it gives the look back when she puts the set back. A free
       //   move (her drag takes it at any time); never in a headset (no conducted turns there), never under the gyro
@@ -1458,7 +1470,8 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       onRecentre: () => xrComfort.calibrate(),
       onDesk: () => xrLayer?.matchTable(),
       onSources: () => siteViewerBus.open('hub'),
-      onLexicon: () => siteViewerBus.open('lexicon')   // S379
+      onLexicon: () => siteViewerBus.open('lexicon'),   // S379
+      deskLift: () => xrComfort.deskLift   // S432: the helper's plate goes with Match my table's lift
     });
     // ⚑ S291 — the era websites, in the headset: a window that comes to the visitor (frame/siteViewer/xrMount.ts)
     siteViewerXr = mountSiteViewerXr(app, camera, {
@@ -1563,6 +1576,12 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       // ⚑ S328 — and in 2026 the stick scrolls Kettle's open thread (time by scroll, his ruling) when the sites are shut
       // ⚑ S429 (UiB job 38 C1) — and in 2016 it scrolls the thread open on her phone, line by line (≤ 7 a second)
       onStick: (_x, y) => { if (siteViewerXr?.isOpen) siteViewerXr.stick(y); else if (os.era === 'e4' && Math.abs(y) > 0.2) os.e4?.browser.scrollAt(null, null, y * 4); else if (os.era === 'e3' && !gameMenuBus.isOpen) era3Devices?.phoneStick(y); },
+      // ⚑ S432 — the hands' line (`handsLine`, above): a hand alone makes it due (never from Home's window: that press is Home's); a
+      //   controller takes it down, only when it is the notice showing
+      onPressBy: (by) => {
+        if (by === 'controller') { if (handsLine === 'due') handsLine = 'unsaid'; else if (xrFrame?.noticeNow() === menuStrings.xrHandsOnly) xrFrame.notice(null); return; }
+        if (by === 'hand-alone' && handsLine === 'unsaid' && !document.getElementById('lambyos-home')) handsLine = 'due';
+      },
       // S271 (his 31 Oct: the hands are "a bit too white… a little bit too garish for your headset") — the frame's
       //   mid grey, not its near-white ink
       wandColor: new pc.Color().fromString(FRAME.faint)
@@ -1599,7 +1618,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       // ⚑ S270 — the debug panel's read-only half, in the headset (his: "I cannot see the debug panel inside of the VR")
       // ⚑ S428 (UiB job 38 B2; HEADSET_RUN answer b: "the debug plate covers the Start corner") — the plate stands aside while a Start
       //   menu is open, so Shut Down… and Leave… are never under it
-      mountXrDebug(app, camera, { hide: () => (os.era === 'e3' && !!queueGuide?.startMenuOpen) || os.startMenuOpen, lines: () => {
+      mountXrDebug(app, camera, { hide: () => (os.era === 'e3' && !!queueGuide?.startMenuOpen) || os.startMenuOpen, seat: () => xrComfort.seatEye(), lines: () => {
         const c = xrComfort.status(), f = (n: number) => n.toFixed(2), h = camera.getLocalPosition();
         return [`build ${BUILD_STAMP}`,   // S349 / T12: which build the headset loaded
           `${os.era} · ${os.inDesktop ? "desktop" : "screen"} · ${spine?.step ?? "-"}`,
@@ -1622,6 +1641,8 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
         point: (p0: number[], p1: number[]) => xrFrame?.tick({ p0: new pc.Vec3(p0[0], p0[1], p0[2]), p1: new pc.Vec3(p1[0], p1[1], p1[2]) }),
         hint: (t: string | null) => xrFrame?.setHint(t),
         hintText: () => xrFrame?.hintNow() ?? null,   // S381: read-only, for the probes
+        hintNow: () => xrFrame?.hintNow() ?? null,   // S432: the same, by the frame's own name (tools/trial-watch.mjs reads it)
+        noticeNow: () => xrFrame?.noticeNow() ?? null,   // S432: read-only, the notice holding the plate
         hintShown: () => xrFrame?.hintShown() ?? null,   // S394 fix: the plate's corners while it is up
         notice: (t: string, sec = 9) => xrFrame?.notice(t, sec),   // S394 fix: a notice, for the probes
         hit: (p0: number[], p1: number[]) => xrFrame?.debugHit({ p0: new pc.Vec3(p0[0], p0[1], p0[2]), p1: new pc.Vec3(p1[0], p1[1], p1[2]) })
@@ -4846,6 +4867,8 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     // ⚑ S359 / H51 — the grip icon: only while the controller's ray is on a device that can be picked up
     xrFrame?.setGrip(aimShown && aimPick && aimAt ? xrComfort.physicalPoint(new pc.Vec3(aimAt.x, aimAt.y, aimAt.z)) : null);
     if (xrFrame && xr?.active && !gameMenuBus.isOpen) xrFrame.setHint(siteViewerXr?.isOpen || closeStage === 'message' ? null : !xrComfort.calibrated ? menuStrings.xrSeat : deviceInHand ? null : aimName ? null : xrHelperText(helper?.text() ?? null, dt));
+    // ⚑ S432 — the hands' line, once it is due and the plate is free (no menu, no site window, no other notice)
+    if (handsLine === 'due' && xrFrame && xr?.active && !gameMenuBus.isOpen && !siteViewerXr?.isOpen && !xrFrame.noticeNow()) { handsLine = 'said'; xrFrame.notice(menuStrings.xrHandsOnly, 8); }
     // ⚑ S208 / A1 (REVIEW_ROUND_5) — the menu holds the SOUND as well as the clock. This early return used to skip the
     //   frame's own audio sync below, so tapes, the bed, L's voice, the songs and the ad all played on behind the
     //   menu ("The frame never plays"). Pause them once on the way in, give them back once on the way out.
@@ -5414,6 +5437,8 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
         story2003: on(os.era === 'e2' && (!os.e2Arrived || !!os.caleb?.open || !!os.netvision?.open || !!os.mediaPlayer?.open
           || !!os.testimony?.playbackActive || !!os.accountability?.modal)),
         lambient: on(!!q3?.guideVoice), personal2016: on(!!q3?.personalQuiet),
+        // ⚑ S431 (UiB job 39 C) — a lesson or another page of the platform opening: she continues, and the set she brought goes back
+        page2016: q3?.pageKey ?? '',
         voice2026: on(!!b4?.guideVoice), toast2026: b4?.toastKey ?? '', felt2026: on(!!b4?.messenger.felt),
         // the site viewer (the menu's Lexicon and websites) starting a track or a film: one thing heard at a time
         viewer: viewerFilm.state() === 'playing' ? `film:${viewerFilm.file()}` : viewerAudio.playing() ?? ''
@@ -6551,7 +6576,18 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
         fov: camera.camera?.fov
       }),
       sends: sendRt?.ids,
-      onSend: (id, outcome) => sendRt?.fire(id, outcome)
+      onSend: (id, outcome) => sendRt?.fire(id, outcome),
+      // ⚑ S430 (UiB job 39 F) — the review's own door into the headset, at whatever seat the route has set (`?era=3`: 2016's)
+      enterVr: {
+        available: () => !!xr?.isAvailable(pc.XRTYPE_VR) && !xr.active,
+        start: () => {
+          if (!camera.camera || !xr || xr.active) return;
+          xr.start(camera.camera, pc.XRTYPE_VR, pc.XRSPACE_LOCAL, {
+            ...quadSessionOptions(),
+            callback: (error) => { if (error) console.warn('[debug] Enter VR refused:', error); }
+          });
+        }
+      }
     });
   }
 

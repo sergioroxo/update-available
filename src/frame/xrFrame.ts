@@ -97,6 +97,9 @@ export interface XrFrame {
   hintShown(): { text: string; corners: number[][] } | null;
   /** ⚑ S381 — the hint line as it stands (the probes read it; nothing acts on it) */
   hintNow(): string | null;
+  /** ⚑ S432 — the notice that holds the plate now (waiting while something is held included), or null: the hands' line waits
+   *  for another to finish (one voice at a time), and a controller's press takes down only its own */
+  noticeNow(): string | null;
   /** ⚑ S361 / H50 — the Close's message, one card at a time, on its own plate in front of the eyes (null: down). The
    *  helper's plate holds two lines and was redrawn by the helper every frame, so in the headset the cards never
    *  showed ("where are the message parts?"). */
@@ -166,6 +169,8 @@ export function mountXrFrame(app: pc.Application, head: pc.Entity, opts: {
   onSources?: () => void;
   /** ⚑ S379 — the menu's "The Lexicon": the one Lexicon in the site window */
   onLexicon?: () => void;
+  /** ⚑ S432 — Match my table's lift (xrComfort `deskLift`, m: the whole room moved up + or down −): the helper's plate goes with it */
+  deskLift?: () => number;
 }): XrFrame {
   const layer = new pc.Layer({ name: 'XR Frame', clearDepthBuffer: true });
   app.scene.layers.pushOpaque(layer); app.scene.layers.pushTransparent(layer);
@@ -329,6 +334,15 @@ export function mountXrFrame(app: pc.Application, head: pc.Entity, opts: {
 
   /** hang a plane `dist` ahead of the head at eye height minus `drop`, facing it */
   const hang = (e: pc.Entity, dist: number, drop: number): void => hangAhead(head, e, dist, drop);
+  /**
+   * ⚑ S432 (UiB job 36; found by its probe, his 24 Nov rule: no plate over a screen) — THE HELPER'S PLATE RIDES WITH THE DESK.
+   * HINT_DROP puts it just under the monitors at the authored desk (S374). Match my table moves the whole room up or down by its
+   * lift (xrComfort, ±0.3 m), and the plate stayed where it was: a table 7 cm under the authored desk put the plate over 1997's
+   * taskbar (Start, the Start menu's Shut Down and Leave) — measured from the seat, the plate's top 4° over the glass's bottom.
+   * It moves by the same lift now, so it keeps its place under the monitor; never lower than 0.5 m under the eye (≈ 40° down at
+   * 0.6 m), so a very low table cannot take it out of a headset's view.
+   */
+  const hangHint = (): void => hang(hintPlane, HINT_DIST, Math.min(0.5, HINT_DROP - (opts.deskLift?.() ?? 0)));
 
   /** where a ray meets a stood-up plane, as canvas px — or null */
   const planeHit = (e: pc.Entity, ray: Ray, w: number, h: number, cw: number, ch: number): { x: number; y: number } | null => {
@@ -487,6 +501,25 @@ export function mountXrFrame(app: pc.Application, head: pc.Entity, opts: {
     }
     if (line) lines.push(line);
     if (lines.length > 2) { lines.length = 2; lines[1] = lines[1].slice(0, -1) + '…'; }
+    // ⚑ S432b — two lines are balanced, not filled greedily: the greedy break left "press." alone under the hands' line
+    //   (his 24 Nov rule on the frames: no line cut short, nothing that looks broken). A break after a comma or a full stop
+    //   wins when one fits (the line splits where it pauses: "…Pick one up, / or pinch…", not "…Pick one / up, or…");
+    //   among those, or among all breaks if none fits, the one that makes the longer line shortest. Both fit the 980 px.
+    else if (lines.length === 2) {
+      const words = hint.split(' ');
+      const pick = (pausesOnly: boolean): string[] | null => {
+        let best: string[] | null = null, bestW = Infinity;
+        for (let k = 1; k < words.length; k++) {
+          if (pausesOnly && !/[.,;:]$/.test(words[k - 1])) continue;
+          const a = words.slice(0, k).join(' '), b = words.slice(k).join(' ');
+          const w = Math.max(hctx.measureText(a).width, hctx.measureText(b).width);
+          if (w <= 980 && w < bestW) { best = [a, b]; bestW = w; }
+        }
+        return best;
+      };
+      const best = pick(true) ?? pick(false);
+      if (best) lines.splice(0, 2, ...best);
+    }
     lines.forEach((l, i) => hctx.fillText(l, 512, lines.length === 1 ? 68 : 46 + i * 44));
     hctx.textAlign = 'left';
     hintTex.upload();
@@ -582,13 +615,14 @@ export function mountXrFrame(app: pc.Application, head: pc.Entity, opts: {
       return true;
     },
     hintNow(): string | null { return noticeText && (held || performance.now() < noticeUntil) ? noticeText : hint; },
+    noticeNow(): string | null { return noticeText && (held || performance.now() < noticeUntil) ? noticeText : null; },
     setHeld(on: boolean): void {
       if (on === held) return;
       held = on;
       if (on) { heldSince = performance.now(); hintPlane.enabled = false; return; }
       // put down: a notice that was waiting has the seconds it had left; the plate comes back where the eyes are now
       if (noticeText) noticeUntil += performance.now() - heldSince;
-      if (hint && !open) { hang(hintPlane, HINT_DIST, HINT_DROP); hintPlane.enabled = true; }
+      if (hint && !open) { hangHint(); hintPlane.enabled = true; }
     },
     hintShown(): { text: string; corners: number[][] } | null {
       if (!hintPlane.enabled || !hint) return null;
@@ -598,6 +632,9 @@ export function mountXrFrame(app: pc.Application, head: pc.Entity, opts: {
     },
     notice(text: string | null, seconds = 6): void {
       noticeUntil = text ? performance.now() + seconds * 1000 : 0;
+      // ⚑ S432 — sent while something is held, its clock stands from NOW (it was from when the thing was taken up, so a notice sent a
+      //   minute into a game came back with a minute more than its own time when the game was put down)
+      if (held) heldSince = performance.now();
       noticeText = null; this.setHint(text); noticeText = text;
     },
     setCard(card: { text: string; by?: string; foot?: string } | null): void {
@@ -618,7 +655,7 @@ export function mountXrFrame(app: pc.Application, head: pc.Entity, opts: {
       else noticeText = null;
       if (text === hint) return;
       hint = text;
-      if (hint && !open && !held) { hang(hintPlane, HINT_DIST, HINT_DROP); hintPlane.enabled = true; }
+      if (hint && !open && !held) { hangHint(); hintPlane.enabled = true; }
       else hintPlane.enabled = false;
       drawHint();
     },

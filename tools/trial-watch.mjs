@@ -19,7 +19,7 @@
 //         (desktop test: open Chrome with --remote-debugging-port=9333 on the piece with ?debug=1, then --port 9333 --no-adb)
 // After the run: node tools/trial-report.mjs --out out/trial-2026-11-24 [--voice <whisper _clock.tsv>]
 import { execFileSync, spawnSync } from 'node:child_process';
-import { mkdirSync, appendFileSync, existsSync, writeFileSync } from 'node:fs';
+import { mkdirSync, appendFileSync, existsSync, writeFileSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import puppeteer from 'puppeteer-core';
 
@@ -32,6 +32,9 @@ const FRAMES = opt('frames', 'both');
 const PORT = Number(opt('port', '9222'));
 const MATCH = opt('match', 'update-available');
 const NO_ADB = flag('no-adb');
+// ⚑ S432 (UiB job 36, T96) — the hands' line, as the piece says it (data/strings/gameMenu.json `xrHandsOnly`): the page's plate is
+//   matched against it here, on the Mac's side, so the snapshot stays a plain read
+const HANDS_LINE = (() => { try { return JSON.parse(readFileSync(new URL('../data/strings/gameMenu.json', import.meta.url), 'utf8')).xrHandsOnly ?? null; } catch { return null; } })();
 mkdirSync(join(OUT, 'frames'), { recursive: true });
 mkdirSync(join(OUT, 'screen'), { recursive: true });
 const LOG = join(OUT, 'log.jsonl');
@@ -81,6 +84,14 @@ function snapshot() {
     out.xr = !!a?.xr?.active;
   } catch { /* */ }
   try { out.cam = w.__camPose?.() ?? null; } catch { /* */ }
+  // ⚑ S430 (UiB job 39) — the headset's own acts, read-only: the menu's Recentre and the Quest's own (the space's reset), Match my
+  //   table (xrComfort's counters), and which A/B the address asks for (?nobatch=1 / ?noseatcull=1, the popping test)
+  try { const c = w.__xrComfort?.status?.(); if (c) out.xrc = { recentres: c.recentres ?? null, resets: c.resets ?? null, tables: c.tables ?? null, lift: +(w.__xrComfort.deskLift ?? 0).toFixed(3) }; } catch { /* */ }
+  try { const q = new URLSearchParams(location.search); out.ab = q.get('nobatch') === '1' ? 'nobatch' : q.get('noseatcull') === '1' ? 'noseatcull' : 'normal'; } catch { /* */ }
+  // ⚑ S432 (UiB job 36, T96) — the hands, read-only: how many controllers (a `tracked-pointer` source with no hand) and hands the
+  //   headset has in, and the frame's plate as it stands (`__xrFrame.hintNow()`: the line due or showing; `hintShown()`: the plate up)
+  try { const s = [...(w.__app?.xr?.input?.inputSources ?? [])]; out.inputs = { pads: s.filter((x) => !x.hand && x.targetRayMode === 'tracked-pointer').length, hands: s.filter((x) => !!x.hand).length }; } catch { /* */ }
+  try { const f = w.__xrFrame; out.hint = (f?.hintNow ?? f?.hintText)?.() ?? null; out.hintUp = f?.hintShown?.()?.text ?? null; } catch { /* */ }
   out.url = location.search;
   return out;
 }
@@ -169,7 +180,8 @@ async function main() {
       if (s.newBeats.length) ev.beats = s.newBeats;
       if (s.newClose.length) ev.close = s.newClose;
       if (Object.keys(ev).length) log({ kind: 'event', ...ev, era: s.era, phone: s.phone });
-      log({ kind: 'tick', era: s.era, phone: s.phone, fps: s.fps, ms: s.ms, draws: s.draws, xr: s.xr, cam: s.cam });
+      const hands = s.inputs ? { ...s.inputs, line: !!HANDS_LINE && s.hint === HANDS_LINE, up: !!HANDS_LINE && s.hintUp === HANDS_LINE } : null;   // S432
+      log({ kind: 'tick', era: s.era, phone: s.phone, fps: s.fps, ms: s.ms, draws: s.draws, xr: s.xr, cam: s.cam, xrc: s.xrc, ab: s.ab, hands });
       if (s.draws) peak.draws = Math.max(peak.draws, s.draws);
       if (s.fps && s.xr) peak.minFps = Math.min(peak.minFps, s.fps);
       if (now - lastStatus > 15000) {

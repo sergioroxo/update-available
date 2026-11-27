@@ -10,6 +10,11 @@ import { reducedMotion } from '../../state/motion';
 import type { GuideEra, GuideView } from '../../narrative/lambyGuide';
 import copy from '../../../data/strings/lambyGuide.json';
 import decisions from '../../../data/strings/cx3b.json';
+import tvData from '../../../data/room/teaching_tvs.json';
+import tvWords from '../../../data/strings/teaching_tv.json';
+/** ⚑ S431 — the eras whose Lamby set is OFFERED, not called (teaching_tvs.json `offer`: 2016): the offer is the guide's own balloon */
+const OFFER_ERAS = new Set(Object.values((tvData as unknown as { tvs: Record<string, { era: string; offer?: boolean }> }).tvs).filter((t) => t.offer).map((t) => t.era));
+const OFFER_WORDS = (tvWords as unknown as { lamby: { offer: { yes: string; no: string } } }).lamby.offer;
 export interface GuideHit { id: string; x: number; y: number; w: number; h: number; label?: string; tip?: string }
 /** `box` (S407 / 97-13): the balloon's own rectangle while it is up — what lies under it cannot be aimed at or pressed */
 export interface GuidePaint { rings: GuideHit[]; balloon: boolean; box?: { x: number; y: number; w: number; h: number }; placed?: { x: number; y: number; w: number; h: number; score: number } }
@@ -61,7 +66,11 @@ export function drawLambyGuide(ctx: CanvasRenderingContext2D, skin: GuideEra, st
   if (state.hidden || !state.text) return out;
   // ⚑ S394 (UiB job 27 B3) — the Lamby set's call and its later offer are drawn IN VIEW by the set's own card
   //   (src/room/teachingTv.ts TvCall), wherever the visitor is looking; the glass does not say them a second time
-  if (state.rung === 'tv' || state.rung === 'tvcall') return out;
+  // ⚑ S431 (UiB job 39 C; his 27 Nov: 2016's offer "came from a different space, not actually a suggestion from the same 'lambient'")
+  //   — except an OFFER (2016's Heartwood): it is this balloon, from the taskbar button, with Bring it · Not now, under the same box rules
+  //   as every other balloon of Lambient's (as tall as its words, whole items only, never over a button); the card does not show it
+  const offerHere = state.rung === 'tvcall' && OFFER_ERAS.has(skin);
+  if (state.rung === 'tv' || (state.rung === 'tvcall' && !offerHere)) return out;
   out.balloon = true;
   const targets = state.targets.flatMap(id => hits.filter(h => h.id === id));
   const multiple = state.beat === 'pledge' || state.beat === 'consent' || state.beat === 'steps';
@@ -178,6 +187,7 @@ export function drawLambyGuide(ctx: CanvasRenderingContext2D, skin: GuideEra, st
   hits.push({ id: 'lg-x', x: x + w - 23, y: y + 2, w: 21, h: 20 });
   let buttons: [string, string][];
   if (state.text === copy.ui.nothing || state.text === decisions.helper.map || state.rung === 'asked') buttons = [['lg-ok', copy.ui.ok]];   // ⚑ S428: an asked line
+  else if (offerHere) buttons = [['lg-take', OFFER_WORDS.yes], ['lg-later', OFFER_WORDS.no]];   // ⚑ S431: the set's offer (teaching_tv.json lamby.offer)
   else if (state.rung === 'personalise') buttons = [['lg-take', copy.form.yes], ['lg-later', copy.form.no]];
   else if (state.rung === 'form') buttons = [['lg-take', copy.form.yes], ['lg-later', copy.form.no]];
   else if (state.rung === 'root') buttons = [['lg-take', copy.root.yes], ['lg-later', copy.form.no]];

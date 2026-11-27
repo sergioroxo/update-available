@@ -94,6 +94,13 @@ interface DebugOpts {
   onFov?: (deg: number) => void;
   /** S83: live, on-device facts; rendered even while the map is collapsed. */
   motionDiagnostic?: () => MotionDiagnostic;
+  /**
+   * ⚑ S430 (UiB job 39 F; HEADSET_TRIAL_2026-11-24 "The first run": "`?era=3` has no VR door") — a review tool's own way into the
+   * headset. The era jumps are review routes, which skip the stars, and the stars' Enter VR was the only place a session began,
+   * so a trial could not start in 2016 in the headset. `start` is called inside the button's own click (WebXR asks for a press).
+   * Never the visit's path: this panel exists only under `?debug=1`.
+   */
+  enterVr?: { available: () => boolean; start: () => void };
 }
 
 /**
@@ -743,6 +750,30 @@ export function mountDebugPanel(os: DesktopOS, opts: DebugOpts = {}): void {
     shotBtn.style.cssText += ';color:#8fffc0;flex:1';
   }
 
+  // ⚑ S430 — Enter VR here, wherever the review route has put the room (shown only where this browser offers a headset session):
+  //   in the map's actions, and beside the closed map's ⚙ pill (the map starts closed), so it is one press on the Quest's page
+  if (opts.enterVr) {
+    const vr = opts.enterVr;
+    const go = (): void => { if (vr.available()) vr.start(); };
+    const vrBtn = mkBtn(actions, 'Enter VR', go);
+    vrBtn.style.cssText += ';color:#8fb6ff;flex:1';
+    const vrPill = document.createElement('button');
+    vrPill.textContent = 'Enter VR';
+    Object.assign(vrPill.style, {
+      position: 'fixed', top: '8px', left: '84px', zIndex: '9999', display: 'none',
+      background: 'rgba(16,18,26,0.92)', color: '#8fb6ff', border: '1px solid #3a4154',
+      font: '11px monospace', padding: '4px 8px', borderRadius: '6px', cursor: 'pointer'
+    } as CSSStyleDeclaration);
+    vrPill.dataset.debugUi = '1';
+    vrPill.addEventListener('click', go);
+    document.body.appendChild(vrPill);
+    const paintVr = (): void => {
+      const can = vr.available();
+      vrBtn.style.display = can ? 'block' : 'none';
+      vrPill.style.display = can && panel.style.display === 'none' ? 'block' : 'none';
+    };
+    paintVr(); availabilityPainters.push(paintVr);
+  }
   const isFlat = runtimeQuery().get('flat') === '1';
   const modeBtn = mkBtn(actions, isFlat ? '🖥 3D' : '▭ flat', () => {
     const p = runtimeQuery();

@@ -90,6 +90,34 @@ Two more things to do on purpose, after the six above:
 
 Job 38's own list, with your calls: `HEADSET_CHECKLIST_JOB38_2026-11-27.md`.
 
+## Added by job 39 (27 Nov): four more checks, one more thing to do
+
+Job 39 fixed the headset faults of your 26 Nov run. The Mac now looks for 24 checks; the four new ones are in
+`tools/trial-items.json`. Three of them can come at any time, so they do not move where the others are looked for:
+
+| check | the Mac finds it by | what only your eye can judge |
+|---|---|---|
+| 39-A Recentre: a cut, facing the seat | Recentre in the Menu, or the Meta button held | no fade and no double picture; you sit in the middle of the chair; the room does not turn with your head |
+| 39-B Match my table with a controller | the desk matched | lay one controller on the table and let go: the room's desk meets your table; a hand in your lap changes nothing |
+| 39-C Heartwood: Lambient's own balloon; the set beside the monitor | the offer answered or left alone | the offer is Lambient's balloon on the monitor; both buttons answer the trigger and a pinch; the set stands left of the monitor and goes back when you open Lesson 2 |
+| 39-E The popping A/B | which address each stretch ran on | which of the three stops the Wick card and the posters popping |
+
+One more thing to do on purpose, after the eight above:
+
+9. **2016, the popping A/B:** start with `?reinterp=1&era=3&debug=1` and press Enter VR on the debug panel (you arrive at
+   Vera's seat). Turn your head slowly left and right, then up and down, for half a minute. Do it three times: as it is,
+   with `&nobatch=1` added, and with `&noseatcull=1`. Say which one stops the popping.
+
+Job 39's own list, with your calls: `HEADSET_CHECKLIST_JOB39_2026-11-27.md`.
+
+## Added by job 36 (27 Nov): one more check
+
+| check | the Mac finds it by | what only your eye can judge |
+|---|---|---|
+| 36-A The line that asks for a controller | the controllers and hands the headset reports, and the line on the plate (`hintNow()`) | during a film, put both controllers down and wait a minute: nothing appears; press something with your hand: the line shows once; do it again: nothing |
+
+Job 36's own list: `HEADSET_CHECKLIST_JOB36_2026-11-27.md`.
+
 ## After
 
 1. I stop the recorder and make the report: `node tools/trial-report.mjs --out out/trial-2026-11-24 --voice "<your _clock.tsv>"`.

@@ -26,7 +26,14 @@ const tOf = (hhmmss) => day.getTime() + secOfDay(hhmmss) * 1000;
 
 // ── the timeline of tokens
 const tokens = [];
-let lastPhone = '', lastEra = '';
+let lastPhone = '', lastEra = '', lastAb = '';
+// ⚑ S430 — the headset's own acts (trial-watch `xrc`, `ab`): xr:recentre (the menu's row), xr:quest-recentre (the Meta button: the
+//   space's reset), xr:table (Match my table set the desk), ab:<normal|nobatch|noseatcull> (the popping A/B's address, on a change)
+const lastXr = { recentres: null, resets: null, tables: null };
+// ⚑ S432 — the hands (trial-watch `hands`): xr:hands-only when the last controller has gone and hands are in (the headset's own switch:
+//   nothing should show then), xr:controllers when a controller comes back, xr:hands-line when the hands' line goes up (once a visit, and
+//   only after a hand's press)
+let lastHands = { pads: -1, hands: 0, line: false };
 const tokenOf = (k, x) => {
   if (typeof x === 'string' || typeof x === 'number') return `ledger:${k}:${x}`;
   if (x && typeof x === 'object') {
@@ -45,6 +52,19 @@ for (const l of lines) {
     const ph = l.phone ? `${l.phone.stage}/${l.phone.screen}` : '';
     if (ph && ph !== lastPhone) { tokens.push({ t: l.t, tok: `phone:${ph}` }); lastPhone = ph; }
     if (l.era && l.era !== lastEra) { tokens.push({ t: l.t, tok: `era:${l.era}` }); lastEra = l.era; }
+    if (l.xrc) for (const [k, tok] of [['recentres', 'xr:recentre'], ['resets', 'xr:quest-recentre'], ['tables', 'xr:table']]) {
+      const v = l.xrc[k];
+      if (typeof v === 'number' && lastXr[k] !== null && v > lastXr[k]) tokens.push({ t: l.t, tok });
+      if (typeof v === 'number') lastXr[k] = v;
+    }
+    if (l.ab && l.ab !== lastAb) { tokens.push({ t: l.t, tok: `ab:${l.ab}` }); lastAb = l.ab; }
+    if (l.hands) {
+      const alone = (h) => h.pads === 0 && h.hands > 0;
+      if (alone(l.hands) && !alone(lastHands)) tokens.push({ t: l.t, tok: 'xr:hands-only' });
+      if (l.hands.pads > 0 && lastHands.pads === 0) tokens.push({ t: l.t, tok: 'xr:controllers' });
+      if (l.hands.line && !lastHands.line) tokens.push({ t: l.t, tok: 'xr:hands-line' });
+      lastHands = l.hands;
+    }
   }
   if (l.kind === 'start' || l.kind === 'connected' || l.kind === 'lost') tokens.push({ t: l.t, tok: `watch:${l.kind}` });
 }
@@ -55,10 +75,12 @@ const found = [];
 let from = 0;
 for (const it of ITEMS) {
   const re = new RegExp(it.start);
-  const i = tokens.findIndex((k, j) => j >= from && re.test(k.tok));
+  // ⚑ S430 — `anyTime`: an act he may do whenever (Recentre, Match my table, the A/B): looked for in the whole log, and it does not
+  //   move the place the next items are looked for from
+  const i = tokens.findIndex((k, j) => j >= (it.anyTime ? 0 : from) && re.test(k.tok));
   if (i < 0) { found.push({ it, start: null }); continue; }
   found.push({ it, start: tokens[i].t - (it.lead ?? 0) * 1000, startTok: tokens[i].tok });
-  from = i + 1;
+  if (!it.anyTime) from = i + 1;
 }
 for (let n = 0; n < found.length; n++) {
   const f = found[n];
@@ -69,6 +91,7 @@ for (let n = 0; n < found.length; n++) {
     const e = tokens.find((k) => k.t >= f.start + (f.it.lead ?? 0) * 1000 && re.test(k.tok));
     if (e) end = e.t - (f.it.endLead ?? 0) * 1000;
   }
+  if (end == null && f.it.anyTime) end = f.start + (f.it.window ?? 30) * 1000;   // S430: an any-time act's own window
   if (end == null) end = found.slice(n + 1).find((g) => g.start != null)?.start ?? lines.at(-1).t;
   f.end = Math.max(end, f.start + 1000);
 }

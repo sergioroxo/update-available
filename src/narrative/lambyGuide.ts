@@ -48,7 +48,8 @@ export class LambyGuide {
   private asked = false;
   private input: GuideInput | null = null;
   private spec: GuideStep | undefined;
-  constructor(private effects: { log: (outcome: 'begun' | 'dismissed', beat: string, countDismissal: boolean, acknowledged: boolean) => void;
+  /** ⚑ S431 — `let-go`: an offer left unanswered went by itself (the platform's patience); logged, never counted as her dismissal */
+  constructor(private effects: { log: (outcome: 'begun' | 'dismissed' | 'let-go', beat: string, countDismissal: boolean, acknowledged: boolean) => void;
     act: (act: string) => void }) {}
   get hasStep(): boolean { return !!this.spec || (this.input?.era === 'e1' && !!this.input.formAvailable); }
   get waiting(): boolean { return !!this.spec && !this.spec.noAgain && !this.mem().finished && this.mem().dismissed > 0 && this.canOffer(); }
@@ -210,6 +211,16 @@ export class LambyGuide {
   offersLeft(era: GuideEra): number { return copy.timing.capPerEra - this.counts[era]; }
   private offer(rung: GuideRung, text: string, targets: string[] = [], act?: string): void {
     this.counts[this.view.era]++; this.idle = 0; this.set(rung, text, targets, act);
+  }
+  /**
+   * ⚑ S431 (UiB job 39 C; his 27 Nov answer on job 38's call 6) — the set's OFFER left unanswered: its own quiet close (the moment's
+   * `offerHold`, the platform's patience). The balloon goes and the let-go is logged (`guide:tvcall`, outcome let-go); it is not her
+   * dismissal (nothing is counted against her). Only while the offer is up: a yes, a Not now or a × has already closed it.
+   */
+  letGo(): void {
+    if (this.view.rung !== 'tvcall' || !this.calling) return;
+    this.effects.log('let-go', 'tvcall', false, false);
+    this.calling = false; this.set('silent'); this.idle = 0;
   }
   /** S284 — a requested answer that is not a beat: Lamby says one plain line (the visitor asked; it is not unsolicited) */
   tell(text: string): void { this.idle = 0; this.set('tip', text); }

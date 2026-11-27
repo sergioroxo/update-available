@@ -81,7 +81,8 @@ export interface Ledger {
    * 2). `witness` resolved from data/dialog/s2_lamby.json at file time, never
    * composed in TS. In-memory only, like everything here.
    */
-  lamby: { id: string; outcome: 'returned' | 'begun' | 'dismissed'; witness: string }[];
+  /** ⚑ S431 — `let-go`: Lambient's offer of the Heartwood set left unanswered and closed by itself (the platform's patience) */
+  lamby: { id: string; outcome: 'returned' | 'begun' | 'dismissed' | 'let-go'; witness: string }[];
   /**
    * S2R.2 (R28-2d-ii): the Restorify Daily Realignment check-in. Every chip
    * is accepted (register, never branch — master plan §5b); each files its

@@ -58,7 +58,11 @@ type Style = 'vcr' | 'dvd' | 'hedge';
 /** ⚑ S424 — `offer`: the era's moment is Lambient's offer, not a call (2016: asked once, nothing comes or plays unasked);
  *  `beside`: the monitor a brought set stands beside (never in front of); `xrFitDeg`: in a headset the whole set is kept
  *  inside this many degrees of the line of sight (data/room/teaching_tvs.json) */
-interface TvSpec { era: string; place: { pos: number[]; yaw: number }; style: Style; seat: number[]; offer?: boolean; beside?: string; xrFitDeg?: number }
+interface TvSpec { era: string; place: { pos: number[]; yaw: number }; style: Style; seat: number[]; offer?: boolean; beside?: string; xrFitDeg?: number; xrBeside?: XrBeside }
+/** ⚑ S431 — in a headset, where the brought set stands beside its monitor (data/room/teaching_tvs.json `xrBeside`): the side away
+ *  from the Handset Window, the eye it must share with the monitor (one Quest-like eye, half-angles in degrees), the margin inside
+ *  that eye, the gap between its inner side and the monitor's glass, and its depth as a share of the monitor's */
+interface XrBeside { side: 'left' | 'right'; eyeDeg: [number, number]; marginDeg: number; gapDeg: number; depth: number }
 const SPECS = (tvData as unknown as { tvs: Record<TapeId, TvSpec> }).tvs;
 const HELD = (tvData as unknown as { held: { xrDist: number; pictureDeg: number; flatFill: number; phoneFill: number; flatMaxW: number; liftBase: number; liftPerMetre: number; liftMax: number; clearance: number; glowRest: number; glowHeld: number; xrKey: number; besideGlassOfMonitor: number; besideTurnMaxDeg: number } }).held;
 const BAR = (tvData as unknown as { bar: { captionCap: number; marginCap: number; floorDeg: number; floorPxComputer: number; floorPxPhone: number; baseH: number; maxH: number; pad: number; gap: number; lineK: number } }).bar;
@@ -116,6 +120,8 @@ const MARGIN_FACE = `"${VENDORED.ui2026}", ${FACES.e4.family}`;
 export interface Hit { id: string; x: number; y: number; w: number; h: number }
 /** ⚑ S424 — a place beside the monitor for the brought set: its pose, its scale, which band, from which eye */
 type BesidePlan = { root: pc.Vec3; rot: pc.Quat; k: number; band: string; dist: number; eye: pc.Vec3;
+  /** ⚑ S431 — a headset: the turn of the head (degrees, toward the set) at which the set and the whole monitor share one eye */
+  headTurn?: number;
   /** ⚑ S425 — the set's glass across, as a share of the monitor's across, in the view it was planned in */
   ratio: number;
   /** ⚑ S425 — on a computer: degrees the view was turned left for it (0: the view she has), and that view's yaw and pitch */
@@ -563,7 +569,7 @@ export class TeachingTv {
   /** ⚑ S424 — the monitor this set is brought beside (its spec's `beside`), resolved when it is needed; null: before the eye */
   besideMonitor: (() => pc.Entity | null) | null = null;
   /** ⚑ S424 — where it was last brought: which band of the view (for the probes and the stills) */
-  fitted: { band: string; k: number; turn?: number; glassOfMonitor?: number } | null = null;
+  fitted: { band: string; k: number; turn?: number; glassOfMonitor?: number; headTurn?: number } | null = null;
   /**
    * ⚑ S424 (UiB job 35 Part D, Act I beat 5; 16-7, his 20 Nov: LambyVision "came to the eyes and played by itself, too close to
    * fit in view"; his 23 Nov call 7: "Yes, but not mandatory") — 2016'S SET, BROUGHT BESIDE THE MONITOR, WHOLE AND IN VIEW.
@@ -685,6 +691,8 @@ export class TeachingTv {
    * and the look comes back when the set is put back. The largest the screen allows, if none reaches it.
    */
   private planBesideFor(eye: pc.Entity, xr: boolean, cam: pc.CameraComponent | null | undefined, monitor: pc.Entity, fitDeg: number, facing: 'view' | 'monitor'): BesidePlan | null {
+    // ⚑ S431 — a headset with an `xrBeside` place: beside the monitor at its height, whatever way the head points (S424's bands retired there)
+    if (xr && this.spec.xrBeside) return this.xrBesidePlan(eye, monitor, this.spec.xrBeside);
     const plan = this.fitBeside(eye, xr, cam, monitor, fitDeg, facing);
     if (!plan || xr || isPhone() || plan.ratio >= HELD.besideGlassOfMonitor) return plan;
     let best = plan;
@@ -698,6 +706,75 @@ export class TeachingTv {
       }
     }
     return best;
+  }
+  /**
+   * ⚑ S431 (UiB job 39 C; HEADSET_RUN_2026-11-26 answer d — his "it makes no sense to be like there … this is very difficult to see",
+   * and where: "beside the monitor") — IN A HEADSET THE BROUGHT SET STANDS BESIDE THE MONITOR, AT ITS HEIGHT, LARGE ENOUGH TO READ.
+   * S424 kept it inside 43° of the line of sight, and beside a monitor that fills ±26° there was no room: it took the band above the
+   * monitor, in front of the calendar, small, and he tipped his head back to read it. Now it stands on the side away from the Handset
+   * Window (`xrBeside.side`), its inner side (an ear) `gapDeg` clear of the monitor's glass, its glass's centre at the height of the
+   * monitor glass's centre, a little nearer than the glass (`depth`), turned to the eye, and as large as one Quest-like eye can hold
+   * with the whole monitor beside it (`eyeDeg` less `marginDeg`): one turn of the head (`headTurn`, toward the set) shows the set,
+   * ears and all, and the whole monitor together. Planned in the frame turned to the monitor's centre, so it stands in the same
+   * place whichever way the head points when Bring it (or a press on the set by the door) is pressed. Measured from the seat by
+   * tools/s431-probe.mjs. Null when the monitor is not in front of the eye (the caller then brings it before the eye).
+   */
+  private xrBesidePlan(eye: pc.Entity, monitor: pc.Entity, X: XrBeside): BesidePlan | null {
+    const E = eye.getPosition().clone();
+    const wt = monitor.getWorldTransform();
+    const Cw = new pc.Vec3(); wt.transformPoint(new pc.Vec3(0, 0, 0), Cw);
+    const toC = Cw.clone().sub(E), dist = toC.length();
+    if (dist < 0.1) return null;
+    const fwd = toC.normalize();
+    const up = new pc.Vec3(0, 1, 0).sub(fwd.clone().mulScalar(fwd.y)).normalize();
+    const right = new pc.Vec3().cross(fwd, up).normalize();
+    const azel = (p: pc.Vec3): { az: number; el: number; z: number } => {
+      const v = p.clone().sub(E), z = v.dot(fwd), x = v.dot(right);
+      return { az: Math.atan2(x, z), el: Math.atan2(v.dot(up), Math.hypot(z, x)), z };
+    };
+    const mc = [[-0.5, -0.5], [0.5, -0.5], [0.5, 0.5], [-0.5, 0.5]].map(([x, z]) => { const o = new pc.Vec3(); wt.transformPoint(new pc.Vec3(x, 0, z), o); return azel(o); });
+    if (mc.some((c) => c.z <= 0.1)) return null;
+    const mL = Math.min(...mc.map((c) => c.az)), mR = Math.max(...mc.map((c) => c.az));
+    const mEl = (Math.min(...mc.map((c) => c.el)) + Math.max(...mc.map((c) => c.el))) / 2;
+    const s = X.side === 'right' ? 1 : -1;
+    const inner = s < 0 ? mL - X.gapDeg * D2R : mR + X.gapDeg * D2R;   // where its inner side stands
+    const far = s < 0 ? mR : mL;                                         // the monitor's other edge
+    const eyeH = (X.eyeDeg[0] - X.marginDeg) * D2R, eyeV = (X.eyeDeg[1] - X.marginDeg) * D2R;
+    const B = BOUNDS, anchor = new pc.Vec3(GLASS.cx, GLASS.cy, GLASS.z), d = dist * X.depth;
+    const monitorPts = [[-0.5, -0.5], [0.5, -0.5], [0.5, 0.5], [-0.5, 0.5]].map(([x, z]) => { const o = new pc.Vec3(); wt.transformPoint(new pc.Vec3(x, 0, z), o); return o; });
+    /** the set at scale k, its glass's centre at (az, el) from the eye at distance d: its pose, its corners and its extent */
+    const place = (k: number, az: number, el: number) => {
+      const dir = fwd.clone().mulScalar(Math.cos(el) * Math.cos(az)).add(right.clone().mulScalar(Math.cos(el) * Math.sin(az))).add(up.clone().mulScalar(Math.sin(el)));
+      const G = E.clone().add(dir.mulScalar(d));
+      const rot = faceRot(G.clone().sub(E).normalize(), up);
+      const root = G.clone().sub(rot.transformVector(anchor.clone().mulScalar(k)));
+      const w = (x: number, y: number, z: number): pc.Vec3 => root.clone().add(rot.transformVector(new pc.Vec3(x * k, y * k, z * k)));
+      const corners = [[B.min[0], B.min[1]], [B.max[0], B.min[1]], [B.max[0], B.max[1]], [B.min[0], B.max[1]]].map(([x, y]) => w(x, y, B.max[2]));
+      const pts = corners.map(azel);
+      const gl = [azel(w(GLASS.cx - GLASS.w / 2, GLASS.cy, GLASS.z)), azel(w(GLASS.cx + GLASS.w / 2, GLASS.cy, GLASS.z))];
+      return { root, rot, G, corners, a0: Math.min(...pts.map((p) => p.az)), a1: Math.max(...pts.map((p) => p.az)), glassW: Math.abs(gl[1].az - gl[0].az) };
+    };
+    /** one eye turned by `t` about the vertical from the look at the monitor's centre, and tipped `p` from that look's pitch, holds
+     *  every point (a rectilinear frustum) — at the monitor's pitch, 10° under it, and 10° and 15° over it (the probes' 20° down … 5° up) */
+    const tx = Math.tan(eyeH), ty = Math.tan(eyeV), Y = new pc.Vec3(0, 1, 0);
+    const level = new pc.Vec3(fwd.x, 0, fwd.z).normalize(), side = new pc.Vec3().cross(level, Y).normalize(), pitch0 = Math.asin(Math.max(-1, Math.min(1, fwd.y)));
+    const holds = (t: number, pts: pc.Vec3[]): boolean => [-10, 0, 10, 15].every((pd) => {
+      const pa = pitch0 + pd * D2R, h = level.clone().mulScalar(Math.cos(t)).add(side.clone().mulScalar(Math.sin(t)));
+      const f = h.clone().mulScalar(Math.cos(pa)).add(Y.clone().mulScalar(Math.sin(pa))), r = new pc.Vec3().cross(f, Y).normalize(), u = new pc.Vec3().cross(r, f).normalize();
+      return pts.every((p) => { const v = p.clone().sub(E), z = v.dot(f); return z > 0.05 && Math.abs(v.dot(r) / z) <= tx && Math.abs(v.dot(u) / z) <= ty; });
+    });
+    for (let k = 0.8; k >= 0.1; k *= 0.97) {
+      let az = inner + s * 0.3;
+      let P = place(k, az, mEl);
+      for (let j = 0; j < 4; j++) { az += inner - (s < 0 ? P.a1 : P.a0); P = place(k, az, mEl); }   // its inner side on `inner` (measured, not guessed)
+      const outer = s < 0 ? P.a0 : P.a1, turn = (far + outer) / 2;
+      // the whole-degree turn that centres the set and the monitor together (a degree either side if the frustum's corners need it)
+      const t = [0, 1, -1].map((dd) => (Math.round(turn / D2R) + dd) * D2R).find((tt) => holds(tt, [...P.corners, ...monitorPts]));
+      if (t === undefined) continue;
+      return { root: P.root.clone(), rot: P.rot.clone(), k, band: X.side, dist: P.G.distance(E), eye: E, ratio: P.glassW / Math.max(1e-6, mR - mL),
+        turn: 0, look: null, headTurn: Math.round(Math.abs(t) / D2R) };
+    }
+    return null;
   }
   /** ⚑ S425 — on a computer, turn the look (the caller's camera, `lookTo`) and say where it was (`lookNow`); null in a headset */
   lookTo: ((yaw: number, pitch: number) => void) | null = null;
@@ -736,7 +813,7 @@ export class TeachingTv {
     this.path(E.clone());
     this.heldScale = plan.k; this.heldDist = plan.dist;
     this.pose = 'lifting'; this.liftT = 0; this.setDown = false;
-    this.beside = true; this.fitted = { band: plan.band, k: Math.round(plan.k * 1000) / 1000, turn: plan.turn, glassOfMonitor: Math.round(plan.ratio * 1000) / 1000 };
+    this.beside = true; this.fitted = { band: plan.band, k: Math.round(plan.k * 1000) / 1000, turn: plan.turn, glassOfMonitor: Math.round(plan.ratio * 1000) / 1000, ...(plan.headTurn !== undefined ? { headTurn: plan.headTurn } : {}) };
     this.set.glow(HELD.glowHeld);
     liftToHeldLayer(this.set.root, xr);
     return true;
@@ -1163,6 +1240,14 @@ export class TeachingTv {
  * (no depth test: the desk or the monitor never cuts it), and if the visitor turns more than `call.followDeg` away it glides
  * back into view (`call.follow` s; it never fades). Its words, its buttons and its × are the guide's own (the balloon on the
  * glass is not drawn while this card shows it: said once). The era's balloon grammar (lambyGuideDraw.ts).
+ * ⚑ S431 (UiB job 39 C; his headset run, 26 Nov: "I was trying to press on the Lambie messages … and the buttons weren't working") —
+ * 2016's offer is no longer drawn here (it is Lambient's own balloon on the monitor: lambyGuideDraw, `offer` in teaching_tvs.json).
+ * The card stays for a call the guide makes while the visitor may face away. In a headset it stood 0.68 m from the eye, BEHIND the
+ * 0.56 m monitor glass it was drawn over: the controller's ray ended on the glass, so its dot sat 11 cm behind the button it seemed to
+ * touch, and a fingertip could never reach it. Now it stands at `call.xrDist` (0.5 m), in front of the glass; it is a surface the
+ * ray lands on and a fingertip touches (its name carries `screen`: frame/xrInput.ts `landing`); and its buttons and × are larger
+ * (34 logical px tall on the 0.4 m card: ~5° from the eye, were ~2.7°). Proved with a controller, a hand's pinch and a fingertip
+ * (tools/s431-probe.mjs, the card97 runs).
  */
 class TvCall {
   readonly entity: pc.Entity;
@@ -1172,7 +1257,7 @@ class TvCall {
   /** logical px (the desktop's grammar), drawn ×3 */
   private readonly S = 3;
   readonly CW = 300;
-  readonly CH = 120;
+  readonly CH = 136;
   hits: Hit[] = [];
   private key = '';
   shown = false;
@@ -1186,7 +1271,7 @@ class TvCall {
     this.canvas.width = this.CW * this.S; this.canvas.height = this.CH * this.S;
     this.ctx = this.canvas.getContext('2d');
     this.tex = makeScreenTexture(app, this.canvas, 'screen');
-    this.entity = makeScreenEntity('teaching-tv-call', this.tex, CALL.w, CALL.w * this.CH / this.CW, true);
+    this.entity = makeScreenEntity('teaching-tv-call-screen', this.tex, CALL.w, CALL.w * this.CH / this.CW, true);   // S431: `screen`, a surface (xrInput landing)
     const mi = this.entity.render?.meshInstances[0];
     if (mi?.material instanceof pc.StandardMaterial) { mi.material.depthTest = false; mi.material.update(); }
     if (this.entity.render) { this.entity.render.batchGroupId = -1; this.entity.render.castShadows = false; }
@@ -1258,7 +1343,7 @@ class TvCall {
     ui.setFont(c, 14);
     const textX = x + 58, textW = w - 58 - 26;
     const lines = ui.wrapText(c, text, textW);
-    const h = Math.min(this.CH - 4, 16 + lines.length * 19 + 36);
+    const h = Math.min(this.CH - 4, 16 + lines.length * 19 + 50);   // ⚑ S431: room for the larger buttons
     const y = 2;
     this.used = y + h;
     if (e1) { ui.px(c, x, y, w, h, ERA1.black); ui.px(c, x + 1, y + 1, w - 2, h - 2, ground); }
@@ -1274,23 +1359,24 @@ class TvCall {
     c.restore();
     ui.setFont(c, 14); c.fillStyle = ink;
     lines.forEach((l, i) => c.fillText(l, textX, y + 10 + i * 19));
-    // × closes it (logged by the guide, like every dismissal)
-    ui.setFont(c, 14); c.fillStyle = ink; c.fillText('×', x + w - 17, y + 6);
-    this.hits.push({ id: 'lg-x', x: x + w - 26, y: y + 1, w: 25, h: 24 });
+    // × closes it (logged by the guide, like every dismissal); ⚑ S431 — its press is the card's top-right corner, 34 × 34
+    ui.setFont(c, 16); c.fillStyle = ink; c.fillText('×', x + w - 19, y + 7);
+    this.hits.push({ id: 'lg-x', x: x + w - 35, y: y + 1, w: 34, h: 34 });
     let bx = textX;
     buttons.forEach(([id, label], i) => {
-      ui.setFont(c, 12); const bw = Math.ceil(c.measureText(label).width) + 22, by = y + h - 31, bh = 24;
-      if (e3) aero.button(c, bx, by, bw, bh, label, { primary: i === 0, size: 12 });
+      // ⚑ S431 — the buttons 34 px tall (were 24), their words 14 px (were 12), 14 px either side
+      ui.setFont(c, 14); const bw = Math.ceil(c.measureText(label).width) + 28, bh = 34, by = y + h - bh - 8;
+      if (e3) aero.button(c, bx, by, bw, bh, label, { primary: i === 0, size: 14 });
       else if (skin === 'e4') {
         ui.px(c, bx, by, bw, bh, i === 0 ? CHROME.button : CHROME.fieldEdge);
         if (i !== 0) ui.px(c, bx + 1, by + 1, bw - 2, bh - 2, CHROME.field);
-        ui.setFont(c, 12); c.fillStyle = i === 0 ? CHROME.buttonInk : CHROME.ink; c.fillText(label, bx + 11, by + 6);
+        ui.setFont(c, 14); c.fillStyle = i === 0 ? CHROME.buttonInk : CHROME.ink; c.fillText(label, bx + 14, by + 10);
       } else {
         ui.px(c, bx, by, bw, bh, ERA1.black); ui.px(c, bx, by, bw - 1, bh - 1, ERA1.white);
         ui.px(c, bx + 1, by + 1, bw - 2, bh - 2, ERA1.grey); ui.px(c, bx + 1, by + 1, bw - 3, bh - 3, ERA1.beige);
-        ui.setFont(c, 12); c.fillStyle = ERA1.black; c.fillText(label, bx + 11, by + 6);
+        ui.setFont(c, 14); c.fillStyle = ERA1.black; c.fillText(label, bx + 14, by + 10);
       }
-      this.hits.push({ id, x: bx, y: by, w: bw, h: bh }); bx += bw + 8;
+      this.hits.push({ id, x: bx, y: by, w: bw, h: bh }); bx += bw + 10;
     });
     c.setTransform(1, 0, 0, 1, 0, 0);
     this.tex.upload();
@@ -1320,6 +1406,8 @@ export interface TvHost {
   callOpen(): boolean;
   /** a press on the in-view card's button, handed to the guide ('lg-take', 'lg-later', 'lg-x') */
   guidePress(id: string): void;
+  /** ⚑ S431 — the offer was left unanswered for `offerHold`: the guide closes its balloon and logs the let-go */
+  letGo?(tape: TapeId): void;
   /** ⚑ S425 — a computer's look, turned (over about a second; her drag stays free) to this yaw and pitch, and where it is now */
   look?(yaw: number, pitch: number): void;
   facing?(): { yaw: number; pitch: number } | null;
@@ -1391,6 +1479,8 @@ class TvMoment {
         if (this.offer) {
           if (this.go) { this.host.call(tape, null); this.answer = 'brought'; this.callSeconds = (performance.now() - this.started) / 1000; this.bring(); this.finish(); break; }
           const declined = this.callClosedAt >= 0, unsaid = !this.callSeen && this.t >= MOMENT.noCall, letGo = this.t >= MOMENT.offerHold;
+          // ⚑ S431 — the let-go is the balloon's own quiet close (the platform's patience), logged by the guide as a let-go
+          if (letGo && !declined && !unsaid) this.host.letGo?.(tape);
           if (declined || unsaid || letGo) { this.host.call(tape, null); this.answer = declined ? 'declined' : unsaid ? 'unsaid' : 'let-go'; this.finish(); }
           break;
         }
@@ -1602,11 +1692,17 @@ export class TeachingTvs {
   /** ⚑ S407 — the set is lit (woken, brought or played at least once): "Did you know" no longer needs to name it */
   get lit(): boolean { const tv = this.current(); return !!tv && tv.state !== 'off'; }
 
+  /** ⚑ S431 — 2016's offer is up on the monitor, in Lambient's own balloon (the walker and the probes read it) */
+  private glassOffer = false;
   /** ⚑ S394 — the guide's call and its one later offer, drawn IN VIEW (the card), from the guide's own view. Each frame. */
   guide(view: { era: string; rung: string; text: string | null; hidden: boolean }, active: boolean): void {
-    const up = active && !view.hidden && (view.rung === 'tvcall' || view.rung === 'tv') && !!view.text;
     // ⚑ S424 — 2016's call is an offer: two answers, Bring it · Not now (the × still closes it, logged)
     const offer = view.rung === 'tvcall' && !!this.current()?.spec.offer;
+    // ⚑ S431 (UiB job 39 C; his 27 Nov: the offer "came from a different space, not actually a suggestion from the same 'lambient'") —
+    //   an OFFER is Lambient's own balloon on the monitor, from its taskbar button (lambyGuideDraw draws it, the glass takes its presses);
+    //   the card in the room is for a call only (the system forcing, while the visitor may face away)
+    this.glassOffer = offer && active && !view.hidden && !!view.text;
+    const up = active && !view.hidden && (view.rung === 'tvcall' || view.rung === 'tv') && !!view.text && !offer;
     const buttons: [string, string][] = view.rung === 'tv' ? [['lg-take', W.lamby.yes], ['lg-later', W.lamby.no]]
       : offer ? [['lg-take', W.lamby.offer.yes], ['lg-later', W.lamby.offer.no]] : [['lg-take', W.lamby.yes]];
     this.card.show(view.era, up ? view.text : null, buttons, this.host.eye(), this.host.xr());
@@ -1696,7 +1792,7 @@ export class TeachingTvs {
     const p = this.card.entity.getPosition();
     return { era: this.era, name: SET_NAME, holding: this.holding, watching: this.watching, deckPixels: deckPixels(),
       moments: Object.fromEntries(TAPE_IDS.map((t) => [t, { stage: this.moments[t].stage, seconds: this.moments[t].seconds, callSeconds: this.moments[t].callSeconds, answer: this.moments[t].answer }])),
-      call: { shown: this.card.shown, text: this.card.text, hits: this.card.hits.map((h) => ({ ...h })), entity: this.card.entity.name, cw: this.card.CW, ch: this.card.CH, at: [p.x, p.y, p.z] },
+      call: { shown: this.card.shown, text: this.card.text, hits: this.card.hits.map((h) => ({ ...h })), entity: this.card.entity.name, cw: this.card.CW, ch: this.card.CH, at: [p.x, p.y, p.z], glass: this.glassOffer },
       tvs: TAPE_IDS.map((t) => this.tvs[t].debug()) };
   }
   /** ⚑ S394 fix (review aid) — every moment of every tape drawn into its bar in this look-mode, in its units */
