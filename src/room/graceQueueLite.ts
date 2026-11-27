@@ -7,7 +7,7 @@ import { drawRenataFilm, filmToCanvas, FILM_TARGETS, PUBLISHED_FRAME, SENT_FRAME
 import vera from '../../data/dialog/s3_vera.json';
 import { veraDay, resetVeraDay } from '../state/veraDay';
 import polish from '../../data/strings/playtestPolish.json';
-import { drawLambyGuide, drawGuidePointer, type GuidePaint } from '../desktop/apps/lambyGuideDraw';
+import { drawLambyGuide, drawGuidePointer, type GuidePaint, type PageLine } from '../desktop/apps/lambyGuideDraw';
 import type { LambyGuide } from '../narrative/lambyGuide';
 import { refuse, drawLambientNote, measureLambientNote, resetRefusals, REFUSAL, type DeskNote } from '../desktop/apps/lambientDesk';
 /**
@@ -125,6 +125,12 @@ import { readHold } from '../desktop/readHold';
 import { reducedMotion } from '../state/motion';
 import { textPx } from '../desktop/theme/fonts';
 /** S358 / H08 — the references' leading (10 px type): 11 read as lines laid on each other from the seat */
+/** ⚑ S429 (UiB job 38 D) — GracePlatform's loop as its file holds it (grace_loop_2016.mp3, MPEG-2 layer III, mono, 22 050 Hz, read from
+ *  its own LAME header): 64.000 s of music, 1 411 200 samples, with 576 samples of encoder delay before and 576 of padding after (2 452
+ *  frames of 576 = 1 412 352). A decoder that keeps the delay leaves 576 + 529 before the music and 576 − 529 = 47 after it. */
+const GRACE_LOOP_SPEC: LoopSpec = { samples: 1411200, rate: 22050, tailPad: 47 };
+/** ⚑ S429 — how far it lowers under a sound of its own (a quarter of its level: still there, under) */
+const GRACE_DUCK = 0.25;
 const REFS_LEAD = 13;   // S349: the Handset Window's bar is the phone's idiom
 import {
   ERA3, drawLambMark, warmGrade, drawNoaFrame, honestLight, NOA_FRAME, NOA_SECONDS, drawMemberFigure, MEMBER_FIGURE
@@ -138,7 +144,7 @@ import { PhoneE3 } from '../desktop/apps/phoneE3';
 import q from '../../data/dialog/s3_queue.json';
 import updates from '../../data/strings/updates.json';
 import d from '../../data/strings/era3_devices.json';
-import { playOnce, playLoop, anythingPlaying, stopClip } from '../audio/tapeAudio';
+import { playOnce, anythingPlaying, stopClip, otherSoundPlaying, GaplessLoop, type LoopState, type LoopSpec } from '../audio/tapeAudio';
 import { Screensaver, SAVER_SECONDS } from '../desktop/apps/screensaver';
 import { pauseWords, wayBackLine } from '../narrative/pauses';
 import pauseCopy from '../../data/strings/pauses.json';
@@ -548,30 +554,29 @@ export class GraceQueueLite {
    *  the testimony editor") — the evening's other messages, in the order she EARNS them: each finished thing (a story,
    *  the send, its receipt, her own record) earns the next, and the phone holds it until the platform is at rest. */
   private earnedJobs = new Set<string>();
-  /** ⚑ S337 — GracePlatform's own music (tools/make_graceloop.py; his 9 Nov). The platform's voice: it plays under the
-   *  work and stops for anything that is a person's (the Story Record, her phone brought forward or a thread being
-   *  read), for the pause menu, the screensaver, the games, and from the moment the update starts installing. */
-  private graceLoop: HTMLAudioElement | null = null;
-  /** ⚑ S358 / H13 (his headset, 10 Nov: "the song starts playing randomly"; and H44, "the song should keep playing in
-   *  the handset window") — every press on her phone stopped the loop and the next press on the board started it again
-   *  FROM THE TOP, so it seemed to start by itself. It now plays on while she reads her phone, stops only for the
-   *  Story Record, Bea's news, the game (its own song), the pause menu, the screensaver and the install — and when it
-   *  comes back it picks up where it stopped. */
-  private graceLoopAt = 0;
-  // ⚑ S362 / H44 (his headset: "the song should keep playing while he is in the handset window") — checked, not changed: `want` below has no
-  //   phone, mirror or Handset Window term, so the platform's loop plays on while she reads her phone (it stops for the Story Record, Bea's
-  //   news, the game, the pause menu, the screensaver and the install, and resumes where it stopped).
+  /** ⚑ S337 — GracePlatform's own music (tools/make_graceloop.py; his 9 Nov). The platform's voice.
+   *  ⚑ S358 / H13, S362 / H44 — it played on while she read her phone and picked up where it stopped; it stopped for the Story Record,
+   *  Bea's news, the game, the pause card (which "This week" reuses), the screensaver and the install, and her Notes (S425).
+   *  ⚑ S429 (UiB job 38 D; his 26 Nov: "Why? What is the logic of stopping there? either the music is part of the scene or not") — THE
+   *  MUSIC IS PART OF THE SCENE. From her sign-in to the update's install it plays: under This week, the memory page, her Notes, Bea's
+   *  news, URGENT, the review, the lock screen. Under a sound of its own — a tape or a film on the bus, Renata's or Noa's video with its
+   *  room tone, the teaching set's tape, the phone game, a song, a voice — it LOWERS to GRACE_DUCK and comes back where it was; it is
+   *  never stopped and started over. It ends with 2016: when the update begins to install (the phone link goes), it fades out over
+   *  1.5 s. The game menu's pause holds it where it is (the frame's pause, as for every sound); the one mute silences it without
+   *  stopping it. It is a Web Audio loop with sample-accurate loop points (tapeAudio `GaplessLoop`): no gap at the wrap.
+   *  (The <audio> element, `graceLoopAt` and S337–S425's stops: 282003e0.) */
+  private readonly graceLoop = new GaplessLoop('grace_loop_2016.mp3', GRACE_LOOP_SPEC);
+  /** ⚑ S429 — the loop's state, for the probes (its loop points in samples, where it is, its level and duck, how often it was started) */
+  get graceLoopState(): LoopState { return this.graceLoop.state; }
+  graceLoopJoin(): ReturnType<GaplessLoop['joinReport']> { return this.graceLoop.joinReport(); }
   private syncGraceLoop(): void {
+    if (this.mode === 'boot') this.graceLoop.prepare();   // decoded while the machine boots, so it is ready at her sign-in
+    if (this.mirrorDisconnected) { this.graceLoop.end(1.5); return; }   // the update installs: 2016 ends
     const signedIn = this.mode === 'board' || this.mode === 'list' || this.mode === 'done';
-    const want = signedIn && !this.pauseOpen && !this.saver && this.veraPage !== 'record' && !this.cascadeConduct && !this.memoryForward   // ⚑ S425: her Notes, no sound
-      && !this.floppy.open && !this.mirrorDisconnected
-      && !filmAudible();   // ⚑ S390 — and it yields to the course on the laptop (one music at a time); it resumes where it stopped
-    if (want && !this.graceLoop) {
-      this.graceLoop = playLoop('grace_loop_2016.mp3');
-      if (this.graceLoop) { this.graceLoop.volume = 0.35; if (this.graceLoopAt > 0) this.graceLoop.currentTime = this.graceLoopAt; }
-    }
-    else if (!want && this.graceLoop) { this.graceLoopAt = this.graceLoop.currentTime || 0; stopClip(this.graceLoop); this.graceLoop = null; }
-    else if (this.graceLoop && this.graceLoop.ended) this.graceLoop = null;
+    if (!signedIn) return;
+    this.graceLoop.rel = 0.35;
+    this.graceLoop.start();
+    this.graceLoop.duck = this.floppy.open || filmAudible() || otherSoundPlaying(this.graceLoop) ? GRACE_DUCK : 1;
   }
   private kitWaitT = 0;
   private kitWarned = false;
@@ -1317,6 +1322,16 @@ export class GraceQueueLite {
     }
     return null;
   }
+  /** ⚑ S429 (UiB job 38 F2; the headset run's frame: on Lesson 2's page Lambient's button said "Lesson 2 opens once Lesson 1 is
+   *  done…", the board's hint) — during the training, what Lambient's button answers on a lesson's own page: that page's line, or
+   *  "done" on a finished lesson's page. Null on the board and once the chain names the step (its line is said everywhere). */
+  get guidePageLine(): string | null {
+    if (this.mode !== 'list' || this.chainState) return null;
+    const id = this.openSurface?.id ?? 'testimony';   // the list without a mounted job is Lesson 1's editor
+    const G = (mirrorCopy as unknown as { guidePage: Record<string, string> }).guidePage;
+    if (this.jobDone(id)) return G.done;
+    return G[id] ?? null;
+  }
   /** the board in front of her, ignoring the two cards the chain itself puts there (the memory card, the kit's pop-in) */
   private boardPlainBut(): boolean {
     return (this.mode === 'board' || this.mode === 'done') && !this.veraPage && !this.openSurface && !this.pauseOpen && !this.minimised && !this.saver;
@@ -1731,8 +1746,9 @@ export class GraceQueueLite {
     this.bump();
   }
 
-  /** the wake-word opt-in. It changes nothing and files nothing — which is the
-   *  point of it, and is true of the real ones too. */
+  /** the opt-in on the consent card (it was a wake word; ⚑ S429, C8: "Let Lambient answer for you when you're busy", a piece without
+   *  voice). It changes nothing and files nothing — which is the point of it, and is true of the real ones too: Lambient answers for
+   *  her later whether it is ticked or not. */
   toggleWakeWord(): void {
     if (this.mode !== 'consent') return;
     this.wakeWord = !this.wakeWord;
@@ -2139,7 +2155,26 @@ export class GraceQueueLite {
   draw(ctx: CanvasRenderingContext2D, W: number, H: number): void {
     const platformW = this.mirrorAvailable ? W - MIRROR_W - MIRROR_GAP : W;   // S368 / F02: the Handset Window's column is reserved
     ctx.save(); ctx.beginPath(); ctx.rect(0, 0, platformW, H); ctx.clip();
-    this.drawSurfaceContent(ctx, platformW, H);
+    // ⚑ S429 (UiB job 38 F2) — where the page's lines fall (logical px), so Lambient's balloon never cuts one with its edge: each line
+    //   the page writes is noted as it is written (the real context's own fillText, for this draw only)
+    const pageLines: PageLine[] = [];
+    {
+      const base = ctx.getTransform?.().d || 1, real = ctx.fillText;
+      const note = function (this: CanvasRenderingContext2D, t: string, x: number, y: number, mw?: number): void {
+        try {
+          const m = this.getTransform(), size = Number(/(\d+(?:\.\d+)?)px/.exec(this.font)?.[1] ?? 11), wd = this.measureText(String(t)).width;
+          const top = this.textBaseline === 'top' || this.textBaseline === 'hanging' ? y : this.textBaseline === 'middle' ? y - size * 0.6 : y - size;
+          const x0 = this.textAlign === 'center' ? x - wd / 2 : this.textAlign === 'right' || this.textAlign === 'end' ? x - wd : x;
+          const sy = (v: number): number => (m.b * x + m.d * v + m.f) / base, sx = (v: number): number => (m.a * v + m.c * y + m.e) / base;
+          pageLines.push({ x0: sx(x0), x1: sx(x0 + wd), y0: Math.floor(sy(top)), y1: Math.ceil(sy(top + size * 1.15)) });   // lines 1.2 em apart only touch
+        } catch { /* a context that cannot say where: nothing noted */ }
+        if (mw === undefined) real.call(this, t, x, y); else real.call(this, t, x, y, mw);
+      };
+      (ctx as unknown as { fillText: typeof note }).fillText = note;
+      try { this.drawSurfaceContent(ctx, platformW, H); } finally { delete (ctx as unknown as { fillText?: unknown }).fillText; }
+    }
+    // ⚑ S429 (F2) — the presses the step waits for: Lambient's balloon never lies over them (lambyGuideDraw `protect`)
+    const pathIds = new Set<string>(['consent-allow', 'consent-decline', 'week-begin', 'pause-close', 'memory-look', 'memory-notnow', 'kit-popin-open']);
     // ⚑ S281 — the glow logic (src/witness/pathGlow.ts): the warm ring on what the story waits on at the workstation
     if (!this.personalQuiet && !this._systemModal && !['dark', 'boot', 'install'].includes(this.mode) && !this.saver && !this.startMap.active && this.veraPage !== 'record' && !veraDay.quiet) {
       const ids = stepTargets('e3', buildStartModel(undefined, 'e3').now?.id);
@@ -2152,6 +2187,7 @@ export class GraceQueueLite {
       if (this.veraPage === 'kit') ids.add(this.kitApproved ? 'vera-kit-close' : 'vera-kit-approve');   // S283: a finished job's one way on
       // ⚑ S406 / H2 — and never through a panel: a ring on something a panel lies over is not drawn
       if (ids.size) for (const r of this.rects) if (ids.has(r.id) && !this.xrResolve(r.x + r.w / 2, r.y + r.h / 2)?.startsWith('cover:')) drawGlow(ctx, r, 'path', aero.ERA3.amber, aero.ERA3.glassEdge);
+      for (const id of ids) pathIds.add(id);
     }
     if (!['dark', 'boot', 'install'].includes(this.mode) && !this.saver) {
       const S = startCopy.desktop.startMenu;
@@ -2170,7 +2206,7 @@ export class GraceQueueLite {
     // ⚑ S428 (UiB job 38 B3; HEADSET_RUN answer e) — its button is drawn on every operable surface (`guideAskable`): the board, every
     //   job page, the bare desktop, whatever the Handset Window shows beside it; while the scene is quiet only a press on it is
     //   answered (`guideAskOnly`). (It was hidden whenever a job was open, the phone was read or a felt beat ran: 40a59042.)
-    if (this.lambyGuide && this.guideAskable) this.lambyGuidePaint = drawLambyGuide(ctx, 'e3', this.lambyGuide.view, this.rects, { w: platformW, h: H });
+    if (this.lambyGuide && this.guideAskable) this.lambyGuidePaint = drawLambyGuide(ctx, 'e3', this.lambyGuide.view, this.rects, { w: platformW, h: H }, [], pageLines, [...pathIds]);
     if (this.guideFocus && !this.guideSilent && !this.guideVoice && !this._systemModal) {
       const r = this.rects.find(r => r.id === this.guideFocus!.id);
       if (r) drawGuidePointer(ctx, r, { x: platformW - 172, y: H - 24 }, ERA3.accent, 0);
@@ -2194,17 +2230,28 @@ export class GraceQueueLite {
     setFont(ctx, 13); ctx.fillStyle = ERA3.ink;
     wrapText(ctx, mirrorCopy.disconnected, 164).forEach((line, i) => ctx.fillText(line, x + 12, 45 + i * 20));
   }
+  /** ⚑ S429 (UiB job 38 C1) — the wheel at (x, y) on the workstation: over the Handset Window's phone, its open thread scrolls (the
+   *  game on it has no scroll). True when the phone took it. */
+  phoneWheelAt(x: number, y: number, dy: number): boolean {
+    const b = this.mirrorBox;
+    if (!b || this.floppy.open || this.mirrorMin) return false;
+    if (x < b.x || y < b.y || x > b.x + 180 * b.scale || y > b.y + MIRROR_PHONE_H * b.scale) return false;
+    return this.phone.wheel(dy);
+  }
+  /** ⚑ S429 (C1) — the headset's thumbstick: the thread on her phone's glass (the Handset Window's, or in her hand) */
+  phoneStick(y: number): void { if (!this.floppy.open && this.mirrorAvailable) this.phone.stick(y); }
   private drawMirror(ctx: CanvasRenderingContext2D, W: number, H: number): void {
     this.mirrorBox = null;
     if (!this.mirrorAvailable) return;
     // ⚑ S358 / H07 (his headset, 10 Nov: "Handset Window · 7" read as Windows 7, then as a countdown, and counted
     //   messages he could not see; and the name showed twice) — the taskbar keeps the program as a 2016 bar does: an
     //   icon (a handset), no name and no number. The name is on the window's own title bar, once.
-    const tx = W - 36;
-    aero.button(ctx, tx, H - 24, 32, 21, '', { size: 10 });
-    const gx = tx + 11, gy = H - 21;
-    px(ctx, gx, gy, 10, 15, PHONE.ink); px(ctx, gx + 1, gy + 2, 8, 9, PHONE.surface); px(ctx, gx + 4, gy + 12, 2, 2, PHONE.surface);
-    this.rects.unshift({ x: tx, y: H - 24, w: 32, h: 21, id: 'mirror-restore' });
+    // ⚑ S429 (UiB job 38 C5; his 26 Nov: "what is the phone button there? I don't know what it means") — THAT BUTTON IS GONE. It
+    //   restored a window that can no longer be minimised (S327/T31 took the minimise away), so a press on it changed nothing anyone
+    //   could see; the window's name is on its own title bar. Every item on this taskbar works or is gone (S382). The taskbar's strip
+    //   now runs on under the window's column, one bar across the monitor. (The icon button, `mirror-restore`: 282003e0.)
+    px(ctx, W - MIRROR_W - MIRROR_GAP, H - 28, MIRROR_W + MIRROR_GAP, 28, ERA3.taskBot);
+    px(ctx, W - MIRROR_W - MIRROR_GAP, H - 28, MIRROR_W + MIRROR_GAP, 1, ERA3.taskMid);
     if (this.mirrorMin) return;
     // S327: brought forward over the board (the cascade, or her own larger view), its usual place shows the desktop
     // ⚑ S358 / H12 (his headset, 10 Nov: the Maiden-to-be window "broke away from the screen") — the larger view used
@@ -2565,16 +2612,16 @@ export class GraceQueueLite {
     }
     studioFont(ctx, 11); ctx.fillStyle = ERA3.greyDk;
     wrapText(ctx, M.editedWith, pw).forEach((ln, i) => ctx.fillText(ln, px0, bottom + 10 + i * 15));
-    // her two presses (See what you wrote, until the page has turned; Close), at the page's left
+    // her two presses: See what you wrote at the page's left, until the page has turned; Close at the page's RIGHT in both states
+    //   (⚑ S429, UiB job 38 C4; his 26 Nov: "the button should be on the right side and not on the left": it slid into See's place
+    //   on the left when the page turned)
     studioFont(ctx, 12);
-    let bx = x;
     if (!this.recordSent) {
       const sw = Math.ceil(ctx.measureText(M.see).width) + 30;
-      aero.button(ctx, bx, by, sw, bh, M.see, { primary: true, size: 12 });
-      this.rects.push({ x: bx, y: by, w: sw, h: bh, id: 'memory-see' });
-      bx += sw + 10;
+      aero.button(ctx, x, by, sw, bh, M.see, { primary: true, size: 12 });
+      this.rects.push({ x, y: by, w: sw, h: bh, id: 'memory-see' });
     }
-    const cw = Math.ceil(ctx.measureText(M.close).width) + 34;
+    const cw = Math.ceil(ctx.measureText(M.close).width) + 34, bx = x + w - cw;
     aero.button(ctx, bx, by, cw, bh, M.close, { primary: this.recordSent, size: 12 });
     this.rects.push({ x: bx, y: by, w: cw, h: bh, id: 'memory-close' });
     // the evening still comes: the campaign kit's pop-in, over the still page (Act III's first beat, as built)
@@ -2822,7 +2869,9 @@ export class GraceQueueLite {
     //   be a button down there going says back to today") — a finished job ends in the way back, at the foot of the
     //   column, where the reading ends (the small one at the top stays: leaving half-way is always allowed)
     if (this.doneT >= 0) {
-      const bw = 160, bh = 26, bx = area.x + area.w - bw, by = area.y + area.h - bh - 4;
+      // ⚑ S429 (UiB job 38 C2) — where the job keeps a clear place for it (`backSlot`: Lesson 2's left column foot), it sits there
+      const slot = surface.backSlot?.() ?? null;
+      const bw = slot?.w ?? 160, bh = 26, bx = slot?.x ?? area.x + area.w - bw, by = slot?.y ?? area.y + area.h - bh - 4;
       aero.button(ctx, bx, by, bw, bh, this.boardBackLabel(), { primary: true, size: 11 });
       this.rects.push({ x: bx, y: by, w: bw, h: bh, id: 'board-back' });
     }

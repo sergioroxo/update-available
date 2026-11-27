@@ -141,14 +141,93 @@ const REFUSAL_BREATH = 1.2;
  *  Every message is still stamped with the minute it lands (S357fr), and nothing in the story waits on the clock. */
 function nowMinutes(): number { const d = new Date(); return d.getHours() * 60 + d.getMinutes(); }
 function clockMinutes(t: string): number { const [h, mm] = t.split(':').map(Number); return (h || 0) * 60 + (mm || 0); }
-function clockOf(min: number): string { const w = ((Math.floor(min) % 1440) + 1440) % 1440, h = Math.floor(w / 60), mm = w % 60; return `${h}:${String(mm).padStart(2, '0')}`; }
+/** ⚑ S429 (UiB job 38 F3) — 24-hour time with the hour padded, as a 2016 phone and a Windows taskbar write it: "00:15", never "0:15"
+ *  (the phone's status bar, its lock screen, each message's stamp, the banner and the taskbar all read this) */
+function clockOf(min: number): string { const w = ((Math.floor(min) % 1440) + 1440) % 1440, h = Math.floor(w / 60), mm = w % 60; return `${String(h).padStart(2, '0')}:${String(mm).padStart(2, '0')}`; }
 const CASCADE_REPEAT_VOLUME = 0.4;
 /** ⚑ S426e (his 24 Nov) — the group stays in its column (the maximised desktop chat, WIDE_*, is retired: 9974fe1f). In the thread:
  *  NAME_ROOM keeps the first message's name under the bar (no line cut in half); nothing written in it reaches past W - RIGHT_PAD
  *  (156 of the phone's 180): on a phone held upright the Handset Window's column is cut at the screen's edge, and about 162 of the
  *  180 are in view (measured from the seat, 390 × 844), so every bubble, card, "Removed by GracePlatform", the bar's words, the
  *  "removing…" tag and the forward chip end at least 6 px inside it. (As built the bubbles reached 166 and the folded lines 171.) */
-const NAME_ROOM = 8, RIGHT_PAD = 24, NAME_GAP = 8;
+const RIGHT_PAD = 24, NAME_GAP = 8;   // (⚑ S429 — NAME_ROOM, the first message's room under the bar, is retired with the paged window)
+
+/**
+ * ⚑ S429 (UiB job 38 C1 and F1; his 26 Nov: "it should be like a scroll motion, like this is a phone from 2016", "there's like blank
+ * spaces"; and his 24 Nov rule, no line ever cut) — WHERE THE LINES FALL. A context that draws nothing and records, for every line
+ * of text a screen would write, its top and bottom (in the caller's coordinates; textBaseline honoured). A thread is laid out with it
+ * first, so it can be clipped BETWEEN lines and never through one, and scrolled a line at a time; and a screen under a notification
+ * banner learns which of its lines the banner's lower edge would cut. Measuring is the real context's; nothing is drawn or stored.
+ */
+type TextBox = { y0: number; y1: number };
+function textBoxes(real: CanvasRenderingContext2D, boxes: TextBox[]): CanvasRenderingContext2D {
+  let st: Record<string, unknown> = { font: real.font, textBaseline: 'top', textAlign: 'left', fillStyle: '#000', strokeStyle: '#000', globalAlpha: 1,
+    lineWidth: 1, lineDashOffset: 0, imageSmoothingEnabled: true, imageSmoothingQuality: 'low', ty: 0 };
+  const stack: Record<string, unknown>[] = [];
+  const text = (_s: string, _x: number, y: number): void => {
+    const s = Number(/(\d+(?:\.\d+)?)px/.exec(String(st.font))?.[1] ?? 12), b = String(st.textBaseline), yy = y + Number(st.ty);
+    const top = b === 'top' || b === 'hanging' ? yy : b === 'middle' ? yy - s * 0.6 : yy - s;
+    // the glyphs' own band: from a little under the em box's top to its foot (descenders end there); a line set tighter than its
+    //   type (the headset's larger type on a card's 13 px lines) then still touches its neighbours instead of overlapping them
+    boxes.push({ y0: Math.floor(top + s * 0.1), y1: Math.ceil(top + s) });
+  };
+  const fns: Record<string, unknown> = {
+    fillText: text, strokeText: text,
+    measureText: (s: string) => { const f = real.font; real.font = String(st.font); const r = real.measureText(s); real.font = f; return r; },
+    save: () => { stack.push({ ...st }); }, restore: () => { st = stack.pop() ?? st; },
+    translate: (_x: number, y: number) => { st.ty = Number(st.ty) + y; },
+    createLinearGradient: () => ({ addColorStop() { /* nothing drawn */ } }), createRadialGradient: () => ({ addColorStop() { /* nothing drawn */ } }),
+    createPattern: () => null, getLineDash: () => []
+  };
+  return new Proxy({}, {
+    get(_t, k) {
+      if (typeof k !== 'string') return undefined;
+      if (k in fns) return fns[k];
+      if (k === 'canvas') return real.canvas;
+      if (k in st) return st[k];
+      return () => undefined;
+    },
+    set(_t, k, v) { if (typeof k === 'string') st[k] = v; return true; }
+  }) as unknown as CanvasRenderingContext2D;
+}
+/** ⚑ S429 (F1) — the real context with its words left out: a screen drawn through it again inside a band repaints its ground and its
+ *  shapes there, and no letters, so a line the banner's edge would have cut is hidden whole */
+function withoutText(real: CanvasRenderingContext2D): CanvasRenderingContext2D {
+  return new Proxy(real, {
+    get(t, k) {
+      if (k === 'fillText' || k === 'strokeText') return () => undefined;
+      const v = Reflect.get(t, k, t) as unknown;
+      return typeof v === 'function' ? (v as (...a: unknown[]) => unknown).bind(t) : v;
+    },
+    set(t, k, v) { return Reflect.set(t, k, v, t); }
+  });
+}
+/** ⚑ S429 (C1) — the real context with ONLY its words: shapes, pictures and fills are left out (a thread's words are drawn through it
+ *  between whole lines, after its bubbles and cards were drawn to the list's own edges) */
+function onlyText(real: CanvasRenderingContext2D): CanvasRenderingContext2D {
+  const keep = new Set(['fillText', 'strokeText', 'measureText', 'save', 'restore', 'translate', 'scale', 'setTransform', 'getTransform', 'resetTransform']);
+  return new Proxy(real, {
+    get(t, k) {
+      const v = Reflect.get(t, k, t) as unknown;
+      if (typeof v !== 'function') return v;
+      return typeof k === 'string' && keep.has(k) ? (v as (...a: unknown[]) => unknown).bind(t) : () => undefined;
+    },
+    set(t, k, v) { return Reflect.set(t, k, v, t); }
+  });
+}
+/** the edges a box list allows: `a` moved down past any line it would cut, `b` up past any line it would cut */
+function snapBetweenLines(boxes: TextBox[], a: number, b: number): { a: number; b: number } {
+  for (let moved = true; moved;) { moved = false; for (const x of boxes) if (x.y0 < a && a < x.y1) { a = x.y1; moved = true; } }
+  for (let moved = true; moved;) { moved = false; for (const x of boxes) if (x.y0 < b && b < x.y1) { b = x.y0; moved = true; } }
+  return { a, b: Math.max(a, b) };
+}
+/** ⚑ S429 (C1) — a thread's message: its slot height and how it draws itself at a slot's top */
+type ThreadItem = { key: string; h: number; draw: (c: CanvasRenderingContext2D, y: number) => void };
+/** ⚑ S429 (C1) — a typical line of a thread (13 px words on 17 px lines): what a page keeps of the one before */
+const THREAD_LINE = 17;
+/** ⚑ S429 (C1) — the wheel's pixels for one line (a 100 px notch is three lines, as a desktop browser scrolls); the thumbstick's lines
+ *  a second, 3 at the edge of its dead zone to 7 at full (≤ 7 Hz: each step one repaint, and none while it is still) */
+const WHEEL_PX_PER_LINE = 34, STICK_DEAD = 0.35, STICK_MIN_RATE = 3, STICK_MAX_RATE = 7;
 
 export class PhoneE3 {
   version = 0;
@@ -533,6 +612,7 @@ export class PhoneE3 {
 
   tick(dt: number, visible = true): void {
     this.tickClock(dt);
+    this.tickStick(dt);   // ⚑ S429 (C1) — the headset's thumbstick on a thread
     if (!this.bannersHidden) { this.bannerAge += dt; this.deliverEvent(); }
     // ⚑ S425 — her newest note, conducted (conductMemoryNotes): typed at ≤ 7 letters a second, the glass redrawn only when what it
     //   shows changes; written, it is filed once (as a gap); held its reading time, the phone goes to its lock screen
@@ -566,7 +646,7 @@ export class PhoneE3 {
         // ⚑ S357fr / 16-12 — Bea's first message no longer waits for the clock to roll up to 21:41: it lands at the clock's minute
         if (this.newsT >= newsWait(this.newsN)) {
           this.newsT = 0; this.newsN++; this.landedAt.set('n' + (this.newsN - 1), this.clockShown); this.logLand('n' + (this.newsN - 1));
-          if (this.scrollBack > 0 && this.userScrolled) { this.scrollBack++; this.unseen++; }   // she is looking back: what she is reading stays put
+          if (this.scrollO !== null && this.userScrolled) this.unseen++;   // she is looking back: what she is reading stays put (⚑ S429: her place is a content y)
           this.newsBanner(NEWS.slice(0, this.newsN));
           if (this.screen === 'group') this.markGroupSeen();
           this.cascadeSound(); this.bump();
@@ -604,7 +684,7 @@ export class PhoneE3 {
     while (this.cascadeN < CASCADE.length && this.cascadeT >= (this.cascadeN === 0 ? CASCADE_STEP : cascadeWait(CASCADE[this.cascadeN - 1]))) {
       this.cascadeT -= this.cascadeN === 0 ? CASCADE_STEP : cascadeWait(CASCADE[this.cascadeN - 1]);
       this.cascadeN++; this.landedAt.set('c' + (this.cascadeN - 1), this.clockShown); this.logLand('c' + (this.cascadeN - 1)); this.newsBanner(CASCADE.slice(0, this.cascadeN));
-      if (this.scrollBack > 0 && this.userScrolled) { this.scrollBack++; this.unseen++; }
+      if (this.scrollO !== null && this.userScrolled) this.unseen++;
       this.cascadeSound();
       if (this.screen === 'group') this.markGroupSeen();   // it landed under her eyes
       this.bump();
@@ -661,19 +741,48 @@ export class PhoneE3 {
     //   under the status bar, the way a phone does it; on the lock screen the messages stack as cards instead.
     const bannerH = 0;
     const bodyH = H - bannerH;
+    // ⚑ S429 (F1; his 24 Nov rule: no line is ever cut) — a banner over a screen never cuts a line under its lower edge. A thread lays
+    //   itself out under it (its list begins below the banner, whole lines only: `bannerFloor`); any other screen is drawn, and then
+    //   drawn again WITHOUT ITS WORDS in the band from the banner's edge down to the end of the line the edge would cut, so that line
+    //   is hidden whole (its ground and shapes stay). Nothing moves; only the cut line goes.
+    const banner = this.conductingNotes ? 0 : this.bannerBottom(ctx, W);
+    this.bannerFloor = banner ? banner + 2 : 0;
+    const drawScreen = (c: CanvasRenderingContext2D): void => {
+      // (⚑ S426 — the article page, S362's conducted masthead and headline that read as a blank page, is retired: 17847974)
+      if (this.screen === 'evening') { this.drawEvening(c, W, bodyH); }
+      else if (this.screen === 'personal') { this.drawThreadView(c, W, bodyH); this.pushBack(20, 62); }
+      else if (this.screen === 'lock') { this.drawLock(c, W, bodyH); }
+      else if (this.screen === 'photos' || this.screen === 'photo') { this.drawPhotos(c, W, bodyH); }
+      else if (this.screen === 'notes') { this.drawNotes(c, W, bodyH); }
+      else if (this.screen === 'group') { this.drawGroup(c, W, bodyH); }
+      else if (this.screen === 'platform') { this.drawPlatform(c, W, bodyH); }
+      else if (this.screen === 'inbox') { this.drawInbox(c, W, bodyH); }
+      else if (this.screen === 'message') { this.drawMessage(c, W, bodyH); }
+      else if (this.screen === 'walk') { this.drawWalk(c, W, bodyH); }
+      else { this.drawHome(c, W, bodyH); }
+    };
     ctx.save(); ctx.beginPath(); ctx.rect(0, bannerH, W, bodyH); ctx.clip(); ctx.translate(0, bannerH);
-    // (⚑ S426 — the article page, S362's conducted masthead and headline that read as a blank page, is retired: 17847974)
-    if (this.screen === 'evening') { this.drawEvening(ctx, W, bodyH); }
-    else if (this.screen === 'personal') { this.drawThreadView(ctx, W, bodyH); this.pushBack(20, 62); }
-    else if (this.screen === 'lock') { this.drawLock(ctx, W, bodyH); }
-    else if (this.screen === 'photos' || this.screen === 'photo') { this.drawPhotos(ctx, W, bodyH); }
-    else if (this.screen === 'notes') { this.drawNotes(ctx, W, bodyH); }
-    else if (this.screen === 'group') { this.drawGroup(ctx, W, bodyH); }
-    else if (this.screen === 'platform') { this.drawPlatform(ctx, W, bodyH); }
-    else if (this.screen === 'inbox') { this.drawInbox(ctx, W, bodyH); }
-    else if (this.screen === 'message') { this.drawMessage(ctx, W, bodyH); }
-    else if (this.screen === 'walk') { this.drawWalk(ctx, W, bodyH); }
-    else { this.drawHome(ctx, W, bodyH); }
+    drawScreen(ctx);
+    const threaded = this.screen === 'evening' || this.screen === 'group';
+    if (banner && !threaded) {
+      const keep = this.rects.length, boxes: TextBox[] = [];
+      drawScreen(textBoxes(ctx, boxes));
+      this.rects.length = keep;
+      const veil = snapBetweenLines(boxes, banner, banner).a;
+      if (veil > banner) {
+        ctx.save(); ctx.beginPath(); ctx.rect(0, banner, W, veil - banner); ctx.clip();
+        drawScreen(withoutText(ctx));
+        ctx.restore();
+        this.rects.length = keep;
+        // what lay in the band is not pressable there (the banner above it is)
+        this.rects = this.rects.flatMap(r => {
+          if (r.y + r.h <= banner || r.y >= veil) return [r];
+          if (r.y >= banner) { const h = r.y + r.h - veil; return h > 4 ? [{ ...r, y: veil, h }] : []; }
+          return [r];
+        });
+      }
+      this.veilBand = veil > banner ? { y0: banner, y1: veil } : null;
+    } else this.veilBand = null;
     ctx.restore();
     this.rects = this.rects.map(r => ({ ...r, y: r.y + bannerH }));
     // ⚑ S281 — THE GLOW LOGIC on her phone (his 1 Nov: "FloppySheep and the message app should slightly glow
@@ -703,7 +812,7 @@ export class PhoneE3 {
     return mirrored;
   }
   private openEvening(from: string): void {
-    this.scrollBack = 0;
+    this.atNewest();
     this.eveningFrom = from; this.screen = from === m.group.name ? 'group' : 'evening';
     if (this.banner?.from === from) this.banner = null;   // S327: opened, the notification has done its job
     for (const e of this.evening.filter(e => e.from === from)) this.readMessages.add('evening:' + e.id);
@@ -727,34 +836,43 @@ export class PhoneE3 {
     phoneFont(ctx, 13);
     const sized = items.map(it => ({ it, lines: phoneWrap(ctx, it.text, W - 42), h: 0 }));
     for (const s of sized) s.h = s.lines.length * 17 + 14 + (s.it.photo ? 104 : 0) + 14;
-    const win = this.scrollWindow(sized.map(s => s.h), top + 6, H - 8);
-    this.drawScrollPills(ctx, W, top, H - 8, win);
-    let y = win.y;
-    const shown = sized.slice(win.from, win.to);
-    for (const s of shown) {
+    // ⚑ S429 (C1) — the thread scrolls line by line (layThread), whole lines only, no blank band; its pills as before
+    this.layThread(ctx, W, top + 6, H - 8, sized.map((s, i) => ({ key: 'm' + i, h: s.h, draw: (c: CanvasRenderingContext2D, y: number) => {
       const bh = s.lines.length * 17 + 10;
-      bubble(ctx, 10, y, W - 22, bh, 'in');
-      phoneFont(ctx, 13); ctx.fillStyle = PHONE.ink;
-      s.lines.forEach((ln, i) => ctx.fillText(ln, 19, y + 5 + i * 17));
+      bubble(c, 10, y, W - 22, bh, 'in');
+      phoneFont(c, 13); c.fillStyle = PHONE.ink;
+      s.lines.forEach((ln, j) => c.fillText(ln, 19, y + 5 + j * 17));
       let yy = y + bh + 2;
       if (s.it.photo) {
-        this.photoSprites ??= makeE3PhotoSprites(m.cameraRoll.busText); ctx.drawImage(this.photoSprites[4], 12, yy, 100, 100);
+        this.photoSprites ??= makeE3PhotoSprites(m.cameraRoll.busText); c.drawImage(this.photoSprites[4], 12, yy, 100, 100);
         this.rects.push({ x: 12, y: yy, w: 100, h: 100, id: 'open-photo-4' });   // ⚑ S362 / H45 — the photo in the thread opens in Photos
         yy += 104;
       }
-      phoneFont(ctx, 10); ctx.fillStyle = PHONE.dim; ctx.fillText(s.it.time, 14, yy);
+      phoneFont(c, 10); c.fillStyle = PHONE.dim; c.fillText(s.it.time, 14, yy);
       // ⚑ S362 / H45 (his headset, 10 Nov: the photo message — "opening Orla goes to the files with the photos") — a message that
       //   is about a photo opens the Photos app on the phone's own camera roll; the bubble is the press, "Photos ›" says so
       if (s.it.opens === 'photos') {
-        phoneFont(ctx, 11, 600); ctx.fillStyle = PHONE.tint;
-        const lab = HOME.openPhotos, lw = ctx.measureText(lab).width;
-        ctx.fillText(lab, W - 14 - lw, yy - 1);
+        phoneFont(c, 11, 600); c.fillStyle = PHONE.tint;
+        const lab = HOME.openPhotos, lw = c.measureText(lab).width;
+        c.fillText(lab, W - 14 - lw, yy - 1);
         this.rects.push({ x: 10, y, w: W - 22, h: bh + 18, id: 'open-photos' });
       }
-      y += s.h;
-    }
+    } })), top);
   }
   private get bannerPhoto(): boolean { return this.evening.some(e => e === this.banner && e.photo === true); }
+  /** ⚑ S429 (F1) — the banner's lower edge (its hairline shadow included) if one is drawn over this screen, else 0 */
+  private bannerBottom(ctx: CanvasRenderingContext2D, W: number): number {
+    const b = this.notice ?? this.banner;
+    if (!b || this.bannersHidden || this.screen === 'lock') return 0;
+    phoneFont(ctx, 12);
+    const lines = phoneWrap(ctx, b.text, W - 12 - 20).slice(0, 3);
+    const photo = !this.notice && this.bannerPhoto;
+    return 22 + 32 + lines.length * 16 + (photo ? 78 : 0) + 1;
+  }
+  /** ⚑ S429 (F1) — where the list of a thread may begin while a banner is over it (0: no banner) */
+  private bannerFloor = 0;
+  /** ⚑ S429 (F1) — the band under a banner redrawn without words on a screen that is not a thread (probes read it) */
+  veilBand: { y0: number; y1: number } | null = null;
   private drawBanner(ctx: CanvasRenderingContext2D, W: number): void {
     // ⚑ S428 — the phone's own notification (her Notes, the group's news, the review) is a banner like a message's, and it is the
     //   one drawn while it waits; it keeps the minute it came in
@@ -805,7 +923,9 @@ export class PhoneE3 {
       y += h + 6;
     }
     for (const c of cards) {
-      phoneFont(ctx, 12); const lines = phoneWrap(ctx, c.text, W - 40).slice(0, 2);
+      // ⚑ S429 (his 24 Nov rule; seen in this job's stills) — a card that counts more messages ("+1") keeps its preview clear of the
+      //   count: it was drawn over the end of Orla's second line ("dee's keeping the corner")
+      phoneFont(ctx, 12); const lines = phoneWrap(ctx, c.text, W - 40 - (c.more ? 26 : 0)).slice(0, 2);
       if (c.photo) lines.push(HOME.photoLine ?? 'Photo');
       const h = 30 + lines.length * 16;
       if (y + h > H - 48) break;
@@ -1094,56 +1214,33 @@ export class PhoneE3 {
     const named = msgs.map((msg, i) => !this.removed.has(msg.key) && msg.from !== 'system' && msg.from !== VERA
       && (i === 0 || msgs[i - 1].from !== msg.from || this.reviewing?.key === msg.key));
     const heights = msgs.map((msg, i) => (this.removed.has(msg.key) ? 22 : this.msgHeight(ctx, msg, W)) + 6 + (named[i] ? NAME_GAP : 0));
-    // ⚑ S426e — the list's top: under the bar, with room for the first message's name over it (NAME_ROOM)
-    const listTop = top + 4 + NAME_ROOM, listBottom = this.forwardOffered ? cy - 8 : H - 8;
+    const listBottom = this.forwardOffered ? cy - 8 : H - 8;
     // ⚑ S426 (beat 13: "one message at a time, slowly enough to watch") — the review takes her to the Malta message in its hand: if
-    //   it is not whole in view, the thread scrolls to it (setting aside the fewest newer messages that keep it in view), the pills
-    //   standing down meanwhile. Once the forwards come the thread follows the newest again, and the review's marks are pushed up by
-    //   them (beat 14: it cannot keep up). The pills are hers throughout otherwise.
-    //   ⚑ S426e — only while she has not scrolled herself (then her place is kept); while the piece holds the thread up there, "▲
-    //   Earlier messages" stays and the bottom pill stands down (nothing lands below meanwhile).
-    const inHand = this.reviewing && !this.cascadeOn && !this.userScrolled ? msgs.findIndex((x) => x.key === this.reviewing!.key) : -1;
-    const held = (): boolean => inHand >= 0 && this.scrollByPiece;
-    let win = this.scrollWindow(heights, listTop, listBottom, true, !held());
-    if (inHand >= 0 && !(win.from <= inHand && inHand < win.to)) {
-      for (let end = msgs.length; end > inHand; end--) {
-        this.scrollBack = msgs.length - end;
-        win = this.scrollWindow(heights, listTop, listBottom, true, false);
-        if (win.from <= inHand) break;
-      }
-      this.scrollByPiece = this.scrollBack > 0;
-    } else if (inHand < 0 && this.scrollByPiece && !this.userScrolled) {   // the review let go: the thread follows the newest again
-      this.scrollBack = 0; this.scrollByPiece = false; win = this.scrollWindow(heights, listTop, listBottom);
-    }
-    if (this.scrollBack === 0) { this.unseen = 0; this.userScrolled = false; }
-    this.groupView = { keys: msgs.slice(win.from, win.to).map((x) => x.key), scrollBack: this.scrollBack, userScrolled: this.userScrolled, unseen: this.unseen };
-    const drawn: { y: number; msg: Live; who: boolean }[] = [];
-    let y = win.y;
-    for (let i = win.from; i < win.to; i++) {
-      // the first whole message in view always says who wrote it (its name in the list's NAME_ROOM if it has no gap of its own)
-      drawn.push({ y: y + (named[i] ? NAME_GAP : 0), msg: msgs[i], who: named[i] || (i === win.from && msgs[i].from !== 'system' && msgs[i].from !== VERA) });
-      y += heights[i];
-    }
-    ctx.save(); ctx.beginPath(); ctx.rect(0, top, W, listBottom - top); ctx.clip();   // ⚑ S362 / H40 — nothing is drawn over the bars
-    for (const { y: my, msg, who } of drawn) {
+    //   it is not whole in view, the thread scrolls to it, the bottom pill standing down meanwhile. Once the forwards come the thread
+    //   follows the newest again, and the review's marks are pushed up by them (beat 14: it cannot keep up). ⚑ S426e — only while she
+    //   has not scrolled herself (then her place is kept). ⚑ S429: `layThread` does it, line by line.
+    const inHand = this.reviewing && !this.cascadeOn && !this.userScrolled ? this.reviewing.key : null;
+    // ⚑ S429 (C1) — THE GROUP SCROLLS LINE BY LINE (layThread): the wheel, the thumbstick, ▲ ▼; whole lines only, no blank band. A
+    //   message's name is drawn at the head of each sender's run, as a 2016 phone does (S426e's name for the first whole message in
+    //   view, NAME_ROOM, is retired with the paged window: 282003e0).
+    this.layThread(ctx, W, top + 4, listBottom, msgs.map((msg, i) => ({ key: msg.key, h: heights[i], draw: (c: CanvasRenderingContext2D, y: number) => {
+      const my = y + (named[i] ? NAME_GAP : 0), who = named[i];
       if (this.removed.has(msg.key)) {
         // ⚑ the platform reached into her phone: the bubble stays, emptied, in the system's grey
         // ⚑ S426e — whole inside the column's RIGHT_PAD (as built it reached 171 of 180: "GracePlatfo|rm" on an upright phone)
         const room = W - RIGHT_PAD - 30;
-        phoneFont(ctx, 10); if (ctx.measureText(REMOVED_LINE).width + 14 > room) phoneFont(ctx, 9);
-        const tw = Math.min(room, Math.ceil(ctx.measureText(REMOVED_LINE).width) + 14);
+        phoneFont(c, 10); if (c.measureText(REMOVED_LINE).width + 14 > room) phoneFont(c, 9);
+        const tw = Math.min(room, Math.ceil(c.measureText(REMOVED_LINE).width) + 14);
         const rx = msg.from === VERA ? W - RIGHT_PAD - tw : 30;
-        roundRect(ctx, rx, my, tw, 18, 9, PHONE.hairline);
-        ctx.fillStyle = PHONE.dim; ctx.fillText(REMOVED_LINE, rx + 7, my + 4);
-        continue;
+        roundRect(c, rx, my, tw, 18, 9, PHONE.hairline);
+        c.fillStyle = PHONE.dim; c.fillText(REMOVED_LINE, rx + 7, my + 4);
+        return;
       }
       const rv = this.reviewing?.key === msg.key ? this.reviewing : null;
-      const box = msg.from === VERA ? this.drawMine(ctx, msg, my, W) : this.drawMsg(ctx, msg, my, W, who, rv?.phase === 'grey');
-      if (rv && box) this.drawReviewMark(ctx, box, rv.phase, who ? msg.from : '', W);
-    }
-    ctx.restore();
-    // the ways to look back, over the list's reserved strips (they stand down while the review is scrolling the thread itself)
-    this.drawScrollPills(ctx, W, top, listBottom, win, !held());
+      const box = msg.from === VERA ? this.drawMine(c, msg, my, W) : this.drawMsg(c, msg, my, W, who, rv?.phase === 'grey');
+      if (rv && box) this.drawReviewMark(c, box, rv.phase, who ? msg.from : '', W);
+    } })), top, inHand);
+    this.groupView = { keys: this.threadWhole, scrollBack: this.scrollBack, userScrolled: this.userScrolled, unseen: this.unseen };
   }
   /** ⚑ S426 — the thread was scrolled by the review (to the message in its hand), not by her */
   private scrollByPiece = false;
@@ -1361,8 +1458,9 @@ export class PhoneE3 {
         else { this.screen = 'group'; this.openGroup(); }
         this.bump(); return true;
       // S358 / H13 — ⚑ S426e: she has scrolled; what lands now does not pull her down (`unseen` counts it), ▼ takes her to the bottom
-      case 'scroll-up': this.scrollBack += this.pageStep; this.userScrolled = true; this.scrollByPiece = false; this.bump(); return true;
-      case 'scroll-down': this.scrollBack = 0; this.userScrolled = false; this.unseen = 0; this.scrollByPiece = false; this.bump(); return true;
+      // ⚑ S429 (C1) — ▲ back a page (line-snapped, the cut message made whole), ▼ to the newest; the wheel and the stick go line by line
+      case 'scroll-up': this.pageUp(); return true;
+      case 'scroll-down': this.holdAt(null); this.scrollByPiece = false; return true;
       case 'inbox-prev': this.inboxPage--; this.bump(); return true;
       case 'inbox-next': this.inboxPage++; this.bump(); return true;
       case 'personal-notification': this.openPersonalThread(); return true;
@@ -1398,7 +1496,7 @@ export class PhoneE3 {
         if (!this.forwardOffered) return true;
         this.forwarded = true; this.forwardAt = this.cascadeN; this.landedAt.set('v', this.clockShown);
         if (this.stage === 'after' && !this.endAnswered) this.endAnswered = 'forward';   // ⚑ S428 (row 15): the update follows
-        if (this.scrollBack > 0) this.scrollBack = 0;   // her own forward, seen where it lands
+        this.scrollO = null; this.userScrolled = false; this.unseen = 0;   // her own forward, seen where it lands
         playOnce('phone_msg_2016.mp3'); this.bump(); return true;
       default:
         if (r.id.startsWith('evening:')) { this.openEvening(r.id.slice(8)); return true; }
@@ -1452,36 +1550,107 @@ export class PhoneE3 {
    * button on it doesn't work"). Every screen with an app bar now publishes it.
    */
   /**
-   * ⚑ S358 / H13 (his headset, 10 Nov: "no way to scroll the messages on the phone") — a thread showed its newest
-   * messages only, and the oldest fell off the top for good. `scrollBack` holds how many of the newest are set aside;
-   * "Earlier messages" (a pill under the bar) steps back a screenful, "Latest" (a pill at the foot) returns. Presses
-   * only: no drag, no wheel (a headset has neither). It resets when a thread is opened.
+   * ⚑ S358 / H13 (his headset, 10 Nov: "no way to scroll the messages on the phone") — a thread showed its newest messages only;
+   * "Earlier messages" (a pill under the bar) stepped back a screenful of whole messages, "Latest" (a pill at the foot) returned.
+   * ⚑ S429 (UiB job 38 C1; his 26 Nov: "the earlier messages doesn't fully work … it should be like a scroll motion, like this is a
+   * phone from 2016"; "there's like blank spaces") — THE THREAD SCROLLS LINE BY LINE. It is laid out once without drawing
+   * (`textBoxes`): every line's top and bottom is known, so the list is clipped between lines and never through one (job 35's whole
+   * lines), and each line is a scroll stop. The wheel on the computer and the thumbstick in the headset move it a line at a time; ▲
+   * stays for touch and goes back a page (the message it cuts made whole, or the page less one line), ▼ comes back to the newest. At
+   * rest the newest sits at the foot; scrolled up, her place is kept while messages land under her ("▼ New messages"). The paged window
+   * (`scrollWindow`, a message at a time, filling up from the foot and leaving a band of empty thread under ▲) is retired: 282003e0.
+   * `scrollO` is the content's y at the list's top while she (or the review) holds it up; null at rest. `scrollBack` stays the probes'
+   * word for it: 0 at rest, else the pixels of thread below the list.
    */
+  private scrollO: number | null = null;
   private scrollBack = 0;
   private static readonly PILL = 20;
-  /** `reserve` (as built): room is kept above and below for the "Earlier messages" / "Latest" pills; the group wide keeps its ▲ ▼ in
-   *  a gutter at the side instead (⚑ S426) */
-  private scrollWindow(heights: number[], top: number, bottom: number, reserve = true, reserveBottom = reserve): { from: number; to: number; y: number; earlier: boolean; latest: boolean } {
-    const fit = (end: number, t: number, b: number): number => {   // the first index that fits above `end`, filling up from b
-      let y = b, i = end;
-      while (i > 0 && y - heights[i - 1] >= t) { y -= heights[i - 1]; i--; }
-      return i;
+  /** ⚑ S429 — the last laid-out thread: where it stood, its stops (each line's top, less 2 px), the stops that begin a message */
+  private thread: { O: number; V: number; restO: number; minO: number; stops: number[]; firsts: number[]; spans: { a: number; b: number }[] } | null = null;
+  /** ⚑ S429 — the probes' handle: the keys of the messages whose every line is on the glass */
+  private threadWhole: string[] = [];
+  /** ⚑ S429 — what the last laid-out thread showed (probes and the stills read it): the list's clip, its pills */
+  threadView: { c0: number; c1: number; vTop: number; vBottom: number; earlier: boolean; latest: boolean; O: number; restO: number; lines: number } | null = null;
+  private layThread(ctx: CanvasRenderingContext2D, W: number, listTop: number, listBottom: number, items: ThreadItem[], pillTop: number, hold: string | null = null): void {
+    const PILLR = PhoneE3.PILL + 2;
+    // a banner over the thread: the list (and its ▲) begins under it (F1)
+    listTop = Math.max(listTop, this.bannerFloor); pillTop = Math.max(pillTop, this.bannerFloor);
+    // ── laid out without drawing: every line's top and bottom, in the thread's own coordinates ──
+    const cum: number[] = []; let T = 0;
+    for (const it of items) { cum.push(T); T += it.h; }
+    const keep = this.rects.length, boxes: (TextBox & { i: number })[] = [];
+    items.forEach((it, i) => { const bx: TextBox[] = []; it.draw(textBoxes(ctx, bx), cum[i]); for (const b of bx) boxes.push({ ...b, i }); });
+    this.rects.length = keep;
+    const sorted = [...boxes].sort((a, b) => a.y0 - b.y0);
+    const rows: { y0: number; y1: number; i: number }[] = [];
+    for (const b of sorted) { const r = rows[rows.length - 1]; if (r && b.y0 < r.y1) r.y1 = Math.max(r.y1, b.y1); else rows.push({ y0: b.y0, y1: b.y1, i: b.i }); }
+    // a stop is 2 px above its line, never above the end of the line before it (so the list's top never falls inside that one)
+    const stops = rows.map((r, k) => Math.max(k ? rows[k - 1].y1 : -Infinity, r.y0 - 2));
+    const firstOf = new Map<number, number>();
+    rows.forEach((r, k) => { if (!firstOf.has(r.i)) firstOf.set(r.i, stops[k]); });
+    const firsts = [...firstOf.values()].sort((a, b) => a - b);
+    const spans = items.map((it, i) => {
+      const own = boxes.filter((b) => b.i === i);
+      return own.length ? { a: Math.min(...own.map((b) => b.y0)) - 2, b: Math.max(...own.map((b) => b.y1)) + 2 } : { a: cum[i], b: cum[i] + it.h };
+    });
+    const minO = Math.min(0, stops[0] ?? 0);
+    // ── where the list stands: at rest the newest at the foot; scrolled, her place; ▲ and ▼ reserve their strips ──
+    const fit = (want: number | null, showLatest: boolean) => {
+      const latest = want !== null && showLatest;
+      const vBottom = latest ? listBottom - PILLR : listBottom;
+      for (const reserveTop of [true, false]) {
+        const vTop = reserveTop ? Math.max(listTop, pillTop + PILLR) : listTop, V = vBottom - vTop, restO = T - V;
+        if (restO <= minO + 0.5) { if (reserveTop) continue; return { vTop, vBottom, V, O: restO, restO, earlier: false, rest: true, latest: false }; }
+        const O = want === null ? restO : Math.max(minO, Math.min(restO, want));
+        const earlier = O > minO + 0.5;
+        if (reserveTop && !earlier) continue;
+        return { vTop, vBottom, V, O, restO, earlier, rest: want === null || O >= restO - 0.5, latest };
+      }
+      return { vTop: listTop, vBottom, V: vBottom - listTop, O: minO, restO: minO, earlier: false, rest: true, latest: false };
     };
-    const n = heights.length;
-    this.scrollBack = Math.max(0, Math.min(this.scrollBack, Math.max(0, n - 1)));
-    const latest = this.scrollBack > 0;
-    const b = latest && reserveBottom ? bottom - PhoneE3.PILL - 2 : bottom;
-    const end = n - this.scrollBack;
-    let from = fit(end, top, b);
-    const earlier = from > 0;
-    if (earlier && reserve) from = fit(end, top + PhoneE3.PILL + 2, b);
-    // ⚑ S362 / H40 — with the larger type one long message (Bea's first) can be taller than the window: the newest is always drawn
-    //   (its top clipped by the caller) rather than an empty thread
-    if (from >= end && end > 0) from = end - 1;
-    let y = b; for (let i = from; i < end; i++) y -= heights[i];
-    return { from, to: end, y, earlier, latest };
+    // the review's hand: the message it is on is brought whole into view, unless she has scrolled herself
+    const held = hold ? items.findIndex((x) => x.key === hold) : -1;
+    let f = fit(this.scrollO, !(held >= 0 && this.scrollByPiece));
+    if (held >= 0 && !this.userScrolled) {
+      const s = spans[held];
+      if (s.a < f.O - 0.5 || s.b > f.O + f.V + 0.5) {
+        this.scrollO = s.b - s.a <= f.V ? s.b - f.V : s.a; this.scrollByPiece = true;
+        f = fit(this.scrollO, false);
+      }
+    } else if (held < 0 && this.scrollByPiece && !this.userScrolled) { this.scrollO = null; this.scrollByPiece = false; f = fit(null, true); }
+    if (f.rest && this.scrollO !== null && !(held >= 0 && this.scrollByPiece)) { this.scrollO = null; f = fit(null, true); }
+    if (this.scrollO === null) { this.unseen = 0; this.userScrolled = false; }
+    this.scrollBack = this.scrollO === null ? 0 : Math.max(1, Math.round(f.restO - f.O));
+    // ── the clip, between lines: a line the list's edge would cut is left out whole ──
+    const toScreen = (b: TextBox): TextBox => ({ y0: b.y0 - f.O + f.vTop, y1: b.y1 - f.O + f.vTop });
+    const on = boxes.map(toScreen);
+    const { a: c0, b: c1 } = snapBetweenLines(on, f.vTop, f.vBottom);
+    // the bubbles, cards and pictures run to the list's own edges (a scrolled thread shows them going on under its bars, never a band
+    //   of bare ground); the words are drawn only between whole lines
+    const r0 = this.rects.length;
+    const pass = (c: CanvasRenderingContext2D, a: number, b: number): void => {
+      ctx.save(); ctx.beginPath(); ctx.rect(0, a, W, b - a); ctx.clip();
+      items.forEach((it, i) => { const y = f.vTop + cum[i] - f.O; if (y + it.h < a - 24 || y > b + 24) return; it.draw(c, y); });
+      ctx.restore();
+    };
+    pass(withoutText(ctx), f.vTop, f.vBottom);
+    const r1 = this.rects.length;
+    pass(onlyText(ctx), c0, c1);
+    this.rects.length = r1;
+    // its own presses, only where it is drawn
+    const added = this.rects.splice(r0).flatMap((r) => { const y0 = Math.max(r.y, f.vTop), y1 = Math.min(r.y + r.h, f.vBottom); return y1 - y0 > 4 ? [{ ...r, y: y0, h: y1 - y0 }] : []; });
+    this.rects.push(...added);
+    this.threadWhole = items.filter((_it, i) => {
+      const own = on.filter((_b, k) => boxes[k].i === i);
+      return own.length > 0 && own.every((b) => b.y0 >= c0 && b.y1 <= c1);
+    }).map((it) => it.key);
+    this.thread = { O: f.O, V: f.V, restO: f.restO, minO, stops, firsts, spans };
+    this.threadView = { c0, c1, vTop: f.vTop, vBottom: f.vBottom, earlier: f.earlier, latest: f.latest, O: Math.round(f.O), restO: Math.round(f.restO),
+      lines: on.filter((b) => b.y0 >= c0 && b.y1 <= c1).length };
+    // ── the ways to look back, over the list's reserved strips (the bottom one stands down while the review holds the thread) ──
+    this.drawScrollPills(ctx, W, pillTop, listBottom, f.earlier, f.latest);
   }
-  private drawScrollPills(ctx: CanvasRenderingContext2D, W: number, top: number, bottom: number, win: { from: number; to: number; earlier: boolean; latest: boolean }, showLatest = true): void {
+  private drawScrollPills(ctx: CanvasRenderingContext2D, W: number, top: number, bottom: number, earlier: boolean, latest: boolean): void {
     const pill = (label: string, y: number, id: string, up: boolean): void => {
       // ⚑ S426 — on a band of the thread's ground, so nothing of the thread shows round it
       ctx.fillStyle = PHONE.bg; ctx.fillRect(0, y - 3, W, PhoneE3.PILL + 2);
@@ -1497,14 +1666,76 @@ export class PhoneE3 {
       ctx.fillText(label, px0 + 21, y + 3);
       this.rects.push({ x: 0, y: y - 2, w: W, h: PhoneE3.PILL, id });
     };
-    this.pageStep = Math.max(1, win.to - win.from - 1);
-    if (win.earlier) pill(m.group.earlier, top + 3, 'scroll-up', true);
+    if (earlier) pill(m.group.earlier, top + 3, 'scroll-up', true);
     // ⚑ S426e (his 24 Nov) — scrolled up while messages land, the bottom pill says so: "New messages" (it takes her to the bottom)
-    if (win.latest && showLatest) pill(this.unseen > 0 ? m.group.newMessages : m.group.latest, bottom - PhoneE3.PILL + 2, 'scroll-down', false);
+    if (latest) pill(this.unseen > 0 ? m.group.newMessages : m.group.latest, bottom - PhoneE3.PILL + 2, 'scroll-down', false);
   }
   /* (⚑ S426e — the wide group's ▲ ▼ gutter, `drawScrollArrows`, is retired with the wide group: 9974fe1f. The column's pills carry
    *  ▲ / ▼ drawn in them.) */
-  private pageStep = 1;
+  /** ⚑ S429 — a thread is on the glass (her Orla, Mam, Nuala; the group): the wheel and the thumbstick scroll it */
+  get threadOnGlass(): boolean { return (this.screen === 'group' || this.screen === 'evening') && !this.disconnected && !!this.thread; }
+  /** ⚑ S429 — a thread opened: at its newest, nothing held, the last thread's stops forgotten */
+  private atNewest(): void { this.scrollO = null; this.scrollBack = 0; this.userScrolled = false; this.unseen = 0; this.scrollByPiece = false; this.thread = null; this.wheelAcc = 0; }
+  /** ⚑ S429 — she holds the thread at content y `O` (null: back to the newest); true if it moved */
+  private holdAt(O: number | null): boolean {
+    const t = this.thread;
+    if (!t) return false;
+    if (O !== null) O = Math.max(t.minO, O);
+    if (O !== null && O >= t.restO - 0.5) O = null;
+    if (O === this.scrollO || (O !== null && this.scrollO !== null && Math.abs(O - this.scrollO) < 0.5)) return false;
+    this.scrollO = O; this.scrollByPiece = false;
+    if (O === null) { this.userScrolled = false; this.unseen = 0; } else this.userScrolled = true;
+    this.bump(); return true;
+  }
+  /** ⚑ S429 (C1) — `n` lines down (towards the newest; up when negative): the wheel's and the thumbstick's step */
+  scrollLines(n: number): boolean {
+    const t = this.thread;
+    if (!t || !this.threadOnGlass || !n) return false;
+    let O = this.scrollO ?? t.O;   // two steps before the glass is redrawn go on from the first
+    for (let k = 0; k < Math.abs(n); k++) {
+      if (n < 0) { const up = t.stops.filter((v) => v < O - 0.5); O = up.length ? Math.max(t.minO, up[up.length - 1]) : t.minO; }
+      else { const down = t.stops.find((v) => v > O + 0.5); O = down === undefined ? t.restO : Math.min(down, t.restO); }
+    }
+    return this.holdAt(O);
+  }
+  /** ⚑ S429 (C1) — ▲ for touch: back a page. The message the list's top cuts is made whole if it fits; else the page less one line,
+   *  begun at a message's first line where one falls in it */
+  private pageUp(): boolean {
+    const t = this.thread;
+    if (!t) return false;
+    const O0 = this.scrollO ?? t.O, N0 = O0 - (t.V - THREAD_LINE);
+    const cut = t.spans.find((s) => s.a < O0 - 0.5 && s.b > O0 + 0.5);
+    const lo = cut ? Math.max(N0, cut.b - t.V) : N0, hi = cut ? cut.a + 0.5 : O0 - 0.5;
+    let O = t.firsts.find((v) => v >= lo - 0.5 && v < hi);
+    if (O === undefined && cut && cut.b - cut.a <= t.V) O = cut.a;
+    if (O === undefined) O = t.stops.find((v) => v >= N0 - 0.5 && v < O0 - 0.5);
+    if (O === undefined) { const up = t.stops.filter((v) => v < O0 - 0.5); O = up.length ? up[up.length - 1] : t.minO; }
+    return this.holdAt(O);
+  }
+  private wheelAcc = 0;
+  /** ⚑ S429 (C1) — the computer's wheel over the thread: page pixels (down reads on), a line per WHEEL_PX_PER_LINE. True while a thread
+   *  is on the glass (the wheel is the thread's there, never the camera's zoom) */
+  wheel(dy: number): boolean {
+    if (!this.threadOnGlass) return false;
+    if (Math.sign(dy) !== Math.sign(this.wheelAcc)) this.wheelAcc = 0;
+    this.wheelAcc += dy;
+    const n = Math.trunc(this.wheelAcc / WHEEL_PX_PER_LINE);
+    if (n) { this.wheelAcc -= n * WHEEL_PX_PER_LINE; this.scrollLines(n); }
+    return true;
+  }
+  private stickY = 0;
+  private stickAt = -1;
+  private stickAcc = 0;
+  /** ⚑ S429 (C1) — the headset's thumbstick (y down +), read each frame; `tick` steps the thread at ≤ STICK_MAX_RATE lines a second */
+  stick(y: number): void { this.stickY = y; this.stickAt = this.clockSec; }
+  private tickStick(dt: number): void {
+    const live = this.threadOnGlass && Math.abs(this.stickY) > STICK_DEAD && this.clockSec - this.stickAt < 0.3;
+    if (!live) { this.stickAcc = 1; return; }   // the first push steps at once
+    const k = (Math.min(1, Math.abs(this.stickY)) - STICK_DEAD) / (1 - STICK_DEAD);
+    this.stickAcc += dt * (STICK_MIN_RATE + (STICK_MAX_RATE - STICK_MIN_RATE) * k);
+    if (this.stickAcc >= 1) { this.stickAcc -= 1; this.scrollLines(Math.sign(this.stickY)); }
+    if (this.stickAcc > 1) this.stickAcc = 1;
+  }
   private pushBack(barTop: number, barBottom: number): void {
     this.rects.push({ x: 0, y: barTop, w: 44, h: barBottom - barTop, id: 'back' });
   }
@@ -1591,7 +1822,7 @@ export class PhoneE3 {
   }
 
   private openGroup(): void {
-    this.scrollBack = 0;
+    this.atNewest();
     this.markGroupSeen();
     veraDay.phoneAnswered = true;
     // ⚑ S428 (rows 10 and 13) — opening the group, however she opens it (its notification, its lock card, Messages), starts what

@@ -96,7 +96,8 @@ export class FamilyCallsApp implements TaskSurface {
   /** the seconds Lambient's line is read before the chosen reply lights, and before it is sent; then the step to Annette */
   private static readonly LIGHT_AT = Math.max(3, readHold(f.lambient.teach));
   private static readonly SEND_AT = FamilyCallsApp.LIGHT_AT + 1.6;
-  private static readonly MOVE_AT = FamilyCallsApp.SEND_AT + 2.4;
+  /* (⚑ S429 — MOVE_AT, the 2.4 s held on Maureen after Lambient had sent, is retired: 282003e0. His 26 Nov, "when I do Maureen it
+   *  should jump to Annette" — he was ahead of it, and took Lambient's send for his own.) */
   tick(dt: number): void {
     if (this.lessonMoved) return;
     const maureen = PARENTS.find((p) => p.id === 'p_maureen');
@@ -116,11 +117,13 @@ export class FamilyCallsApp implements TaskSurface {
         ledger.checkins.push({ id: familyCheckinId(p.id), witness: f.lambient.lessonWitness });
         playOnce('tick_task.mp3');
       }
-      this.lessonSent = true; this.bump();
-    }
-    if (crossed(FamilyCallsApp.MOVE_AT) && this.lessonSent) {
+      this.lessonSent = true;
+      // ⚑ S429 (UiB job 38 C3; his 26 Nov: "when I do Maureen it should jump to Annette") — sent, the screen goes to Annette AT ONCE,
+      //   and Lambient's note in the list column says plainly that it answered Maureen (`lambient.answered`); her row keeps "sent by
+      //   Lambient · lesson". The note goes when she answers Annette, as any note does.
       this.lessonMoved = true;
-      const ann = PARENTS.findIndex((p) => p.id === QUIET.id);
+      if (r) this.note = { line: f.lambient.answered.replace('{reply}', r.label), voice: 'lambient' };
+      const ann = PARENTS.findIndex((q) => q.id === QUIET.id);
       if (ann >= 0 && !this.outcomes.has(QUIET.id)) this.select(ann); else this.bump();
     }
   }

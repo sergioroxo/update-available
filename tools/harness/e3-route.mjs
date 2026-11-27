@@ -18,7 +18,7 @@ const IPHONE_UA = 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleW
 /** the look-mode the page was launched in: 'desktop' (a mouse), 'xr' (the headset mock: a controller ray and its trigger), 'phone' (a tap) */
 let MODE = 'desktop';
 
-export async function launch(port, { width = 1280, height = 720, scale = 1, query = '', mode = 'desktop', hidePlate = true } = {}) {
+export async function launch(port, { width = 1280, height = 720, scale = 1, query = '', mode = 'desktop', hidePlate = true, init = null } = {}) {
   MODE = mode;
   if (mode === 'phone') { width = 390; height = 844; }
   const browser = await puppeteer.launch({
@@ -31,6 +31,7 @@ export async function launch(port, { width = 1280, height = 720, scale = 1, quer
   const errors = [];
   page.on('pageerror', (e) => errors.push(String(e).slice(0, 240)));
   page.on('console', (m) => { if (m.type() === 'error') errors.push(m.text().slice(0, 240)); });
+  if (init) await page.evaluateOnNewDocument(init);   // ⚑ S429 — a probe's own hooks, before the page's scripts (the music probe wraps Web Audio)
   await page.goto(`http://localhost:${port}/?reinterp=1&kiosk=0&era=3&debug=1&descent=0${query}`, { waitUntil: 'domcontentloaded', timeout: 180000 });
   await page.waitForFunction(() => window.__graceQueue?.() && window.__app && window.__os && window.__camPose, { timeout: 180000 });
   await page.addStyleTag({ content: '#debug-panel, .debug-panel, #motion-diagnostic, #debug-toggle { display: none !important; }' });

@@ -54,7 +54,9 @@ const idle = async (row, what) => {
 {
   const c = await page.evaluate(async () => {
     const d = new Date(), p = window.__graceQueue().phone, dev = (await import('/data/strings/era3_devices.json')).default;
-    return { phone: p.eveningClock, real: [d.getHours() + ':' + String(d.getMinutes()).padStart(2, '0'), (() => { const e = new Date(Date.now() - 60000); return e.getHours() + ':' + String(e.getMinutes()).padStart(2, '0'); })()], date: dev.phone.lockDate };
+    // ⚑ S429 (F3) — the hour is padded now ("00:15"); either writing is the real time of day for this check (the build before S429 wrote "0:15")
+    const hm = (e) => [e.getHours() + ':' + String(e.getMinutes()).padStart(2, '0'), String(e.getHours()).padStart(2, '0') + ':' + String(e.getMinutes()).padStart(2, '0')];
+    return { phone: p.eveningClock, real: [...hm(d), ...hm(new Date(Date.now() - 60000))], date: dev.phone.lockDate };
   });
   check('A1', 'the phone\'s clock reads the visitor\'s real time of day', c.real.includes(c.phone), `${c.phone} (real ${c.real[0]})`);
   check('A1', 'the day reads Tuesday 6 December', c.date === 'Tuesday 6 December', c.date);

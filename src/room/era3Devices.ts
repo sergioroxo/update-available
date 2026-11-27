@@ -787,6 +787,11 @@ export interface Era3Devices {
   /** ⚑ S328 — where a ray meets 2026's monitor, in the monitor's logical pixels (null off it, or off era 4): the
    *  wheel and the drag ask this before they turn the view, so Kettle's thread scrolls under them */
   monitorPoint(ray: { p0: pc.Vec3; p1: pc.Vec3 }): { x: number; y: number } | null;
+  /** ⚑ S429 (UiB job 38 C1) — the computer's wheel over 2016's Handset Window (or with her phone in her hand): her open thread scrolls
+   *  a line at a time; true when it was the thread's (the camera's zoom does not hear it) */
+  phoneWheel(ray: { p0: pc.Vec3; p1: pc.Vec3 } | null, dy: number): boolean;
+  /** ⚑ S429 (C1) — the headset's thumbstick in 2016 (y down +): her open thread scrolls a line at a time */
+  phoneStick(y: number): void;
   /** ?debug=1 review aid only (like __os/__tapes) — the raw offscreen
    *  canvases, for pixel-probing the shell content/lamb-marks without
    *  screenshot-chasing the 3D projection. */
@@ -1815,6 +1820,16 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
       const place = PLACEMENT.monitor;
       return hitPlane(s.entity, place.size.w, place.size.h, s.logical.w, s.logical.h, ray);
     },
+    phoneWheel(ray: { p0: pc.Vec3; p1: pc.Vec3 } | null, dy: number): boolean {
+      if (eraNow !== 'e3') return false;
+      if (phoneHeld) return graceQueueLite.phone.wheel(dy);
+      const s = screens.find(sc => sc.name === 'workstation');
+      if (!ray || !s || !s.entity.enabled) return false;
+      const place = PLACEMENT.workstation;
+      const p = hitPlane(s.entity, place.size.w, place.size.h, s.logical.w, s.logical.h, ray);
+      return !!p && graceQueueLite.phoneWheelAt(p.x, p.y, dy);
+    },
+    phoneStick(y: number): void { if (eraNow === 'e3') graceQueueLite.phoneStick(y); },
     handleWorkstationPointer(ray: { p0: pc.Vec3; p1: pc.Vec3 }): boolean {
       const test = (name: 'workstation' | 'phone' | 'laptop' | 'monitor'): { x: number; y: number } | null => {
         const s = screens.find(sc => sc.name === name);

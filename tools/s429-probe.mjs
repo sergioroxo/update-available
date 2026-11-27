@@ -1,0 +1,381 @@
+#!/usr/bin/env node
+/**
+ * ⚑ S429 (UiB job 38 part two: C, F) — HIS MARKS ON THE PAGES AND THE PHONE, AND THE FOUR FAULTS IN S428'S PICTURES, PROVED ON PRESSES.
+ *
+ *     node tools/s429-probe.mjs --port 5811 --mode desktop [--shots <dir>] [--build after]     # desktop | xr | phone
+ *
+ * 2016 played by presses (tools/harness/e3-route.mjs: real mouse presses, the headset mock's ray and trigger, or a tap; the fiction's
+ * own times run through the app's own update loop), the same presses on every build; where a press is not there nothing is pressed and
+ * the check reads what that build does at that moment. Each check reads the build from the outside — the words the workstation
+ * actually wrote (its canvas's fillText, caught for one redraw), the pixels of the Handset Window and the workstation, the controls it
+ * published — so it fails where the old build had the fault and passes where it is fixed:
+ *   C1  the group and Orla's thread: the largest band of empty thread (rows of the thread's ground, full width) at rest and scrolled
+ *       up; a scroll by the wheel (computer) / the thumbstick (headset mock) / ▲ (touch) moves the thread; ▼ comes back
+ *   C2  Lesson 2 finished: Back to Today clear of the Trending panel (in the left column)
+ *   C3  Lesson 3: seconds from Lambient's send to Annette on the screen; Lambient saying it answered
+ *   C4  the memory page's Close: its right edge in both states, on the right
+ *   C5  the Handset Window's taskbar button: not published
+ *   C6  the take-down page: its heading says what happened (the words drawn)
+ *   C7  Lesson 1: "20" said once (the words drawn)
+ *   C8  the consent card: no wake word (the words drawn)
+ *   F1  every banner seen over a screen: dark (ink) pixels in the two rows under its lower edge (a line cut in half shows there)
+ *   F2  Lambient's asked line on the board and each lesson's page: what it says, the balloon fitted to its words (no band), and no line
+ *       of the page cut by its top or bottom edge (ink pixels in the two rows outside each edge)
+ *   F3  the phone's and the taskbar's clock: the hour padded
+ *   F4  the Start menu's foot: the band between the menu and Start is the menu's own paper (no mark of the page under it)
+ * Writes <out>/s429-probe_<mode>_<build>.json; with --shots, the stills (2560 × 1440; the phone's own portrait) named NN_<what>_<mode>.png.
+ */
+import fs from 'node:fs';
+import path from 'node:path';
+import { launch, ff, e3, press, targets, playTo, wait } from './harness/e3-route.mjs';
+
+const argv = process.argv.slice(2);
+const flag = (n, d) => { const i = argv.indexOf(`--${n}`); return i >= 0 && argv[i + 1] && !argv[i + 1].startsWith('--') ? argv[i + 1] : d; };
+const PORT = Number(flag('port', 0)); if (!PORT) throw Error('Pass --port');
+const MODE = ['xr', 'phone'].includes(flag('mode', 'desktop')) ? flag('mode', 'desktop') : 'desktop';
+const SHOTS = flag('shots', null) ? path.resolve(flag('shots')) : null;
+const BUILD = flag('build', String(PORT));
+const OUT = path.resolve(flag('out', 'out/s429'));
+fs.mkdirSync(OUT, { recursive: true }); if (SHOTS) fs.mkdirSync(SHOTS, { recursive: true });
+
+const { browser, page, errors, view } = await launch(PORT, { mode: MODE, scale: SHOTS ? 2 : 1, width: 1280, height: 720 });
+const say = (m) => console.log(m);
+const result = { port: PORT, mode: MODE, build: BUILD, checks: [], banners: [], stills: [], errors };
+const check = (id, what, ok, detail) => { result.checks.push({ id, what, ok: ok === null ? null : !!ok, detail }); say(`${ok === null ? 'n/a ' : ok ? 'PASS' : 'FAIL'} ${id} ${what} — ${typeof detail === 'string' ? detail : JSON.stringify(detail)}`); };
+const live = async () => new Set((await targets(page, view)).map((t) => t.id));
+const tryPress = async (...ids) => { const l = await live(); for (const id of ids) if (l.has(id)) { await press(page, view, id); await ff(page, 0.3); return id; } return null; };
+const q = (fn, arg) => page.evaluate(fn, arg);
+const shot = async (n, what) => {
+  if (!SHOTS) return;
+  await wait(700);
+  const file = `${n}_${what}_${MODE}.png`;
+  await page.screenshot({ path: path.join(SHOTS, file) });
+  const draws = await q(() => window.__drawCalls ?? null);
+  result.stills.push({ file, draws });
+  say(`still ${file} · draws ${draws}`);
+};
+
+// ── what the workstation writes: its canvas's own words, caught for one redraw ──
+await q(() => {
+  const proto = CanvasRenderingContext2D.prototype, orig = proto.fillText;
+  window.__drawn = null;
+  proto.fillText = function (t, x, y, mw) {
+    if (window.__drawn && this.canvas === window.__era3Devices?.()?.workstation) window.__drawn.push(String(t));
+    return mw === undefined ? orig.call(this, t, x, y) : orig.call(this, t, x, y, mw);
+  };
+});
+const drawnWords = async () => {
+  await q(() => { window.__drawn = []; const g = window.__graceQueue(); g.bump?.(); });
+  await wait(350);
+  return q(() => { const d = window.__drawn || []; window.__drawn = null; return d; });
+};
+// ── pixels ──
+/** the Handset Window's phone (its own 2× canvas): the largest band of full-width rows of the thread's ground inside [y0, y1) (logical) */
+const phoneBand = (y0, y1) => q(({ y0, y1 }) => {
+  const g = window.__graceQueue(), cv = g.mirrorCanvas; if (!cv) return null;
+  const c = cv.getContext('2d'), s = cv.width / 180, d = c.getImageData(0, 0, cv.width, cv.height).data, W = cv.width;
+  const at = (x, y) => { const i = (y * W + x) * 4; return [d[i], d[i + 1], d[i + 2]]; };
+  const ground = at(2 * s, Math.round(y1 * s) - 2);   // the thread's ground at the list's foot, at its left margin
+  let best = 0, run = 0, bestAt = -1;
+  for (let y = Math.round(y0 * s); y < Math.round(y1 * s); y++) {
+    let plain = true;
+    for (let x = Math.round(4 * s); x < Math.round(150 * s); x += 2) { const p = at(x, y); if (Math.abs(p[0] - ground[0]) + Math.abs(p[1] - ground[1]) + Math.abs(p[2] - ground[2]) > 12) { plain = false; break; } }
+    if (plain) { run++; if (run > best) { best = run; bestAt = y - run + 1; } } else run = 0;
+  }
+  return { band: Math.round(best / s), at: Math.round(bestAt / s) };
+}, { y0, y1 });
+/** dark (ink) pixels in phone rows [y0, y1) (logical) across x 8…150 */
+const phoneInk = (y0, y1) => q(({ y0, y1 }) => {
+  const cv = window.__graceQueue().mirrorCanvas; if (!cv) return null;
+  const c = cv.getContext('2d'), s = cv.width / 180, d = c.getImageData(0, Math.round(y0 * s), cv.width, Math.max(1, Math.round((y1 - y0) * s))).data;
+  let n = 0; for (let i = 0; i < d.length; i += 4) { const x = (i / 4) % cv.width; if (x < 8 * s || x > 150 * s) continue; if (0.3 * d[i] + 0.59 * d[i + 1] + 0.11 * d[i + 2] < 120) n++; }
+  return n;
+}, { y0, y1 });
+/** dark (ink) pixels in workstation rows [y0, y1) (logical) across x [x0, x1) */
+const wsInk = (x0, x1, y0, y1) => q(({ x0, x1, y0, y1 }) => {
+  const cv = window.__era3Devices().workstation, s = cv.width / 676, c = cv.getContext('2d');
+  const d = c.getImageData(Math.round(x0 * s), Math.round(y0 * s), Math.max(1, Math.round((x1 - x0) * s)), Math.max(1, Math.round((y1 - y0) * s))).data;
+  let n = 0; for (let i = 0; i < d.length; i += 4) if (0.3 * d[i] + 0.59 * d[i + 1] + 0.11 * d[i + 2] < 140) n++;
+  return n;
+}, { x0, x1, y0, y1 });
+/** the banner over the phone's screen now: its lower edge (logical), worked out as the banner draws itself (theme/phone.ts) */
+const bannerNow = () => q(async () => {
+  const g = window.__graceQueue(), p = g.phone, b = p.notice ?? p.banner;
+  if (!b || p.bannersHidden || p.screen === 'lock' || p.conductingNotes || g.floppy?.open || !g.mirrorCanvas) return null;
+  const { phoneFont, phoneWrap } = await import('/src/desktop/theme/phone.ts');
+  const c = document.createElement('canvas').getContext('2d'); phoneFont(c, 12);
+  const lines = phoneWrap(c, b.text, 180 - 12 - 20).slice(0, 3);
+  const photo = !p.notice && p.evening?.some?.((e) => e === b && e.photo === true);
+  return { from: b.from, text: b.text.slice(0, 40), screen: p.screen, bottom: 22 + 32 + lines.length * 16 + (photo ? 78 : 0) + 1 };
+});
+const bannerCheck = async (label, must = false) => {
+  await wait(300);
+  const b = await bannerNow();
+  if (!b) { if (must) check('F1', `a banner ${label}`, null, 'no banner on this build here'); return null; }
+  if (b.screen === 'home') {   // the wallpaper is dark: the ink test cannot read it; the first row of app pictures goes under the banner
+    result.banners.push({ label, ...b, ink: null });
+    check('F1', `the banner ${label} (${b.from} over the home screen)`, null, 'over the app pictures and the wallpaper (no line of words under its edge; the eye checks the still)');
+    return null;
+  }
+  const ink = await phoneInk(b.bottom, b.bottom + 2);
+  result.banners.push({ label, ...b, ink });
+  if (SHOTS) {   // the Handset Window's phone as drawn, for the eye (its own 2× canvas)
+    const png = await q(() => window.__graceQueue().mirrorCanvas.toDataURL('image/png'));
+    fs.writeFileSync(path.join(SHOTS, `phone_banner-${label.replace(/[^a-z0-9]+/gi, '-')}_${MODE}.png`), Buffer.from(png.split(',')[1], 'base64'));
+  }
+  check('F1', `the banner ${label} (${b.from} over ${b.screen}) cuts no line`, ink === 0, `ink in the two rows under its edge: ${ink}`);
+  return ink;
+};
+// ── Lambient's asked line ──
+const asked = async (where, expect, still = null) => {
+  if (!(await tryPress('lg-tray'))) { check('F2', `Lambient's button on ${where}`, false, 'not published'); return; }
+  for (let i = 0; i < 20 && !(await q(() => !!window.__graceQueue().lambyGuidePaint?.balloon)); i++) await ff(page, 1);
+  await wait(400);
+  const g = await q(async () => {
+    const G = window.__graceQueue(), box = G.lambyGuidePaint?.box ?? null, text = window.__os?.lambyGuide?.view?.text ?? null;
+    if (!box || !text) return { box, text };
+    const ui = await import('/src/desktop/theme/chrome.ts'), c = document.createElement('canvas').getContext('2d');
+    ui.setFont(c, 11); const n = ui.wrapText(c, text, box.w - 36).length;
+    return { box, text, lines: n };
+  });
+  if (!g.box) { check('F2', `Lambient's balloon on ${where}`, false, 'no balloon'); return; }
+  const fit = g.box.h - (49 + g.lines * 15);
+  if (still) await shot(still[0], still[1]);
+  // the page under it, read without it: the balloon put away (Got it), the page drawn again, then its edges tested against the page's
+  //   own rows of ink — a run of ink rows that goes on across the top or the foot is a line cut there; ink right and left of its side
+  //   in the same rows is a line cut by the side
+  await tryPress('lg-ok', 'lg-x'); await ff(page, 0.3); await wait(400);
+  if (SHOTS) {   // the page without it, the balloon's box drawn in, for the eye
+    const png = await q((b) => { const cv = window.__era3Devices().workstation, s = cv.width / 676, o = document.createElement('canvas'); o.width = cv.width; o.height = cv.height;
+      const c = o.getContext('2d'); c.drawImage(cv, 0, 0); c.strokeStyle = '#ff00ff'; c.lineWidth = 1; c.strokeRect(b.x * s + 0.5, b.y * s + 0.5, b.w * s, b.h * s); return o.toDataURL('image/png'); }, g.box);
+    fs.writeFileSync(path.join(SHOTS, `ws_balloon-${where.replace(/[^a-z0-9]+/gi, '-')}_${MODE}.png`), Buffer.from(png.split(',')[1], 'base64'));
+  }
+  const cut = await q((b) => {
+    const cv = window.__era3Devices().workstation, s = cv.width / 676, c = cv.getContext('2d');
+    const X0 = Math.round(b.x * s), X1 = Math.round((b.x + b.w) * s), Y0 = Math.max(0, Math.round((b.y - 24) * s)), Y1 = Math.min(cv.height, Math.round((b.y + b.h + 24) * s));
+    const d = c.getImageData(0, Y0, cv.width, Y1 - Y0).data, ink = (x, y) => { const i = ((y - Y0) * cv.width + x) * 4; return 0.3 * d[i] + 0.59 * d[i + 1] + 0.11 * d[i + 2] < 140; };
+    // a row of WORDS: dark in at least three separate places along it (a list row's coloured spine or a rule is one dark run)
+    const words = (y, x0, x1) => { let n = 0, was = false; for (let x = x0; x < x1; x++) { const k = ink(x, y); if (k && !was) n++; was = k; } return n >= 3; };
+    const rowInk = (y, x0, x1) => { for (let x = x0; x < x1; x++) if (ink(x, y)) return true; return false; };
+    const across = (edge) => { const e = Math.round(edge * s); return words(e - 1, X0 + 2, X1 - 2) && words(e, X0 + 2, X1 - 2) ? 1 : 0; };
+    // a run of ink rows through the edge: ink in the row just above AND the row at the edge, inside the balloon's width
+    const top = across(b.y), foot = across(b.y + b.h);
+    let side = 0;
+    for (let y = Math.round(b.y * s) + 2; y < Math.round((b.y + b.h) * s) - 2; y++) {
+      const L = Math.round(b.x * s);
+      if (rowInk(y, Math.max(0, L - 4), L) && rowInk(y, L, L + 4)) side++;
+    }
+    return { top, foot, side };
+  }, g.box);
+  if (expect) check('F2', `on ${where} the asked line speaks to it`, g.text === expect, `"${g.text}"`);
+  else check('F2', `on ${where} the asked line`, null, `"${g.text}"`);
+  check('F2', `on ${where} the balloon fits its words`, fit <= 1, `h ${g.box.h} for ${g.lines} lines (${fit} px of band)`);
+  check('F2', `on ${where} the balloon's edges cut no line of the page`, cut.top + cut.foot === 0 && cut.side === 0, `a line through its top ${cut.top}, its foot ${cut.foot}; rows with words both sides of its left side ${cut.side}; it sits at x ${g.box.x}, y ${g.box.y}, ${g.box.w} × ${g.box.h}`);
+  result[`balloon_${where}`] = g;
+  return g;
+};
+const dismiss = async () => { await tryPress('lg-ok', 'lg-x', 'lg-later'); await ff(page, 0.5); };
+// ── the thread's scroll, the way each look-mode does it ──
+const threadO = () => q(() => window.__graceQueue().phone.threadView?.O ?? window.__graceQueue().phone.groupView?.scrollBack ?? null);
+const scrollUp = async () => {
+  if (MODE === 'desktop') {
+    const t = (await targets(page, view)).find((x) => x.id === 'mirror:back');
+    if (!t) return 'no thread';
+    await page.mouse.move(t.pt[0] + 40, t.pt[1] + (SHOTS ? 140 : 140));
+    for (let i = 0; i < 2; i++) { await page.mouse.wheel({ deltaY: -100 }); await wait(250); }
+    return 'the wheel, two notches up';
+  }
+  if (MODE === 'xr') {
+    await q(() => { window.__controller.gamepad.axes = [0, 0, 0, -1]; });
+    await ff(page, 0.6);
+    await q(() => { window.__controller.gamepad.axes = [0, 0, 0, 0]; });
+    await ff(page, 0.2);
+    return 'the thumbstick, held up 0.6 s';
+  }
+  return (await tryPress('mirror:scroll-up')) ? '▲' : 'no ▲';
+};
+const threadCheck = async (what) => {
+  await ff(page, 0.3); await wait(400);
+  const v = await q(() => { const p = window.__graceQueue().phone; return { tv: p.threadView ?? null, gv: p.groupView, screen: p.screen }; });
+  const top = v.tv ? v.tv.vTop : 70, bottom = v.tv ? v.tv.vBottom : 300;
+  const band = await phoneBand(top, bottom);
+  return { ...v, band };
+};
+
+// ═══ 2016, by presses ═══
+await playTo(page, view, (s) => s.mode === 'consent', { log: () => {} });
+await ff(page, 0.5);
+{ const words = await drawnWords();
+  check('C8', 'the consent card asks for no voice', !words.some((w) => /when you say/.test(w)), words.find((w) => /Let Lambient/.test(w)) ?? '(no line)'); }
+await shot('01', 'consent');
+await playTo(page, view, (s) => s.mode === 'board' && s.week, { log: () => {} });
+await tryPress('pause-close');
+if ((await e3(page)).week) await tryPress('week-begin');
+if ((await e3(page)).job) await tryPress('board-back');
+await ff(page, 1);
+{ const c = await q(() => ({ phone: window.__graceQueue().phone.eveningClock }));
+  check('F3', 'the clock\'s hour is padded (phone, lock screen, stamps, taskbar)', /^\d\d:\d\d$/.test(c.phone), c.phone);
+  const words = await drawnWords();
+  check('F3', 'the taskbar writes the padded hour', words.includes(c.phone) && /^\d\d:/.test(c.phone), words.filter((w) => /^\d{1,2}:\d\d$/.test(w)).join(', '));
+  const l = await live();
+  check('C5', 'the Handset Window\'s taskbar button is gone', !l.has('mirror-restore'), l.has('mirror-restore') ? 'published' : 'not published'); }
+await shot('02', 'clock-taskbar');
+await asked('the board', null, ['03', 'lambient-board']);
+await dismiss();
+
+// ── Lesson 1 ──
+await tryPress('task-0', 'week-begin');
+for (let i = 0; i < 40 && (await e3(page)).watch; i++) await ff(page, 1);
+for (let i = 0; i < 6 && (await live()).has('apply'); i++) { await tryPress('apply'); await ff(page, 14); }
+{ const words = await drawnWords();
+  const heading = words.find((w) => /^Lesson 1/.test(w)) ?? '';
+  check('C7', 'Lesson 1 says 20 once', !/20/.test(heading), `heading "${heading}"; labels ${words.filter((w) => /0:\d\d/.test(w)).join(' | ')}`); }
+await shot('04', 'lesson1');
+const GP = await q(async () => (await import('/data/strings/e3_mirror.json')).default.guidePage ?? null);
+await asked('Lesson 1\'s page', GP?.testimony ?? '(no page line on this build)', ['05', 'lambient-lesson1']);
+await dismiss();
+await tryPress('vera-send'); await ff(page, 2); await tryPress('board-back'); await ff(page, 2);
+
+// ── Lesson 2 ──
+await playTo(page, view, (s) => s.job === 'places', { log: () => {} });
+await ff(page, 1);
+await asked('Lesson 2\'s page', GP?.places ?? '(no page line on this build)', ['06', 'lambient-lesson2']);
+await dismiss();
+await tryPress('places-add'); await ff(page, 1);
+{ const r = await q(() => { const G = window.__graceQueue(); const backs = G.rects.filter((x) => x.id === 'board-back').sort((a, b) => b.w * b.h - a.w * a.h); return { back: backs[0] ?? null, W: G.mirrorAvailable ? 676 - 180 - 6 : 676 }; });
+  check('C2', 'Lesson 2 finished: Back to Today clear of the Trending panel', !!r.back && r.back.x + r.back.w < r.W * 0.56, r.back ? `x ${Math.round(r.back.x)}–${Math.round(r.back.x + r.back.w)}, y ${Math.round(r.back.y)} (the right column begins at about ${Math.round(r.W * 0.56)})` : 'none'); }
+await shot('07', 'lesson2-done');
+await tryPress('board-back'); await ff(page, 12);
+await bannerCheck('after Lesson 2');
+// a finished lesson's page, during the training (Lesson 1, opened again)
+if (await tryPress('task-0')) { await ff(page, 0.5); await asked('a finished lesson\'s page', GP?.done ?? '(no page line on this build)', ['07b', 'lambient-finished']); await dismiss(); await tryPress('board-back'); await ff(page, 2); }
+
+// ── Orla's thread (C1) ──
+if (await tryPress('mirror:lock-card:Orla', 'mirror:evening-banner')) {
+  await ff(page, 1);
+  const a = await threadCheck();
+  await shot('08', 'orla-rest');
+  const how = await scrollUp();
+  const b = await threadCheck();
+  check('C1', `Orla's thread at rest: no blank band`, a.band && a.band.band <= 24, `largest empty band ${a.band?.band} px at y ${a.band?.at}`);
+  check('C1', `Orla's thread scrolled (${how}): it moved`, (b.tv?.O ?? 0) !== (a.tv?.O ?? 0) || b.gv?.scrollBack !== a.gv?.scrollBack, `O ${a.tv?.O} → ${b.tv?.O}`);
+  check('C1', `Orla's thread scrolled: no blank band`, b.band && b.band.band <= 24, `largest empty band ${b.band?.band} px at y ${b.band?.at}`);
+  await shot('09', 'orla-up');
+  await tryPress('mirror:scroll-down'); await tryPress('mirror:back'); await tryPress('mirror:back'); await ff(page, 1);
+} else check('C1', 'Orla\'s thread', null, 'not reachable here');
+
+// ── Lesson 3 ──
+await playTo(page, view, (s) => s.job === 'family', { log: () => {} });
+await ff(page, 0.2);
+await asked('Lesson 3\'s page', GP?.family ?? '(no page line on this build)', ['10', 'lambient-lesson3']);
+await dismiss();
+{ const fam = () => q(() => { const f = window.__graceQueue().surfaces.get('family'); return { sent: !!f.lessonSent, on: f.current().id, note: f.note?.line ?? null }; });
+  let n = 0; while (!(await fam()).sent && n++ < 300) await ff(page, 0.1);
+  const at0 = await fam(); let t = 0;
+  while ((await fam()).on !== 'p_annette' && t < 6) { await ff(page, 0.1); t += 0.1; }
+  check('C3', 'Lambient answers Maureen, then Annette at once', at0.sent && t < 0.05, `on Annette ${Math.round(t * 10) / 10} s after Lambient's send (screen at the send: ${at0.on})`);
+  check('C3', 'it says plainly that Lambient answered', /answered Maureen/.test(at0.note ?? ''), at0.note ?? '(no line)');
+  // the still: the moment of the send (on this build)
+}
+await shot('11', 'lesson3-sent');
+await tryPress('family-sel-1'); await tryPress('family-reply-r_grief'); await ff(page, 1);
+await asked('Lesson 3 finished (the chain names the step)', null);
+await dismiss();
+await tryPress('board-back'); await ff(page, 12);
+await bannerCheck('after Lesson 3');
+
+// ── the memory page (C4) ──
+await playTo(page, view, (s) => !!s.card || s.page === 'record', { log: () => {} });
+if ((await e3(page)).card) await tryPress('memory-look');
+await ff(page, 0.5);
+const closeEdge = () => q(() => { const r = window.__graceQueue().rects.find((x) => x.id === 'memory-close'); return r ? { x: Math.round(r.x), right: Math.round(r.x + r.w) } : null; });
+const c1 = await closeEdge();
+await shot('12', 'memory-published');
+await ff(page, 40);
+const c2 = await closeEdge();
+check('C4', 'the memory page\'s Close stays on the right in both states', !!c1 && !!c2 && c1.right === c2.right && c2.x > 676 * 0.4, `published ${JSON.stringify(c1)} → turned ${JSON.stringify(c2)}`);
+await shot('13', 'memory-turned');
+
+// ── row 6: the Notes banner over Mam's thread (F1), the Start menu's foot (F4) ──
+await tryPress('memory-close'); await ff(page, 0.5);
+await bannerCheck('of her Notes', true);
+await shot('14', 'banner-notes');
+if (await tryPress('start-menu')) {
+  await ff(page, 0.2); await wait(400);
+  const f = await q(() => {
+    const G = window.__graceQueue(), leave = G.rects.find((r) => r.id === 'sm-leave'), cv = window.__era3Devices().workstation, s = cv.width / 676, c = cv.getContext('2d');
+    if (!leave) return null;
+    // the band from under the foot's buttons to the taskbar (390 - 28), across the menu's width: every pixel the menu's paper?
+    const y0 = Math.ceil(leave.y + leave.h + 3), y1 = 390 - 28, x0 = 6, x1 = 290;
+    const paper = c.getImageData(Math.round(20 * s), Math.round((leave.y + leave.h + 2) * s), 1, 1).data;
+    const d = c.getImageData(Math.round(x0 * s), Math.round(y0 * s), Math.round((x1 - x0) * s), Math.max(1, Math.round((y1 - y0) * s))).data;
+    let off = 0; for (let i = 0; i < d.length; i += 4) if (Math.abs(d[i] - paper[0]) + Math.abs(d[i + 1] - paper[1]) + Math.abs(d[i + 2] - paper[2]) > 24) off++;
+    return { band: [y0, y1], off, leaveBottom: Math.round(leave.y + leave.h) };
+  });
+  check('F4', 'the Start menu\'s foot: nothing of the page shows under it', !!f && f.off === 0, f ? `${f.off} pixels in rows ${f.band[0]}–${f.band[1]} that are not the menu's paper (Leave… ends at ${f.leaveBottom})` : 'no foot on this build');
+  await shot('15', 'start-foot');
+  await tryPress('start-menu'); await ff(page, 0.3);
+}
+
+// ── rows 7–9: her Notes, Nuala, Bea's banner over Nuala's thread (F1) ──
+await tryPress('mirror:evening-banner', 'mirror:lock-notice'); await ff(page, 15);
+await tryPress('mirror:back'); await ff(page, 4);
+await tryPress('mirror:lock-card:Nuala'); await ff(page, 12);
+await bannerCheck('from Maiden-to-be (Bea)', true);
+await shot('16', 'banner-bea');
+
+// ── rows 10–11: the group (C1) ──
+await tryPress('mirror:evening-banner', 'mirror:lock-notice');
+await playTo(page, view, (s) => s.phone?.stage === 'read' || s.kitPopin, { log: () => {}, limit: 60 });
+if ((await q(() => window.__graceQueue().phone.screenNow ?? window.__graceQueue().phone.screen)) !== 'group') await tryPress('mirror:evening-banner', 'mirror:lock-notice', 'mirror:lock-card:Maiden-to-be');
+await ff(page, 0.5);
+{ const a = await threadCheck();
+  await shot('17', 'group-rest');
+  const how = await scrollUp();
+  const b = await threadCheck();
+  check('C1', 'Bea\'s group at rest: no blank band', a.band && a.band.band <= 24, `largest empty band ${a.band?.band} px at y ${a.band?.at}`);
+  check('C1', `Bea's group scrolled (${how}): it moved`, (b.tv?.O ?? 0) !== (a.tv?.O ?? 0) || b.gv?.scrollBack !== a.gv?.scrollBack, `O ${a.tv?.O} → ${b.tv?.O}; scrollBack ${a.gv?.scrollBack} → ${b.gv?.scrollBack}`);
+  check('C1', 'Bea\'s group scrolled: no blank band', b.band && b.band.band <= 24, `largest empty band ${b.band?.band} px at y ${b.band?.at}`);
+  await shot('18', 'group-up');
+  // ▲ by press too (touch's way, on every look-mode), and ▼ back
+  const up = await tryPress('mirror:scroll-up'); const c = await threadCheck();
+  check('C1', 'Bea\'s group: ▲ by press goes back, no blank band', !!up && c.band && c.band.band <= 24, `pressed ${!!up}; band ${c.band?.band} px; keys ${c.gv?.keys?.join(',')}`);
+  if (SHOTS) await shot('19', 'group-up-press');
+  const down = await tryPress('mirror:scroll-down'); const d = await threadCheck();
+  check('C1', 'Bea\'s group: ▼ back to the newest', !!down && d.gv?.scrollBack === 0, `pressed ${!!down}; scrollBack ${d.gv?.scrollBack}`);
+  // repaints: the thread still (no press, no stick) repaints nothing; held, at most the stick's rate
+  if (MODE === 'xr') {
+    const rate = (held) => q(async (held) => {
+      const G = window.__graceQueue(); if (held) window.__controller.gamepad.axes = [0, 0, 0, -1];
+      const v0 = G.phoneVersion, t0 = performance.now(); let n = 0, last = v0;
+      await new Promise((res) => { const tick = () => { const v = G.phoneVersion; if (v !== last) { n++; last = v; } if (performance.now() - t0 < 2000) requestAnimationFrame(tick); else res(); }; requestAnimationFrame(tick); });
+      window.__controller.gamepad.axes = [0, 0, 0, 0];
+      return Math.round(n / ((performance.now() - t0) / 1000) * 10) / 10;
+    }, held);
+    await tryPress('mirror:scroll-down');
+    const still = await rate(false), held = await rate(true);
+    result.repaints = { stillPerSecond: still, stickHeldPerSecond: held };
+    check('C1', 'the thumbstick steps the thread at ≤ 7 a second; still, it repaints nothing', held <= 8 && still <= 0.5, `phone repaints: still ${still}/s, stick held ${held}/s`);
+  }
+}
+
+// ── rows 11–12: the kit; Take my story down (C6) ──
+await playTo(page, view, (s) => s.kitPopin || s.page === 'kit', { log: () => {}, limit: 80 });
+await tryPress('kit-popin-open'); await ff(page, 1);
+if (await tryPress('vera-take-down')) {
+  await ff(page, 0.5);
+  const words = await drawnWords();
+  const V = await q(async () => (await import('/data/dialog/s3_vera.json')).default.kit);
+  check('C6', 'the take-down page says what happened', words.includes(V.takenDownHeading ?? '\u0000') && !words.includes(V.takeDown), `drawn: ${words.filter((w) => /[Tt]aken? (my story )?down|SisterSignal|copies/.test(w)).join(' | ')}`);
+  await shot('20', 'take-down');
+} else check('C6', 'the take-down page', false, 'Take my story down not published');
+await tryPress('vera-kit-close'); await ff(page, 1);
+await bannerCheck('of the review');
+
+result.draws = await q(() => window.__drawCalls ?? null);
+const pass = result.checks.filter((c) => c.ok === true).length, fail = result.checks.filter((c) => c.ok === false).length;
+result.summary = { pass, fail, na: result.checks.length - pass - fail };
+fs.writeFileSync(path.join(OUT, `s429-probe_${MODE}_${BUILD}.json`), JSON.stringify(result, null, 1));
+say(`${BUILD} ${MODE}: PASS ${pass} · FAIL ${fail} · n/a ${result.summary.na} · errors ${errors.length}`);
+await browser.close();
+process.exit(fail ? 1 : 0);

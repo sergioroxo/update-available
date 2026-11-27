@@ -327,7 +327,11 @@ export class StartMenuMap {
       ui.px(ctx, x + 3, y + 3, 20, h - 6, ERA1.navy);
       ctx.save(); ctx.translate(x + 7, y + h - 8); ctx.rotate(-Math.PI / 2); ui.setFont(ctx, 12); ctx.fillStyle = ERA1.white; ctx.fillText(S.banner, 0, 0); ctx.restore();
     } else {
-      ui.px(ctx, x, y, w, h, p.edge); ui.px(ctx, x + 1, y + 1, w - 2, h - 2, p.paper);
+      // ⚑ S429 (UiB job 38 F4; a stray mark under Shut Down… in S428's frame) — the foot's FOOT_GAP above Start was left unpainted,
+      //   and the board's Lambient mark showed through it as a lone dot (its lowest pixel). The menu's paper now runs down over the gap
+      //   to the taskbar, as a 2016 Start menu sits on its bar; the buttons stay where they were (Leave… 19 px above Start).
+      const boxH = h + FOOT_GAP;
+      ui.px(ctx, x, y, w, boxH, p.edge); ui.px(ctx, x + 1, y + 1, w - 2, boxH - (FOOT_GAP ? 1 : 2), p.paper);
       if (era === 'e3') aero.px(ctx, x + 1, y + 1, w - 2, 3, p.accent);
     }
     let cy = y + 6;

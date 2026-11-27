@@ -77,8 +77,11 @@ const ledgerRecords = () => M.ledger.records;
 
 // ── A1: the clock is the visitor's own time of day; the day stays Tuesday 6 December ──
 {
-  const d = new Date(), want = `${d.getHours()}:${String(d.getMinutes()).padStart(2, '0')}`;
-  const ok = [want, (() => { const e = new Date(Date.now() - 60000); return `${e.getHours()}:${String(e.getMinutes()).padStart(2, '0')}`; })()];
+  // ⚑ S429 (F3) — 24-hour time with the hour padded, as a 2016 phone writes it ("00:15", never "0:15")
+  const hm = (e) => `${String(e.getHours()).padStart(2, '0')}:${String(e.getMinutes()).padStart(2, '0')}`;
+  const d = new Date(), want = hm(d);
+  const ok = [want, hm(new Date(Date.now() - 60000))];
+  assert.match(P.eveningClock, /^\d\d:\d\d$/, `F3: the clock's hour is padded (${P.eveningClock})`);
   assert.ok(ok.includes(P.eveningClock), `A1: the phone's clock reads the real time of day (${P.eveningClock}, wanted ${want})`);
   const lockDate = JSON.parse(fs.readFileSync('data/strings/era3_devices.json', 'utf8')).phone.lockDate;
   assert.equal(lockDate, 'Tuesday 6 December', 'A1: the day stays Tuesday 6 December');
@@ -90,6 +93,10 @@ q.settleArrival(); draw();
 idle('row 1 (sign-in waits)');
 pressId('signin'); assert.equal(q.mode, 'consent', 'row 1: Sign in → the question');
 pressId('consent-allow'); assert.equal(q.mode, 'board', 'row 2: Allow → the board'); assert.ok(q.pauseOpen, 'row 2: This week');
+// ⚑ S429 (D) — the platform's music is on from her sign-in and through This week (it was stopped under the card)
+const loop = (where) => { const L = q.graceLoopState; assert.ok(L.on, `D: the music plays ${where}`); return L; };
+run(0.2); loop('under This week');
+assert.ok(!live().includes('mirror-restore'), 'C5: the Handset Window\'s taskbar button is gone');
 pressId('week-begin'); assert.equal(q.mode, 'list', 'row 3: Begin → Lesson 1');
 run(30);   // Lambient's own first cut (the fiction's own time)
 for (let i = 0; i < 4 && live().includes('apply'); i++) { pressId('apply'); run(14); }
@@ -98,9 +105,25 @@ assert.equal(q.lessonState('places'), 'lit', 'row 3: Lesson 1 finished → Lesso
 run(10);
 assert.equal(P.screen, 'lock', 'row 3: the Mentor\'s message arrived and opened nothing on the phone');
 assert.ok(P.delivered('mentor'), 'row 3: the Mentor\'s message is a notification');
-pressId('task-1'); pressId('places-add'); run(1); pressId('board-back'); run(10);
+pressId('task-1');
+// ⚑ S429 (F2) — on Lesson 2's page Lambient's button answers about this page, not the board's next step
+const GP = JSON.parse(fs.readFileSync('data/strings/e3_mirror.json', 'utf8')).guidePage;
+assert.equal(q.guidePageLine, GP.places, 'F2: on Lesson 2\'s page the asked line is the page\'s');
+pressId('places-add'); run(1);
+assert.equal(q.guidePageLine, GP.done, 'F2: on a finished lesson\'s page the asked line says it is done');
+// ⚑ S429 (C2) — the finished lesson's Back to Today sits at the foot of the left column, clear of the Trending panel on the right
+{ const back = draw().filter((r) => r.id === 'board-back').sort((a, b) => b.w * b.h - a.w * a.h)[0];
+  assert.ok(back && back.x + back.w < W * 0.6, `C2: Back to Today in the left column (x ${back?.x}–${back ? back.x + back.w : '?'})`); }
+pressId('board-back'); run(10);
 assert.ok(P.delivered('arrival') && P.screen === 'lock', 'row 3: Orla\'s message arrived as a notification; the phone did not open');
-pressId('task-2'); run(14);   // Lesson 3: Lambient answers Maureen (its own time), then Annette is hers
+pressId('task-2');
+// ⚑ S429 (C3) — Lambient answers Maureen in its own time, and the same moment the screen is on Annette, its note saying so plainly
+{ const fam = q.surfaces.get('family'); let n = 0;
+  while (!fam.lessonSent && n++ < 200) run(0.1);
+  assert.ok(fam.lessonSent, 'C3: Lambient sent Maureen\'s reply');
+  assert.equal(fam.current().id, 'p_annette', 'C3: at once on Annette (no 2.4 s held on Maureen)');
+  assert.match(fam.note?.line ?? '', /^I answered Maureen for you: Encourage patience\. Annette is yours\.$/, 'C3: Lambient says plainly it answered'); }
+run(2);
 pressId('family-reply-r_grief'); run(1); pressId('board-back'); run(12);
 assert.ok(P.delivered('decision') && P.screen === 'lock', 'row 3: Mam\'s message arrived as a notification; the phone did not open');
 
@@ -123,7 +146,13 @@ assert.ok(!live().includes('memory-notnow'), 'row 5b: Look back alone');
 
 // ── row 5: Look back → the page; it turns to her own words in its reading time (kept), then waits ──
 pressId('memory-look'); assert.equal(q.veraPage, 'record', 'row 5: the memory page');
+const closeAt = () => { const r = draw().find((x) => x.id === 'memory-close'); return r ? r.x + r.w : -1; };
+const close0 = closeAt(), see0 = draw().find((x) => x.id === 'memory-see');
 run(40);
+loop('under the memory page');
+// ⚑ S429 (C4) — Close stays on the right in both states
+assert.ok(see0 && close0 > see0.x + see0.w, 'C4: Close to the right of See what you wrote');
+assert.equal(closeAt(), close0, `C4: Close stays where it was when the page turns (${close0})`);
 idle('row 5 (the page open: the Notes do not come by themselves)');
 assert.equal(P.screen, 'evening', 'row 5: nothing opened on the phone (Mam\'s thread, where she left it)');
 
@@ -139,6 +168,7 @@ assert.equal(P.screen, 'notes', 'row 7: the Notes open');
 assert.ok(P.conductingNotes, 'row 7: her line types');
 run(15);
 assert.ok(P.refusalWritten && !P.conductingNotes, 'row 7: her line written (the fiction\'s own time), then nothing runs');
+loop('under her Notes');
 idle('row 7 (the Notes open, written: waiting for her to close them)');
 
 // ── row 8: closing the Notes → the phone locks; Nuala's message lands on the lock screen ──
@@ -161,7 +191,21 @@ assert.notEqual(P.screen, 'group', 'row 9: the group did not open by itself');
 // ── rows 10–11: opening it → the news, a message at a time (its own time); read → the kit pops in, and waits ──
 pressId('mirror:evening-banner');
 assert.equal(P.screen, 'group', 'row 10: the group opens');
-run(60);
+run(20);
+loop('under Bea\'s news');
+// ⚑ S429 (C1) — the group scrolls line by line: a line up (the wheel's and the stick's step) moves a line; ▲ goes back a page with no
+//   band under it; ▼ comes back to the newest; and no line is cut at either edge of the list
+{ const tv0 = P.threadView; assert.ok(tv0 && tv0.c0 - tv0.vTop <= 18, `C1: at rest no band under the top (${tv0?.c0 - tv0?.vTop} px)`);
+  P.scrollLines(-1); draw(); const tv1 = P.threadView;
+  assert.ok(tv1.O < tv0.O && tv0.O - tv1.O <= 40, `C1: one line up moves one line (${tv0.O - tv1.O} px)`);
+  assert.equal(tv1.c0, tv1.vTop, 'C1: scrolled, the top line begins at the list\'s top: no band');
+  assert.ok(P.groupView.userScrolled, 'C1: her place is hers');
+  pressId('mirror:scroll-up'); draw(); const tv2 = P.threadView;
+  assert.ok(tv2.O < tv1.O, `C1: ▲ goes back (${tv1.O} → ${tv2.O})`);
+  assert.equal(tv2.c0, tv2.vTop, 'C1: after ▲ no band under it');
+  assert.ok(P.wheel(-34 * 2), 'C1: the wheel is the thread\'s'); draw(); assert.ok(P.threadView.O < tv2.O, 'C1: the wheel scrolls it');
+  pressId('mirror:scroll-down'); draw(); assert.equal(P.groupView.scrollBack, 0, 'C1: ▼ back to the newest'); }
+run(40);
 assert.equal(P.stage, 'read', 'row 10: Bea\'s news landed, each after the one before had its reading time');
 assert.ok(q.kitPopin, 'row 11: the last read, the kit pops in on the board');
 idle('row 11 (the kit pops in and waits: it never opens itself)');
@@ -185,8 +229,10 @@ const removedA = [...P.removed].length;
 assert.ok(removedA >= 1, `row 13: the review runs with a job open (${removedA} removed)`);
 pressId('mirror:back'); pressId('mirror:back'); pressId('mirror:floppy'); assert.ok(q.floppy.open, 'stall: the phone game open (the group left: Messages, home, the game)');
 run(15);
+assert.equal(loop('under the phone game').duck, 0.25, 'D: under the game\'s own sound it lowers (it does not stop)');
 assert.ok([...P.removed].length > removedA, 'row 13: the review runs while the game is open');
-q.floppy.closeGame(); pressId('win-min'); assert.ok(q.minimised, 'stall: the window minimised');
+q.floppy.closeGame(); run(0.2); assert.equal(loop('after the game').duck, 1, 'D: and comes back');
+pressId('win-min'); assert.ok(q.minimised, 'stall: the window minimised');
 run(120);
 assert.equal(P.stage, 'after', 'row 14: "Review could not keep up." — the review ran to its end with all of that open');
 assert.equal(q.minimised, true, 'stall: the window did not come back by itself');
@@ -213,9 +259,17 @@ assert.ok(q.guideAskable, 'B3: on a job page Lambient\'s button is drawn');
 
 // ── row 15: closing the group → the update ──
 idle('row 15 (the end, in the group, waits for her)');
+loop('at the end of 2016');
 pressId('mirror:back');
 assert.equal(P.endAnswered, 'close', 'row 15: closing the group answers the end');
 assert.ok(q.updateReady, 'row 15: the update follows');
+
+// ⚑ S429 — the data lines (C6, C7, C8)
+{ const V = JSON.parse(fs.readFileSync('data/dialog/s3_vera.json', 'utf8')).kit, Q = JSON.parse(fs.readFileSync('data/dialog/s3_queue.json', 'utf8'));
+  assert.notEqual(V.takenDownHeading, V.takeDown, 'C6: the take-down page is headed with what happened, not the button\'s words');
+  const sys = JSON.stringify(Q).match(/"systemLine": ?"([^"]*)"/)?.[1] ?? '';
+  assert.doesNotMatch(sys, /20/, 'C7: the lesson\'s heading no longer says 20 (the film\'s label does)');
+  assert.doesNotMatch(Q.lambient.consentWakeWord, /say|Lamby/, 'C8: the consent line asks for no voice'); }
 
 // ── source guards: the retired clocks stay retired ──
 const gq = fs.readFileSync('src/room/graceQueueLite.ts', 'utf8'), ph = fs.readFileSync('src/desktop/apps/phoneE3.ts', 'utf8'), e3d = fs.readFileSync('src/room/era3Devices.ts', 'utf8');
@@ -225,3 +279,4 @@ for (const [src, re, what] of [[gq, /const KIT_POPIN_AUTO\s*=/, 'KIT_POPIN_AUTO'
   [ph, /^\s*if \(!visible\) return;/m, 'the phone\'s pause while a job or the game is open']]) assert.doesNotMatch(src, re, `A3: ${what} is retired`);
 
 console.log(`2016's chain: ${rows} rows each waited two minutes on no press with nothing moving; rows 1–15 each moved by her press; the review ran through a reopened lesson, the game and a minimised window; Shut Down refused in view, Leave tall and clear of Start, Take me there; the clock the real time of day. OK.`);
+console.log('S429: the group scrolls a line at a time, ▲ a page, ▼ the newest, no band; Lesson 2\'s back clear of Trending; Lambient answers Maureen and the screen is on Annette at once; Close on the right; the phone button gone; Lambient\'s asked line speaks to the page; the music on from sign-in to the end, lowered under the game; the hour padded. OK.');

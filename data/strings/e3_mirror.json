@@ -71,6 +71,13 @@
     },
     "lambientPhone": "Nothing here needs you now. Your phone is on the right."
   },
+  "guidePage": {
+    "_docS429": "⚑ S429 (UiB job 38 F2) — what Lambient's taskbar button answers ON A LESSON'S OWN PAGE, during the training: the page she is on, not the board's next step (on Lesson 2's page it said \"Lesson 2 opens once Lesson 1 is done…\", the map's board hint). A finished lesson's page says it is done. After the training the chain's line is said everywhere, as before (`chain`). Claude's words; his edit wins.",
+    "testimony": "Apply or skip each rule on Renata's film, then send her story. Back to Today when you're done.",
+    "places": "Add The Wick to the list, or leave it off.",
+    "family": "I answer Maureen, to show you. Annette is yours: send a reply, or don't.",
+    "done": "This lesson is done. Back to Today takes you to the next."
+  },
   "_retiredS424focus": "⚑ S424 (UiB job 35 Part D, Act I beat 1; storyboard §3: \"Retired here: the Focus mode card … This week says it\") — `focus`, `on`, `later` are the Focus mode offer, never shown since S324 (his 8 Nov: it removed the felt part); This week now says what it said (pauses.json e3: \"Messages wait until a lesson is done.\"), and the dead code that drew it is gone from graceQueueLite.ts. Kept as the record.",
   "focus": [
     "Your phone is connected. Focus mode can hold notifications while you work."

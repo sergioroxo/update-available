@@ -133,6 +133,12 @@ export class PlacesListApp implements TaskSurface {
       setFont(ctx, 13); ctx.fillStyle = ERA3.titleText; ctx.fillText(P.doneHeading, a.x + 10, by + 2);
       setFont(ctx, 10); ctx.fillStyle = ERA3.greyDk; ctx.fillText(P.doneSub, a.x + 10, by + 20);
     }
+    // ⚑ S429 (UiB job 38 C2; his 26 Nov: "the back to today button is on top of the trending panel") — the finished lesson's way back
+    //   sits in the page's own top row, where the small Back to Today stood while the lesson ran (that row is empty once it is done:
+    //   graceQueueLite drawSurface), at the left, over nothing. At the area's right foot it lay over the Trending panel's last line
+    //   ("The Continental Wire"), and neither column has a free foot for it: the left one ends 48 px under the rule's last button, the
+    //   right one in the Trending panel.
+    this.backAt = this.by ? { x: a0.x, y: a0.y - 28, w: 160 } : null;
     // ── the list ───────────────────────────────────────────────────────────────
     setFont(ctx, 10); ctx.fillStyle = ERA3.greyDk; ctx.fillText(P.listHeading, rx, a.y);
     setFont(ctx, 9); ctx.fillStyle = ERA3.grey; ctx.fillText(P.listSub, rx, a.y + 14);
@@ -153,6 +159,9 @@ export class PlacesListApp implements TaskSurface {
     row(P.newRow, this.by ? 'new' : 'proposed');
     drawTrending(ctx, rx, ly + 8, rw, a.y + a.h - ly - 46);   // the foot stays clear for the finished job's way back
   }
+
+  private backAt: { x: number; y: number; w: number } | null = null;
+  backSlot(): { x: number; y: number; w: number } | null { return this.backAt; }
 
   press(id: string): boolean {
     if (this.by) return false;

@@ -75,9 +75,11 @@
   "approved": "Approved. Scheduled for tonight.",
   "admin": "Approved by administrator. Scheduled for tonight.",
   "takeDown": "Take my story down",
+  "takenDownHeading": "Taken down. The copies stay.",
   "receipt": [
-   "Taken down from SisterSignal. The copies stay. Original kept."
+   "Gone from SisterSignal. Original kept."
   ],
+  "_docS429takenDown": "⚑ S429 (UiB job 38 C6; his 26 Nov: \"the take my story down is still here … I just press continue like it just disappears\") — the page after Take my story down was headed with the button's own words, which read as \"nothing happened\". Its heading now says what happened (`takenDownHeading`), and the line under it no longer repeats it: `receipt` was \"Taken down from SisterSignal. The copies stay. Original kept.\" Claude's words; his edit wins.",
   "back": "Back to today",
   "urgentTag": "URGENT",
   "urgentTitle": "Campaign kit · the Malta vote",

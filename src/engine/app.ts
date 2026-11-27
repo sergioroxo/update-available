@@ -53,7 +53,7 @@ import { TapeSystem, type TapeId } from '../narrative/tapes';
 import { noteHumanInput, registerXrSession } from '../frame/attract';
 import { mountViewMorph } from './viewMorph';
 import { BUILD_STAMP } from '../state/buildStamp';
-import { TapeAudioBus, roomBed, setOneShotsMuted, setOneShotsPaused, playOnce, playLoop, stopClip, setCueListener } from '../audio/tapeAudio';
+import { TapeAudioBus, roomBed, setOneShotsMuted, setOneShotsPaused, playOnce, playLoop, stopClip, setCueListener, setLoopDecoder, playingNow } from '../audio/tapeAudio';
 import captionsData from '../../data/strings/captions.json';
 import aimStrings from '../../data/strings/aim.json';
 import { mountDebugPanel } from '../debug/panel';
@@ -808,6 +808,33 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   immersiveVrRequested = false;
   const { app, cameraRig, camera } = shell;
   const xr = app.xr;
+  /**
+   * ⚑ S429 (UiB job 38 D; his 26 Nov, "a stop before every time it loops the song") — a programme's loop that must not gap is decoded
+   * into a buffer and played through Web Audio (tapeAudio `GaplessLoop`). It is loaded the way the room's models are: a PlayCanvas
+   * asset from the build's own folder, decoded by the engine's sound manager into its one AudioContext. The context is made at the
+   * visit's first press (inside a gesture, so it runs; in a headset no page press follows the Enter VR one), and a loop asks it to
+   * resume when it starts.
+   */
+  //   It is decoded at the FILE'S OWN RATE (an OfflineAudioContext at 22 050 Hz): decoded at the context's 48 000 the resampler bends the
+  //   buffer's first and last few samples (measured: a step of 0.167 at the join, nine times the music's own 99th-percentile step), a
+  //   click at every wrap; at its own rate the join is the music's (0.034); the source node resamples it as one continuous stream.
+  window.addEventListener('pointerdown', () => { void app.soundManager?.context; }, { once: true, capture: true });
+  setLoopDecoder((url, rate) => new Promise((resolve) => {
+    const ctx = app.soundManager?.context ?? null;
+    if (!ctx) { resolve(null); return; }
+    const asset = new pc.Asset(`loop-${url}`, 'binary', { url });
+    asset.once('load', () => {
+      const bytes = asset.resource as ArrayBuffer | undefined;
+      if (!bytes) { resolve(null); return; }
+      const W = window as unknown as { OfflineAudioContext?: typeof OfflineAudioContext; webkitOfflineAudioContext?: typeof OfflineAudioContext };
+      const Off = W.OfflineAudioContext ?? W.webkitOfflineAudioContext;
+      let dec: BaseAudioContext = ctx;
+      try { if (Off && rate) dec = new Off(1, 1, rate); } catch { dec = ctx; }
+      dec.decodeAudioData(bytes.slice(0)).then((buffer) => resolve({ ctx, buffer }), () => resolve(null));
+    });
+    asset.once('error', () => resolve(null));
+    app.assets.add(asset); app.assets.load(asset);
+  }));
   // ⚑ S346 / T08 — the view morph: every cut arrives as the destination's own picture, never black (viewMorph.ts)
   const viewMorph = mountViewMorph(app, camera);
   // ⚑ S407 (UiB job 32, 97-7 / 97-9) — the held layer, mounted before the frame's (src/room/heldLayer.ts)
@@ -1145,6 +1172,9 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     // projection dance — mirrors __os's own established convention exactly.
     (window as { __graceQueue?: () => unknown }).__graceQueue = () =>
       era3Devices ? era3Devices.debugQueue() : null;
+    // ⚑ S429 (?debug=1 only) — the sound the app itself is playing, and its mute and the menu's hold, for the music probe (a module
+    //   imported again from the page can be a second copy after a hot reload: these are the app's own)
+    (window as { __sound?: unknown }).__sound = { playingNow, setOneShotsMuted, setOneShotsPaused };
     // ⚑ S364 (job 14 B7) the console session, for review (?debug=1 only): light(), draw(), tap(u,v), stats
     (window as { __consoleSession?: unknown }).__consoleSession = consoleSession;
     // ⚑ S390 — the teaching TVs (?debug=1 only): their state, hits and places for the walker and the probes; `play`/`press` are
@@ -1333,7 +1363,10 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       //   theirs; an asked answer says the step's Lambient line)
       if (os.era === 'e3') {
         const c = queueGuide?.chainState;
-        const beat = c ? { id: c.step === 'card' ? 'vera-install' : c.step.startsWith('kit') ? 'vera-kit' : 'chain-' + c.step, label: c.label, hint: c.lambient } : undefined;
+        const page = queueGuide?.guidePageLine ?? null, cur = mapState(os).current?.beat;
+        const beat = c ? { id: c.step === 'card' ? 'vera-install' : c.step.startsWith('kit') ? 'vera-kit' : 'chain-' + c.step, label: c.label, hint: c.lambient }
+          // ⚑ S429 (UiB job 38 F2) — on a lesson's own page the asked line speaks to that page (the map's beat keeps its id: its tips)
+          : page ? { id: cur?.id ?? 'page', label: cur?.label ?? '', hint: page } : undefined;
         // one voice at a time: Lambient's own lane, and her phone while a message is being read or her line types
         return { silent: (queueGuide?.guideSilent ?? true) || !queueGuide?.guideAskable, voice: (queueGuide?.guideVoice ?? false) || !!queueGuide?.phone.voiceBusy, askOnly: !!queueGuide?.guideAskOnly, beat };
       }
@@ -1528,7 +1561,8 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       onDragMove: (_source, ray) => { if (siteViewerXr?.grabbing) siteViewerXr.grabMove(ray); },
       onDragEnd: () => { siteViewerXr?.grabEnd(); },
       // ⚑ S328 — and in 2026 the stick scrolls Kettle's open thread (time by scroll, his ruling) when the sites are shut
-      onStick: (_x, y) => { if (siteViewerXr?.isOpen) siteViewerXr.stick(y); else if (os.era === 'e4' && Math.abs(y) > 0.2) os.e4?.browser.scrollAt(null, null, y * 4); },
+      // ⚑ S429 (UiB job 38 C1) — and in 2016 it scrolls the thread open on her phone, line by line (≤ 7 a second)
+      onStick: (_x, y) => { if (siteViewerXr?.isOpen) siteViewerXr.stick(y); else if (os.era === 'e4' && Math.abs(y) > 0.2) os.e4?.browser.scrollAt(null, null, y * 4); else if (os.era === 'e3' && !gameMenuBus.isOpen) era3Devices?.phoneStick(y); },
       // S271 (his 31 Oct: the hands are "a bit too white… a little bit too garish for your headset") — the frame's
       //   mid grey, not its near-white ink
       wandColor: new pc.Color().fromString(FRAME.faint)
@@ -4483,6 +4517,10 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     // ⚑ S328 — over Kettle's open thread the wheel scrolls it (through Mum's years to today); elsewhere it is the zoom
     const kp = e.ctrlKey ? null : kettlePoint(e, true);
     if (kp && os.e4?.browser.scrollAt(kp.x, kp.y, e.deltaY * (e.deltaMode === 1 ? 16 : 1) * 0.5)) return;
+    // ⚑ S429 (UiB job 38 C1; his 26 Nov: "it should be like a scroll motion, like this is a phone from 2016") — over 2016's Handset
+    //   Window, the wheel scrolls her open thread line by line (the zoom stays everywhere else)
+    if (!e.ctrlKey && options.reinterp && os.era === 'e3' && era3Devices && os.inDesktop
+      && era3Devices.phoneWheel(screenRay(e), e.deltaY * (e.deltaMode === 1 ? 33 : e.deltaMode === 2 ? 300 : 1))) return;
     const rate = e.ctrlKey ? 0.12 : (e.deltaMode === 1 ? 2.4 : 0.03);   // trackpad pinch · notches · pixels
     camera.camera.fov = Math.max(FOV_MIN, Math.min(FOV_MAX, camera.camera.fov + e.deltaY * rate));
     fovTouched = true;

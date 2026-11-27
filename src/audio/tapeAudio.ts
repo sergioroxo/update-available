@@ -16,7 +16,7 @@
  * ugly, so we simply never issue the request for an unknown name.
  */
 
-import { track, type Channel } from './mix';   // ⚑ S248 — the one mixer: every element below is tracked, so master and channel sliders reach it
+import { track, channelOf, channelOfElement, fileGain, scaleFor, subscribeMix, type Channel } from './mix';   // ⚑ S248 — the one mixer: every element below is tracked, so master and channel sliders reach it
 
 const AUDIO_BASE = 'assets/audio/';
 
@@ -745,9 +745,18 @@ export function stopClip(a: HTMLMediaElement | null): void {
 
 /** ⚑ S208 — is anything audible playing: a tape or the ad on the bus, or any one-shot or loop (a song, a jingle,
  *  a read-aloud, the ball)? The room's ambient bed does not count. The screensavers come on only in silence. */
-export function anythingPlaying(except: HTMLMediaElement | null = null): boolean {
+export function anythingPlaying(except: HTMLMediaElement | GaplessLoop | null = null): boolean {
   if (liveBus?.isPlaying()) return true;
   for (const a of liveOneShots) if (a !== except && !a.paused && !a.ended) return true;   // S337: a programme's own bed loop may be excepted
+  for (const l of liveLoops) if (l !== except && l.sounding) return true;   // ⚑ S429: a Web Audio loop is a sound playing too
+  return false;
+}
+/** ⚑ S429 (UiB job 38 D) — a sound of its own is playing, under which a programme's music lowers: a tape on the bus, or any clip that
+ *  is not an effect (a song, a film's sound, a room tone under a video, a voice). Presses, pings, chimes and ticks do not count. */
+export function otherSoundPlaying(except: GaplessLoop | null = null): boolean {
+  if (liveBus?.isPlaying()) return true;
+  for (const a of liveOneShots) if (!a.paused && !a.ended && (channelOfElement(a) ?? 'effects') !== 'effects') return true;
+  for (const l of liveLoops) if (l !== except && l.sounding) return true;
   return false;
 }
 
@@ -755,6 +764,7 @@ export function anythingPlaying(except: HTMLMediaElement | null = null): boolean
  *  playing, and resume exactly those on close — a clip that had ended stays ended */
 const heldOneShots = new Set<HTMLMediaElement>();
 export function setOneShotsPaused(paused: boolean): void {
+  for (const l of liveLoops) l.hold(paused);   // ⚑ S429: the menu holds a Web Audio loop where it is, and lets it go on from there
   if (paused) {
     for (const a of liveOneShots) if (!a.paused && !a.ended) { a.pause(); heldOneShots.add(a); }
   } else {
@@ -765,6 +775,7 @@ export function setOneShotsPaused(paused: boolean): void {
 
 /** A frame navigation cut ends the old scene's clips, including clips held by pause. */
 export function stopOneShots(): void {
+  for (const l of [...liveLoops]) l.end(0.05);   // ⚑ S429: a new year ends the last one's loop too
   for (const clip of [...liveOneShots]) stopClip(clip);
   heldOneShots.clear();
 }
@@ -773,10 +784,162 @@ export function stopOneShots(): void {
 export function playingNow(): string[] {
   const out: string[] = liveBus?.isPlaying() ? ['bus'] : [];
   for (const a of liveOneShots) if (!a.paused && !a.ended) out.push(a.src.split('/').pop() ?? a.src);
+  for (const l of liveLoops) if (l.sounding) out.push(l.name);
   return out;
 }
 
 export function setOneShotsMuted(muted: boolean): void {
   oneShotsMuted = muted;
   for (const a of liveOneShots) a.muted = muted;
+  for (const l of liveLoops) l.level();
+}
+
+/**
+ * ⚑ S429 (UiB job 38 D; his 26 Nov: "Why? What is the logic of stopping there? either the music is part of the scene or not"; and
+ * at 22:07:15, "a stop before every time it loops the song") — A LOOP THAT NEVER GAPS, played through Web Audio.
+ *
+ * GracePlatform's loop was a looping <audio> element. The file loops cleanly (64.000 s, tools/make_graceloop.py), but it is an MP3:
+ * LAME put 576 samples of encoder delay before the music and 576 of padding after it (its own header says so), and an element does not
+ * loop sample-accurately — at each wrap it seeks back and can play the padding and the seek, 50–100 ms of silence every 64 s.
+ * Here the file is decoded once into a buffer (loaded the way the room's models are, as a PlayCanvas asset: `setLoopDecoder`, app.ts)
+ * and played by an AudioBufferSourceNode whose loop points are the music's own first and last samples: the decoder's lead (if it left
+ * one) and the padding are outside them. The level is the element's was (its relative level × the file's gain × the music channel ×
+ * master), so the menu's sliders reach it; the one mute silences it without stopping it; the menu's pause holds it where it is.
+ * `duck` lowers it (and brings it back) under a sound of its own; nothing here starts it over.
+ */
+export interface LoopSpec {
+  /** the music's own length in samples at the file's rate (the encoder's delay and padding excluded) */
+  samples: number;
+  /** the file's sample rate */
+  rate: number;
+  /** what an untrimmed decode leaves after the music: the LAME padding less the decoder's 529-sample delay */
+  tailPad: number;
+}
+type LoopDecoder = (url: string, rate?: number) => Promise<{ ctx: AudioContext; buffer: AudioBuffer } | null>;
+let loopDecoder: LoopDecoder | null = null;
+/** app.ts hands the loader in (PlayCanvas's asset system and its sound manager's context); without one, a loop stays silent */
+export function setLoopDecoder(fn: LoopDecoder | null): void { loopDecoder = fn; }
+const liveLoops = new Set<GaplessLoop>();
+export interface LoopState {
+  ready: boolean; on: boolean; sounding: boolean; held: boolean; muted: boolean; position: number; level: number; duck: number;
+  loopStartSample: number; loopEndSample: number; bufferLength: number; sampleRate: number; starts: number; context: string;
+}
+export class GaplessLoop {
+  /** the caller's level inside its channel (the <audio> element's `volume` was this) */
+  rel = 1;
+  private ctx: AudioContext | null = null;
+  private buffer: AudioBuffer | null = null;
+  private loading = false;
+  private src: AudioBufferSourceNode | null = null;
+  private gain: GainNode | null = null;
+  private want = false;
+  private held = false;
+  private duckTo = 1;
+  /** where in the music it is (seconds from the loop's start) when it is not running; where it was started from when it is */
+  private pos = 0;
+  private startedAt = 0;
+  private loopStart = 0;
+  private loopEnd = 0;
+  /** how many times a source has been started (a resume after the menu counts; the probe checks nothing else starts it over) */
+  private starts = 0;
+  private unsub: (() => void) | null = null;
+  constructor(readonly name: string, private readonly spec: LoopSpec) {}
+  /** decode it ahead of its scene (no sound) */
+  prepare(): void {
+    if (this.buffer || this.loading || !loopDecoder || !isAudioAvailable(this.name)) return;
+    this.loading = true;
+    loopDecoder(REGISTRY[this.name], this.spec.rate).then((r) => {
+      this.loading = false;
+      if (!r) return;
+      this.ctx = r.ctx; this.buffer = r.buffer;
+      // the music's own samples: a decoder that honours LAME's gapless header gives exactly them; one that does not leaves its lead
+      //   (the encoder's delay plus its own) before them and the padding's remainder after
+      const k = r.buffer.sampleRate / this.spec.rate, music = this.spec.samples * k, extra = r.buffer.length - music;
+      const lead = extra <= 4 ? 0 : Math.max(0, Math.round(extra - this.spec.tailPad * k));
+      this.loopStart = lead / r.buffer.sampleRate;
+      this.loopEnd = Math.min(r.buffer.length, lead + Math.round(music)) / r.buffer.sampleRate;
+      if (this.want && !this.held) this.begin();
+    }).catch(() => { this.loading = false; });
+  }
+  /** play (from where it is); nothing happens if it is already playing */
+  start(): void {
+    if (this.want) return;
+    this.want = true; liveLoops.add(this);
+    onCue?.(this.name);
+    this.prepare();
+    if (this.buffer && !this.held) this.begin();
+  }
+  /** the scene's end: it fades over `fade` seconds and stops; a later `start` goes on from where it stopped */
+  end(fade = 1.5): void {
+    if (!this.want) return;
+    this.pos = this.position; this.want = false; liveLoops.delete(this);
+    const src = this.src, g = this.gain, ctx = this.ctx;
+    this.src = null; this.gain = null; this.unsub?.(); this.unsub = null;
+    if (src && g && ctx) {
+      const t = ctx.currentTime;
+      g.gain.cancelScheduledValues(t); g.gain.setValueAtTime(g.gain.value, t); g.gain.linearRampToValueAtTime(0, t + fade);
+      try { src.stop(t + fade + 0.02); } catch { /* already stopped */ }
+    }
+  }
+  /** the game menu: held where it is, and on from there */
+  hold(on: boolean): void {
+    if (on === this.held) return;
+    this.held = on;
+    if (on) { if (this.src) { this.pos = this.position; this.stopSource(); } }
+    else if (this.want && this.buffer) this.begin();
+  }
+  /** under a sound of its own: 0..1 of its level, eased (never stopped) */
+  set duck(v: number) { if (v !== this.duckTo) { this.duckTo = v; this.level(0.18); } }
+  get duck(): number { return this.duckTo; }
+  /** its level now (relative × the file's gain × the music channel × master × the duck; 0 while muted) */
+  level(tau = 0.03): void {
+    if (!this.gain || !this.ctx) return;
+    const target = oneShotsMuted ? 0 : Math.min(1, this.rel * fileGain(this.name) * scaleFor(channelOf(this.name))) * this.duckTo;
+    this.gain.gain.setTargetAtTime(target, this.ctx.currentTime, tau);
+  }
+  /** seconds into the music */
+  get position(): number {
+    const len = this.loopEnd - this.loopStart;
+    if (!this.src || !this.ctx || len <= 0) return this.pos;
+    return (this.pos + (this.ctx.currentTime - this.startedAt)) % len;
+  }
+  /** it is playing and can be heard (not held, not muted) */
+  get sounding(): boolean { return !!this.src && !this.held && !oneShotsMuted && this.ctx?.state === 'running'; }
+  get state(): LoopState {
+    const sr = this.buffer?.sampleRate ?? 0;
+    return { ready: !!this.buffer, on: this.want, sounding: this.sounding, held: this.held, muted: oneShotsMuted, position: Math.round(this.position * 1000) / 1000,
+      level: this.gain ? Math.round(this.gain.gain.value * 1000) / 1000 : 0, duck: this.duckTo, loopStartSample: Math.round(this.loopStart * sr),
+      loopEndSample: Math.round(this.loopEnd * sr), bufferLength: this.buffer?.length ?? 0, sampleRate: sr, starts: this.starts, context: this.ctx?.state ?? 'none' };
+  }
+  /** ⚑ S429 — the join, measured on the decoded samples (probes): the loudness of the last and first 10 ms against the whole, and the
+   *  step from the last sample to the first against the music's usual step from one sample to the next */
+  joinReport(): { rmsWhole: number; rmsTail: number; rmsHead: number; jump: number; stepMedian: number; stepP99: number } | null {
+    const b = this.buffer;
+    if (!b) return null;
+    const x = b.getChannelData(0), s0 = Math.round(this.loopStart * b.sampleRate), s1 = Math.round(this.loopEnd * b.sampleRate), win = Math.round(b.sampleRate / 100);
+    const rms = (a: number, n: number): number => { let q = 0; for (let i = a; i < a + n; i++) q += x[i] * x[i]; return Math.sqrt(q / n); };
+    const steps: number[] = [];
+    for (let i = s0 + 1; i < s1; i += 7) steps.push(Math.abs(x[i] - x[i - 1]));
+    steps.sort((p, q) => p - q);
+    const r = (v: number): number => Math.round(v * 10000) / 10000;
+    return { rmsWhole: r(rms(s0, s1 - s0)), rmsTail: r(rms(s1 - win, win)), rmsHead: r(rms(s0, win)), jump: r(Math.abs(x[s0] - x[s1 - 1])),
+      stepMedian: r(steps[Math.floor(steps.length / 2)]), stepP99: r(steps[Math.floor(steps.length * 0.99)]) };
+  }
+  private begin(): void {
+    if (!this.ctx || !this.buffer || this.src) return;
+    const ctx = this.ctx, src = ctx.createBufferSource(), g = ctx.createGain();
+    src.buffer = this.buffer; src.loop = true; src.loopStart = this.loopStart; src.loopEnd = this.loopEnd;
+    g.gain.value = 0;
+    src.connect(g); g.connect(ctx.destination);
+    if (ctx.state === 'suspended') ctx.resume().catch(() => { /* no gesture yet: PlayCanvas resumes it at the next press */ });
+    this.src = src; this.gain = g; this.startedAt = ctx.currentTime; this.starts++;
+    src.start(0, this.loopStart + this.pos);
+    this.level(this.starts === 1 ? 0.25 : 0.05);
+    this.unsub = subscribeMix(() => this.level());
+  }
+  private stopSource(): void {
+    try { this.src?.stop(); } catch { /* already stopped */ }
+    this.src?.disconnect(); this.gain?.disconnect();
+    this.src = null; this.gain = null; this.unsub?.(); this.unsub = null;
+  }
 }

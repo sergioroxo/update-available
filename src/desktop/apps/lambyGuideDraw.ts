@@ -37,7 +37,9 @@ export function drawGuidePointer(ctx: CanvasRenderingContext2D, r: GuideHit, fro
 /** S271 (his 31 Oct: "plenty of multiple lambies that need to be fixed") — in a headset Lamby steps OUT of the
  *  screen into the room (VR-05); while he is out there, the balloon on the glass is drawn without him */
 export const guideBody = { inRoom: false };
-export function drawLambyGuide(ctx: CanvasRenderingContext2D, skin: GuideEra, state: GuideView, hits: GuideHit[], size = { w: 512, h: 384 }, remoteActions: string[] = []): GuidePaint {
+/** ⚑ S429 (UiB job 38 F2) — a line of text on the page under a balloon (logical px): the balloon's edges keep out of it */
+export interface PageLine { x0: number; x1: number; y0: number; y1: number }
+export function drawLambyGuide(ctx: CanvasRenderingContext2D, skin: GuideEra, state: GuideView, hits: GuideHit[], size = { w: 512, h: 384 }, remoteActions: string[] = [], pageLines: PageLine[] = [], protect: string[] = []): GuidePaint {
   const out: GuidePaint = { rings: [], balloon: false };
   if (state.era !== skin) return out;
   const W = size.w, H = size.h, tx = W - (skin === 'e3' ? 182 : 108), ty = H - 20;
@@ -64,11 +66,64 @@ export function drawLambyGuide(ctx: CanvasRenderingContext2D, skin: GuideEra, st
   const multiple = state.beat === 'pledge' || state.beat === 'consent' || state.beat === 'steps';
   const selected = multiple ? targets : targets.slice(0, 1);
   const pointing = state.rung === 'show' || state.rung === 'start' || state.rung === 'file';   // S401: the file
-  const w = Math.min(state.rung === 'choice' ? 304 : 272, W - 8), x = W - w - 4;   // ⚑ S362 / H33: three buttons need a wider balloon
+  let w = Math.min(state.rung === 'choice' ? 304 : 272, W - 8), x = W - w - 4;   // ⚑ S362 / H33: three buttons need a wider balloon
   ui.setFont(ctx, 11);
-  const h = Math.max(112, 58 + ui.wrapText(ctx, state.text, w - (skin === 'e4' ? 66 : 36)).length * 15);
+  // ⚑ S429 (UiB job 38 F2; the headset run's frame: "an empty band between its text and Got it") — 2016's balloon is as tall as its
+  //   words and its buttons (14 above the first line, 15 a line, 6 under the last, the buttons' 29); the other eras keep their 112
+  //   floor (their lamb stands beside it)
+  const heightFor = (ww: number): number => {
+    const n = ui.wrapText(ctx, state.text ?? "", ww - (skin === "e4" ? 66 : 36)).length;
+    return skin === 'e3' ? 49 + n * 15 : Math.max(112, 58 + n * 15);
+  };
+  let h = heightFor(w);
   let y = W < 300 ? 2 : H - 22 - h - 70;
   if (pointing && selected.some(r => r.x < x + w && r.x + r.w > x && r.y < y + h && r.y + r.h > y)) y = 26;
+  // ⚑ S429 (F2; "its edges slice the page's lines": "Youth drop-in · Quay Street" across its top, the Trending item across its foot,
+  //   and words under its left side) — 2016's balloon never cuts a line of the page under it in half: no line crosses its top or its
+  //   foot, and none crosses its left or right side. It may cover whole lines. It keeps to the right of the platform, over the
+  //   taskbar's Lambient; it moves up or down (at most 90 px from where it stood) and, where the page's columns need it, narrows (to
+  //   248, 224 or 200 px). Of the places it may take, in this order: it never lies over the press the step waits for (`protect`: the
+  //   path's own controls, its own pointer's), then it cuts no line, then it leaves the page's other controls whole (a button cut in half
+  //   by its edge last of all, one it covers next), then the nearest, the widest, a little clear of the lines before touching them.
+  //   An UNASKED line (a tip after a stall) keeps off the step's own press, because a visitor who has not asked may press it through
+  //   the balloon at any moment (the consent card's Allow lay under one); a line she ASKED for is read first and put away with Got it,
+  //   so for it a clean edge comes first and only its own pointer's target is kept clear.
+  if (skin === 'e3' && pageLines.length) {
+    const guard = new Set([...(state.rung === 'asked' ? [] : protect), ...state.targets]);
+    const controls = hits.filter((r) => !r.id.startsWith('lg-') && !r.id.startsWith('mirror') && r.w * r.h < W * H * 0.2);
+    const linesCut = (xx: number, ww: number, yy: number, hh: number, M: number): number => {
+      // the tail under its foot (6 × 6, toward Lambient's tray) lies over the page too: a line under it is cut by it
+      const tl = Math.max(xx + 8, Math.min(xx + ww - 8, tx + 7)), tr = tl + 6;
+      let n = 0;
+      for (const l of pageLines) {
+        const besideH = l.y1 > yy && l.y0 < yy + hh, besideW = l.x1 > xx && l.x0 < xx + ww;
+        if ((besideW && ((l.y0 - M < yy && yy < l.y1 + M) || (l.y0 - M < yy + hh && yy + hh < l.y1 + M)))
+          || (besideH && ((l.x0 < xx && xx < l.x1) || (l.x0 < xx + ww && xx + ww < l.x1)))
+          || (l.x1 > tl && l.x0 < tr && l.y0 < yy + hh + 6 + M && l.y1 > yy + hh)) n++;
+      }
+      return n;
+    };
+    const pinnedTop = pointing && y === 26;
+    let best: { score: number; w: number; x: number; y: number; h: number } | null = null;
+    for (const M of [2, 0]) {
+      for (const [k, ww] of [w, 248, 224, 200].filter((v, i, a) => v <= w && a.indexOf(v) === i).entries()) {
+        const hh = heightFor(ww), xx = W - ww - 4, base = pinnedTop ? 26 : H - 22 - hh - 70, lo = 26, hi = H - 22 - hh - 8;
+        for (let d = -90; d <= 90; d++) {
+          const yy = base + d;
+          if (yy < lo || yy > hi) continue;
+          let guarded = 0, cut = 0, covered = 0;
+          for (const r of controls) {
+            if (r.x >= xx + ww || r.x + r.w <= xx || r.y >= yy + hh + 6 || r.y + r.h <= yy) continue;
+            if (guard.has(r.id)) guarded++;
+            else if (r.x >= xx && r.x + r.w <= xx + ww && r.y >= yy && r.y + r.h <= yy + hh) covered++; else cut++;
+          }
+          const score = guarded * 1e9 + linesCut(xx, ww, yy, hh, M) * 1e6 + cut * 1e5 + covered * 1e4 + (M ? 0 : 5000) + Math.abs(d) * 10 + k;
+          if (!best || score < best.score) best = { score, w: ww, x: xx, y: yy, h: hh };
+        }
+      }
+    }
+    if (best) ({ w, x, y, h } = best);
+  }
   out.box = { x, y, w, h };
   const cx = skin === 'e3' ? tx + 10 : W - 48, cy = H - 59;
   const left = selected.length > 0 && selected[0].x + selected[0].w / 2 < cx;
