@@ -501,6 +501,25 @@ export function mountXrFrame(app: pc.Application, head: pc.Entity, opts: {
     }
     if (line) lines.push(line);
     if (lines.length > 2) { lines.length = 2; lines[1] = lines[1].slice(0, -1) + '…'; }
+    // ⚑ S432b — two lines are balanced, not filled greedily: the greedy break left "press." alone under the hands' line
+    //   (his 24 Nov rule on the frames: no line cut short, nothing that looks broken). A break after a comma or a full stop
+    //   wins when one fits (the line splits where it pauses: "…Pick one up, / or pinch…", not "…Pick one / up, or…");
+    //   among those, or among all breaks if none fits, the one that makes the longer line shortest. Both fit the 980 px.
+    else if (lines.length === 2) {
+      const words = hint.split(' ');
+      const pick = (pausesOnly: boolean): string[] | null => {
+        let best: string[] | null = null, bestW = Infinity;
+        for (let k = 1; k < words.length; k++) {
+          if (pausesOnly && !/[.,;:]$/.test(words[k - 1])) continue;
+          const a = words.slice(0, k).join(' '), b = words.slice(k).join(' ');
+          const w = Math.max(hctx.measureText(a).width, hctx.measureText(b).width);
+          if (w <= 980 && w < bestW) { best = [a, b]; bestW = w; }
+        }
+        return best;
+      };
+      const best = pick(true) ?? pick(false);
+      if (best) lines.splice(0, 2, ...best);
+    }
     lines.forEach((l, i) => hctx.fillText(l, 512, lines.length === 1 ? 68 : 46 + i * 44));
     hctx.textAlign = 'left';
     hintTex.upload();
