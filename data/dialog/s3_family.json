@@ -5,6 +5,7 @@
   "app": {
     "title": "GracePlatform · Answer the mothers",
     "lessonHeading": "Lesson 3 · Answer the mothers",
+    "_retiredS433lessonHeading": "⚑ S433 (UiB job 40) — no longer drawn: the lesson's head carries the step (TRAINING · STEP 4 OF 4), what it teaches (e3_training.json lessons.family.teaches) and the NOW line; `intro` stays under it. Kept as the record.",
     "sentByLesson": "sent by Lambient · lesson",
     "_docS424": "⚑ S424 (UiB job 35 Part D, Act I beat 7; storyboard 2016_SECOND_HALF §3): the job is Lesson 3. `lessonHeading` stands over its intro; Lambient answers Maureen itself to show how (the reply `lambient.lessonReply`, tagged `sentByLesson`, filed with `lambient.lessonWitness`), then it is her turn with Annette.",
     "heading": "FAMILY LINE",

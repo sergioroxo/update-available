@@ -2761,7 +2761,7 @@
     ],
     [
      "Beats",
-     "15"
+     "16"
     ]
    ],
    "tabs": {
@@ -4061,15 +4061,21 @@
         "where": "Where: the workstation."
        },
        {
+        "label": "Welcome to GracePlatform",
+        "opt": "",
+        "hint": "Training step 1 of 4: GracePlatform shows you around, one thing at a time. Press Next on its card; answer Lambient’s question when it asks.",
+        "where": "Where: the workstation."
+       },
+       {
         "label": "Lambient's question",
         "opt": "",
         "hint": "Answer the assistant's question — either answer works.",
         "where": "Where: the workstation."
        },
        {
-        "label": "Lesson 1 · A testimony",
+        "label": "Step 2 · Correct a testimony",
         "opt": "",
-        "hint": "Begin Lesson 1: Lambient makes the first cut in Renata’s film; apply or skip the next two rules, then send it. Then return to Today.",
+        "hint": "Step 2: Begin opens it. Lambient shows you the first rule; the next two are yours.",
         "where": "Where: the workstation."
        },
        {
@@ -4079,15 +4085,15 @@
         "where": "Where: the workstation."
        },
        {
-        "label": "Lesson 2 · The places list",
+        "label": "Step 3 · The places list",
         "opt": "",
-        "hint": "Lesson 2 opens once Lesson 1 is done: add The Wick to the list, or leave it off.",
+        "hint": "Step 3, lit when step 2 is done: add The Wick to the list, or leave it off.",
         "where": "Where: the workstation."
        },
        {
-        "label": "Lesson 3 · The mothers",
+        "label": "Step 4 · The mothers",
         "opt": "",
-        "hint": "Lesson 3: Lambient answers the first mother; then Annette is yours. Send a reply, or don’t.",
+        "hint": "Step 4: Lambient answers the first mother to show you; then Annette is yours.",
         "where": "Where: the workstation."
        },
        {
@@ -4105,7 +4111,7 @@
        {
         "label": "Vera · 2014",
         "opt": "",
-        "hint": "Her story as it was published, then her own words. Close returns to the board; her Notes come to the phone.",
+        "hint": "Her story as it was published. See what you wrote turns the page to her own words. Close returns to the board; then her own Notes, on her phone.",
         "where": "Where: the workstation."
        },
        {

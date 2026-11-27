@@ -1,0 +1,68 @@
+{
+ "_doc": "⚑ S433 (UiB job 40, the welcome; his 26 Nov in the headset: \"why did it start already inside of the lessons instead of the actual grace platform training … it's not related to the tutorial\", \"I don't fully remember what I had to do\"; and asked what it should show: \"It should welcome right from the start to the turtoral of the system. Like this needs that logic of someone being introduced to the system\") — GRACEPLATFORM'S TRAINING, IN FOUR STEPS. Step 1 is the welcome: from Sign in the platform introduces itself to a new story caretender, one thing at a time and each on her press (no clock: his October rule and job 38's): the welcome page (`hello`), then the board, a lesson, Lambient (its own question, the consent card, then its button), her phone in the Handset Window and her record, each ringed in place with the tour's card under the board's tiles (`tour`); This week (pauses.json e3) closes the welcome, and its Begin opens step 2. Steps 2–4 are the three lessons, the board's tiles; each lesson's page is headed by its step (`kicker`, with four pips), says what the step teaches (the lesson's own heading line, s3_queue/s3_places/s3_family), and, tagged NOW, the one thing to do now (`lessons.*.now`): the loudest line on the page. It is the platform's own onboarding voice: warm, efficient, commercial, the charm the operable register allows; it collapses later, in the review (never early, and never at Vera). Claude's words; his edit wins.",
+ "title": "GracePlatform · Welcome",
+ "kicker": "TRAINING · STEP {n} OF {m}",
+ "kickerNamed": "TRAINING · STEP {n} OF {m} · {name}",
+ "kickerDone": "TRAINING · DONE",
+ "nowTag": "NOW",
+ "hello": {
+  "name": "WELCOME",
+  "heading": "Welcome to GracePlatform, Vera.",
+  "body": [
+   "You're one of our new story caretenders. You'll help women's stories reach the women who need them, gently and safely.",
+   "Your training has four steps: this welcome, then three short lessons. First, a quick look around."
+  ],
+  "tourLabel": "ON THE TOUR",
+  "parts": [
+   "Your board",
+   "A lesson",
+   "Lambient",
+   "Your phone",
+   "Your record"
+  ],
+  "button": "Show me around"
+ },
+ "tour": {
+  "_doc": "⚑ S433 — the tour's card, one per thing shown, under the board's tiles (never over one); the thing itself ringed where it is. `kicker` counts the five things of `hello.parts`; Lambient's is two cards (its question, the consent card, with its own kicker, then its button, with its answer to her: s3_queue.json lambient acceptReply / declineReply, said here once, in its tag).",
+  "kicker": "WELCOME · {n} OF 5 · {name}",
+  "next": "Next",
+  "board": "This is your board. Work comes to it as cards; this week, the cards are your lessons. They open in order.",
+  "lesson": "The lit card is your next lesson. Lessons are real work, and each one shows you what to do now, marked NOW.",
+  "lambient": "Lambient's button is here, on your taskbar. Press it whenever you're not sure what to do.",
+  "phone": "Your phone is here, in the Handset Window. Messages wait until a lesson is done; open them when you like.",
+  "record": "GracePlatform keeps a record of your work, for continuity of care. Read it any time: My account · activity, at the top."
+ },
+ "asked": "GracePlatform is showing you around. Close this, and Next on its card goes on.",
+ "_docAsked": "⚑ S433 — what Lambient's taskbar button answers while the welcome is up (help asked for is uncapped, R28 amendment 2): one line, Lambient's voice. While its balloon is up the welcome's card waits (one voice at a time) and is back when the balloon closes. Nothing is said unasked during the welcome.",
+ "lessons": {
+  "_doc": "⚑ S433 — each lesson's head: `teaches`, what the step is for, beside its kicker; and its NOW line by the moment of the lesson: `watch` while Lambient shows how (nothing of hers to press), `cutting` while a cut she applied is made in Renata's film, `turn` when the press is hers, `send` when Renata's story waits to be sent, `done` when the lesson is done and Back to Today leads on. Short enough for one line beside Back to Today. `name` is the step's name on the welcome's and the board's cards.",
+  "testimony": {
+   "name": "CORRECT A TESTIMONY",
+   "teaches": "Cut Renata's story for the campaign.",
+   "now": {
+    "watch": "Nothing to press. Lambient shows you.",
+    "cutting": "Nothing to press while the cut is made.",
+    "turn": "Apply or skip the rule below.",
+    "send": "Send Renata's story to the network.",
+    "done": "Back to Today, for step 3."
+   }
+  },
+  "places": {
+   "name": "THE PLACES LIST",
+   "teaches": "Keep the places list up to date.",
+   "now": {
+    "turn": "Add The Wick, or leave it off.",
+    "done": "Back to Today, for step 4."
+   }
+  },
+  "family": {
+   "name": "ANSWER THE MOTHERS",
+   "teaches": "Reply to the mothers with our scripts.",
+   "now": {
+    "watch": "Nothing to press. Lambient shows you.",
+    "turn": "Answer Annette, or don't send a script.",
+    "done": "Back to Today. Your training is done."
+   }
+  }
+ }
+}

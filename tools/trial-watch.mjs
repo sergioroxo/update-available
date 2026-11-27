@@ -92,6 +92,8 @@ function snapshot() {
   //   headset has in, and the frame's plate as it stands (`__xrFrame.hintNow()`: the line due or showing; `hintShown()`: the plate up)
   try { const s = [...(w.__app?.xr?.input?.inputSources ?? [])]; out.inputs = { pads: s.filter((x) => !x.hand && x.targetRayMode === 'tracked-pointer').length, hands: s.filter((x) => !!x.hand).length }; } catch { /* */ }
   try { const f = w.__xrFrame; out.hint = (f?.hintNow ?? f?.hintText)?.() ?? null; out.hintUp = f?.hintShown?.()?.text ?? null; } catch { /* */ }
+  // ⚑ S435 (UiB job 40 C4) — a balloon of Lamby's / Lambient's up (the guide's own state, read-only): the hands' line waits for it
+  try { out.balloon = !!w.__os?.lambyGuide?.active; } catch { /* */ }
   out.url = location.search;
   return out;
 }
@@ -180,7 +182,7 @@ async function main() {
       if (s.newBeats.length) ev.beats = s.newBeats;
       if (s.newClose.length) ev.close = s.newClose;
       if (Object.keys(ev).length) log({ kind: 'event', ...ev, era: s.era, phone: s.phone });
-      const hands = s.inputs ? { ...s.inputs, line: !!HANDS_LINE && s.hint === HANDS_LINE, up: !!HANDS_LINE && s.hintUp === HANDS_LINE } : null;   // S432
+      const hands = s.inputs ? { ...s.inputs, line: !!HANDS_LINE && s.hint === HANDS_LINE, up: !!HANDS_LINE && s.hintUp === HANDS_LINE, balloon: !!s.balloon } : null;   // S432 · S435: the balloon
       log({ kind: 'tick', era: s.era, phone: s.phone, fps: s.fps, ms: s.ms, draws: s.draws, xr: s.xr, cam: s.cam, xrc: s.xrc, ab: s.ab, hands });
       if (s.draws) peak.draws = Math.max(peak.draws, s.draws);
       if (s.fps && s.xr) peak.minFps = Math.min(peak.minFps, s.fps);

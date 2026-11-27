@@ -412,7 +412,8 @@ const closeEdge = () => q(() => { const r = window.__graceQueue().rects.find((x)
 const c1 = await closeEdge();
 if (await q(() => ['evening', 'group'].includes(window.__graceQueue().phone.screen))) await threadCheck('Mam\'s thread beside the memory page');
 await shot('12', 'memory-published');
-await ff(page, 40);
+// ⚑ S434 (UiB job 40 B1) — the page turns on her press now (it turned by itself in its reading time before): See what you wrote
+await ff(page, 2); await tryPress('memory-see'); await ff(page, 0.5);
 const c2 = await closeEdge();
 check('C4', 'the memory page\'s Close stays on the right in both states', !!c1 && !!c2 && c1.right === c2.right && c2.x > 676 * 0.4, `published ${JSON.stringify(c1)} → turned ${JSON.stringify(c2)}`);
 await shot('13', 'memory-turned');

@@ -128,6 +128,7 @@ const CONDITIONS: Record<string, Condition> = {
   migrated: () => has('subject-migrated'),
   signedIn: () => has('e3-signed-in') || ledger.lamby.some((l) => l.id === 'e3_lambient_consent'),
   consentAnswered: () => ledger.lamby.some((l) => l.id === 'e3_lambient_consent'),
+  welcomeDone: () => has('e3-welcome-done'),   // ⚑ S433 (UiB job 40) — GracePlatform's welcome, the training's step 1, shown through
   renataWorked: () => [1, 3, 7].every(id => ledger.graceQueue.some(c => c.cardId === id)),
   pipelineSent: () => veraDay.distributed,
   veraRecordOpened: () => veraDay.recordOpened,

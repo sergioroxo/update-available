@@ -189,13 +189,24 @@
     },
     "e3": {
       "signin": {
-        "tip": "Welcome to GracePlatform! Press Sign in to begin your first shift.",
+        "tip": "Sign in, and GracePlatform will show you around.",
+        "_retiredS433tip": "⚑ S433 (UiB job 40) — was \"Welcome to GracePlatform! Press Sign in to begin your first shift.\": GracePlatform's own welcome comes after Sign in now (\"Welcome to GracePlatform, Vera.\"), so Lambient's stall tip at Sign in points to it instead of saying it first.",
         "here": "Sign in is right here.",
         "again": "Your shift starts when you sign in.",
         "target": [
           "signin"
         ],
         "act": "focus:signin"
+      },
+      "welcome": {
+        "_docS433": "⚑ S433 (UiB job 40) — the training's step 1, GracePlatform's welcome (map.json `welcome`). Nothing is said unasked while it runs (graceQueueLite guideSilent): `tip`, `here` and `again` are said only if a review route lifts that; Lambient's button, asked, answers with e3_training.json `asked`. The target is the welcome card's Next (and the warm path glow on it). Claude's words; his edit wins.",
+        "tip": "GracePlatform is showing you around. Next on its card goes on.",
+        "here": "Next is right here.",
+        "again": "One thing at a time. Next shows the next.",
+        "target": [
+          "welcome-next"
+        ],
+        "act": "focus:welcome-next"
       },
       "consent": {
         "tip": "Lambient has a quick question. Answer it and we're off.",
@@ -208,9 +219,10 @@
         "act": "focus:consent-allow"
       },
       "work": {
-        "tip": "Your training is on the board. Lesson 1 is lit: begin there.",
-        "here": "Lesson 1 starts here.",
-        "again": "One lesson at a time. Lesson 1 comes first.",
+        "tip": "Your training is on the board. Step 2 is lit: begin there.",
+        "here": "Step 2 starts here.",
+        "again": "One step at a time. Step 2 comes first.",
+        "_retiredS433": "⚑ S433 (UiB job 40: the lessons are the training's steps 2–4) — was `tip` \"Your training is on the board. Lesson 1 is lit: begin there.\", `here` \"Lesson 1 starts here.\", `again` \"One lesson at a time. Lesson 1 comes first.\"",
         "_retiredS424": "⚑ S424 (UiB job 35 Part D, Act I: the board is the training, lessons in order) — was `tip` \"Pick a card on the board and work it through to the end.\", `here` \"Any card will do. Start with the first.\", `again` \"One card at a time. The first one is fine.\" (any card no longer opens: the next lesson is lit). `week-begin` (This week's Begin) is the first target now.",
         "target": [
           "week-begin",
@@ -254,8 +266,9 @@
         "act": "focus:vera-kit-close"
       },
       "places": {
-        "tip": "Lesson 2 is lit on the board: the places list.",
-        "here": "Lesson 2 is the second card.",
+        "tip": "Step 3 is lit on the board: the places list.",
+        "here": "Step 3 is the second card.",
+        "_retiredS433": "⚑ S433 — was `tip` \"Lesson 2 is lit on the board: the places list.\", `here` \"Lesson 2 is the second card.\"",
         "_retiredS424": "⚑ S424 — was `tip` \"Next on the board: the places list. Either answer is recorded.\", `here` \"The places list is the second card.\"",
         "again": "Add the place, or leave it off.",
         "target": [
@@ -267,8 +280,9 @@
         "act": "focus:task-1"
       },
       "family": {
-        "tip": "Lesson 3 is lit: answer the mothers.",
-        "here": "Lesson 3 is the third card.",
+        "tip": "Step 4 is lit: answer the mothers.",
+        "here": "Step 4 is the third card.",
+        "_retiredS433": "⚑ S433 — was `tip` \"Lesson 3 is lit: answer the mothers.\", `here` \"Lesson 3 is the third card.\"",
         "_retiredS424": "⚑ S424 — was `tip` \"Next: the mothers. Two are waiting.\", `here` \"Answer the mothers is the third card.\"",
         "again": "Send a reply, or don’t send a script.",
         "_docS403": "⚑ S403 (UiB job 30 B1): `tip` was \"Next: the family calls. Three parents are waiting.\", `here` \"The family calls are the third card.\"; Ruth and the parents' circle reply left, so `family-sel-2` and `family-reply-r_group` are no longer targets.",

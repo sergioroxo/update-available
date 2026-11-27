@@ -233,7 +233,9 @@ const PREFER = [
   // ⚑ S425 (UiB job 35 Part D, Act II) — 2016's memory: Look back (never its Not now), See what you wrote, then Close (Kindredraft's
   //   Install, As sent and Close record are retired; her Notes come with her own words on the page, or over the board after Close)
   // ⚑ S426 — and her forward in the group (only ever a candidate with --forward yes: guidedAllows)
-  /^vera-send$|^memory-look$|^memory-see$|^vera-kit-approve$|^vera-take-down$|^mirror:forward-link$/i,
+  // ⚑ S433 (UiB job 40) — and GracePlatform's welcome after Sign in: Show me around / Next on each card (`welcome-next`), the one
+  //   press each of its steps waits for (Lambient's question inside it is answered by the /allow/ tier below)
+  /^vera-send$|^memory-look$|^memory-see$|^vera-kit-approve$|^vera-take-down$|^mirror:forward-link$|^welcome-next$/i,
   /^vera-send-close$|^memory-close$|^vera-kit-close$/i,
   // ⚑ S245 — the opening film (96 s) is MANDATORY and has no Skip: Show me is the only way on, and the walker sits
   //   the whole film out (stallCap below; the scripted entrance waits for the step after it).

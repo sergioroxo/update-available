@@ -155,6 +155,8 @@ import { StartMenuMap } from '../desktop/apps/startMenuMap';
 import { gameMenuBus } from '../state/gameMenuBus';
 import startCopy from '../../data/strings/slice.json';
 import { StartPanel } from '../desktop/apps/startPanel';   // S229 / W1-A6
+import training from '../../data/strings/e3_training.json';   // ⚑ S433 — the welcome and the training's frame
+import { drawKicker, drawNowRow, kickerHeight, lessonNow, lessonNowMax, lessonStep, lessonTeaches, TRAINING_STEPS, type LessonKey } from '../desktop/apps/trainingPanel';
 
 /** re-exported from its Session-64 home so `era3Devices.ts` keeps its import;
  *  the type moved to `desktop/apps/comments.ts` when that module took over the
@@ -306,6 +308,18 @@ const FOUR_JOBS = ['testimony', 'places', 'family', 'group'];
 const LESSONS = ['testimony', 'places', 'family'];
 /** ⚑ S424 — Lesson 1's first rule (Soften the term): Lambient makes this cut itself, in front of her ("Watch") */
 const LESSON_FIRST = 1;
+/**
+ * ⚑ S433 (UiB job 40; his 26 Nov: "It should welcome right from the start to the turtoral of the system. Like this needs that logic
+ * of someone being introduced to the system") — THE WELCOME, the training's step 1, from Sign in: the welcome page (`hello`), then the
+ * system shown one thing at a time, each ringed in place with the tour's card under the board's tiles: the board, a lesson, Lambient
+ * (its question — the consent card — then its button, with its answer to her), her phone in the Handset Window, her record. Every step
+ * moves on her press (Next, or her answer to Lambient); nothing here has a clock. After `record`, This week closes the welcome and its
+ * Begin opens step 2 (Lesson 1). The lessons are steps 2–4 (e3_training.json). Nothing of Lambient's is said unasked while it runs.
+ */
+const WELCOME_STEPS = ['hello', 'board', 'lesson', 'consent', 'lambient', 'phone', 'record'] as const;
+type WelcomeStep = typeof WELCOME_STEPS[number];
+/** the tour's five things (e3_training.json `hello.parts`), by the step that shows each */
+const WELCOME_PART: Partial<Record<WelcomeStep, number>> = { board: 1, lesson: 2, consent: 3, lambient: 3, phone: 4, record: 5 };
 /* (⚑ S428 (UiB job 38 A2 row 3, A3) — Lesson 2 no longer waits for Heartwood's offer to be answered or let go: finishing a lesson
  *  opens the next. S424's HEARTWOOD_FAILSAFE (30 s, then Lesson 2 lit anyway) is retired with that wait; the offer is not made once
  *  she has opened Lesson 2 (app.ts). 40a59042 holds them.) */
@@ -387,7 +401,7 @@ const ARRIVAL = (updates as unknown as {
 
 const MALTA = d.phone.malta;
 /** ⚑ S428 — 2016's chain, named (the Start map's Now, Lambient's asked line): e3_mirror.json `chain` */
-const CHAIN = (mirrorCopy as unknown as { chain: Record<string, { label: string; hint: string }> & { lambientPhone: string } }).chain;
+const CHAIN = (mirrorCopy as unknown as { chain: Record<string, { label: string; hint: string }> & { lambientPhone: string; lambientNotes: string } }).chain;
 /** ⚑ S428 — whose messages the chain waits on (their threads are opened by "Take me there") */
 const MAM_FROM = mirrorCopy.events.find((e) => e.id === 'decision')?.from ?? 'Mam';
 const NUALA_FROM = mirrorCopy.events.find((e) => e.id === 'nuala')?.from ?? 'Nuala';
@@ -480,8 +494,11 @@ export class GraceQueueLite {
   }
   lambyGuidePaint: GuidePaint = { rings: [], balloon: false };
 
-  get guideSilent(): boolean { return this.kitPopin || this.personalQuiet || this.veraPage === 'record' || veraDay.quiet || this.startMap.active || this.phoneInHand || this.pauseOpen || !!this.saver
-    || ['dark', 'boot', 'install'].includes(this.mode) || this.mode === 'list' || this.playing; }
+  // ⚑ S434 — and while her Notes' notification waits (`memoryStage` 'notice'): Lambient says nothing unasked beside her own Notes, and its
+  //   button is answered (ask-only; the map's quiet beat had hidden it, so a press there did nothing)
+  get guideSilent(): boolean { return this.kitPopin || this.personalQuiet || this.memoryStage === 'notice' || this.veraPage === 'record' || veraDay.quiet || this.startMap.active || this.phoneInHand || this.pauseOpen || !!this.saver
+    || ['dark', 'boot', 'install'].includes(this.mode) || this.mode === 'list' || this.playing
+    || this.welcome !== null; }   // ⚑ S433 — the welcome is the platform's own voice: nothing of Lambient's is said unasked over it
   /**
    * ⚑ S428 (UiB job 38 B3; HEADSET_RUN answer e: "I don't have Lamby here"; G2, his 15 Oct: help asked for is uncapped) — LAMBIENT'S
    * TASKBAR BUTTON STAYS ON EVERY OPERABLE SURFACE: the board, every job page, the bare desktop, and beside the Handset Window
@@ -508,7 +525,8 @@ export class GraceQueueLite {
   get tvMomentFree(): boolean {
     return this.mode === 'board' && !this.veraPage && !this.openSurface && !this.lambPriority && !this.personalQuiet
       && !this.pauseOpen && !this.saver && !this.startMap.active && !this.minimised && !this._systemModal
-      && !this.kitPopin && !this.phone.voiceBusy && this.phone.queued === 0 && !this.floppy.open && !this.lambyGuide?.active;
+      && !this.kitPopin && !this.phone.voiceBusy && this.phone.queued === 0 && !this.floppy.open && !this.lambyGuide?.active
+      && this.welcome === null;   // ⚑ S433 — never during the welcome
   }
   /** ⚑ S431 (UiB job 39 C; his headset run: "if I continue it should just go back to their space") — the page she has open on the
    *  platform: '' on the board at rest; a lesson (the list's open job) or another page (the send, the record, the kit) otherwise. A new
@@ -774,6 +792,16 @@ export class GraceQueueLite {
   private chipReturn: { mode: Mode; surface: TaskSurface | null; page: 'send' | 'record' | 'kit' | null } | null = null;
   /** the chip's lit step as last drawn — the redraw clock moves only when it changes */
   private consent: 'allowed' | 'declined' | null = null;
+  /** ⚑ S433 — the welcome's step (an index of WELCOME_STEPS), or null when it is not running */
+  private welcome: number | null = null;
+  /** ⚑ S433 — Lambient's answer to her answer, said once on the welcome's Lambient card (it was its lane line under This week) */
+  private welcomeReply: string | null = null;
+  /** ⚑ S433 — This week as the welcome's last card (its lead closes the tour), not reopened from the board */
+  private weekFromWelcome = false;
+  /** ⚑ S433 — what the welcome's card is showing, ringed where it is (resolved at the end of `draw`, once every rect is known) */
+  private welcomeRing: string | Rect | null = null;
+  /** ⚑ S433 — the welcome's step she is on ('hello' … 'record'), or null (read by the probes, the harness and the walker) */
+  get welcomeStep(): WelcomeStep | null { return this.welcome === null ? null : WELCOME_STEPS[this.welcome]; }
   private wakeWord = false;
   private seenBoard = false;
   private arrivalT = -1;   // < 0 = not running
@@ -987,8 +1015,9 @@ export class GraceQueueLite {
     // ⚑ S332 — and not in the one frame between Renata's last rule and the send page the platform is about to open
     // ⚑ S425 — and her memory page, once it is still (her Notes have come): Nuala's message lands on it, the kit may come over it
     // ⚑ S428 — a minimised window is at rest too (her phone beside it still brings its news; nothing brings the window back)
+    // ⚑ S433 — and not while GracePlatform's welcome is showing her the platform (one voice at a time)
     this.phone.atRest = (this.mode === 'signin' || ((this.mode === 'board' || this.mode === 'done') && !this.veraPage && !this.openSurface
-      && !(this.subComplete(SUBMISSIONS[0]) && !veraDay.distributed)))
+      && !(this.subComplete(SUBMISSIONS[0]) && !veraDay.distributed) && this.welcome === null))
       && !this.lambPriority && !this.pauseOpen && !this.saver && !this.startMap.active
       && !this.wickConducting && !this.deskConducting && !this.cascadeConduct && !this._systemModal
       && !voiceHeld();   // ⚑ S390 — and not while the teaching TV's conducted tape holds the floor (the phone waits, then delivers)
@@ -1131,10 +1160,10 @@ export class GraceQueueLite {
   }
   private get trainingDone(): boolean { return LESSONS.every((id) => this.jobDone(id)); }
   /** THIS WEEK, opened: first after her answer to Lambient, or again from the board's button */
-  private openWeek(): void { this.pauseOpen = true; this.bump(); }
+  private openWeek(): void { this.pauseOpen = true; this.weekFromWelcome = false; this.bump(); }
   /** This week's Begin: the card goes and the lit lesson opens (if none is lit, the card only closes) */
   private beginLesson(): void {
-    this.pauseOpen = false;
+    this.pauseOpen = false; this.weekFromWelcome = false;
     const i = this.litLessonIndex();
     if (i >= 0) this.openTask(i); else this.bump();
   }
@@ -1326,8 +1355,10 @@ export class GraceQueueLite {
     if (!this.fourJobsDone || !['board', 'done', 'list'].includes(this.mode) || this.phone.endAnswered) return null;
     const p = this.phone, glass = (screen: string): boolean => p.screenNow === screen && !this.floppy.open;
     const C = CHAIN as Record<string, { label: string; hint: string }>;
+    // ⚑ S434 (UiB job 40 Part B item 2) — at her Notes (their notification, the Notes open) Lambient's asked line is `lambientNotes`:
+    //   it says nothing of her phone or her Notes (they are hers; GracePlatform never sees them), where `lambientPhone` pointed her there
     const at = (key: string, take: string | null, onPhone: boolean): { step: string; label: string; hint: string; lambient: string; take: string | null } =>
-      ({ step: key, label: C[key].label, hint: C[key].hint, lambient: onPhone ? CHAIN.lambientPhone : C[key].hint, take });
+      ({ step: key, label: C[key].label, hint: C[key].hint, lambient: key === 'notesNotice' || key === 'notes' ? CHAIN.lambientNotes : onPhone ? CHAIN.lambientPhone : C[key].hint, take });
     const offBoard = !this.boardPlainBut();
     const stage = p.stageNow;
     if (stage === 'after') return at('end', glass('group') ? null : 'group', true);
@@ -1344,7 +1375,7 @@ export class GraceQueueLite {
     }
     if (this.memoryStage === 'notes') return at('notes', glass('notes') ? null : 'notes', true);
     if (this.memoryStage === 'notice') return at('notesNotice', 'notice', true);
-    if (this.veraPage === 'record') return at('page', null, false);
+    if (this.veraPage === 'record') return at(this.recordSent ? 'pageOwn' : 'page', null, false);   // ⚑ S434: turned only by her press
     if (this.memoryCard) return at('card', offBoard ? 'board' : null, false);
     if (this.memoryDeclined && !veraDay.recordOpened) return at('again', 'again', false);
     if (this.memoryDue) return at('card', 'board', false);
@@ -1359,6 +1390,7 @@ export class GraceQueueLite {
    *  done…", the board's hint) — during the training, what Lambient's button answers on a lesson's own page: that page's line, or
    *  "done" on a finished lesson's page. Null on the board and once the chain names the step (its line is said everywhere). */
   get guidePageLine(): string | null {
+    if (this.welcome !== null) return training.asked;   // ⚑ S433 — asked during the welcome: one line about the welcome
     if (this.mode !== 'list' || this.chainState) return null;
     const id = this.openSurface?.id ?? 'testimony';   // the list without a mounted job is Lesson 1's editor
     const G = (mirrorCopy as unknown as { guidePage: Record<string, string> }).guidePage;
@@ -1470,7 +1502,8 @@ export class GraceQueueLite {
   /** ⚑ S208 — the lock screen (screensaver.ts 'lock'): only on the board, nothing open, no card up, nothing playing;
    *  anything that opens or plays wakes it. The corrections counter starts from the board's open jobs. */
   private updateSaver(dt: number): void {
-    const quiet = this.mode === 'board' && !this.veraPage && !this.openSurface && !this.pauseOpen && !this.minimised && !anythingPlaying(this.graceLoop) && !this.lambyGuide?.active;
+    const quiet = this.mode === 'board' && !this.veraPage && !this.openSurface && !this.pauseOpen && !this.minimised && !anythingPlaying(this.graceLoop) && !this.lambyGuide?.active
+      && this.welcome === null;   // ⚑ S433 — the welcome's card is up: the machine is not resting
     if (!this.saver) {
       if (quiet && this.boardQuietT > SAVER_SECONDS) {
         this.saver = new Screensaver('lock', 2016).rotate('e3');
@@ -1743,8 +1776,35 @@ export class GraceQueueLite {
     this.clearPersonalNotice(); this.phone.closePersonalThread();
     playOnce('login_2016.mp3');   // S141: Vera signs in
     if (!ledger.records.includes('e3-signed-in')) ledger.records.push('e3-signed-in');   // S158: the map's beat
-    this.mode = this.consent ? 'board' : 'consent';
+    // ⚑ S433 (UiB job 40) — signing in opens GracePlatform's welcome (the training's step 1), not Lambient's question: the question
+    //   is the welcome's fourth card, after the board and a lesson have been shown (S424's Sign in → question → This week: 5ae6508a)
+    if (!ledger.records.includes('e3-welcome-done')) { this.mode = 'board'; this.welcome = 0; this.welcomeRing = null; }
+    else this.mode = this.consent ? 'board' : 'consent';
     if (this.mode === 'board') this.seenBoard = true;
+    this.bump();
+  }
+
+  /** ⚑ S433 — the welcome's Next: the next thing shown, on her press. From `lesson` it asks Lambient's question (the consent card),
+   *  which her answer moves on (`decideConsent`); after `record`, This week closes the welcome. Nothing else moves it. */
+  private welcomeNext(): void {
+    if (this.welcome === null) return;
+    const step = WELCOME_STEPS[this.welcome];
+    if (step === 'consent') return;   // her answer to Lambient is the press here
+    if (step === 'record') { this.finishWelcome(); return; }
+    this.welcome++;
+    if (WELCOME_STEPS[this.welcome] === 'consent') {
+      if (this.consent) this.welcome++;   // (a review aid that answered already: the question is not asked twice)
+      else this.mode = 'consent';
+    }
+    this.welcomeRing = null;
+    this.bump();
+  }
+  /** ⚑ S433 — the tour shown: the welcome is done (the map's beat), and This week, its last card, is up with Begin */
+  private finishWelcome(): void {
+    this.welcome = null; this.welcomeReply = null; this.welcomeRing = null;
+    if (!ledger.records.includes('e3-welcome-done')) ledger.records.push('e3-welcome-done');
+    this.mode = 'board'; this.seenBoard = true;
+    this.openWeek(); this.weekFromWelcome = true;
     this.bump();
   }
 
@@ -1772,9 +1832,16 @@ export class GraceQueueLite {
     //   Lambient — it explains the jobs and the phone) — the reply is said ALONE ("Lovely. I'll show you as we go."; the order
     //   line after it is retired: the lessons teach the order), and THIS WEEK is the first thing over the board: the three
     //   lessons, Heartwood, the phone, and Begin. Lambient's line is in its lane under the card.
-    this.lambSay([allow ? LAMBIENT.acceptReply : LAMBIENT.declineReply]);
+    // ⚑ S433 (UiB job 40) — inside the welcome the answer moves the tour on: Lambient's reply is said on the welcome's next card (its
+    //   button, ringed on the taskbar), once, in its tag; This week comes at the welcome's end. (Outside it — a review aid — as before.)
     this.seenBoard = true;
     this.mode = 'board';
+    if (this.welcome !== null) {
+      this.welcomeReply = allow ? LAMBIENT.acceptReply : LAMBIENT.declineReply;
+      this.welcome = WELCOME_STEPS.indexOf('lambient'); this.welcomeRing = null;
+      this.bump(); return;
+    }
+    this.lambSay([allow ? LAMBIENT.acceptReply : LAMBIENT.declineReply]);
     this.openWeek();
     this.bump();
   }
@@ -2233,7 +2300,7 @@ export class GraceQueueLite {
       }
     }
     // ⚑ S429 (F2) — the presses the step waits for: Lambient's balloon never lies over them (lambyGuideDraw `protect`)
-    const pathIds = new Set<string>(['consent-allow', 'consent-decline', 'week-begin', 'pause-close', 'memory-look', 'memory-notnow', 'kit-popin-open']);
+    const pathIds = new Set<string>(['consent-allow', 'consent-decline', 'week-begin', 'pause-close', 'memory-look', 'memory-notnow', 'kit-popin-open', 'welcome-next']);
     // ⚑ S281 — the glow logic (src/witness/pathGlow.ts): the warm ring on what the story waits on at the workstation
     if (!this.personalQuiet && !this._systemModal && !['dark', 'boot', 'install'].includes(this.mode) && !this.saver && !this.startMap.active && this.veraPage !== 'record' && !veraDay.quiet) {
       const ids = stepTargets('e3', buildStartModel(undefined, 'e3').now?.id);
@@ -2272,6 +2339,9 @@ export class GraceQueueLite {
     }
     ctx.restore();
     this.drawMirror(ctx, W, H);
+    // ⚑ S433 — the welcome's ring, last: what its card shows may be the Handset Window or Lambient's button, drawn after the board
+    this.trayAt = this.rects.find((r) => r.id === 'lg-tray') ?? this.trayAt;
+    this.drawWelcomeRing(ctx, W, H);
   }
   private mirrorMin = false;
   private mirrorReading = false;
@@ -2395,7 +2465,7 @@ export class GraceQueueLite {
     //   the whole picture, and it is worth the beat: the machine has a life
     //   that is not the shift, and she has put the shift down to look at it.
     if (this.minimised) { this.drawTaskButton(ctx, H, false); return; }
-    const title = this.veraPage === 'record' ? vera.memory.card : this.veraPage === 'kit' ? vera.kit.title : this.veraPage === 'send' ? vera.send.title : this.mode === 'signin' || this.mode === 'consent' ? q.app.shellTitle
+    const title = this.veraPage === 'record' ? vera.memory.card : this.veraPage === 'kit' ? vera.kit.title : this.veraPage === 'send' ? vera.send.title : this.welcome !== null && (this.mode === 'board' || this.mode === 'consent') ? training.title : this.mode === 'signin' || this.mode === 'consent' ? q.app.shellTitle
       : this.mode === 'board' || this.mode === 'done' ? q.app.boardTitle
         : this.openSurface ? this.openSurface.windowTitle
           : q.app.title;
@@ -2417,6 +2487,7 @@ export class GraceQueueLite {
     if (this.veraPage) this.drawVeraPage(ctx, body);
     else if (this.mode === 'signin') this.drawSignIn(ctx, body);
     else if (this.mode === 'consent') this.drawConsent(ctx, body);
+    else if (this.welcomeStep === 'hello') this.drawWelcome(ctx, body);   // ⚑ S433 — the welcome's page
     else if (this.mode === 'board' || this.mode === 'done') this.drawBoard(ctx, body);
     else if (this.openSurface) this.drawSurface(ctx, body, this.openSurface);
     else this.drawList(ctx, body);
@@ -2539,8 +2610,8 @@ export class GraceQueueLite {
     this.lambyGuide?.press('lg-x'); this.startPanel.close(); this.pauseOpen = false;
     this.bump();
   }
-  /** ⚑ S425 — the page turns to her own words as she sent them, the cuts struck through (her press, or the piece's once the published
-   *  story has had its reading time); her Notes are due once those words have had theirs */
+  /** ⚑ S425 — the page turns to her own words as she sent them, the cuts struck through. ⚑ S434: on her press alone (See what you
+   *  wrote); the piece's own turn, once the published story had had its reading time, is retired (his "The automatic is 2026") */
   private turnMemory(): void {
     if (this.veraPage !== 'record' || this.recordSent) return;
     this.recordSent = true; this.memoryT = 0;
@@ -2569,11 +2640,11 @@ export class GraceQueueLite {
       if (!this.boardPlain) this.memoryLeft = true;
       else if (this.memoryLeft && !this.phone.voiceBusy) { this.memoryCard = 'again'; this.memoryLeft = false; this.bump(); }
     }
-    // beat 9 — the published story read, the page turns by itself to her own words (the piece takes her there; A2 row 5 kept as built)
-    if (this.veraPage === 'record') {
-      this.memoryT += dt;
-      if (!this.recordSent && this.memoryT >= readHold([vera.record.publishedText])) this.turnMemory();
-    }
+    // beat 9 — ⚑ S434 (UiB job 40 Part B item 1; his call 1 on job 38, "didint see that", and his rule "The automatic is 2026 not
+    //   2016"): the page waits for HER press, See what you wrote, to turn to her own words; it no longer turns by itself once the
+    //   published story has had its reading time (S425's turn, kept by S428 as A2 row 5). `memoryT` still counts each face's seconds
+    //   for the probes; nothing reads it to move the story.
+    if (this.veraPage === 'record') this.memoryT += dt;
     // beats 10–11 — ⚑ S428 (A2 rows 6–9): each on her act. Closing the page put the Notes notification on her phone (`closeMemory`).
     if (this.memoryStage === 'notice') {
       // row 7 — she opened it (the notification, or the Notes app): her Notes, and her line typing there (phoneE3)
@@ -2769,13 +2840,17 @@ export class GraceQueueLite {
   private drawBoard(ctx: CanvasRenderingContext2D, c: aero.AeroContent): void {
     // ⚑ S424 (16-8 + 16-11; storyboard beat 1) — TRAINING, and under it her role ("story caretender · in training"); "Choose
     //   any job." is retired (the lessons come in order). Right of it, a small This week button opens the card again.
-    setFont(ctx, 10); ctx.fillStyle = ERA3.greyDk;
-    ctx.fillText(q.app.boardHeading, c.x, c.y + 2);
+    // ⚑ S433 (UiB job 40) — the header is the training's kicker: "TRAINING · STEP n OF 4" and its four pips (step 1 the welcome, 2–4
+    //   the lessons), the same kicker each lesson's page wears; "TRAINING · DONE" once the three lessons are done
+    const litI = this.litLessonIndex(), litId = litI >= 0 ? this.tasks()[litI]?.id : undefined;
+    const step = this.welcome !== null ? 1 : this.trainingDone ? TRAINING_STEPS + 1 : litId ? lessonStep(litId) : 0;
+    if (step > 0) drawKicker(ctx, c.x, c.y + 2, c.w - 120, step);
+    else { setFont(ctx, 10); ctx.fillStyle = ERA3.greyDk; ctx.fillText(q.app.boardHeading, c.x, c.y + 2); }
     setFont(ctx, 11); ctx.fillStyle = ERA3.grey;
     ctx.fillText(q.app.roleBadge, c.x, c.y + 18);
     px(ctx, c.x, c.y + 36, c.w, 1, ERA3.glassEdge);
     if (!this.memoryCard && this.offer) this.drawOffer(ctx, c, this.offer);
-    else if (!this.pauseOpen) {
+    else if (!this.pauseOpen && this.welcome === null) {
       setFont(ctx, 11); const wbw = Math.ceil(ctx.measureText(q.app.weekButton).width) + 24, wbx = c.x + c.w - wbw, wby = c.y + 4;
       aero.button(ctx, wbx, wby, wbw, 24, q.app.weekButton, { size: 11 });
       this.rects.push({ x: wbx, y: wby, w: wbw, h: 24, id: 'week-open' });
@@ -2790,17 +2865,24 @@ export class GraceQueueLite {
     const COLS = 3;
     const rows = Math.max(1, Math.ceil(tasks.length / COLS));
     const tileW = Math.floor((c.w - GAP * (COLS - 1)) / COLS);
+    // ⚑ S433 — the welcome's card and This week sit UNDER the tiles, in the band Lambient's lane uses (never over a tile): the tiles
+    //   give it the room it needs. (S424's This week lay over the tiles, their edges showing at its sides: 5ae6508a.)
+    const cardH = this.welcome !== null ? this.tourCard(ctx, c, null) : this.pauseOpen ? this.weekCard(ctx, c, null) : 0;
     // ⚑ the LANE's height is part of the budget. With six tiles on two rows the
     //   bottom row was running under Lambient's band — reserve it here rather
     //   than discovering the overlap in a screenshot for the fourth time.
-    const avail = c.h - 52 - 82;
+    const avail = c.h - 52 - Math.max(82, cardH ? cardH + 18 : 0);
     const tileH = Math.min(196, Math.floor((avail - GAP * (rows - 1)) / rows));
     const top = c.y + 52;
+    const tileAt: Rect[] = [];
     tasks.forEach((t, i) => {
       const x = c.x + (i % COLS) * (tileW + GAP);
       const y = top + Math.floor(i / COLS) * (tileH + GAP);
       this.drawTile(ctx, x, y, tileW, tileH, t, i);
+      tileAt.push({ x, y, w: tileW, h: tileH, id: 'task-' + i });
     });
+    // ⚑ S433 — during the welcome the tiles are shown, not opened: only the card's Next moves on (no tile is published to press)
+    if (this.welcome !== null) this.rects = this.rects.filter((r) => !r.id.startsWith('task-'));
 
     // (⚑ S426 — the board's tile after the cascade, "Campaign kit · scheduled" / "2014 original · retained", is retired from the visit:
     //  it stood in a second row the training's one-row board does not have, half over the taskbar (S421's T33–T35), and the last
@@ -2812,10 +2894,11 @@ export class GraceQueueLite {
     // work away also wiped away the only evidence of what she had done.
     // ⚑ S424 (storyboard beat 7) — the three lessons done: "Training done · 3 of 3" (was "You're caught up." / "No new stories
     //   waiting.", kept in s3_queue.json as the record)
-    if (this.trainingDone) {
+    // ⚑ S433 — "Training done · 4 of 4": the welcome was its first step
+    if (this.trainingDone && !cardH) {
       const by = top + rows * (tileH + GAP);
       setFont(ctx, 14); ctx.fillStyle = ERA3.titleText;
-      ctx.fillText(q.app.trainingDone.replace('{n}', String(LESSONS.length)).replace('{m}', String(LESSONS.length)), c.x, by);
+      ctx.fillText(q.app.trainingDone.replace('{n}', String(TRAINING_STEPS)).replace('{m}', String(TRAINING_STEPS)), c.x, by);
     }
     // ⚑ THE CONDUCTION, and it obeys the R28 cap: ≤2 lines per beat, and it is
     //   the SYSTEM's lane, never a character standing in the room. The first
@@ -2830,20 +2913,222 @@ export class GraceQueueLite {
     //   phone, the wait line, the way back, the cascade's "Everything on your board is still there…") was being
     //   wiped here before it was ever drawn; they now stay until she acts.
     //   The first-task beat itself closes on her next press on the board (handleClick).
-    if (this.lambLines && (this.lambPriority || !this.lambyGuide?.active)) this.drawLambientLane(ctx, c, this.lambLines);
-    if (!this.personalQuiet) drawLambMark(ctx, c.x + 8, c.y + c.h - 10, 1.2);
+    // ⚑ S433 — one voice at a time: while the welcome's card or This week is in the band, Lambient's lane waits
+    if (!cardH && this.lambLines && (this.lambPriority || !this.lambyGuide?.active)) this.drawLambientLane(ctx, c, this.lambLines);
+    if (!this.personalQuiet && !cardH) drawLambMark(ctx, c.x + 8, c.y + c.h - 10, 1.2);
     // ⚑ S229 / W1-A6 — on the board the card becomes a strip UNDER the day's tiles (never over one), and only where
     //   it fits between them and Lambient's lane
-    if (this.startPanel.open && this.startPanelCalm() && rows === 1) {
+    if (this.startPanel.open && this.startPanelCalm() && rows === 1 && !cardH) {
       const sy = top + tileH + 4;
       if (sy + StartPanel.STRIP_H <= c.y + c.h - 42 - 2) {
         for (const b of this.startPanel.drawStrip(ctx, c.x, sy, c.w)) this.rects.push({ ...b, id: 'startpanel-close' });
       }
     }
-    if (this.pauseOpen) this.drawPauseCard(ctx, c);
+    // ⚑ S433 — the welcome's card (and the thing it shows, ringed at the end of `draw`), or This week
+    const cardY = c.y + c.h - cardH - 2;
+    // ⚑ S433 — one voice at a time: while Lambient's balloon (asked for) or the Start menu is up, the welcome's card waits — its place
+    //   kept (nothing moves), the balloon in the band it always takes under the tiles; it is back when they close
+    // ⚑ S433b — and This week the same (the balloon's place is the band the card stands in)
+    const cardWaits = (this.welcome !== null || this.pauseOpen) && (!!this.lambyGuide?.active || this.startMap.active);
+    if (cardWaits) this.welcomeRing = null;
+    else if (this.welcome !== null) {
+      const ws = WELCOME_STEPS[this.welcome];
+      const union = tileAt.length ? { x: tileAt[0].x, y: tileAt[0].y, w: tileAt[tileAt.length - 1].x + tileAt[tileAt.length - 1].w - tileAt[0].x, h: tileH, id: 'tiles' } : null;
+      this.welcomeRing = ws === 'board' ? union : ws === 'lesson' ? (tileAt[litI] ?? union) : ws === 'lambient' ? 'lg-tray' : ws === 'phone' ? 'mirror' : ws === 'record' ? 'account-activity' : null;
+      this.tourCard(ctx, c, cardY);
+    } else if (this.pauseOpen) {
+      this.welcomeRing = this.weekFromWelcome && litI >= 0 ? (tileAt[litI] ?? null) : null;
+      this.weekCard(ctx, c, cardY);
+    } else this.welcomeRing = null;
     // ⚑ S362 / H41 + H42b — the two pop-ins sit over the board, last, so nothing is drawn across them
     if (this.memoryCard) this.drawMemoryCard(ctx, c);
     if (this.kitPopin) this.drawKitPopin(ctx, c);
+  }
+
+  /** ⚑ S433 — where the ring's target sits, for the card's notch: above the card (a tile), or to its right (the Handset Window) */
+  private trayAt: Rect | null = null;
+  private ringPoint(): { side: 'up' | 'down' | 'right'; x: number } | null {
+    const t = this.welcomeRing;
+    if (!t) return null;
+    if (typeof t !== 'string') return { side: 'up', x: t.x + Math.round(t.w / 2) };
+    if (t === 'mirror') return { side: 'right', x: 0 };
+    // (Lambient's button sits right under the card, and her record far above the tiles: the ring alone points there, no notch)
+    return null;
+  }
+  /** a card's notch toward what it shows: a small pixel triangle in the card's own white, on its edge */
+  private drawNotch(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number): void {
+    const p = this.ringPoint();
+    if (!p) return;
+    const N = 6;
+    if (p.side === 'right') {
+      const cy = y + Math.round(h / 2);
+      for (let i = 0; i < N; i++) { px(ctx, x + w + i, cy - (N - 1 - i), 1, 2 * (N - 1 - i) + 1, ERA3.white); }
+      return;
+    }
+    const cx = Math.max(x + 12 + N, Math.min(x + w - 12 - N, p.x));
+    for (let i = 0; i < N; i++) {
+      if (p.side === 'up') px(ctx, cx - i, y - N + i, 2 * i + 1, 1, ERA3.white);
+      else px(ctx, cx - i, y + h + N - 1 - i, 2 * i + 1, 1, ERA3.white);
+    }
+  }
+  /** the card's own frame: white, a hairline, the platform's blue along its top */
+  private cardFrame(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number): void {
+    px(ctx, x - 1, y - 1, w + 2, h + 2, ERA3.glassEdge);
+    px(ctx, x, y, w, h, ERA3.white);
+    px(ctx, x, y, w, 3, ERA3.accent);
+  }
+
+  /**
+   * ⚑ S433 (UiB job 40) — THE WELCOME'S CARD, under the board's tiles: its kicker ("WELCOME · n OF 5 · THE THING"), on Lambient's card
+   * Lambient's answer to hers (once, in its tag), the platform's words about the thing ringed above it, and Next. Measured with
+   * `y` null (its height), drawn with a `y`. As tall as its words; nothing cut.
+   */
+  private tourCard(ctx: CanvasRenderingContext2D, c: aero.AeroContent, y: number | null): number {
+    if (this.welcome === null) return 0;
+    const ws = WELCOME_STEPS[this.welcome], part = WELCOME_PART[ws] ?? 1;
+    const T = training.tour as unknown as Record<string, string>;
+    const name = training.hello.parts[part - 1].toUpperCase();
+    const kicker = T.kicker.replace('{n}', String(part)).replace('{name}', name);
+    const PAD = 12, BW = 84, BH = 28;
+    const bodyW = c.w - PAD * 2 - BW - 14;
+    const kH = kickerHeight();
+    const reply = ws === 'lambient' && this.welcomeReply ? { line: this.welcomeReply, voice: 'lambient' as const } : null;
+    studioFont(ctx, 11);
+    const replyH = reply ? measureLambientNote(ctx, bodyW, reply) + 4 : 0;
+    setFont(ctx, 12);
+    const lead = Math.round(textPx(12, 'e3')) + 4;
+    const lines = wrapText(ctx, T[ws] ?? '', bodyW);
+    const h = 3 + 8 + kH + 5 + replyH + lines.length * lead + 8;
+    if (y === null) return Math.max(h, BH + 22);
+    const H = Math.max(h, BH + 22), x = c.x;
+    this.cardFrame(ctx, x, y, c.w, H);
+    this.drawNotch(ctx, x, y, c.w, H);
+    let ty = y + 3 + 8;
+    setFont(ctx, 9); ctx.fillStyle = ERA3.greyDk; ctx.fillText(kicker, x + PAD, ty);
+    ty += kH + 5;
+    if (reply) { studioFont(ctx, 11); drawLambientNote(ctx, x + PAD, ty, bodyW, reply); ty += replyH; }
+    setFont(ctx, 12); ctx.fillStyle = ERA3.titleText;
+    lines.forEach((ln, i) => ctx.fillText(ln, x + PAD, ty + i * lead));
+    const bx = x + c.w - PAD - BW, by = y + Math.round((H - BH) / 2) + 1;
+    aero.button(ctx, bx, by, BW, BH, T.next, { primary: true, size: 12 });
+    this.rects.push({ x: bx, y: by, w: BW, h: BH, id: 'welcome-next' });
+    return H;
+  }
+
+  /**
+   * ⚑ S207 — "This week": the platform's own card. ⚑ S424 — the first thing after her answer to Lambient, with Begin.
+   * ⚑ S433 (UiB job 40) — THE WELCOME'S LAST CARD, under the tiles like the tour's (never over a tile): its lead closes the tour
+   * ("That's the tour, Vera. Your lessons are next."), what else the week holds (Heartwood's set), and Begin, which opens the lit
+   * lesson (step 2), ringed above it. The lessons are on the tiles and the phone was shown on its own card, so neither is listed
+   * again. Reopened from the board's This week button it leads with the week (`weekLeadAgain`), and its button is Close once no
+   * lesson is lit. Measured with `y` null, drawn with a `y`.
+   */
+  private weekCard(ctx: CanvasRenderingContext2D, c: aero.AeroContent, y: number | null): number {
+    const P = pauseWords('e3') as unknown as { title: string; weekLead: string; weekLeadAgain: string; begin: string; close: string };
+    const lines = (pauseCopy.pause.e3 as unknown as { week: string[] }).week;
+    const PAD = 12, BW = 96, BH = 28;
+    const bodyW = c.w - PAD * 2 - BW - 14;
+    const kH = kickerHeight();
+    const lead = this.weekFromWelcome ? P.weekLead : P.weekLeadAgain;
+    studioFont(ctx, 13, true);
+    const leadLead = Math.round(textPx(13, 'e3')) + 4;
+    const leadLines = wrapText(ctx, lead, bodyW);
+    setFont(ctx, 12);
+    const rowLead = Math.round(textPx(12, 'e3')) + 4;
+    const rows = lines.map((l) => wrapText(ctx, l, bodyW - 16));
+    const h = 3 + 8 + kH + 5 + leadLines.length * leadLead + 2 + rows.reduce((n, r) => n + r.length, 0) * rowLead + 8;
+    const H = Math.max(h, BH + 22);
+    if (y === null) return H;
+    const x = c.x;
+    // ⚑ S406 / H2 — the card takes a press anywhere on it; its button is the one thing on it that answers
+    this.cover('this-week', x - 1, y - 1, c.w + 2, H + 2);
+    this.cardFrame(ctx, x, y, c.w, H);
+    this.drawNotch(ctx, x, y, c.w, H);
+    let ty = y + 3 + 8;
+    setFont(ctx, 9); ctx.fillStyle = ERA3.greyDk; ctx.fillText(P.title.toUpperCase(), x + PAD, ty);
+    ty += kH + 5;
+    studioFont(ctx, 13, true); ctx.fillStyle = ERA3.titleText;
+    leadLines.forEach((ln, i) => ctx.fillText(ln, x + PAD, ty + i * leadLead));
+    ty += leadLines.length * leadLead + 2;
+    setFont(ctx, 12);
+    rows.forEach((rs) => {
+      px(ctx, x + PAD + 2, ty + Math.round(rowLead / 2) - 4, 5, 5, ERA3.accent);
+      rs.forEach((r) => { ctx.fillStyle = ERA3.titleText; ctx.fillText(r, x + PAD + 14, ty); ty += rowLead; });
+    });
+    const begin = this.litLessonIndex() >= 0;
+    const bx = x + c.w - PAD - BW, by = y + Math.round((H - BH) / 2) + 1;
+    aero.button(ctx, bx, by, BW, BH, begin ? P.begin : P.close, { primary: true });
+    this.rects.push({ x: bx, y: by, w: BW, h: BH, id: begin ? 'week-begin' : 'pause-close' });
+    return H;
+  }
+
+  /**
+   * ⚑ S433 (UiB job 40) — THE WELCOME'S PAGE, the first thing after Sign in: the training's kicker (step 1 of 4, the welcome), the
+   * platform greeting its new story caretender by name, what a caretender does and what the training is, the five things the tour will
+   * show (numbered, in its order), and Show me around. Nothing on it moves by itself.
+   */
+  private drawWelcome(ctx: CanvasRenderingContext2D, c: aero.AeroContent): void {
+    const W = training.hello;
+    const CONTENT_W = Math.min(480, c.w - 48);
+    const cx = c.x + Math.round((c.w - CONTENT_W) / 2);
+    let y = c.y + 14;
+    drawKicker(ctx, cx, y, CONTENT_W, 1, W.name);
+    y += kickerHeight() + 8;
+    setFont(ctx, 24); ctx.fillStyle = ERA3.titleText;
+    ctx.fillText(W.heading, cx, y);
+    y += Math.round(textPx(24, 'e3')) + 12;
+    setFont(ctx, 13); ctx.fillStyle = ERA3.greyDk;
+    const lead = Math.round(textPx(13, 'e3')) + 5;
+    for (const para of W.body) {
+      wrapText(ctx, para, CONTENT_W).forEach((ln) => { ctx.fillText(ln, cx, y); y += lead; });
+      y += 6;
+    }
+    // the tour's five things, numbered in its order
+    y += 6;
+    setFont(ctx, 9); ctx.fillStyle = ERA3.greyDk; ctx.fillText(W.tourLabel, cx, y);
+    y += kickerHeight() + 4;
+    const n = W.parts.length, GAP = 5, chipW = Math.floor((CONTENT_W - GAP * (n - 1)) / n);
+    setFont(ctx, 11);
+    const labLead = Math.round(textPx(11, 'e3')) + 3;
+    const labs = W.parts.map((p) => wrapText(ctx, p, chipW - 27));
+    const chipH = Math.max(32, Math.max(...labs.map((l) => l.length)) * labLead + 12);
+    W.parts.forEach((_, i) => {
+      const x = cx + i * (chipW + GAP);
+      px(ctx, x + 1, y + chipH, chipW, 2, ERA3.glassEdge);
+      px(ctx, x, y, chipW, chipH, ERA3.white);
+      px(ctx, x + 5, y + Math.round(chipH / 2) - 7, 14, 14, ERA3.accent);
+      studioFont(ctx, 10, true); ctx.fillStyle = ERA3.white;
+      const num = String(i + 1), nw = ctx.measureText(num).width;
+      ctx.fillText(num, x + 12 - Math.round(nw / 2), y + Math.round(chipH / 2) - Math.round(textPx(10, 'e3') / 2) - 1);
+      setFont(ctx, 11); ctx.fillStyle = ERA3.titleText;
+      const top = y + Math.round((chipH - labs[i].length * labLead) / 2) + 1;
+      labs[i].forEach((ln, k) => ctx.fillText(ln, x + 24, top + k * labLead));
+    });
+    const bw = 220, bh = 40, bx = cx, by = c.y + c.h - bh - 16;
+    aero.button(ctx, bx, by, bw, bh, W.button, { primary: true, size: 15 });
+    this.rects.push({ x: bx, y: by, w: bw, h: bh, id: 'welcome-next' });
+  }
+
+  /** ⚑ S433 — the ring round what the welcome's card is showing, drawn last (the Handset Window and Lambient's button are drawn after
+   *  the board): the board's tiles, the lit lesson, Lambient's taskbar button, the Handset Window, her record in the title bar. The
+   *  warm ring of the path (pathGlow), always drawn here: it is the card's own pointer, not the frame's highlight. */
+  private drawWelcomeRing(ctx: CanvasRenderingContext2D, W: number, H: number): void {
+    const t = this.welcomeRing;
+    if (!t || this.mode !== 'board' || this.minimised || this.veraPage || this.startMap.active || this.saver || this.lambyGuide?.active) return;
+    if (this.welcome === null && !(this.pauseOpen && this.weekFromWelcome)) return;
+    let r: { x: number; y: number; w: number; h: number } | null = null, pad = 3;
+    if (typeof t !== 'string') r = t;
+    else if (t === 'mirror') { if (!this.mirrorAvailable || this.mirrorMin) return; r = { x: W - MIRROR_W, y: 0, w: MIRROR_W, h: H - 30 }; pad = -2; }
+    else { r = this.rects.find((h) => h.id === t) ?? null; if (t === 'lg-tray' || t === 'account-activity') pad = 1; }   // tight: on the bars
+    if (!r) return;
+    ctx.save();
+    ctx.strokeStyle = ERA3.amber; ctx.lineWidth = 2; ctx.globalAlpha = 0.95;
+    ctx.strokeRect(Math.round(r.x - pad) + 0.5, Math.round(r.y - pad) + 0.5, Math.round(r.w + pad * 2) - 1, Math.round(r.h + pad * 2) - 1);
+    if (pad > 1) {
+      ctx.globalAlpha = 0.35;
+      ctx.strokeRect(Math.round(r.x - pad - 2) + 0.5, Math.round(r.y - pad - 2) + 0.5, Math.round(r.w + pad * 2 + 4) - 1, Math.round(r.h + pad * 2 + 4) - 1);
+    }
+    ctx.restore();
   }
 
   /** ⚑ S227 — THE OFFER, in the board's header, right of TODAY: the platform's one line, its version in small type, and
@@ -2871,41 +3156,41 @@ export class GraceQueueLite {
     this.rects.push({ x: bx, y: by, w: bw, h: bh, id: 'update-accept' });
   }
 
-  /** ⚑ S207 — "This week": the platform's own card over the board, in its glass; the only thing pressable while up.
-   *  ⚑ S424 (16-8; storyboard beat 1) — it is the training's welcome now, the first thing after her answer to Lambient: THIS
-   *  WEEK, "Your training starts today.", the three lessons, Heartwood on the set by the door, the phone, and Begin (which
-   *  opens the lesson that is lit). It sits above Lambient's lane, so its one line is read under it. Reopened from the board
-   *  once the training is done, its button is Close. (S207's list read from the map and its outro are retired.) */
-  private drawPauseCard(ctx: CanvasRenderingContext2D, c: aero.AeroContent): void {
-    const P = pauseWords('e3') as unknown as { title: string; weekLead: string; begin: string; close: string };
-    const lines = (pauseCopy.pause.e3 as unknown as { week: string[] }).week;
-    const cw = Math.min(520, c.w - 40);
-    setFont(ctx, 12);
-    const rows = lines.map((l) => wrapText(ctx, l, cw - 64));
-    const ch = 104 + rows.reduce((n, r) => n + r.length, 0) * 17 + rows.length * 5;
-    // above Lambient's lane (its one line, read under the card), never over it
-    const laneH = this.lambLines && !this.personalQuiet ? 12 + 15 * Math.max(1, this.lambLines.length) : 0;
-    const room = c.h - laneH - 6;
-    const cx = c.x + Math.round((c.w - cw) / 2), cy = c.y + Math.max(2, Math.round((room - ch) / 2));
-    // ⚑ S406 / H2 (his 22:08:24: the cards "can be pressed" behind "This week") — the card takes a press anywhere on it; its
-    //   button is the one thing on it that answers (the board below stays as it was, and is pressable again once it closes)
-    this.cover('this-week', cx - 2, cy - 2, cw + 4, ch + 4);
-    px(ctx, cx - 2, cy - 2, cw + 4, ch + 4, ERA3.glassEdge);
-    px(ctx, cx, cy, cw, ch, ERA3.white);
-    px(ctx, cx, cy, cw, 4, ERA3.accent);
-    setFont(ctx, 11); ctx.fillStyle = ERA3.grey; ctx.fillText(P.title.toUpperCase(), cx + 22, cy + 16);
-    setFont(ctx, 16); ctx.fillStyle = ERA3.titleText; ctx.fillText(P.weekLead, cx + 22, cy + 33);
-    let y = cy + 60;
-    setFont(ctx, 12);
-    rows.forEach((rs) => {
-      px(ctx, cx + 26, y + 5, 6, 6, ERA3.accent);
-      rs.forEach((r) => { ctx.fillStyle = ERA3.titleText; ctx.fillText(r, cx + 42, y); y += 17; });
-      y += 5;
-    });
-    const begin = this.litLessonIndex() >= 0;
-    const bw = 110, bh = 30, bx = cx + cw - bw - 18, by = cy + ch - bh - 12;
-    aero.button(ctx, bx, by, bw, bh, begin ? P.begin : P.close, { primary: true });
-    this.rects.push({ x: bx, y: by, w: bw, h: bh, id: begin ? 'week-begin' : 'pause-close' });
+  /* (⚑ S433 — S424's `drawPauseCard`, This week over the tiles with the three lessons and the phone listed, is retired: This week is
+   *  the welcome's last card now, under the tiles (`weekCard`). 5ae6508a holds it.) */
+
+  /**
+   * ⚑ S433 (UiB job 40; his 26 Nov: "I don't fully remember what I had to do") — A LESSON'S HEAD, the same on all three: on its first
+   * row the training's kicker (TRAINING · STEP n OF 4, the pips) and what the step teaches (e3_training.json `teaches`; under the
+   * kicker if the row cannot hold both); under it the way back's place (`backW`, the caller's button) and the NOW row, tagged NOW: the
+   * one thing to do now, the loudest line on the page. The NOW row is as tall as the tallest of the lesson's NOW lines, so the page
+   * keeps one layout whatever the moment (Renata's film one size: S357fr). Returns the row's top and height and the content's top.
+   */
+  private lessonHead(ctx: CanvasRenderingContext2D, c: aero.AeroContent, id: LessonKey, backW: number, moment: string): { rowY: number; rowH: number; top: number } {
+    const kx = drawKicker(ctx, c.x, c.y, c.w - 24, lessonStep(id));
+    const teach = lessonTeaches(id), kH = kickerHeight();
+    studioFont(ctx, 10, true); ctx.fillStyle = ERA3.titleText;
+    const lead = Math.round(textPx(10, 'e3')) + 3;
+    let rowY: number;
+    if (kx + 14 + ctx.measureText(teach).width <= c.x + c.w - 24) {
+      ctx.fillText(teach, kx + 14, c.y - 1);
+      rowY = c.y + Math.max(kH, lead) + 3;
+    } else {
+      const lines = wrapText(ctx, teach, c.w - 24);
+      lines.forEach((ln, i) => ctx.fillText(ln, c.x, c.y + kH + 1 + i * lead));
+      rowY = c.y + kH + 1 + lines.length * lead + 3;
+    }
+    const nowX = c.x + backW + 10, nowW = c.x + c.w - nowX;
+    const rowH = lessonNowMax(ctx, id, nowW);
+    drawNowRow(ctx, nowX, rowY, nowW, lessonNow(id, moment), rowH);
+    return { rowY, rowH, top: rowY + rowH + 4 };
+  }
+  /** ⚑ S433 — Lesson 1's moment, for its NOW line: Lambient showing the first rule, a cut being made, her turn, the send, done */
+  private lessonOneMoment(): string {
+    if (this.watch || (!this.watchDone && !this.decisions.has(LESSON_FIRST) && !this.storyDone)) return 'watch';   // (its first frame too)
+    if (this.cutQueue.length) return 'cutting';
+    if (this.storyDone) return this.editorSendPending ? 'send' : 'done';
+    return 'turn';
   }
 
   /**
@@ -2919,11 +3204,16 @@ export class GraceQueueLite {
     ctx: CanvasRenderingContext2D, c: aero.AeroContent, surface: TaskSurface
   ): void {
     const backW = 96; const backH = 18;
+    // ⚑ S433 (UiB job 40) — a lesson's page is headed by the training: its kicker and what the step teaches, then its way back beside
+    //   the NOW row (the one thing to do now). The job draws under it (its own heading line is retired: the head carries it).
+    const lesson = LESSONS.includes(surface.id) ? surface.id as LessonKey : null;
+    const head = lesson ? this.lessonHead(ctx, c, lesson, backW, surface.nowMoment?.() ?? 'turn') : null;
+    const backY = head ? head.rowY + Math.round((head.rowH - backH) / 2) : c.y - 2;
     if (this.doneT < 0 && !this.storyDone) {
-      aero.button(ctx, c.x, c.y - 2, backW, backH, this.boardBackLabel());
-      this.rects.push({ x: c.x, y: c.y - 2, w: backW, h: backH, id: 'board-back' });
+      aero.button(ctx, c.x, backY, backW, backH, this.boardBackLabel());
+      this.rects.push({ x: c.x, y: backY, w: backW, h: backH, id: 'board-back' });
     }
-    let area = { x: c.x, y: c.y + backH + 8, w: c.w, h: c.h - backH - 8 };
+    let area = head ? { x: c.x, y: head.top, w: c.w, h: c.y + c.h - head.top } : { x: c.x, y: c.y + backH + 8, w: c.w, h: c.h - backH - 8 };
 
     // ⚑ S208 / A18 (ERA16-03, ETHICS-02) — no Lambient lane on a job screen: jobs show people's own words, and
     //   the register law keeps the assistant off them. Its lines wait for the board.
@@ -2935,7 +3225,8 @@ export class GraceQueueLite {
     //   column, where the reading ends (the small one at the top stays: leaving half-way is always allowed)
     if (this.doneT >= 0) {
       // ⚑ S429 (UiB job 38 C2) — where the job keeps a clear place for it (`backSlot`: Lesson 2's own top row), it sits there
-      const slot = surface.backSlot?.() ?? null;
+      // ⚑ S433 — on a lesson's page that slot is the head's own: where Back to Today stood while the lesson ran, beside the NOW row
+      const s0 = surface.backSlot?.() ?? null, slot = s0 && head ? { x: c.x, y: backY, w: backW, h: backH } : s0;
       const bw = slot?.w ?? 160, bh = slot?.h ?? 26, bx = slot?.x ?? area.x + area.w - bw, by = slot?.y ?? area.y + area.h - bh - 4;
       // ⚑ S429b (G4) — a slot that gives its height takes the small button's type too (Lesson 2: the top row's 96 × 18, lit)
       aero.button(ctx, bx, by, bw, bh, this.boardBackLabel(), slot?.h ? { primary: true } : { primary: true, size: 11 });
@@ -2990,7 +3281,7 @@ export class GraceQueueLite {
     // ⚑ S424 (call 1) — a lesson's note says where it is in the training: the lit one "Start here", a waiting one "after
     //   Lesson n", a finished one nothing (its "done" tag); a job that is not a lesson keeps its own note
     const lesson = this.lessonState(t.id), li = LESSONS.indexOf(t.id);
-    const note = lesson === 'lit' ? q.app.lessonLit : lesson === 'locked' ? q.app.lessonAfter.replace('{n}', String(li))
+    const note = lesson === 'lit' ? q.app.lessonLit : lesson === 'locked' ? q.app.lessonAfter.replace('{n}', String(li + 1))   // ⚑ S433: after step n (a lesson is step i + 2)
       : lesson === 'done' ? '' : t.id === 'testimony' ? polish.queueWaiting.replace('{n}', String(SUBMISSIONS.filter(sb => !this.subComplete(sb)).length)) : t.note;
     setFont(ctx, 10); ctx.fillStyle = lesson === 'lit' ? ERA3.accent : ERA3.grey;
     ctx.fillText(note, x + padX, y + thumbH + 29);
@@ -3063,27 +3354,35 @@ export class GraceQueueLite {
   private drawConsent(ctx: CanvasRenderingContext2D, c: aero.AeroContent): void {
     const cw = Math.min(560, c.w - 40);
     const cx = c.x + Math.round((c.w - cw) / 2);
+    // ⚑ S433 (UiB job 40) — Lambient's question is the welcome's third thing shown: its kicker over it, the card moved down by it
+    let k = 0;
+    if (this.welcome !== null) {
+      const T = training.tour as unknown as Record<string, string>;
+      setFont(ctx, 9); ctx.fillStyle = ERA3.greyDk;
+      ctx.fillText(T.kicker.replace('{n}', '3').replace('{name}', training.hello.parts[2].toUpperCase()), cx, c.y + 4);
+      k = kickerHeight() + 6;
+    }
 
     setFont(ctx, 22); ctx.fillStyle = ERA3.titleText;
-    ctx.fillText(LAMBIENT.consentTitle, cx, c.y + 6);
+    ctx.fillText(LAMBIENT.consentTitle, cx, c.y + 6 + k);
     setFont(ctx, 12); ctx.fillStyle = ERA3.grey;
-    ctx.fillText(LAMBIENT.consentHello1, cx, c.y + 38);
-    ctx.fillText(LAMBIENT.consentHello2, cx, c.y + 56);
+    ctx.fillText(LAMBIENT.consentHello1, cx, c.y + 38 + k);
+    ctx.fillText(LAMBIENT.consentHello2, cx, c.y + 56 + k);
 
     // ⚑ the mark at HERO size, where the friendly ring used to go — and left in
     //   the era's own grey rather than lit up. Lambient's mark is a scattered
     //   thing, not a glowing orb, and a bright bouncing circle here would be
     //   the piece playing along more eagerly than the piece should. The warmth
     //   on this card is in the words; the picture is allowed to be honest.
-    if (!this.personalQuiet) drawLambMark(ctx, cx + Math.round(cw / 2), c.y + 120, 9);
+    if (!this.personalQuiet) drawLambMark(ctx, cx + Math.round(cw / 2), c.y + 120 + k, 9);
 
     // ⚑ the small print, at small-print size, unabridged. It is not decoration
     //   and it is not a joke: every clause is a thing the era uses later.
     setFont(ctx, 9); ctx.fillStyle = ERA3.greyDk;
     const body = wrapText(ctx, LAMBIENT.consentSmallPrint, cw);
-    body.slice(0, 7).forEach((ln, i) => ctx.fillText(ln, cx, c.y + 186 + i * 11));
+    body.slice(0, 7).forEach((ln, i) => ctx.fillText(ln, cx, c.y + 186 + k + i * 11));
 
-    const wy = c.y + 186 + Math.min(7, body.length) * 11 + 10;
+    const wy = c.y + 186 + k + Math.min(7, body.length) * 11 + 10;
     const bs = 12;
     px(ctx, cx, wy, bs, bs, ERA3.field);
     px(ctx, cx, wy, bs, 1, ERA3.fieldEdge);
@@ -3388,17 +3687,15 @@ export class GraceQueueLite {
     // (⚑ S386's own-cut screen after the published version — "Your story was edited with this rule too (2014)" and its Back — is
     //  retired at S425: her own cut is met on Kindredraft's memory page, Act II; 76d0671d holds it)
     // the way back, and the system's one line
-    let sysX = c.x;
+    // ⚑ S433 (UiB job 40) — the lesson's head (the training's kicker, what the step teaches, the NOW row beside the way back) in place
+    //   of the system's one line ("Lesson 1 · Cut Renata's story for the campaign.": s3_queue.json `systemLine`, no longer drawn)
+    const head = this.lessonHead(ctx, c, 'testimony', 106, this.lessonOneMoment());
     if (!this.storyDone) {
-      aero.button(ctx, c.x, c.y, 106, 23, this.boardBackLabel(), { size: 10 });
-      this.rects.push({ x: c.x, y: c.y, w: 106, h: 23, id: 'board-back' });
-      sysX = c.x + 116;
+      const by = head.rowY + Math.round((head.rowH - 23) / 2);
+      aero.button(ctx, c.x, by, 106, 23, this.boardBackLabel(), { size: 10 });
+      this.rects.push({ x: c.x, y: by, w: 106, h: 23, id: 'board-back' });
     }
-    studioFont(ctx, 10, true); ctx.fillStyle = ERA3.titleText;
-    const lead = Math.round(textPx(10, 'e3')) + 2;
-    const sys = wrapText(ctx, video.systemLine ?? '', c.x + c.w - sysX).slice(0, 2);
-    sys.forEach((ln, i) => ctx.fillText(ln, sysX, c.y + (sys.length === 1 ? 6 : 0) + i * lead));
-    const top = c.y + Math.max(28, sys.length * lead + 5);
+    const top = head.top;
     const band = this.studioBand(ctx, c);
     const by = c.y + c.h - 2 - this.studioBandMax(ctx, c, sub);   // ⚑ S357fr / 16-4: one band height, one film size
     const rowH = Math.max(16, Math.round(textPx(10, 'e3')) + 6), colW = 124;
@@ -3964,6 +4261,7 @@ export class GraceQueueLite {
     if (lg && this.lambyGuide?.press(lg.id)) { this.bump(); return; }
 
     const vh = this.rects.find(rr => hit(rr, x, y));
+    if (vh?.id === 'welcome-next') { this.startMap.close(); this.welcomeNext(); return; }   // ⚑ S433 — the welcome's Next (and its Show me around)
     if (vh?.id === 'testimony-prev' || vh?.id === 'testimony-next') { this.submissionPage += vh.id === 'testimony-next' ? 1 : -1; this.bump(); return; }
     // ⚑ S425 (Act II) — the memory: Look back, Not now (once; logged), See what you wrote, Close
     if (vh?.id === 'memory-look') { this.openMemory(); return; }
@@ -4123,13 +4421,20 @@ export class GraceQueueLite {
         this.beginArrival();
         break;
       case 'signin': this.settleArrival(); break;
-      case 'consent': this.settleArrival(); this.minimised = false; this.beginList(); break;
+      // ⚑ S433 — the welcome's page (review aid); `consent` jumps to the welcome's question, `board` through the whole welcome
+      case 'welcome': this.settleArrival(); this.minimised = false; this.beginList(); break;
+      case 'consent':
+        this.settleArrival(); this.minimised = false; this.beginList();
+        if (this.welcome !== null && !this.consent) { this.welcome = WELCOME_STEPS.indexOf('consent'); this.mode = 'consent'; this.bump(); }
+        break;
       case 'consentAllow': this.debugBeat('consent'); this.decideConsent(true); break;
       case 'consentDecline': this.debugBeat('consent'); this.decideConsent(false); break;
       case 'board':
         this.settleArrival(); this.minimised = false;
         this.beginList();
+        if (this.welcome !== null && !this.consent) { this.welcome = WELCOME_STEPS.indexOf('consent'); this.mode = 'consent'; }
         if (this.mode === 'consent') this.decideConsent(true);
+        if (this.welcome !== null) this.finishWelcome();
         break;
       case 'list': this.debugBeat('board'); this.openTask(0); break;
       case 'backToBoard': this.debugBeat('list'); this.backToBoard(); break;

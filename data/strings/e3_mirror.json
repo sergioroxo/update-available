@@ -23,15 +23,22 @@
     },
     "page": {
       "label": "Vera · 2014",
-      "hint": "Her story as it was published, then her own words. Close returns to the board."
+      "hint": "Her story as it was published. See what you wrote turns the page to her own words. Close returns to the board.",
+      "_retiredS434": "⚑ S434 (UiB job 40 Part B item 1) — `hint` was \"Her story as it was published, then her own words. Close returns to the board.\" (the page turned by itself; it waits for her press now)."
+    },
+    "pageOwn": {
+      "label": "Vera · 2014",
+      "hint": "Her own words, as she sent them in 2014. Close returns to the board."
     },
     "notesNotice": {
-      "label": "Her Notes",
-      "hint": "A Notes notification is on the phone. Open it."
+      "label": "Her own Notes",
+      "hint": "On her phone, unseen by the platform. Open them.",
+      "_retiredS434": "⚑ S434 (UiB job 40 Part B item 2) — `label` was \"Her Notes\", `hint` \"A Notes notification is on the phone. Open it.\"."
     },
     "notes": {
-      "label": "Her Notes",
-      "hint": "Her Notes are open on the phone. When her line is written, Back closes them."
+      "label": "Her own Notes",
+      "hint": "Her Notes are open on her phone. She writes for no one but herself; Back closes them when she is done.",
+      "_retiredS434": "⚑ S434 (UiB job 40 Part B item 2) — `label` was \"Her Notes\", `hint` \"Her Notes are open on the phone. When her line is written, Back closes them.\" (\"when her line is written\" read as a task: his note on row 6, \"does this mean that as part of her system she was to type a notes for the reviewer?\")."
     },
     "nuala": {
       "label": "Nuala's message",
@@ -69,7 +76,9 @@
       "label": "The group, outnumbered",
       "hint": "Review could not keep up. Forward the link if she wants, or close the group. The update follows."
     },
-    "lambientPhone": "Nothing here needs you now. Your phone is on the right."
+    "lambientPhone": "Nothing here needs you now. Your phone is on the right.",
+    "lambientNotes": "Nothing on the board needs you now.",
+    "_docS434": "⚑ S434 (UiB job 40 Part B items 1–2; his 27 Nov answers to job 38's calls 1 and 2, and his note on row 6: \"does this mean that as part of her system she was to type a notes for the reviewer? … Like the fact that you can use space to have your own voice?\") — HER NOTES ARE HER OWN VOICE, kept as built: they are hers, on her own phone, and GracePlatform never sees them (the record files them only as a gap, s3_maiden.json witness.residue). The Now at her Notes (`notesNotice`, `notes`) says so and asks nothing for the platform; `lambientNotes` is what Lambient's button answers there (it is ask-only there now: graceQueueLite `guideSilent`), and it says nothing of her phone or her Notes (`lambientPhone`, said at every other phone step, pointed her to the phone). `page` follows the memory page's own press (See what you wrote). Claude's words; his edit wins."
   },
   "guidePage": {
     "_docS429": "⚑ S429 (UiB job 38 F2) — what Lambient's taskbar button answers ON A LESSON'S OWN PAGE, during the training: the page she is on, not the board's next step (on Lesson 2's page it said \"Lesson 2 opens once Lesson 1 is done…\", the map's board hint). A finished lesson's page says it is done. After the training the chain's line is said everywhere, as before (`chain`). Claude's words; his edit wins.",

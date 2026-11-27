@@ -33,7 +33,9 @@ const lastXr = { recentres: null, resets: null, tables: null };
 // ⚑ S432 — the hands (trial-watch `hands`): xr:hands-only when the last controller has gone and hands are in (the headset's own switch:
 //   nothing should show then), xr:controllers when a controller comes back, xr:hands-line when the hands' line goes up (once a visit, and
 //   only after a hand's press)
-let lastHands = { pads: -1, hands: 0, line: false };
+// ⚑ S435 (UiB job 40 C4) — and guide:balloon / guide:balloon-gone when a balloon of Lamby's or Lambient's goes up or closes (the hands'
+//   line waits for it: xr:hands-line should come only after a guide:balloon-gone, when the balloon was up at the hand's press)
+let lastHands = { pads: -1, hands: 0, line: false, balloon: false };
 const tokenOf = (k, x) => {
   if (typeof x === 'string' || typeof x === 'number') return `ledger:${k}:${x}`;
   if (x && typeof x === 'object') {
@@ -63,6 +65,7 @@ for (const l of lines) {
       if (alone(l.hands) && !alone(lastHands)) tokens.push({ t: l.t, tok: 'xr:hands-only' });
       if (l.hands.pads > 0 && lastHands.pads === 0) tokens.push({ t: l.t, tok: 'xr:controllers' });
       if (l.hands.line && !lastHands.line) tokens.push({ t: l.t, tok: 'xr:hands-line' });
+      if (l.hands.balloon !== undefined && !!l.hands.balloon !== !!lastHands.balloon) tokens.push({ t: l.t, tok: l.hands.balloon ? 'guide:balloon' : 'guide:balloon-gone' });   // S435
       lastHands = l.hands;
     }
   }

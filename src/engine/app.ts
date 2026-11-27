@@ -1147,8 +1147,25 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       // ⚑ S425 — on a computer, 2016's set brought beside the monitor turns the look (as little as it takes) so the set can stand
       //   large enough to read at the monitor's left, the monitor whole; it gives the look back when she puts the set back. A free
       //   move (her drag takes it at any time); never in a headset (no conducted turns there), never under the gyro
-      look: (yaw, pitch) => { if (xr?.active || motionState === 'live') return; startCamMove({ x: camPos.x, y: camPos.y, z: camPos.z, pitch, yaw }, 1.0, false); },
-      facing: () => (xr?.active ? null : { yaw: camYaw + lookOffYaw, pitch: camPitch + lookOffPitch })
+      // ⚑ S435 (UiB job 40 Part C, item 3) — on a phone or a tablet (`how`): the VIEW is taken to this facing by the browser's own
+      //   conducted turn (smoothstep, `how.seconds` at the comfort law's pace; under reduced motion startCamMove's covered cut), drag
+      //   riding on top as for every conducted move; under the gyro the rig turns by the yaw between the view and this facing, so the
+      //   device's own look composes on top of it (the rig's pitch is the seat's: the device's pitch is its own). Never in a headset.
+      look: (yaw, pitch, how) => {
+        if (xr?.active) return;
+        if (!how) { if (motionState === 'live') return; startCamMove({ x: camPos.x, y: camPos.y, z: camPos.z, pitch, yaw }, 1.0, false); return; }
+        if (motionState === 'live') {
+          const f = camera.forward, d = ((yaw - Math.atan2(-f.x, -f.z) * 180 / Math.PI + 540) % 360) - 180;
+          startCamMove({ x: camPos.x, y: camPos.y, z: camPos.z, pitch: camPitch, yaw: camYaw + d }, how.seconds, true);
+        } else startCamMove({ x: camPos.x, y: camPos.y, z: camPos.z, pitch, yaw }, how.seconds, true);
+        tvTurnSeq = camMoveSeq;   // the set's own turn is not the story speaking (the `conduct` voice would send the set back)
+      },
+      // (⚑ S435 — under the gyro, the view's own facing: the device's look included)
+      facing: () => {
+        if (xr?.active) return null;
+        if (motionState === 'live') { const f = camera.forward; return { yaw: Math.atan2(-f.x, -f.z) * 180 / Math.PI, pitch: Math.asin(Math.max(-1, Math.min(1, f.y))) * 180 / Math.PI }; }
+        return { yaw: camYaw + lookOffYaw, pitch: camPitch + lookOffPitch };
+      }
     });
   }
   // (the in-room cork board that used to be built here is RETIRED — decision
@@ -2151,6 +2168,8 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   /** S72: monotonic id of the driven leg currently owning the camera — see
    *  startCamMove and the `__camPose` probe. Never resets; only ever compared. */
   let camMoveSeq = 0;
+  /** ⚑ S435 — the leg id of the conducted turn a brought Lamby set made (a phone or a tablet): the set's own turn, never a voice */
+  let tvTurnSeq = -1;
   /** ⚑ THE ONE OPT-OUT (`?descent=0`). It has always turned off the entrance
    *  descent; S67 makes it turn off the RELOCATIONS too, because they are the
    *  same thing at a larger scale and the brief is explicit that whatever opts
@@ -4868,7 +4887,12 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     xrFrame?.setGrip(aimShown && aimPick && aimAt ? xrComfort.physicalPoint(new pc.Vec3(aimAt.x, aimAt.y, aimAt.z)) : null);
     if (xrFrame && xr?.active && !gameMenuBus.isOpen) xrFrame.setHint(siteViewerXr?.isOpen || closeStage === 'message' ? null : !xrComfort.calibrated ? menuStrings.xrSeat : deviceInHand ? null : aimName ? null : xrHelperText(helper?.text() ?? null, dt));
     // ⚑ S432 — the hands' line, once it is due and the plate is free (no menu, no site window, no other notice)
-    if (handsLine === 'due' && xrFrame && xr?.active && !gameMenuBus.isOpen && !siteViewerXr?.isOpen && !xrFrame.noticeNow()) { handsLine = 'said'; xrFrame.notice(menuStrings.xrHandsOnly, 8); }
+    // ⚑ S435 (UiB job 40 C4; his "okay" to job 36's call) — and no balloon of Lamby's (Lambient's, Lamby's card in the room): one voice
+    //   at a time, the frame's helper yields to the guide's balloon (R28 amendment 2). It waits until the balloon is gone (answered,
+    //   × or let go: a press that answers it closes it, so the line comes on the next frame), then has its 8 s; a controller picked
+    //   up while it waits (present: no press needed) unasks it, so it never shows — a later hand press with none present asks again
+    if (handsLine === 'due' && xrInput?.controllerIn()) handsLine = 'unsaid';
+    if (handsLine === 'due' && xrFrame && xr?.active && !gameMenuBus.isOpen && !siteViewerXr?.isOpen && !xrFrame.noticeNow() && !os.lambyGuide.active) { handsLine = 'said'; xrFrame.notice(menuStrings.xrHandsOnly, 8); }
     // ⚑ S208 / A1 (REVIEW_ROUND_5) — the menu holds the SOUND as well as the clock. This early return used to skip the
     //   frame's own audio sync below, so tapes, the bed, L's voice, the songs and the ad all played on behind the
     //   menu ("The frame never plays"). Pause them once on the way in, give them back once on the way out.
@@ -5428,7 +5452,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       const voices: Record<string, string> = {
         lamby: os.lambyGuide.active ? os.lambyGuide.view.text ?? '1' : '',
         toast: os.toastKey,
-        conduct: on(!!camMove && camMove.conducted && !teachingTvs.momentRunning),
+        conduct: on(!!camMove && camMove.conducted && !teachingTvs.momentRunning && camMoveSeq !== tvTurnSeq),   // ⚑ S435: not the set's own turn
         side: os.era === 'e1' ? os.guide?.activeText ?? '' : '',
         felt1997: on(os.era === 'e1' && (!!os.packet?.open || !!os.diary?.open)),
         chat1997: on(os.era === 'e1' && !!os.irc?.open),

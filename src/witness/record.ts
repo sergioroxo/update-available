@@ -108,7 +108,7 @@ function recordWitness(id: string): string {
 }
 
 /** ⚑ S267 — ids `ledger.records` holds for the map (src/witness/map.ts), never meant for Your file */
-const MAP_BEATS = new Set(['e3-signed-in', 'e3-job-done', 'e3-two-jobs', 'e3-day-done']);
+const MAP_BEATS = new Set(['e3-signed-in', 'e3-job-done', 'e3-two-jobs', 'e3-day-done', 'e3-welcome-done']);   // ⚑ S433: the welcome shown through (map.ts)
 /** ⚑ S405 (UiB job 31, T94) — and 2016's job marks (graceQueueLite.ts updateConnections: `e3-job:<id>` as each job is
  *  finished, `e3-jobs-done` when all are): progress marks for the map and the day (map.ts, phoneE3.ts, app.ts read them),
  *  not filings. Each job files its own entry (the testimony: graceQueue + era3Jobs 'pipeline'; the places list: era3Jobs

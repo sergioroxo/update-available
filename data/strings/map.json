@@ -342,6 +342,14 @@
      "where": "the workstation"
     },
     {
+     "id": "welcome",
+     "label": "Welcome to GracePlatform",
+     "done": "welcomeDone",
+     "hint": "Training step 1 of 4: GracePlatform shows you around, one thing at a time. Press Next on its card; answer Lambient’s question when it asks.",
+     "where": "the workstation",
+     "_docS433": "⚑ S433 (UiB job 40; his 26 Nov: \"It should welcome right from the start to the turtoral of the system\") — the training's first step, from Sign in: the welcome (graceQueueLite WELCOME_STEPS). Lambient's question is asked inside it (the `consent` beat below is answered before this one is done). Done when the tour has shown her record and This week is up. Claude's words; his edit wins."
+    },
+    {
      "id": "consent",
      "label": "Lambient's question",
      "done": "consentAnswered",
@@ -350,11 +358,13 @@
     },
     {
      "id": "work",
-     "label": "Lesson 1 · A testimony",
+     "label": "Step 2 · Correct a testimony",
      "done": "renataWorked",
-     "hint": "Begin Lesson 1: Lambient makes the first cut in Renata’s film; apply or skip the next two rules, then send it. Then return to Today.",
+     "hint": "Step 2: Begin opens it. Lambient shows you the first rule; the next two are yours.",
      "where": "the workstation",
-     "_retiredS424": "⚑ S424 (UiB job 35 Part D, Act I: the board is the training) — `label` was \"A story, corrected\", `hint` \"Correct Renata’s testimony: apply or skip each rule. Then return to Today.\"."
+     "_retiredS424": "⚑ S424 (UiB job 35 Part D, Act I: the board is the training) — `label` was \"A story, corrected\", `hint` \"Correct Renata’s testimony: apply or skip each rule. Then return to Today.\".",
+     "_retiredS433": "⚑ S433 (UiB job 40: the lessons are the training's steps 2–4) — `label` was \"Lesson 1 · A testimony\", `hint` \"Begin Lesson 1: Lambient makes the first cut in Renata’s film; apply or skip the next two rules, then send it. Then return to Today.\".",
+     "_docS433b": "⚑ S433b — the three lessons' hints short enough for Lambient's asked balloon to stand in the band under the tiles (asked on the board or over This week, it lay over the tiles at 115 px tall); the NOW line on each lesson's page says the rest."
     },
     {
      "id": "pipeline",
@@ -367,19 +377,21 @@
     },
     {
      "id": "places",
-     "label": "Lesson 2 · The places list",
+     "label": "Step 3 · The places list",
      "done": "placesDone",
-     "hint": "Lesson 2 opens once Lesson 1 is done: add The Wick to the list, or leave it off.",
+     "hint": "Step 3, lit when step 2 is done: add The Wick to the list, or leave it off.",
      "where": "the workstation",
-     "_retiredS424": "⚑ S424 — `label` was \"The places list\", `hint` \"On the board: The places list. Add The Wick to the list, or leave it off.\"."
+     "_retiredS424": "⚑ S424 — `label` was \"The places list\", `hint` \"On the board: The places list. Add The Wick to the list, or leave it off.\".",
+     "_retiredS433": "⚑ S433 (UiB job 40: the lessons are the training's steps 2–4) — `label` was \"Lesson 2 · The places list\", `hint` \"Lesson 2 opens once Lesson 1 is done: add The Wick to the list, or leave it off.\"."
     },
     {
      "id": "family",
-     "label": "Lesson 3 · The mothers",
+     "label": "Step 4 · The mothers",
      "done": "familyDone",
-     "hint": "Lesson 3: Lambient answers the first mother; then Annette is yours. Send a reply, or don’t.",
+     "hint": "Step 4: Lambient answers the first mother to show you; then Annette is yours.",
      "where": "the workstation",
-     "_retiredS424": "⚑ S424 — `label` was \"The mothers\", `hint` \"On the board: Answer the mothers. Send each a reply, or don’t.\"."
+     "_retiredS424": "⚑ S424 — `label` was \"The mothers\", `hint` \"On the board: Answer the mothers. Send each a reply, or don’t.\".",
+     "_retiredS433": "⚑ S433 (UiB job 40: the lessons are the training's steps 2–4) — `label` was \"Lesson 3 · The mothers\", `hint` \"Lesson 3: Lambient answers the first mother; then Annette is yours. Send a reply, or don’t.\"."
     },
     {
      "id": "group",
@@ -403,7 +415,8 @@
      "label": "Vera · 2014",
      "done": "veraRecordClosed",
      "quiet": true,
-     "hint": "Her story as it was published, then her own words. Close returns to the board; her Notes come to the phone.",
+     "hint": "Her story as it was published. See what you wrote turns the page to her own words. Close returns to the board; then her own Notes, on her phone.",
+     "_retiredS434": "⚑ S434 (UiB job 40 Part B items 1–2) — `hint` was \"Her story as it was published, then her own words. Close returns to the board; her Notes come to the phone.\" (the page turned by itself; \"her Notes come to the phone\" read as something the platform brings).",
      "where": "the workstation",
      "_retiredS425": "⚑ S425 — `hint` was \"As sent shows her earlier account. Close record returns to the day.\" (As sent and Close record are retired: See what you wrote and Close).",
      "_retiredS428": "⚑ S428 (UiB job 38 A2/B4; his 26 Nov: \"The automatic is 2026 not 2016\") — the chain on her acts: `hint` was \"Her story as it was published, then her own words. Her Notes follow. Close returns to the board.\"."

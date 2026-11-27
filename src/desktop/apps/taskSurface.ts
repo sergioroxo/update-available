@@ -53,6 +53,10 @@ export interface TaskSurface {
    *  reached, never on a timer. */
   complete(): boolean;
 
+  /** ⚑ S433 (UiB job 40) — a lesson's moment, for its NOW line (e3_training.json `lessons.<id>.now`): 'watch' while Lambient
+   *  shows how, 'turn' when the press is hers, 'done' when it is finished. Only the training's lessons give one. */
+  nowMoment?(): string;
+
   /** monotonic; bumped on every real state change. The board and the open task
    *  both re-upload only when this moves (S37's dirty law). NEVER bump it from
    *  a clock. */

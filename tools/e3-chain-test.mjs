@@ -68,7 +68,7 @@ const pressId = (id) => {
 const run = (s) => { for (let i = 0, n = Math.round(s * 10); i < n; i++) { if (q.wickBanReady) q.takeWickBan(); q.update(0.1); if (i % 5 === 0) draw(); } draw(); };
 const P = q.phone;
 /** what may move or open: the platform's page, job, cards; the phone's screen, stage, notification, messages; the chain's step; the update */
-const sig = () => JSON.stringify([q.mode, q.veraPage, q.openSurface?.id ?? null, q.pauseOpen, q.kitPopin, q.memoryCard, q.memoryStage, q.minimised,
+const sig = () => JSON.stringify([q.welcomeStep, q.mode, q.veraPage, q.openSurface?.id ?? null, q.pauseOpen, q.kitPopin, q.memoryCard, q.memoryStage, q.minimised,
   P.screen, P.stage, P.noticeId, P.newsN, P.cascadeN, [...P.removed].length, P.evening.map((e) => e.id).join(','), P.endAnswered, q.updateReady, q.chainState?.step ?? null]);
 let rows = 0;
 const idle = (label) => { const a = sig(); run(120); const b = sig(); assert.equal(b, a, `${label}: two minutes with no press move nothing and open nothing`); rows++; };
@@ -91,14 +91,49 @@ const ledgerRecords = () => M.ledger.records;
 // ── rows 1–3: sign in, Allow, the training (each lesson opens the next; a message arrives as a notification and opens nothing) ──
 q.settleArrival(); draw();
 idle('row 1 (sign-in waits)');
-pressId('signin'); assert.equal(q.mode, 'consent', 'row 1: Sign in → the question');
-pressId('consent-allow'); assert.equal(q.mode, 'board', 'row 2: Allow → the board'); assert.ok(q.pauseOpen, 'row 2: This week');
+pressId('signin');
+// ── ⚑ S433 (UiB job 40; his 26 Nov: "It should welcome right from the start to the turtoral of the system") — rows W1–W7, the welcome:
+//   Sign in opens GracePlatform's welcome (the training's step 1), and the system is shown one thing at a time. At each step two minutes
+//   with no press move nothing and open nothing (the phone included), and Lambient says nothing unasked; each press moves exactly one
+//   step: Next (Show me around on the first), and her answer to Lambient's question, which is asked inside the welcome. ──
+const Q0 = JSON.parse(fs.readFileSync('data/dialog/s3_queue.json', 'utf8'));
+const W_STEPS = ['hello', 'board', 'lesson', 'consent', 'lambient', 'phone', 'record'];
+assert.equal(q.welcomeStep, 'hello', 'W1: Sign in → GracePlatform\'s welcome, not Lambient\'s question');
+assert.notEqual(q.mode, 'consent', 'W1: the question is not the first thing');
+let wRows = 0;
+for (let i = 0; i < W_STEPS.length; i++) {
+  const st = W_STEPS[i];
+  assert.equal(q.welcomeStep, st, `W${i + 1}: the welcome is on ${st}`);
+  const ids = live();
+  if (st === 'consent') assert.equal(q.mode, 'consent', 'W4: Lambient\'s question, inside the welcome');
+  else assert.ok(ids.includes('welcome-next'), `W${i + 1}: ${st} — its Next is drawn and pressable`);
+  if (st !== 'consent' && st !== 'hello') {
+    assert.ok(!ids.some((id) => id.startsWith('task-')), `W${i + 1}: ${st} — the tiles are shown, not opened`);
+    assert.ok(!ids.includes('week-open'), `W${i + 1}: ${st} — no This week button while the welcome shows the platform`);
+  }
+  assert.ok(q.guideSilent, `W${i + 1}: ${st} — nothing of Lambient's is said unasked during the welcome`);
+  assert.equal(q.lambLines, null, `W${i + 1}: ${st} — no Lambient lane line over the welcome`);
+  idle(`W${i + 1} (welcome: ${st})`); wRows++;
+  assert.equal(P.screen, 'lock', `W${i + 1}: ${st} — nothing opened on the phone`);
+  pressId(st === 'consent' ? 'consent-allow' : 'welcome-next');
+  assert.equal(q.welcomeStep, W_STEPS[i + 1] ?? null, `W${i + 1}: her press moves the welcome one step (${st} → ${W_STEPS[i + 1] ?? 'This week'})`);
+  if (st === 'consent') assert.equal(q.welcomeReply, Q0.lambient.acceptReply, 'W4: Lambient\'s answer to her Allow is said on its next card, once');
+}
+assert.equal(q.mode, 'board', 'W7: the welcome ends on the board'); assert.ok(q.pauseOpen, 'row 2: This week closes the welcome');
+assert.ok(M.ledger.records.includes('e3-welcome-done'), 'W7: the welcome is done (the map\'s beat)');
+// This week sits under the tiles, never over one
+{ const rs = draw(), card = q.covers.find((c) => c.id === 'cover:this-week'), tiles = rs.filter((r) => /^task-\d$/.test(r.id));
+  assert.ok(card && tiles.length === 3, 'This week is drawn, with the three tiles');
+  for (const t of tiles) assert.ok(t.y + t.h <= card.y, `This week lies under the tiles (tile ${t.id} ends ${t.y + t.h}, card at ${card.y})`); }
 // ⚑ S429 (D) — the platform's music is on from her sign-in and through This week (it was stopped under the card)
 const loop = (where) => { const L = q.graceLoopState; assert.ok(L.on, `D: the music plays ${where}`); return L; };
 run(0.2); loop('under This week');
 assert.ok(!live().includes('mirror-restore'), 'C5: the Handset Window\'s taskbar button is gone');
 pressId('week-begin'); assert.equal(q.mode, 'list', 'row 3: Begin → Lesson 1');
+// ⚑ S433 — the lessons are the training's steps, each with its NOW line for the moment it is in
+assert.equal(q.lessonOneMoment(), 'watch', 'S433: step 2 opens on Lambient showing the first rule (NOW: nothing to press)');
 run(30);   // Lambient's own first cut (the fiction's own time)
+assert.equal(q.lessonOneMoment(), 'turn', 'S433: then the rule is hers (NOW: apply or skip)');
 for (let i = 0; i < 4 && live().includes('apply'); i++) { pressId('apply'); run(14); }
 pressId('vera-send'); run(2); pressId('board-back'); run(1);
 assert.equal(q.lessonState('places'), 'lit', 'row 3: Lesson 1 finished → Lesson 2 lit (no Heartwood wait)');
@@ -106,10 +141,12 @@ run(10);
 assert.equal(P.screen, 'lock', 'row 3: the Mentor\'s message arrived and opened nothing on the phone');
 assert.ok(P.delivered('mentor'), 'row 3: the Mentor\'s message is a notification');
 pressId('task-1');
+assert.equal(q.surfaces.get('places').nowMoment(), 'turn', 'S433: step 3\'s NOW is the ask');
 // ⚑ S429 (F2) — on Lesson 2's page Lambient's button answers about this page, not the board's next step
 const GP = JSON.parse(fs.readFileSync('data/strings/e3_mirror.json', 'utf8')).guidePage;
 assert.equal(q.guidePageLine, GP.places, 'F2: on Lesson 2\'s page the asked line is the page\'s');
 pressId('places-add'); run(1);
+assert.equal(q.surfaces.get('places').nowMoment(), 'done', 'S433: step 3 done, its NOW is the way back');
 assert.equal(q.guidePageLine, GP.done, 'F2: on a finished lesson\'s page the asked line says it is done');
 // ⚑ S429 (C2) — the finished lesson's Back to Today sits at the foot of the left column, clear of the Trending panel on the right
 { const back = draw().filter((r) => r.id === 'board-back').sort((a, b) => b.w * b.h - a.w * a.h)[0];
@@ -121,11 +158,13 @@ assert.ok(P.delivered('arrival') && P.screen === 'lock', 'row 3: Orla\'s message
 pressId('task-2');
 // ⚑ S429 (C3) — Lambient answers Maureen in its own time, and the same moment the screen is on Annette, its note saying so plainly
 { const fam = q.surfaces.get('family'); let n = 0;
+  assert.equal(fam.nowMoment(), 'watch', 'S433: step 4 opens on Lambient answering Maureen (NOW: nothing to press)');
   draw(); assert.ok(fam.keepOut().length >= 4, 'G2: Lesson 3 hands its replies to Lambient\'s balloon to keep off, while Lambient shows how');
   while (!fam.lessonSent && n++ < 200) run(0.1);
   assert.ok(fam.lessonSent, 'C3: Lambient sent Maureen\'s reply');
   assert.equal(fam.current().id, 'p_annette', 'C3: at once on Annette (no 2.4 s held on Maureen)');
-  assert.match(fam.note?.line ?? '', /^I answered Maureen for you: Encourage patience\. Annette is yours\.$/, 'C3: Lambient says plainly it answered'); }
+  assert.match(fam.note?.line ?? '', /^I answered Maureen for you: Encourage patience\. Annette is yours\.$/, 'C3: Lambient says plainly it answered');
+  assert.equal(fam.nowMoment(), 'turn', 'S433: then Annette is hers (NOW: answer her, or don\'t send a script)'); }
 run(2);
 pressId('family-reply-r_grief'); run(1); pressId('board-back'); run(12);
 assert.ok(P.delivered('decision') && P.screen === 'lock', 'row 3: Mam\'s message arrived as a notification; the phone did not open');
@@ -147,12 +186,18 @@ pressId('pause-close'); run(0.2);
 assert.equal(q.memoryCard, 'again', 'row 5b: back on the board, the card again, Look back alone');
 assert.ok(!live().includes('memory-notnow'), 'row 5b: Look back alone');
 
-// ── row 5: Look back → the page; it turns to her own words in its reading time (kept), then waits ──
+// ── row 5: Look back → the page, on her story as published; ⚑ S434 (UiB job 40 B1; his call 1, "The automatic is 2026 not 2016"):
+//   it waits for HER press, See what you wrote, to turn to her own words (it turned by itself in its reading time before) ──
 pressId('memory-look'); assert.equal(q.veraPage, 'record', 'row 5: the memory page');
 const closeAt = () => { const r = draw().find((x) => x.id === 'memory-close'); return r ? r.x + r.w : -1; };
 const close0 = closeAt(), see0 = draw().find((x) => x.id === 'memory-see');
-run(40);
 loop('under the memory page');
+idle('row 5 (the page on her story as published: two minutes with no press, it does not turn)');
+assert.equal(q.memoryState.page, 'published', 'S434 B1: two minutes with no press, the page still shows her story as published');
+assert.ok(!q.guideAskable, 'S434 B1: no Lambient on the felt page');
+pressId('memory-see');
+assert.equal(q.memoryState.page, 'own', 'S434 B1: See what you wrote turns it to her own words');
+assert.ok(!live().includes('memory-see'), 'S434 B1: then Close alone');
 // ⚑ S429 (C4) — Close stays on the right in both states
 assert.ok(see0 && close0 > see0.x + see0.w, 'C4: Close to the right of See what you wrote');
 assert.equal(closeAt(), close0, `C4: Close stays where it was when the page turns (${close0})`);
@@ -162,6 +207,9 @@ assert.equal(P.screen, 'evening', 'row 5: nothing opened on the phone (Mam\'s th
 // ── row 6: closing the page → a Notes notification (the Notes do not open) ──
 pressId('memory-close');
 assert.equal(P.noticeId, 'notes', 'row 6: a Notes notification on the phone');
+// ⚑ S434 (UiB job 40 B2) — her Notes are her own: Lambient's asked line there says nothing of her phone or her Notes, and is answered
+assert.equal(step(), 'notesNotice'); assert.doesNotMatch(q.chainState.lambient, /phone|notes?\b/i, 'S434 B2: Lambient says nothing of her Notes');
+assert.ok(q.guideAskOnly, 'S434 B2: at her Notes\' notification Lambient\'s button is answered (ask-only), nothing said unasked');
 idle('row 6 (the Notes notification waits)');
 assert.notEqual(P.screen, 'notes', 'row 6: the Notes did not open by themselves');
 
@@ -194,6 +242,30 @@ assert.notEqual(P.screen, 'group', 'row 9: the group did not open by itself');
 // ── rows 10–11: opening it → the news, a message at a time (its own time); read → the kit pops in, and waits ──
 pressId('mirror:evening-banner');
 assert.equal(P.screen, 'group', 'row 10: the group opens');
+// ⚑ S434 (UiB job 40 B3; his "Yes, a preview") — Bea's card opens its preview on her tap, in the phone; nothing on the monitor; the
+//   news goes on landing (nothing held back) but the preview is not reading Bea's last message; Back returns to the group, her place kept
+{ let n = 0; while (P.newsN < 2 && n++ < 200) run(0.1);
+  assert.ok(live().includes('mirror:malta-open'), 'S434 B3: Bea\'s card is a press in the Handset Window');
+  const page0 = [q.mode, q.veraPage, q.openSurface?.id ?? null, q.kitPopin].join('|'), held0 = P.groupView.userScrolled;
+  pressId('mirror:malta-open');
+  assert.equal(P.screen, 'article', 'S434 B3: her tap opens the preview in the phone');
+  assert.equal([q.mode, q.veraPage, q.openSurface?.id ?? null, q.kitPopin].join('|'), page0, 'S434 B3: nothing opens on the monitor');
+  draw(); const pv = P.previewViews['180x310'];
+  assert.ok(pv && pv.dropped === 0 && pv.body >= 2 && pv.lines.every((l) => l.y1 <= pv.H), `S434 B3: the preview's lines all drawn whole (${pv?.body} body lines, ${pv?.dropped} left out)`);
+  assert.doesNotMatch(pv.lines.map((l) => l.t).join(' '), /Lambient|GracePlatform/, 'S434 B3: no Lambient and no platform voice in it');
+  run(120);   // two minutes in the preview: the news is the fiction's own time and lands; nothing else opens
+  assert.equal(P.screen, 'article', 'S434 B3: the preview stays until her Back');
+  assert.equal(P.newsN, 5, 'S434 B3: the news went on landing while the preview was open (nothing held back)');
+  assert.equal(P.stage, 'news', 'S434 B3: the preview does not count as reading Bea\'s last message');
+  assert.equal(q.kitPopin, false, 'S434 B3: no kit while the preview is open');
+  pressId('mirror:back');
+  assert.equal(P.screen, 'group', 'S434 B3: Back returns to the group');
+  // ⚑ S434b — and the card she tapped stands whole in the Handset Window's list (the news landed meanwhile and pushed it up), its foot
+  //   above the ▼ pill's strip; the thread held there for her (then ▼ back to the newest, for the rows that follow)
+  draw(); const mt = P.mirrorThread, sl = mt?.slots?.n1;
+  assert.ok(sl && sl.y0 >= mt.vTop && sl.y1 <= mt.vBottom, `S434b: back from the preview, Bea's card whole in view (${JSON.stringify(sl)} in ${mt?.vTop}–${mt?.vBottom})`);
+  assert.ok(P.groupView.userScrolled || !held0, 'S434 B3: her place is hers');
+  pressId('mirror:scroll-down'); draw(); assert.equal(P.groupView.scrollBack, 0, 'S434b: ▼ back to the newest'); }
 run(20);
 loop('under Bea\'s news');
 // ⚑ S429 (C1) — the group scrolls line by line: a line up (the wheel's and the stick's step) moves a line; ▲ goes back a page with no
@@ -263,6 +335,7 @@ assert.ok(q.guideAskable, 'B3: on a job page Lambient\'s button is drawn');
 // ── row 15: closing the group → the update ──
 idle('row 15 (the end, in the group, waits for her)');
 loop('at the end of 2016');
+assert.ok(!live().includes('mirror:malta-open'), 'S434 B3: the card the review removed is no longer a press');
 pressId('mirror:back');
 assert.equal(P.endAnswered, 'close', 'row 15: closing the group answers the end');
 assert.ok(q.updateReady, 'row 15: the update follows');
@@ -281,5 +354,18 @@ for (const [src, re, what] of [[gq, /const KIT_POPIN_AUTO\s*=/, 'KIT_POPIN_AUTO'
   [gq, /const HEARTWOOD_FAILSAFE\s*=/, 'HEARTWOOD_FAILSAFE'], [gq, /const TAIL_HOLD_SECONDS\s*=/, 'TAIL_HOLD_SECONDS'], [e3d, /const FINAL_GAP\s*=/, 'FINAL_GAP'],
   [ph, /^\s*if \(!visible\) return;/m, 'the phone\'s pause while a job or the game is open']]) assert.doesNotMatch(src, re, `A3: ${what} is retired`);
 
+// ⚑ S433 — the decline: Not now also moves the welcome on, Lambient's other answer on its card
+{ M.ledger.records.splice(M.ledger.records.indexOf('e3-welcome-done'), 1);   // a second visit's welcome (a new instance resets the day: so last)
+  const q2 = new M.GraceQueueLite(); q2.settleArrival(); const d2 = () => { q2.draw(g, W, H); return q2.rects; };
+  const p2 = (id) => { const r = d2().find((x) => x.id === id); assert.ok(r, `decline route: ${id} drawn`); q2.handleClick(r.x + r.w / 2, r.y + r.h / 2); };
+  p2('signin'); p2('welcome-next'); p2('welcome-next'); p2('welcome-next');
+  assert.equal(q2.mode, 'consent', 'W4: the question, on the decline route too');
+  p2('consent-decline');
+  assert.equal(q2.welcomeStep, 'lambient', 'W4: Not now moves the welcome on (refusing is real; the day opens anyway)');
+  assert.equal(q2.welcomeReply, Q0.lambient.declineReply, 'W4: "I\'ll keep the room tidy either way", on its card');
+  p2('welcome-next'); p2('welcome-next'); p2('welcome-next');
+  assert.ok(q2.pauseOpen && q2.welcomeStep === null, 'W7: the decline route ends on This week too'); }
+console.log(`S433: the welcome's ${wRows} steps each waited two minutes on no press with nothing moving, and each moved one step on her press (Allow and Not now both); This week under the tiles; the lessons' NOW moments. OK.`);
 console.log(`2016's chain: ${rows} rows each waited two minutes on no press with nothing moving; rows 1–15 each moved by her press; the review ran through a reopened lesson, the game and a minimised window; Shut Down refused in view, Leave tall and clear of Start, Take me there; the clock the real time of day. OK.`);
+console.log('S434: the memory page waits two minutes on her story as published and turns on See what you wrote; Lambient says nothing of her Notes and answers there; Bea\'s card opens its preview in the phone, the news lands meanwhile, Back returns to the group. OK.');
 console.log('S429: the group scrolls a line at a time, ▲ a page, ▼ the newest, no band; Lesson 2\'s back clear of Trending; Lambient answers Maureen and the screen is on Annette at once; Close on the right; the phone button gone; Lambient\'s asked line speaks to the page; the music on from sign-in to the end, lowered under the game; the hour padded. OK.');
