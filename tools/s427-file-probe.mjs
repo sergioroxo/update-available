@@ -166,6 +166,9 @@ const doPress = async (id, why) => {
 };
 
 const TRAINING = await page.evaluate(() => 'watch' in (window.__graceQueue?.() ?? {}));
+// ⚑ S428 (UiB job 38) — 2016's chain waits for her on the phone now: Mam's message, the Notes notification, her Notes' Back, Nuala's
+//   message, the group's notifications, the group's Back at the end (visitor-state `e3Wait`); the memory page is closed before Nuala
+const CHAIN = await page.evaluate(() => 'chainState' in (window.__graceQueue?.() ?? {}));
 const started = Date.now();
 let step = 0, lastSig = '', sigSince = Date.now(), nualaIn = false, mid = false;
 const seenAt = new Map(), done = new Set();
@@ -184,11 +187,13 @@ while (Date.now() - started < HARD_STOP) {
   const readFor = (id) => (Date.now() - (seenAt.get(id) ?? Date.now())) / 1000;
   if (stable >= 700) {
     const ctx = CONTEXT.find(([id, dwell]) => !done.has(id) && live.has(id) && readFor(id) >= dwell
-      && !(id === 'memory-close' && !nualaIn)
+      && !(id === 'memory-close' && !nualaIn && !CHAIN)
       && !(id === 'vera-record-close' && !done.has('vera-as-sent'))
       && !(id === 'vera-kit-close' && !done.has('vera-take-down') && !done.has('vera-kit-approve')));
     if (!nualaIn) nualaIn = await page.evaluate(() => !!window.__graceQueue?.()?.phone?.delivered?.('nuala') && !window.__graceQueue?.()?.phone?.voiceBusy);
     if (ctx) { if (await doPress(ctx[0], 'context')) { done.add(ctx[0]); continue; } }
+    const chainId = CHAIN && (s.e3Wait || []).find((id) => live.has(id) && readFor(id) >= 2);
+    if (chainId && await doPress(chainId, 'chain')) continue;
     while (step < ROUTE.length && ROUTE[step][2] && (ROUTE[step][2] === 'old') === TRAINING) step++;
     if (step < ROUTE.length && ROUTE[step][0][0] === 'board-back' && !live.has('board-back')
       && await page.evaluate(() => ['board', 'done'].includes(window.__graceQueue?.()?.mode) && !window.__graceQueue?.()?.openSurface)) { step++; continue; }

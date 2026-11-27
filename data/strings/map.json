@@ -393,27 +393,30 @@
      "id": "vera-install",
      "label": "A memory from 2014",
      "done": "veraRecordOpened",
-     "hint": "When the training is done, Kindredraft shows a memory from 2014. Look back opens Vera’s own story.",
+     "hint": "When the training is done and Mam’s message has been read, Kindredraft shows a memory from 2014. Look back opens Vera’s own story.",
      "where": "the workstation",
-     "_retiredS425": "⚑ S425 (UiB job 35 Part D, Act II: Kindredraft as a memory, no Install) — `label` was \"Kindredraft\", `hint` \"When the board’s jobs are done, install Kindredraft. It opens Vera’s own 2014 story.\""
+     "_retiredS425": "⚑ S425 (UiB job 35 Part D, Act II: Kindredraft as a memory, no Install) — `label` was \"Kindredraft\", `hint` \"When the board’s jobs are done, install Kindredraft. It opens Vera’s own 2014 story.\"",
+     "_retiredS428": "⚑ S428 (UiB job 38 A2/B4; his 26 Nov: \"The automatic is 2026 not 2016\") — the chain on her acts: `hint` was \"When the training is done, Kindredraft shows a memory from 2014. Look back opens Vera’s own story.\"."
     },
     {
      "id": "vera-story",
      "label": "Vera · 2014",
      "done": "veraRecordClosed",
      "quiet": true,
-     "hint": "Her story as it was published, then her own words. Her Notes follow. Close returns to the board.",
+     "hint": "Her story as it was published, then her own words. Close returns to the board; her Notes come to the phone.",
      "where": "the workstation",
-     "_retiredS425": "⚑ S425 — `hint` was \"As sent shows her earlier account. Close record returns to the day.\" (As sent and Close record are retired: See what you wrote and Close)."
+     "_retiredS425": "⚑ S425 — `hint` was \"As sent shows her earlier account. Close record returns to the day.\" (As sent and Close record are retired: See what you wrote and Close).",
+     "_retiredS428": "⚑ S428 (UiB job 38 A2/B4; his 26 Nov: \"The automatic is 2026 not 2016\") — the chain on her acts: `hint` was \"Her story as it was published, then her own words. Her Notes follow. Close returns to the board.\"."
     },
     {
      "id": "vote",
      "label": "Bea’s news",
      "done": "voted",
-     "hint": "After Nuala’s message, Bea’s news from Malta comes to the group, opened wide on the monitor. ▲ ▼ look back.",
-     "where": "the group, wide on the monitor",
+     "hint": "After Nuala’s message, the group Maiden-to-be has a notification on the phone. Open it: Bea’s news from Malta, one message at a time.",
+     "where": "the phone, beside the workstation",
      "_retiredS426": "⚑ S426 (UiB job 35 Part D, Act III beat 11; his call 8, the kit after the news) — `label` was \"The vote\", `hint` \"When the campaign kit closes, Bea shares the news from Malta in the group, beside the platform.\", `where` \"the mirrored phone beside the platform\"; it came after the kit. Its `done` (`voted`) is set once the news has been read now (it was set as it began).",
-     "quiet": true
+     "quiet": true,
+     "_retiredS428": "⚑ S428 (UiB job 38 A2/B4; his 26 Nov: \"The automatic is 2026 not 2016\") — the chain on her acts: `hint` was \"After Nuala’s message, Bea’s news from Malta comes to the group, opened wide on the monitor. ▲ ▼ look back.\"; `where` was \"the group, wide on the monitor\"."
     },
     {
      "id": "vera-kit",
@@ -436,17 +439,19 @@
      "label": "The group, outnumbered",
      "done": "cascadeSeen",
      "quiet": true,
-     "hint": "With the kit closed, GracePlatform removes the news from the group, one message at a time. The women forward it faster. ↪ Forward the link is hers, if she wants.",
-     "where": "the group, wide on the monitor",
-     "_retiredS426": "⚑ S426 (Act III beats 13–14) — `label` was \"The group\", `hint` \"GracePlatform removes the messages by itself. The group forwards them faster.\", `where` \"the mirrored phone beside the platform\"."
+     "hint": "With the kit closed, the group has a notification on the phone. Open it: GracePlatform removes the news, one message at a time, and the women forward it faster. ↪ Forward the link is hers, if she wants.",
+     "where": "the phone, beside the workstation",
+     "_retiredS426": "⚑ S426 (Act III beats 13–14) — `label` was \"The group\", `hint` \"GracePlatform removes the messages by itself. The group forwards them faster.\", `where` \"the mirrored phone beside the platform\".",
+     "_retiredS428": "⚑ S428 (UiB job 38 A2/B4; his 26 Nov: \"The automatic is 2026 not 2016\") — the chain on her acts: `hint` was \"With the kit closed, GracePlatform removes the news from the group, one message at a time. The women forward it faster. ↪ Forward the link is hers, if she wants.\"; `where` was \"the group, wide on the monitor\"."
     },
     {
      "id": "update",
      "label": "The update",
      "done": "updatedTo4",
-     "hint": "The system update follows once the review could not keep up.",
+     "hint": "When the review could not keep up, forwarding the link or closing the group brings the system update.",
      "where": "the workstation",
-     "_retiredS426": "⚑ S426 — `hint` was \"The system update follows the group’s cascade.\""
+     "_retiredS426": "⚑ S426 — `hint` was \"The system update follows the group’s cascade.\"",
+     "_retiredS428": "⚑ S428 (UiB job 38 A2/B4; his 26 Nov: \"The automatic is 2026 not 2016\") — the chain on her acts: `hint` was \"The system update follows once the review could not keep up.\"."
     }
    ],
    "_retiredS426beats": [

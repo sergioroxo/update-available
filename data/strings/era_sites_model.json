@@ -4099,20 +4099,20 @@
        {
         "label": "A memory from 2014",
         "opt": "",
-        "hint": "When the training is done, Kindredraft shows a memory from 2014. Look back opens Vera’s own story.",
+        "hint": "When the training is done and Mam’s message has been read, Kindredraft shows a memory from 2014. Look back opens Vera’s own story.",
         "where": "Where: the workstation."
        },
        {
         "label": "Vera · 2014",
         "opt": "",
-        "hint": "Her story as it was published, then her own words. Her Notes follow. Close returns to the board.",
+        "hint": "Her story as it was published, then her own words. Close returns to the board; her Notes come to the phone.",
         "where": "Where: the workstation."
        },
        {
         "label": "Bea’s news",
         "opt": "",
-        "hint": "After Nuala’s message, Bea’s news from Malta comes to the group, opened wide on the monitor. ▲ ▼ look back.",
-        "where": "Where: the group, wide on the monitor."
+        "hint": "After Nuala’s message, the group Maiden-to-be has a notification on the phone. Open it: Bea’s news from Malta, one message at a time.",
+        "where": "Where: the phone, beside the workstation."
        },
        {
         "label": "The campaign kit",
@@ -4129,13 +4129,13 @@
        {
         "label": "The group, outnumbered",
         "opt": "",
-        "hint": "With the kit closed, GracePlatform removes the news from the group, one message at a time. The women forward it faster. ↪ Forward the link is hers, if she wants.",
-        "where": "Where: the group, wide on the monitor."
+        "hint": "With the kit closed, the group has a notification on the phone. Open it: GracePlatform removes the news, one message at a time, and the women forward it faster. ↪ Forward the link is hers, if she wants.",
+        "where": "Where: the phone, beside the workstation."
        },
        {
         "label": "The update",
         "opt": "",
-        "hint": "The system update follows once the review could not keep up.",
+        "hint": "When the review could not keep up, forwarding the link or closing the group brings the system update.",
         "where": "Where: the workstation."
        }
       ]

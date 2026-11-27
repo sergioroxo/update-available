@@ -72,6 +72,24 @@ Everything else, just play as anyone would.
 The 12 calls in the two checklists (the 7.5° turn of the computer view, the red stripe, the slower removal…) are not
 asked again here. Mention any of them if you notice it.
 
+## Added by job 38 (27 Nov): three more checks, two more things to do
+
+Since job 38, **nothing in 2016 opens by itself.** News comes as a notification in the Handset Window, and you open it.
+The Mac now looks for 20 checks; the three new ones are in `tools/trial-items.json`:
+
+| check | the Mac finds it by | what only your eye can judge |
+|---|---|---|
+| 38-music The music never stops | from Lambient allowed to the update | it never stops; it goes quieter under a film or the game, then comes back where it was; no gap when it loops |
+| 38-scroll Earlier messages scroll | the news starts | the thumbstick moves the thread a few lines at a time; ▲ and ▼ by the ray; no white band, no line cut |
+| 38-stall After the kit, a finished lesson | your answer to the kit | open a finished lesson at once: the group's notification still comes, and 2016 ends |
+
+Two more things to do on purpose, after the six above:
+
+7. **2016, after the kit:** open a finished lesson at once (as on 26 Nov), then open the group from its notification.
+8. **2016, Malta:** scroll the group with the thumbstick, up and back down.
+
+Job 38's own list, with your calls: `HEADSET_CHECKLIST_JOB38_2026-11-27.md`.
+
 ## After
 
 1. I stop the recorder and make the report: `node tools/trial-report.mjs --out out/trial-2026-11-24 --voice "<your _clock.tsv>"`.

@@ -680,9 +680,9 @@ const RITUAL_OFFSET = {
 const CORRECTION_IDS = new Set((queue.corrections as { id: number }[]).map(c => c.id));
 const TOTAL_CORRECTIONS = (queue.submissions as { corrections: number[] }[])
   .reduce((n, s) => n + s.corrections.filter(id => CORRECTION_IDS.has(id)).length, 0);
-/** s of ordinary quiet, with the gate met and nothing open, before the notice —
- *  long enough that it plainly is not a response to the player's press. */
-const FINAL_GAP = 6;
+/* (⚑ S428 (UiB job 38 A2 row 15) — S149's FINAL_GAP, six seconds of quiet with nothing open before the notice, is retired: the
+ *  notice answers her act — forwarding the link once the review could not keep up, or closing the group after it — and comes at once.
+ *  40a59042 holds it.) */
 void TOTAL_CORRECTIONS;   // S149: no longer the era's trigger (see tick); kept for the review probes
 
 /** ⚑ THE ONE TOUCH: how far in front of the eye the picture hangs once the
@@ -787,6 +787,11 @@ export interface Era3Devices {
   /** ⚑ S328 — where a ray meets 2026's monitor, in the monitor's logical pixels (null off it, or off era 4): the
    *  wheel and the drag ask this before they turn the view, so Kettle's thread scrolls under them */
   monitorPoint(ray: { p0: pc.Vec3; p1: pc.Vec3 }): { x: number; y: number } | null;
+  /** ⚑ S429 (UiB job 38 C1) — the computer's wheel over 2016's Handset Window (or with her phone in her hand): her open thread scrolls
+   *  a line at a time; true when it was the thread's (the camera's zoom does not hear it) */
+  phoneWheel(ray: { p0: pc.Vec3; p1: pc.Vec3 } | null, dy: number): boolean;
+  /** ⚑ S429 (C1) — the headset's thumbstick in 2016 (y down +): her open thread scrolls a line at a time */
+  phoneStick(y: number): void;
   /** ?debug=1 review aid only (like __os/__tapes) — the raw offscreen
    *  canvases, for pixel-probing the shell content/lamb-marks without
    *  screenshot-chasing the 3D projection. */
@@ -1243,8 +1248,6 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
 
   let arrived = false;
   let eraNow: EraKey = 'e1';
-  /** s of quiet accumulated since the correction list was exhausted */
-  let finalT = -1;
   let finalArmed = false;
 
   // ── ⚑ THE VISOR (S76) ─────────────────────────────────────────────────────
@@ -1522,13 +1525,12 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
       const rit = eraNow === 'e3' ? e4Bridge()?.update() : null;
       graceQueueLite.systemModal = !!(rit?.open && rit.visible);
       graceQueueLite.updateDeferred = !!rit?.deferred;
-      if (eraNow === 'e3' && !finalArmed) {
-        const gate = graceQueueLite.updateReady;   // S327 → ⚑ S426: the review outnumbered ("Review could not keep up."), the thread held, the window back
-        const clear = !phoneHeld && !graceQueueLite.busy && !desk.notebookOpen;
-        if (gate && clear) {
-          finalT = finalT < 0 ? 0 : finalT + dt;
-          if (finalT >= FINAL_GAP) { finalArmed = true; e4Bridge()?.armFinal(); }
-        }
+      // ⚑ S428 (UiB job 38 A2 row 15; his 26 Nov: "The automatic is 2026 not 2016") — the gate is her act at the end (graceQueueLite
+      //   `updateReady`: the link forwarded, or the group closed, once "Review could not keep up." has been on her glass), and the notice
+      //   comes at once, over whatever is open on the workstation (it is the system's). Only her notebook in her hand holds it (a felt
+      //   object: it waits for her to put it down). (S149's six clear seconds and its open-job / phone-in-hand gate: 40a59042.)
+      if (eraNow === 'e3' && !finalArmed && graceQueueLite.updateReady && !desk.notebookOpen) {
+        finalArmed = true; e4Bridge()?.armFinal();
       }
       driveVisor(dt);
       // S61: the arrival (dark → boot → install → sign-in) is the only thing
@@ -1818,6 +1820,16 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
       const place = PLACEMENT.monitor;
       return hitPlane(s.entity, place.size.w, place.size.h, s.logical.w, s.logical.h, ray);
     },
+    phoneWheel(ray: { p0: pc.Vec3; p1: pc.Vec3 } | null, dy: number): boolean {
+      if (eraNow !== 'e3') return false;
+      if (phoneHeld) return graceQueueLite.phone.wheel(dy);
+      const s = screens.find(sc => sc.name === 'workstation');
+      if (!ray || !s || !s.entity.enabled) return false;
+      const place = PLACEMENT.workstation;
+      const p = hitPlane(s.entity, place.size.w, place.size.h, s.logical.w, s.logical.h, ray);
+      return !!p && graceQueueLite.phoneWheelAt(p.x, p.y, dy);
+    },
+    phoneStick(y: number): void { if (eraNow === 'e3') graceQueueLite.phoneStick(y); },
     handleWorkstationPointer(ray: { p0: pc.Vec3; p1: pc.Vec3 }): boolean {
       const test = (name: 'workstation' | 'phone' | 'laptop' | 'monitor'): { x: number; y: number } | null => {
         const s = screens.find(sc => sc.name === name);

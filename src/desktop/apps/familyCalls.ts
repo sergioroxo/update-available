@@ -96,7 +96,8 @@ export class FamilyCallsApp implements TaskSurface {
   /** the seconds Lambient's line is read before the chosen reply lights, and before it is sent; then the step to Annette */
   private static readonly LIGHT_AT = Math.max(3, readHold(f.lambient.teach));
   private static readonly SEND_AT = FamilyCallsApp.LIGHT_AT + 1.6;
-  private static readonly MOVE_AT = FamilyCallsApp.SEND_AT + 2.4;
+  /* (⚑ S429 — MOVE_AT, the 2.4 s held on Maureen after Lambient had sent, is retired: 282003e0. His 26 Nov, "when I do Maureen it
+   *  should jump to Annette" — he was ahead of it, and took Lambient's send for his own.) */
   tick(dt: number): void {
     if (this.lessonMoved) return;
     const maureen = PARENTS.find((p) => p.id === 'p_maureen');
@@ -116,14 +117,21 @@ export class FamilyCallsApp implements TaskSurface {
         ledger.checkins.push({ id: familyCheckinId(p.id), witness: f.lambient.lessonWitness });
         playOnce('tick_task.mp3');
       }
-      this.lessonSent = true; this.bump();
-    }
-    if (crossed(FamilyCallsApp.MOVE_AT) && this.lessonSent) {
+      this.lessonSent = true;
+      // ⚑ S429 (UiB job 38 C3; his 26 Nov: "when I do Maureen it should jump to Annette") — sent, the screen goes to Annette AT ONCE,
+      //   and Lambient's note in the list column says plainly that it answered Maureen (`lambient.answered`); her row keeps "sent by
+      //   Lambient · lesson". The note goes when she answers Annette, as any note does.
       this.lessonMoved = true;
-      const ann = PARENTS.findIndex((p) => p.id === QUIET.id);
+      if (r) this.note = { line: f.lambient.answered.replace('{reply}', r.label), voice: 'lambient' };
+      const ann = PARENTS.findIndex((q) => q.id === QUIET.id);
       if (ann >= 0 && !this.outcomes.has(QUIET.id)) this.select(ann); else this.bump();
     }
   }
+
+  /** ⚑ S429b (G2) — the replies and "Don't send a script" as drawn, pressable or not (while Lambient shows how, they are drawn and
+   *  not yet hers): Lambient's balloon keeps off them (graceQueueLite → lambyGuideDraw) */
+  private drawnPresses: { x: number; y: number; w: number; h: number; id: string }[] = [];
+  keepOut(): { x: number; y: number; w: number; h: number; id: string }[] { return this.drawnPresses; }
 
   version(): number { return this.v; }
   private bump(): void { this.v++; }
@@ -343,6 +351,7 @@ export class FamilyCallsApp implements TaskSurface {
     //   lights a moment before it is sent, and stays lit on her row as the one that was sent
     const watching = p.id === 'p_maureen' && !this.lessonSent && !this.lessonMoved && !this.outcomes.has(p.id);
     const chosen = (watching && this.lessonT >= FamilyCallsApp.LIGHT_AT) || this.lessonBy.has(p.id) ? this.lessonReply?.id : undefined;
+    this.drawnPresses = [];
     REPLIES.forEach((r, i) => {
       const bx = readX + (i % 2) * (bw + 10);
       const by = verbsY + 22 + Math.floor(i / 2) * (bh + 6);
@@ -351,6 +360,7 @@ export class FamilyCallsApp implements TaskSurface {
       setFont(ctx, 10); ctx.fillStyle = lit ? ERA3.white : done ? ERA3.grey : ERA3.ink;
       wrapText(ctx, r.label, bw - 12).forEach((line, n) => ctx.fillText(line, bx + 6, by + 4 + n * 12));
       if (!done && !watching) hit({ x: bx, y: by, w: bw, h: bh, id: 'family-reply-' + r.id });
+      this.drawnPresses.push({ x: bx, y: by, w: bw, h: bh, id: 'family-reply-' + r.id });
     });
 
     // ⚑ and the row that is always available and never labelled as a refusal:
@@ -358,6 +368,7 @@ export class FamilyCallsApp implements TaskSurface {
     const hy = verbsY + 22 + Math.ceil(REPLIES.length / 2) * (bh + 6) + 4;
     if (!this.complete()) aero.button(ctx, readX, hy, readW, bh, f.app.noReplyLabel, { disabled: done || watching, size: 10 });
     if (!done && !watching) hit({ x: readX, y: hy, w: readW, h: bh, id: 'family-refuse' });
+    if (!this.complete()) this.drawnPresses.push({ x: readX, y: hy, w: readW, h: bh, id: 'family-refuse' });
 
     if (this.complete()) {
       setFont(ctx, 12); ctx.fillStyle = ERA3.titleText;

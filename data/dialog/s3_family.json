@@ -69,6 +69,8 @@
   "lambient": {
     "onQuiet": "That one's outside what we send. Mark it handled.",
     "teach": "Watch: warmth first, then the truth.",
+    "answered": "I answered Maureen for you: {reply}. Annette is yours.",
+    "_docS429answered": "⚑ S429 (UiB job 38 C3; his 26 Nov: \"when I do Maureen it should jump to Annette\") — Lambient's note in the list column the moment it has sent Maureen's reply and the screen has gone to Annette (at once; the 2.4 s on Maureen is retired). Claude's words; his edit wins.",
     "lessonReply": "r_patience",
     "lessonWitness": "family: replied by Lambient as the lesson's example — Maureen, patience encouraged",
     "_retiredS424teach": "⚑ S424 (Act I beat 7; storyboard §3b) — was \"Families need words. We give them gentle ones: warmth first, then the truth.\""

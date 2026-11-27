@@ -63,7 +63,8 @@ export function drawVeraDistribution(ctx: CanvasRenderingContext2D, a: SurfaceRe
 }
 export function drawRetainedCopies(ctx: CanvasRenderingContext2D, a: SurfaceRect, approved: boolean, hit: (r: SurfaceHit) => void): void {
   px(ctx, a.x, a.y, a.w, a.h, P.glass);
-  studioFont(ctx, 20, true); ctx.fillStyle = P.titleText; ctx.fillText(D.kit.takeDown, a.x + 14, a.y + 8);
+  // ⚑ S429 (UiB job 38 C6) — headed with what happened, not with the button's words ("Take my story down" read as nothing done)
+  studioFont(ctx, 20, true); ctx.fillStyle = P.titleText; ctx.fillText(D.kit.takenDownHeading, a.x + 14, a.y + 8);
   text(ctx, D.kit.receipt[0], a.x + 14, a.y + 39, a.w - 28, 13);
   const top = a.y + 77, gap = 10, cw = Math.floor((a.w - 48) / 3);
   for (let i = 0; i < 3; i++) {
