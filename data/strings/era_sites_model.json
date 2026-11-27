@@ -4075,7 +4075,7 @@
        {
         "label": "Step 2 · Correct a testimony",
         "opt": "",
-        "hint": "Training step 2: Begin opens it. Lambient shows you the first rule on Renata’s film; apply or skip the next two, then send her story. Then Back to Today.",
+        "hint": "Step 2: Begin opens it. Lambient shows you the first rule; the next two are yours.",
         "where": "Where: the workstation."
        },
        {
@@ -4087,13 +4087,13 @@
        {
         "label": "Step 3 · The places list",
         "opt": "",
-        "hint": "Training step 3, lit when step 2 is done: add The Wick to the list, or leave it off. Then Back to Today.",
+        "hint": "Step 3, lit when step 2 is done: add The Wick to the list, or leave it off.",
         "where": "Where: the workstation."
        },
        {
         "label": "Step 4 · The mothers",
         "opt": "",
-        "hint": "Training step 4: Lambient answers the first mother to show you; then Annette is yours. Send a reply, or don’t send a script.",
+        "hint": "Step 4: Lambient answers the first mother to show you; then Annette is yours.",
         "where": "Where: the workstation."
        },
        {

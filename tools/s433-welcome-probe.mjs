@@ -104,6 +104,24 @@ const layout = async (label) => {
   return d;
 };
 
+/** ⚑ Lambient's button asked over a card of the welcome's (or This week): one voice at a time — the card waits (its press not drawn),
+ *  the balloon lies over no tile and no card, and Got it brings the card back */
+const askedBalloon = async (label) => {
+  if (!(await liveIds()).has('lg-tray')) { check(true, `${label}: (no Lambient button in this mock)`); return; }
+  await pressOne('lg-tray'); await ff(page, 1.5);
+  const d = await drawn();
+  const lg = d.rects.find((r) => r.id === 'lg-cover');
+  const cardPress = d.rects.find((r) => ['welcome-next', 'week-begin', 'pause-close'].includes(r.id));
+  const tiles = d.lines.filter((l) => /^Step [234] ·|^Start here$|^after step/.test(l.t));
+  const hitsTile = lg ? tiles.filter((l) => l.x1 > lg.x && l.x0 < lg.x + lg.w && l.y1 > lg.y && l.y0 < lg.y + lg.h) : [];
+  check(!!lg && !cardPress && hitsTile.length === 0, `${label}: Lambient asked — its balloon up, the card waits, no tile under the balloon`,
+    `${lg ? `balloon ${lg.x},${lg.y} ${lg.w}×${lg.h}` : 'no balloon'} · card press ${cardPress?.id ?? 'none'} · tile lines under it ${hitsTile.length}`);
+  for (const id of ['lg-ok', 'lg-x']) if ((await liveIds()).has(id)) { await pressOne(id); break; }
+  await ff(page, 0.5);
+  const back = (await drawn()).rects.some((r) => ['welcome-next', 'week-begin', 'pause-close'].includes(r.id));
+  check(back, `${label}: the balloon closed, the card is back`);
+};
+
 /** two minutes of the app's own clock with no press: nothing moves, nothing opens */
 const idle = async (label) => {
   const a = await sig();
@@ -136,6 +154,7 @@ for (let i = 0; i < STEPS.length; i++) {
   check((await liveIds()).has(pressId), `welcome ${st}: its press (${pressId}) is published to the visitor's aim`);
   await idle(`welcome ${st}`);
   check(!(await page.evaluate(() => window.__os.lambyGuide?.active)), `welcome ${st}: no Lambient balloon unasked`);
+  if (st === 'board') await askedBalloon('welcome board');
   await pressOne(pressId);
   const after = await e3(page);
   trail.push(`${st} →(${pressId}) ${after.welcome ?? (after.week ? 'This week' : after.mode)}`);
@@ -145,6 +164,7 @@ const sW = await e3(page);
 check(sW.week && sW.mode === 'board', 'the welcome ends on This week', JSON.stringify({ week: sW.week, mode: sW.mode }));
 await layout('This week (the welcome\'s last card)');
 await idle('This week');
+await askedBalloon('This week');
 check((await said()) === said0, 'no unasked Lambient balloon from the press of Sign in to This week', `${said0} → ${await said()}`);
 
 // ── the lessons: each page's head, at each of its moments ──

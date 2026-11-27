@@ -106,17 +106,17 @@ const nextPress = async () => {
 };
 
 const HARD = 900;   // fiction seconds
-let fiction = 0, lastSig = '', stableFor = 0, extrasDone = false;
+let fiction = 0, lastSig = '', stableFor = 0, extrasDone = false, weekExtrasDone = false;
 /** ⚑ on the welcome's board card (after build): Lambient's button asked, and the Start map's Now, each photographed, then put away */
-const extras = async () => {
+const extras = async (where = 'welcome-board') => {
   const shotAs = async (what) => { await wait(800); const file = `${String(++shotN).padStart(2, '0')}_${what}_${MODE}.png`; await page.screenshot({ path: path.join(OUT, file) }); log.stills.push({ file, state: what }); say(`still ${file}`); };
   if ((await live()).has('lg-tray')) {
-    await press(page, view, 'lg-tray', say); await ff(page, 1.5); await shotAs('welcome-board-lambient-asked');
+    await press(page, view, 'lg-tray', say); await ff(page, 1.5); await shotAs(`${where}-lambient-asked`);
     for (const id of ['lg-ok', 'lg-x']) if ((await live()).has(id)) { await press(page, view, id, say); break; }
     await ff(page, 0.5);
   }
   if ((await live()).has('start-menu')) {
-    await press(page, view, 'start-menu', say); await ff(page, 0.5); await shotAs('welcome-board-start-now');
+    await press(page, view, 'start-menu', say); await ff(page, 0.5); await shotAs(`${where}-start-now`);
     await press(page, view, 'start-menu', say); await ff(page, 0.5);
   }
 };
@@ -125,6 +125,7 @@ while (fiction < HARD) {
   if (sig !== lastSig) { lastSig = sig; stableFor = 0; }
   if (stableFor >= 1 && !shotSigs.has(sig)) await shoot(sig);
   if (!extrasDone && stableFor >= 1 && JSON.parse(sig).welcome === 'board' && shotSigs.has(sig)) { extrasDone = true; await extras(); lastSig = ''; continue; }
+  if (!weekExtrasDone && stableFor >= 1 && JSON.parse(sig).week && shotSigs.has(sig)) { weekExtrasDone = true; await extras('this-week'); lastSig = ''; continue; }
   const s = await e3(page);
   if (s.lessons.every((x) => x === 'done') && (s.mode === 'board' || s.mode === 'done') && !s.job && stableFor >= 3) { await shoot(sig, '#end'); break; }
   if (stableFor >= 2) {

@@ -2924,7 +2924,8 @@ export class GraceQueueLite {
     const cardY = c.y + c.h - cardH - 2;
     // ⚑ S433 — one voice at a time: while Lambient's balloon (asked for) or the Start menu is up, the welcome's card waits — its place
     //   kept (nothing moves), the balloon in the band it always takes under the tiles; it is back when they close
-    const cardWaits = this.welcome !== null && (!!this.lambyGuide?.active || this.startMap.active);
+    // ⚑ S433b — and This week the same (the balloon's place is the band the card stands in)
+    const cardWaits = (this.welcome !== null || this.pauseOpen) && (!!this.lambyGuide?.active || this.startMap.active);
     if (cardWaits) this.welcomeRing = null;
     else if (this.welcome !== null) {
       const ws = WELCOME_STEPS[this.welcome];
