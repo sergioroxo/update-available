@@ -58,9 +58,26 @@ const shot = async (n, what) => {
 // ── what the workstation writes: its canvas's own words, caught for one redraw ──
 await q(() => {
   const proto = CanvasRenderingContext2D.prototype, orig = proto.fillText;
+  // ⚑ S429c (H1) — the workstation's filled rectangles and pictures, where (logical px), while `__rectsAt` is set
+  const origRect = proto.fillRect, origImage = proto.drawImage;
+  const note = (c, x, y, w, h) => {
+    const m = c.getTransform(), k = c.canvas.width / 676, x0 = (m.a * x + m.e) / k, x1 = (m.a * (x + w) + m.e) / k, y0 = (m.d * y + m.f) / k, y1 = (m.d * (y + h) + m.f) / k;
+    window.__rectsAt.push({ x0: Math.min(x0, x1), x1: Math.max(x0, x1), y0: Math.min(y0, y1), y1: Math.max(y0, y1) });
+  };
+  proto.fillRect = function (x, y, w, h) { if (window.__rectsAt && this.canvas === window.__era3Devices?.()?.workstation) note(this, x, y, w, h); return origRect.call(this, x, y, w, h); };
+  proto.drawImage = function (...a) {
+    if (window.__rectsAt && this.canvas === window.__era3Devices?.()?.workstation) {
+      const [dx, dy, dw, dh] = a.length >= 9 ? [a[5], a[6], a[7], a[8]] : a.length >= 5 ? [a[1], a[2], a[3], a[4]] : [a[1], a[2], a[0]?.width ?? 0, a[0]?.height ?? 0];
+      note(this, dx, dy, dw, dh);
+    }
+    return origImage.apply(this, a);
+  };
   window.__drawn = null;
   proto.fillText = function (t, x, y, mw) {
     if (window.__drawn && this.canvas === window.__era3Devices?.()?.workstation) window.__drawn.push(String(t));
+    if (window.__phoneText && this.canvas === window.__graceQueue?.()?.mirrorCanvas) {   // S429c: the phone's own words (H2)
+      const m = this.getTransform(), k = this.canvas.width / 180; window.__phoneText.push({ s: String(t), y: (m.d * y + m.f) / k });
+    }
     if (window.__drawnAt && this.canvas === window.__era3Devices?.()?.workstation) {   // S429b: where (logical px), for G2
       const m = this.getTransform(), k = this.canvas.width / 676, w = this.measureText(String(t)).width;
       const size = Number(/(\d+(?:\.\d+)?)px/.exec(this.font)?.[1] ?? 11), bl = this.textBaseline;
@@ -129,6 +146,19 @@ const bannerCheck = async (label, must = false) => {
   }
   const ink = await phoneInk(b.bottom, b.bottom + 2);
   result.banners.push({ label, ...b, ink });
+  // ⚑ S429c (H2) — a preview shortened to fit ends with "…" (one that fits whole gets none)
+  const pv = await q(async () => {
+    const G = window.__graceQueue(), p = G.phone, bb = p.notice ?? p.banner;
+    const { phoneFont, phoneWrap } = await import('/src/desktop/theme/phone.ts');
+    const c = document.createElement('canvas').getContext('2d'); phoneFont(c, 12);
+    const all = phoneWrap(c, bb.text, 180 - 12 - 20);
+    window.__phoneText = []; G.phoneV = (G.phoneV ?? 0) + 1; G.bump?.();
+    await new Promise((r) => setTimeout(r, 350));
+    const drawn = window.__phoneText.filter((t) => t.y > 40 && t.y < 22 + 32 + 3 * 16 + 2).map((t) => t.s); window.__phoneText = null;
+    return { long: all.length > 3, drawn };
+  });
+  const last = pv.drawn[pv.drawn.length - 1] ?? '';
+  check('H2', `the banner ${label}: a shortened preview ends with "…"`, pv.long ? last.endsWith('…') : null, pv.long ? `its last line "${last}"` : `it fits whole (last line "${last}"; no "…" needed)`);
   if (SHOTS) {   // the Handset Window's phone as drawn, for the eye (its own 2× canvas)
     const png = await q(() => window.__graceQueue().mirrorCanvas.toDataURL('image/png'));
     fs.writeFileSync(path.join(SHOTS, `phone_banner-${label.replace(/[^a-z0-9]+/gi, '-')}_${MODE}.png`), Buffer.from(png.split(',')[1], 'base64'));
@@ -165,15 +195,39 @@ const asked = async (where, expect, still = null) => {
   }
   // the page's own lines as it writes them (the balloon put away): a line crossing its top or foot, or crossing its side, is cut
   const cut = await q(async (b) => {
-    window.__drawnAt = []; window.__graceQueue().bump?.();
+    window.__drawnAt = []; window.__rectsAt = []; window.__graceQueue().bump?.();
     await new Promise((r) => setTimeout(r, 350));
     const L = window.__drawnAt.filter((l) => l.s.trim() && l.x1 - l.x0 > 1 && l.y < 390 - 28); window.__drawnAt = null;
+    const R = window.__rectsAt; window.__rectsAt = null;
+    // ⚑ S429c (H1) — the page's items: the window's body (its largest fill under the title bar, 9 px gutter inside it) gives the content
+    //   edges; a fill of 12 px or more inside it, not the body's own ground, is an item; one with a dozen fills inside it is a picture
+    const body0 = R.filter((r) => r.y0 > 12 && r.y0 < 40 && r.x0 < 20).sort((p, q2) => (q2.x1 - q2.x0) * (q2.y1 - q2.y0) - (p.x1 - p.x0) * (p.y1 - p.y0))[0];
+    const cL = body0 ? body0.x0 + 9 : 13, cR = body0 ? body0.x1 - 9 : 477, cW = cR - cL, cH = body0 ? body0.y1 - body0.y0 : 330, cY = body0 ? body0.y0 : 26;
+    const inside = (a, c) => a.x0 >= c.x0 - 0.5 && a.x1 <= c.x1 + 0.5 && a.y0 >= c.y0 - 0.5 && a.y1 <= c.y1 + 0.5;
+    const meets = (a, c) => a.x0 < c.x1 - 0.5 && a.x1 > c.x0 + 0.5 && a.y0 < c.y1 - 0.5 && a.y1 > c.y0 + 0.5;
+    const sized = R.filter((r) => r.x1 - r.x0 >= 12 && r.y1 - r.y0 >= 12 && r.y0 >= cY - 1 && r.x1 - r.x0 < cW * 0.9 && (r.x1 - r.x0) * (r.y1 - r.y0) < cW * cH * 0.3);
+    const pics = sized.filter((p) => R.filter((r) => r !== p && inside(r, p)).length >= 12);
+    const items = sized.filter((r) => !pics.includes(r) && !pics.some((p) => inside(r, p)));
+    const box = { x0: b.x, x1: b.x + b.w, y0: b.y, y1: b.y + b.h }, tl = Math.max(b.x + 8, Math.min(b.x + b.w - 8, 490 - 182 + 7));
+    const tail = { x0: tl, x1: tl + 6, y0: b.y + b.h, y1: b.y + b.h + 6 };
+    const text = L.map((l) => ({ x0: l.x0, x1: l.x1, y0: l.g0, y1: l.g1, s: l.s }));
+    const sliced = [...items, ...text].filter((r) => (meets(r, box) && !inside(r, box)) || meets(r, tail)).map((r) => r.s ? `"${r.s}"` : `item ${Math.round(r.x0)},${Math.round(r.y0)} ${Math.round(r.x1 - r.x0)}×${Math.round(r.y1 - r.y0)}`);
+    const picsCut = pics.filter((p) => meets(p, box) || meets(p, tail)).map((p) => `${Math.round(p.x0)},${Math.round(p.y0)} ${Math.round(p.x1 - p.x0)}×${Math.round(p.y1 - p.y0)}`);
+    const edges = [cL, cR, ...items.map((r) => r.x0), ...text.map((r) => r.x0)];
+    const aligned = Math.abs(b.x + b.w - cR) <= 1 || Math.abs(b.x - cL) <= 1 || edges.some((e) => Math.abs(b.x - e) <= 1);
+    const covered = [...items, ...text].filter((r) => inside(r, box));
+    const twoCols = covered.some((a) => covered.some((c) => a.x1 + 6 < c.x0 && a.y1 > c.y0 && a.y0 < c.y1));
+    const h1 = { sliced, picsCut, aligned, twoCols, content: [Math.round(cL), Math.round(cR)] };
     const inX = (l) => l.x1 > b.x + 1 && l.x0 < b.x + b.w - 1, inY = (l) => l.g1 > b.y && l.g0 < b.y + b.h;
     const thru = (l, e) => l.g0 < e - 0.5 && l.g1 > e + 0.5;
     const top = L.filter((l) => inX(l) && thru(l, b.y)).map((l) => l.s), foot = L.filter((l) => inX(l) && thru(l, b.y + b.h)).map((l) => l.s);
     const side = L.filter((l) => inY(l) && (l.x0 < b.x - 0.5 && l.x1 > b.x + 0.5)).map((l) => l.s);
-    return { top, foot, side };
+    return { top, foot, side, h1 };
   }, g.box);
+  check('H1', `on ${where} the balloon covers only whole items, in one column, its side on a column or content edge`,
+    !cut.h1.sliced.length && cut.h1.aligned && !cut.h1.twoCols,
+    `sliced: ${cut.h1.sliced.slice(0, 6).join(', ') || 'none'}; side ${g.box.x}–${g.box.x + g.box.w} against the content ${cut.h1.content.join('–')}${cut.h1.aligned ? ' (aligned)' : ' (NOT aligned)'}; ${cut.h1.twoCols ? 'TWO columns' : 'one column'}`);
+  check('H1', `on ${where} a picture covered only in part`, null, cut.h1.picsCut.length ? `part of the picture at ${cut.h1.picsCut.join('; ')}` : 'none');
   // ⚑ S429b (G2) — the presses the page asks for (its sends, replies, adds, leaves, Back to Today, the cards' answers): none under it.
   //   Read twice: the buttons it publishes, and the words of its buttons as drawn (Lesson 3's replies are drawn, not yet pressable,
   //   while Lambient shows how)

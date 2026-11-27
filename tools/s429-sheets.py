@@ -53,6 +53,30 @@ spec['SHEET_F1_banners-closeup'] = {'title': 'F1, close: the Handset Window\'s p
 wb = ['ws_balloon-the-board_desktop.png', 'ws_balloon-Lesson-1-s-page_desktop.png', 'ws_balloon-Lesson-2-s-page_desktop.png', 'ws_balloon-a-finished-lesson-s-page_desktop.png', 'ws_balloon-Lesson-3-s-page_desktop.png']
 wl = ['the board', 'Lesson 1', 'Lesson 2', 'a finished lesson', 'Lesson 3']
 spec['SHEET_F2_balloon-closeup'] = {'title': 'F2, close: the page under Lambient\'s balloon, the balloon\'s box in magenta (no line crosses its edges)', 'rows': [close(s, wb, wl) for s in F]}
+# ⚑ S429c — the coordinator's H1 (the balloon covers only whole items) and H2 (a shortened preview ends with "…"): S429b (2325c60b,
+#   S429/after/) above, S429c (S429/after-c/) below. Run with `c` as the second argument to write only these.
+SIDE['after-c'] = 'after (S429c)'
+SIDE['after-b'] = 'before (S429b, 2325c60b)'
+def rowc(side, name, label, modes=('desktop', 'xr', 'phone')):
+    folder = 'after' if side == 'after-b' else side
+    return {'label': SIDE[side], 'cells': [({'label': f'{label}: {dict(MODES)[m]}', 'path': f'{D}/{folder}/{name}_{m}.png'} if os.path.exists(f'{D}/{folder}/{name}_{m}.png') else None) for m in modes]}
+C3 = [
+ ('lesson1', '04_lesson1', 'Lesson 1 (unchanged by S429c, for reference)', 'Lesson 1'),
+ ('lambient-lesson1', '05_lambient-lesson1', 'H1: Lambient asked on Lesson 1: whole items only (no part of the film)', 'Lesson 1, Lambient asked'),
+ ('lambient-lesson2', '06_lambient-lesson2', 'H1: Lambient asked on Lesson 2: in the right column, over whole rows, its side on the content edge', 'Lesson 2, Lambient asked'),
+ ('lesson2-done', '07_lesson2-done', 'Lesson 2 finished (unchanged by S429c, for reference)', 'Lesson 2 finished'),
+ ('lambient-finished', '07b_lambient-finished', 'H1: Lambient asked on a finished lesson: whole items only', 'a finished lesson, Lambient asked'),
+ ('lambient-lesson3', '10_lambient-lesson3', 'H1: Lambient asked on Lesson 3: in the empty lower left, whole items only', 'Lesson 3, Lambient asked'),
+ ('banner-bea', '16_banner-bea', 'H2: Bea\'s banner over Nuala\'s thread ends with "…"', 'Nuala\'s message read'),
+]
+specc = {}
+for key, name, title, label in C3:
+    specc[f'SHEET_S429c_{key}'] = {'title': title, 'rows': [rowc('after-b', name, label), rowc('after-c', name, label)]}
+specc['SHEET_S429c_banners-closeup'] = {'title': 'H2, close: the phone under each banner (a shortened preview ends with "…"; her whole note gets none)', 'rows': [
+    {'label': SIDE['after-b'], 'cells': [({'label': l, 'path': f'{D}/after/{f}'} if os.path.exists(f'{D}/after/{f}') else None) for f, l in zip(pb, pl)]},
+    {'label': SIDE['after-c'], 'cells': [({'label': l, 'path': f'{D}/after-c/{f}'} if os.path.exists(f'{D}/after-c/{f}') else None) for f, l in zip(pb, pl)]}]}
+if len(sys.argv) > 2 and sys.argv[2] == 'c':
+    spec = specc
 os.makedirs('out', exist_ok=True)
 json.dump(spec, open('out/s429-sheets.json', 'w'), indent=1)
 print('ok', len(spec), 'sheets')

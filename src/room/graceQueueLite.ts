@@ -2158,6 +2158,28 @@ export class GraceQueueLite {
     // ⚑ S429 (UiB job 38 F2) — where the page's lines fall (logical px), so Lambient's balloon never cuts one with its edge: each line
     //   the page writes is noted as it is written (the real context's own fillText, for this draw only)
     const pageLines: PageLine[] = [];
+    // ⚑ S429c (H1) — and the page's filled rectangles and pictures (cards, rows, panels, buttons, the film): the balloon covers only
+    //   whole items (lambyGuideDraw `pageRects`)
+    const pageRects: PageLine[] = [];
+    {
+      const base = ctx.getTransform?.().d || 1, realRect = ctx.fillRect, realImage = ctx.drawImage;
+      const box = (c: CanvasRenderingContext2D, x: number, y: number, w: number, h: number): void => {
+        try {
+          const m = c.getTransform(), X = (v: number, yy: number): number => (m.a * v + m.c * yy + m.e) / base, Y = (v: number, xx: number): number => (m.b * xx + m.d * v + m.f) / base;
+          const x0 = X(x, y), x1 = X(x + w, y), y0 = Y(y, x), y1 = Y(y + h, x);
+          pageRects.push({ x0: Math.min(x0, x1), x1: Math.max(x0, x1), y0: Math.min(y0, y1), y1: Math.max(y0, y1) });
+        } catch { /* a context that cannot say where: nothing noted */ }
+      };
+      (ctx as unknown as { fillRect: CanvasRenderingContext2D['fillRect'] }).fillRect = function (this: CanvasRenderingContext2D, x: number, y: number, w: number, h: number): void {
+        box(this, x, y, w, h); realRect.call(this, x, y, w, h);
+      };
+      (ctx as unknown as { drawImage: (...a: unknown[]) => void }).drawImage = function (this: CanvasRenderingContext2D, ...a: unknown[]): void {
+        const img = a[0] as { width?: number; height?: number };
+        const [dx, dy, dw, dh] = a.length >= 9 ? [a[5], a[6], a[7], a[8]] as number[] : a.length >= 5 ? [a[1], a[2], a[3], a[4]] as number[] : [a[1] as number, a[2] as number, img?.width ?? 0, img?.height ?? 0];
+        box(this, dx, dy, dw, dh);
+        (realImage as unknown as (...q: unknown[]) => void).apply(this, a);
+      };
+    }
     {
       const base = ctx.getTransform?.().d || 1, real = ctx.fillText;
       const note = function (this: CanvasRenderingContext2D, t: string, x: number, y: number, mw?: number): void {
@@ -2171,7 +2193,11 @@ export class GraceQueueLite {
         if (mw === undefined) real.call(this, t, x, y); else real.call(this, t, x, y, mw);
       };
       (ctx as unknown as { fillText: typeof note }).fillText = note;
-      try { this.drawSurfaceContent(ctx, platformW, H); } finally { delete (ctx as unknown as { fillText?: unknown }).fillText; }
+      try { this.drawSurfaceContent(ctx, platformW, H); } finally {
+        delete (ctx as unknown as { fillText?: unknown }).fillText;
+        delete (ctx as unknown as { fillRect?: unknown }).fillRect;
+        delete (ctx as unknown as { drawImage?: unknown }).drawImage;
+      }
     }
     // ⚑ S429 (F2) — the presses the step waits for: Lambient's balloon never lies over them (lambyGuideDraw `protect`)
     const pathIds = new Set<string>(['consent-allow', 'consent-decline', 'week-begin', 'pause-close', 'memory-look', 'memory-notnow', 'kit-popin-open']);
@@ -2206,7 +2232,7 @@ export class GraceQueueLite {
     // ⚑ S428 (UiB job 38 B3; HEADSET_RUN answer e) — its button is drawn on every operable surface (`guideAskable`): the board, every
     //   job page, the bare desktop, whatever the Handset Window shows beside it; while the scene is quiet only a press on it is
     //   answered (`guideAskOnly`). (It was hidden whenever a job was open, the phone was read or a felt beat ran: 40a59042.)
-    if (this.lambyGuide && this.guideAskable) this.lambyGuidePaint = drawLambyGuide(ctx, 'e3', this.lambyGuide.view, this.rects, { w: platformW, h: H }, [], pageLines, [...pathIds], this.guideKeepOut);
+    if (this.lambyGuide && this.guideAskable) this.lambyGuidePaint = drawLambyGuide(ctx, 'e3', this.lambyGuide.view, this.rects, { w: platformW, h: H }, [], pageLines, [...pathIds], this.guideKeepOut, { rects: pageRects, content: this.guideContent });
     if (this.guideFocus && !this.guideSilent && !this.guideVoice && !this._systemModal) {
       const r = this.rects.find(r => r.id === this.guideFocus!.id);
       if (r) drawGuidePointer(ctx, r, { x: platformW - 172, y: H - 24 }, ERA3.accent, 0);
@@ -2295,6 +2321,8 @@ export class GraceQueueLite {
     const hits = phoneRects.map(r => ({ ...r, x: px0 + r.x * scale, y: py + r.y * scale, w: r.w * scale, h: r.h * scale, id: `mirror:${r.id}` }));
     this.rects.unshift(...hits);
   }
+  /** ⚑ S429c (H1) — the page's content rectangle (the window's body inside its 9 px gutter): the balloon's side lines up with its edge */
+  guideContent: { x: number; y: number; w: number; h: number } | null = null;
   /** ⚑ S429b (G2) — the open job's drawn presses (pressable or not this moment): Lambient's balloon keeps off them */
   guideKeepOut: { x: number; y: number; w: number; h: number; id: string }[] = [];
   private drawSurfaceContent(ctx: CanvasRenderingContext2D, W: number, H: number): void {
@@ -2351,6 +2379,7 @@ export class GraceQueueLite {
     //   layout is inset, which is what a maximised window does anyway.
     const GUTTER = 9;
     const body = { ...c, x: c.x + GUTTER, w: c.w - GUTTER * 2 };
+    this.guideContent = { x: body.x, y: body.y, w: body.w, h: body.h };   // ⚑ S429c (H1) — the page's content edges, for the balloon
 
     if (this.veraPage) this.drawVeraPage(ctx, body);
     else if (this.mode === 'signin') this.drawSignIn(ctx, body);

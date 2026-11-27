@@ -225,6 +225,18 @@ function wholeLinesOnly(real: CanvasRenderingContext2D, a: number, b: number): C
     set(t, k, v) { return Reflect.set(t, k, v, t); }
   });
 }
+/** ⚑ S429c (H2; the coordinator: Bea's banner ended "make it an offence to try to" with nothing after it) — a notification's preview
+ *  as a phone shows it: its first `max` lines, and when the message goes on past them the last shown line ends in "…" (words dropped
+ *  from its end until it fits; no word changed). A message that fits whole (her unfinished note) gets none. */
+function previewLines(ctx: CanvasRenderingContext2D, text: string, width: number, max: number): string[] {
+  const all = phoneWrap(ctx, text, width);
+  if (all.length <= max) return all;
+  const lines = all.slice(0, max);
+  let last = lines[max - 1].replace(/[\s,;:.\-—]+$/, '');
+  while (ctx.measureText(last + '…').width > width && last.includes(' ')) last = last.slice(0, last.lastIndexOf(' ')).replace(/[\s,;:.\-—]+$/, '');
+  lines[max - 1] = last + '…';
+  return lines;
+}
 /** the edges a box list allows: `a` moved down past any line it would cut, `b` up past any line it would cut */
 function snapBetweenLines(boxes: TextBox[], a: number, b: number): { a: number; b: number } {
   for (let moved = true; moved;) { moved = false; for (const x of boxes) if (x.y0 < a && a < x.y1) { a = x.y1; moved = true; } }
@@ -875,7 +887,7 @@ export class PhoneE3 {
     const b = this.notice ?? this.banner;
     if (!b || this.bannersHidden || this.screen === 'lock') return 0;
     phoneFont(ctx, 12);
-    const lines = phoneWrap(ctx, b.text, W - 12 - 20).slice(0, 3);
+    const lines = previewLines(ctx, b.text, W - 12 - 20, 3);
     const photo = !this.notice && this.bannerPhoto;
     return 22 + 32 + lines.length * 16 + (photo ? 78 : 0) + 1;
   }
@@ -891,7 +903,7 @@ export class PhoneE3 {
     if (this.screen === 'lock') return;   // S330: the lock screen shows its messages as stacked cards (drawLock)
     phoneFont(ctx, 12);
     const x = 6, y = 22, w = W - 12;
-    const lines = phoneWrap(ctx, b.text, w - 20).slice(0, 3);
+    const lines = previewLines(ctx, b.text, w - 20, 3);
     const photo = !this.notice && this.bannerPhoto;
     const h = 32 + lines.length * 16 + (photo ? 78 : 0);
     roundRect(ctx, x, y + 1, w, h, 10, PHONE.dim);   // a hairline shadow under the card
@@ -923,7 +935,7 @@ export class PhoneE3 {
     let y = top;
     // ⚑ S428 — the phone's own notification waiting is the newest card, on top (her press on it opens what it names)
     if (this.notice) {
-      phoneFont(ctx, 12); const lines = phoneWrap(ctx, this.notice.text, W - 40).slice(0, 2);
+      phoneFont(ctx, 12); const lines = previewLines(ctx, this.notice.text, W - 40, 2);
       const h = 30 + lines.length * 16;
       roundRect(ctx, 10, y, W - 20, h, 8, PHONE.surface);
       ctx.fillStyle = PHONE.ink; phoneFont(ctx, 12, 600); ctx.fillText(this.notice.from, 20, y + 7);
@@ -935,7 +947,7 @@ export class PhoneE3 {
     for (const c of cards) {
       // ⚑ S429 (his 24 Nov rule; seen in this job's stills) — a card that counts more messages ("+1") keeps its preview clear of the
       //   count: it was drawn over the end of Orla's second line ("dee's keeping the corner")
-      phoneFont(ctx, 12); const lines = phoneWrap(ctx, c.text, W - 40 - (c.more ? 26 : 0)).slice(0, 2);
+      phoneFont(ctx, 12); const lines = previewLines(ctx, c.text, W - 40 - (c.more ? 26 : 0), 2);
       if (c.photo) lines.push(HOME.photoLine ?? 'Photo');
       const h = 30 + lines.length * 16;
       if (y + h > H - 48) break;
