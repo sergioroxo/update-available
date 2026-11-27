@@ -675,7 +675,7 @@ export class DesktopOS {
       log: (outcome, beat, countDismissal, acknowledged) => {
         if (beat === 'personalise' && this.restorify) this.restorify.offerPending = false;
         if (countDismissal) ledger.assistant.dismissals++;
-        const line = acknowledged ? lambyGuideCopy.witness.acknowledged : lambyGuideCopy.witness[outcome];
+        const line = acknowledged ? lambyGuideCopy.witness.acknowledged : outcome === 'let-go' ? lambyGuideCopy.witness.letGo : lambyGuideCopy.witness[outcome];
         this.fileLambyRecord(outcome, `guide:${beat}`, line.replace('{beat}', beat));
       },
       act: (act) => this.performGuideAct(act)
@@ -1462,7 +1462,7 @@ export class DesktopOS {
    *  is `dismissed`, and the `id` + the data-resolved witness line carry WHICH
    *  beat it was (`introduction`, `first-greeting`, `message-notice`). */
   private fileLambyRecord(
-    outcome: 'returned' | 'begun' | 'dismissed', id: string, witness: string
+    outcome: 'returned' | 'begun' | 'dismissed' | 'let-go', id: string, witness: string
   ): void {
     ledger.lamby.push({ id, outcome, witness });
   }

@@ -32,7 +32,9 @@
   "witness": {
     "dismissed": "guide declined: {beat}",
     "begun": "guide requested: {beat}",
-    "acknowledged": "guide acknowledged: {beat}"
+    "acknowledged": "guide acknowledged: {beat}",
+    "letGo": "guide let go: {beat}",
+    "_docS431": "⚑ S431 (UiB job 39 C) — `letGo`: the record's line when an offer of Lambient's was left unanswered and closed by itself (2016's Heartwood offer after `offerHold`, data/room/teaching_tvs.json). The apparatus's own register, like the three above; Claude's words, his edit wins."
   },
   "eras": {
     "e1": {

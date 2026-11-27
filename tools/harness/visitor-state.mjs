@@ -202,7 +202,8 @@ const LAP = { w: 224, h: 140 };
     }
     const add = (id, surface, r, pt) => {
       const logical = [Math.round(r.x + r.w / 2), Math.round(r.y + r.h / 2)];
-      if (pt) targets.push({ id, surface, logical, pt });
+      // ⚑ S431 — and its point in the room (world, logical metres): a probe's fingertip or pinch is aimed at it (tools/s431-probe.mjs)
+      if (pt) targets.push({ id, surface, logical, pt, world: lastWorld ? [...lastWorld] : null });
       else dropped.push({
         id, surface, logical, why: lastWhy || 'unprojectable', turn: turnTo(lastWorld)
       });
@@ -387,6 +388,13 @@ const LAP = { w: 224, h: 140 };
       if (tvState.call && tvState.call.shown) {
         tvSet.card = true;
         for (const r of tvState.call.hits || []) add(r.id + '@call', 'tvcall', r, onPlane(tvState.call.entity, r.x + r.w / 2, r.y + r.h / 2, tvState.call.cw, tvState.call.ch));
+      } else if (tvState.call && tvState.call.glass && q) {
+        // ⚑ S431 (UiB job 39 C) — 2016's offer is Lambient's own balloon on the monitor: its Bring it · Not now (and ×) are the
+        //   workstation's own `lg-` rects, published here as the offer's answers (`@call`) so the walker answers them as before
+        for (const r of q.rects || []) if (['lg-take', 'lg-later', 'lg-x'].includes(r.id)) {
+          tvSet.card = true;
+          add(r.id + '@call', 'tvcall', r, onPlane('era3-device-workstation', r.x + r.w / 2, r.y + r.h / 2, WS.w, WS.h));
+        }
       }
       // between Lamby's yes and the set setting off there is a frame with neither the card nor the travel: the moment's own
       //   stage says the set is on its way (the walk's first run pressed the kit in that gap)

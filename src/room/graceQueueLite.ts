@@ -510,6 +510,13 @@ export class GraceQueueLite {
       && !this.pauseOpen && !this.saver && !this.startMap.active && !this.minimised && !this._systemModal
       && !this.kitPopin && !this.phone.voiceBusy && this.phone.queued === 0 && !this.floppy.open && !this.lambyGuide?.active;
   }
+  /** ⚑ S431 (UiB job 39 C; his headset run: "if I continue it should just go back to their space") — the page she has open on the
+   *  platform: '' on the board at rest; a lesson (the list's open job) or another page (the send, the record, the kit) otherwise. A new
+   *  one opening is the story moving on: the Lamby set she brought goes back to its place (app.ts `page2016`, TeachingTvs.update). */
+  get pageKey(): string {
+    if (this.mode !== 'list' && !this.veraPage) return '';
+    return `${this.mode}:${this.openSurface?.id ?? (this.mode === 'list' ? 'testimony' : '')}:${this.veraPage ?? ''}`;
+  }
   /** ⚑ S424 — set each frame by app.ts: 2016's Heartwood offer (after Lesson 1) has been answered, let go, or will not be
    *  made. ⚑ S428: read by nothing in the chain now (Lesson 2 no longer waits for it); kept for the probes that print it. */
   heartwoodSettled = true;

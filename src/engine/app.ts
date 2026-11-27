@@ -1132,6 +1132,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       call: (_tape, text) => { tvCallText = text ?? undefined; os.dirty = true; },
       callOpen: () => os.lambyGuide.view.rung === 'tvcall' && os.lambyGuide.active,
       guidePress: (id) => { os.lambyGuide.press(id); os.dirty = true; },
+      letGo: () => { os.lambyGuide.letGo(); os.dirty = true; },   // ⚑ S431: 2016's offer left unanswered closes itself, logged as a let-go
       // ⚑ S425 — on a computer, 2016's set brought beside the monitor turns the look (as little as it takes) so the set can stand
       //   large enough to read at the monitor's left, the monitor whole; it gives the look back when she puts the set back. A free
       //   move (her drag takes it at any time); never in a headset (no conducted turns there), never under the gyro
@@ -5414,6 +5415,8 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
         story2003: on(os.era === 'e2' && (!os.e2Arrived || !!os.caleb?.open || !!os.netvision?.open || !!os.mediaPlayer?.open
           || !!os.testimony?.playbackActive || !!os.accountability?.modal)),
         lambient: on(!!q3?.guideVoice), personal2016: on(!!q3?.personalQuiet),
+        // ⚑ S431 (UiB job 39 C) — a lesson or another page of the platform opening: she continues, and the set she brought goes back
+        page2016: q3?.pageKey ?? '',
         voice2026: on(!!b4?.guideVoice), toast2026: b4?.toastKey ?? '', felt2026: on(!!b4?.messenger.felt),
         // the site viewer (the menu's Lexicon and websites) starting a track or a film: one thing heard at a time
         viewer: viewerFilm.state() === 'playing' ? `film:${viewerFilm.file()}` : viewerAudio.playing() ?? ''

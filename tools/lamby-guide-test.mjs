@@ -99,7 +99,14 @@ call.press('lg-take');assert.equal(acts.at(-1),'open:tv');call.tick(0.1,callIn()
 const callX=make();callX.tick(0.1,callIn());callX.press('lg-x');assert.equal(logs.at(-1)[0],'dismissed');assert.equal(logs.at(-1)[1],'tvcall');
 callX.tick(1,callIn());assert(!callX.active);
 const callGone=make();callGone.tick(0.1,callIn());callGone.tick(0.1,callIn({tvCall:undefined}));assert(!callGone.active);
-console.log('Teaching TV call: said over the TV\'s hold, once per era; Take me there is navigation; × logged; taken down with the moment.');
+// ⚑ S431 (UiB job 39 C) — 2016's OFFER left unanswered: the moment's let-go closes the balloon and logs it as a let-go (never her
+//   dismissal: nothing counted against her); once it is answered or closed there is nothing left to let go; it counts once in the eight
+const offerIn=(extra={})=>input('places',{era:'e3',map:{current:{era:'e3',beat:{id:'places'}},quiet:false},voice:true,tvCall:'Session Two of Heartwood goes with this lesson. Shall I bring the set?',...extra});
+const lg=make();lg.tick(0.1,offerIn());assert.equal(lg.view.rung,'tvcall');assert.equal(lg.offersLeft('e3'),copy.timing.capPerEra-1);
+const nLogs=logs.length,dis0=logs.filter(l=>l[2]).length;lg.letGo();assert.equal(logs.length,nLogs+1);assert.deepEqual(logs.at(-1),['let-go','tvcall',false,false]);assert(!lg.active);
+lg.tick(0.1,offerIn({tvCall:undefined}));assert.equal(logs.length,nLogs+1,'no second entry when the call is taken down');assert.equal(logs.filter(l=>l[2]).length,dis0,'a let-go is not a dismissal');
+const lgNo=make();lgNo.tick(0.1,offerIn());lgNo.press('lg-later');const nNo=logs.length;lgNo.letGo();assert.equal(logs.length,nNo,'nothing to let go once Not now has closed it');
+console.log('Teaching TV call: said over the TV\'s hold, once per era; Take me there is navigation; × logged; taken down with the moment. 2016\'s offer: counted once in the eight; left alone it is let go (logged, not a dismissal).');
 
 // S306: a timed surface must retain its pending action while the real guide speaks.
 const waitJs = ts.transpileModule(fs.readFileSync('src/narrative/guideWait.ts', 'utf8'), {
