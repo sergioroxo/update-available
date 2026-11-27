@@ -38,7 +38,7 @@ const FORWARD_LABEL = m.group.forward;
 const VERA = 'Vera';
 const CASCADE = m.cascade as Msg[];
 type Live = Msg & { key: string };
-const LINK_VOTE = m.linkVote as { masthead: string; headline: string; fact: string };   // S227 / M1: the never-drawn standfirst and tapHint are gone; ⚑ S426: its fact line (call 3)
+const LINK_VOTE = m.linkVote as { masthead: string; headline: string; fact: string; preview: string[] };   // S227 / M1: the never-drawn standfirst and tapHint are gone; ⚑ S426: its fact line (call 3); ⚑ S434: its preview's lines
 const BACKLOG = m.backlog as { from: string; time: string; text: string; register?: string; stampCard?: string; opens?: string; thread?: { time: string; text: string }[] }[];
 const UNLOCK_HINT = (m.home as unknown as Record<string, string>).unlockHint;
 const HOME = m.home as unknown as Record<string, string>;
@@ -597,6 +597,8 @@ export class PhoneE3 {
   private newsBanner(messages: Msg[]): void {
     const e = messages[messages.length - 1];
     if (this.screen === 'group') { this.banner = null; this.bump(); return; }   // S327: it is landing on the open thread
+    // ⚑ S434 — or on the group's own link reader (Bea's card's preview): it lands in the thread, and Back shows it there
+    if (this.screen === 'article') { this.banner = null; this.bannerFromGroup = false; this.bump(); return; }
     // ⚑ S357fr / 16-12 — it has just landed: the banner says the clock's minute, not the message's authored one
     if (e) { this.banner = { from: e.from, time: this.clockShown, text: e.text ?? (e.kind === 'link2' ? LINK_VOTE.headline : e.kind === 'link' ? m.link.headline : '') }; this.bannerFromGroup = true; }
     this.bump();
@@ -771,7 +773,9 @@ export class PhoneE3 {
     this.bannerFloor = banner ? banner + 2 : 0;
     const drawScreen = (c: CanvasRenderingContext2D): void => {
       // (⚑ S426 — the article page, S362's conducted masthead and headline that read as a blank page, is retired: 17847974)
-      if (this.screen === 'evening') { this.drawEvening(c, W, bodyH); }
+      // ⚑ S434 — Bea's card's preview, on her tap: the messenger's own link reader (drawPreview)
+      if (this.screen === 'article') { this.drawPreview(c, W, bodyH); }
+      else if (this.screen === 'evening') { this.drawEvening(c, W, bodyH); }
       else if (this.screen === 'personal') { this.drawThreadView(c, W, bodyH); this.pushBack(20, 62); }
       else if (this.screen === 'lock') { this.drawLock(c, W, bodyH); }
       else if (this.screen === 'photos' || this.screen === 'photo') { this.drawPhotos(c, W, bodyH); }
@@ -885,11 +889,16 @@ export class PhoneE3 {
   /** ⚑ S429 (F1) — the banner's lower edge (its hairline shadow included) if one is drawn over this screen, else 0 */
   private bannerBottom(ctx: CanvasRenderingContext2D, W: number): number {
     const b = this.notice ?? this.banner;
-    if (!b || this.bannersHidden || this.screen === 'lock') return 0;
+    if (!b || this.bannersHidden || this.screen === 'lock' || this.groupBannerOverPreview) return 0;
     phoneFont(ctx, 12);
     const lines = previewLines(ctx, b.text, W - 12 - 20, 3);
     const photo = !this.notice && this.bannerPhoto;
     return 22 + 32 + lines.length * 16 + (photo ? 78 : 0) + 1;
+  }
+  /** ⚑ S434 — inside the group's own link reader (Bea's card's preview) the group's own news, forwards and review notification are not
+   *  drawn over the page (as on the open thread: they land in the thread, and Back shows them); the preview stays readable until Back */
+  private get groupBannerOverPreview(): boolean {
+    return this.screen === 'article' && (this.notice ? this.notice.id === 'bea' || this.notice.id === 'review' : this.bannerFromGroup);
   }
   /** ⚑ S429 (F1) — where the list of a thread may begin while a banner is over it (0: no banner) */
   private bannerFloor = 0;
@@ -899,7 +908,7 @@ export class PhoneE3 {
     // ⚑ S428 — the phone's own notification (her Notes, the group's news, the review) is a banner like a message's, and it is the
     //   one drawn while it waits; it keeps the minute it came in
     const b = this.notice ?? this.banner;
-    if (!b || this.bannersHidden) return;
+    if (!b || this.bannersHidden || this.groupBannerOverPreview) return;
     if (this.screen === 'lock') return;   // S330: the lock screen shows its messages as stacked cards (drawLock)
     phoneFont(ctx, 12);
     const x = 6, y = 22, w = W - 12;
@@ -1330,6 +1339,8 @@ export class PhoneE3 {
     if (msg.kind === 'link' || msg.kind === 'link2') {
       const w = W - bx - RIGHT_PAD;
       this.drawLinkCard(ctx, bx, y, w, msg, grey);
+      // ⚑ S434 — Bea's card is a press now (his "Yes, a preview"), until the review greys it; the forwards' cards stay cards
+      if (msg.kind === 'link2' && !grey) this.rects.push({ x: bx, y, w, h: this.cardH(ctx, msg, w), id: 'malta-open' });
       return { x: bx, y, w, h: this.cardH(ctx, msg, w) };
     }
     phoneFont(ctx, 13);
@@ -1387,6 +1398,67 @@ export class PhoneE3 {
       ctx.fillStyle = grey ? PHONE.faint : PHONE.dim;
       fact.forEach((ln, i) => ctx.fillText(ln, tx, y + 19 + head.length * 13 + 4 + i * 11));
     }
+  }
+
+  /** ⚑ S434 — Bea's card may be opened: it has landed, and the review has not greyed or removed it */
+  private get maltaCardOpenable(): boolean {
+    const k = NEWS.findIndex((n) => n.kind === 'link2');
+    if (k < 0 || this.newsN <= k) return false;
+    const key = 'n' + k;
+    return !this.removed.has(key) && !(this.reviewing?.key === key && this.reviewing.phase === 'grey');
+  }
+  /** ⚑ S434 — what the preview drew, per canvas size (the Handset Window's 180 × 310, the phone in the room's 180 × 360): each line
+   *  with its size and box, how many body lines, and any paragraph left out for want of room (none, by design). Probes read it. */
+  previewViews: Record<string, { W: number; H: number; top: number; lines: { t: string; role: string; size: number; weight: number; x0: number; x1: number; y0: number; y1: number }[]; body: number; dropped: number }> = {};
+  /**
+   * ⚑ S434 (UiB job 40 Part B item 3; his 27 Nov answer to job 38's call 3: "does this also make the link from Malta something that
+   * you can open? as a preview inside of the app?" — "Yes, a preview") — BEA'S CARD'S PREVIEW: the 2016 messenger's own link reader,
+   * on her tap, in the phone's own grammar (theme/phone.ts: its status bar, an app bar with the one back chevron, a white page, the
+   * sans, the card's red as the paper's rule). The invented masthead is the bar's title; under it the card's headline and fact line,
+   * then a few short lines on what the law does (s3_maiden.json linkVote `preview`, documentary). Laid out to be read whole at the
+   * seat: nothing scrolls, and a paragraph that would not fit whole is left out whole (never cut; `dropped` says so, and none is).
+   * No Lambient, no platform voice, nothing filed. Back (the chevron) returns to the group where she was (pressControl 'back').
+   */
+  private drawPreview(ctx: CanvasRenderingContext2D, W: number, H: number): void {
+    ctx.fillStyle = PHONE.surface; ctx.fillRect(0, 0, W, H);
+    const y0 = statusBar(ctx, W, this.clockText);
+    const top = appBar(ctx, W, y0, '');
+    this.pushBack(y0, top);
+    type Line = { t: string; role: string; size: number; weight: 400 | 600; x0: number; x1: number; y0: number; y1: number; color: string };
+    const lines: Line[] = [];
+    // the masthead, the bar's title, set after the chevron (centred it would touch it)
+    let ms = 14; phoneFont(ctx, ms, 600);
+    while (ms > 11 && ctx.measureText(LINK_VOTE.masthead).width > W - 22 - 8) { ms--; phoneFont(ctx, ms, 600); }
+    lines.push({ t: LINK_VOTE.masthead, role: 'masthead', size: ms, weight: 600, x0: 22, x1: 22 + ctx.measureText(LINK_VOTE.masthead).width, y0: y0 + 8, y1: y0 + 8 + ms + 3, color: PHONE.ink });
+    const X = 10, TW = W - 20;
+    let y = top + 9, dropped = 0, body = 0;
+    const block = (text: string, role: string, size: number, weight: 400 | 600, step: number, color: string): Line[] => {
+      phoneFont(ctx, size, weight);
+      // the fact line breaks between its parts ("Malta · Act LV of 2016" / "passed 5 December"), never inside one
+      const rows = role === 'fact' ? text.split(' · ').reduce<string[]>((acc, part) => {
+        const last = acc[acc.length - 1];
+        if (last !== undefined && ctx.measureText(last + ' · ' + part).width <= TW) acc[acc.length - 1] = last + ' · ' + part; else acc.push(part);
+        return acc;
+      }, []).flatMap((r) => phoneWrap(ctx, r, TW)) : phoneWrap(ctx, text, TW);
+      return rows.map((t, i) => ({ t, role, size, weight, x0: X, x1: X + ctx.measureText(t).width, y0: y + i * step, y1: y + i * step + step, color }));
+    };
+    const place = (b: Line[], gap: number): boolean => {
+      if (!b.length || b[b.length - 1].y1 > H - 6) return false;
+      lines.push(...b); y = b[b.length - 1].y1 + gap; return true;
+    };
+    place(block(LINK_VOTE.headline, 'headline', 15, 600, 19, PHONE.ink), 3);
+    place(block(LINK_VOTE.fact, 'fact', 11, 400, 14, PHONE.dim), 0);
+    const rule = y + 5;
+    y = rule + 9;
+    for (const para of LINK_VOTE.preview) {
+      const b = block(para, 'body', 12, 400, 16, PHONE.ink);
+      if (place(b, 6)) body += b.length; else dropped++;
+    }
+    // the paper: the card's red as the masthead's rule under the bar, a hairline between the fact line and the lines on the law
+    ctx.fillStyle = PHONE.tileLive; ctx.fillRect(0, top, W, 2);
+    ctx.fillStyle = PHONE.hairline; ctx.fillRect(X, rule, TW, 1);
+    for (const l of lines) { phoneFont(ctx, l.size, l.weight); ctx.fillStyle = l.color; ctx.fillText(l.t, l.x0, l.role === 'masthead' ? l.y0 : l.y0 + 1); }
+    this.previewViews[`${W}x${H}`] = { W, H, top: y0, lines: lines.map(({ color: _c, ...l }) => ({ ...l, x0: Math.round(l.x0), x1: Math.round(l.x1) })), body, dropped };
   }
 
 
@@ -1501,9 +1573,12 @@ export class PhoneE3 {
         if (this.screen === 'notes' && this.notesConducted && this.refusalWritten && !this.notesClosed) {
           this.notesClosed = true; this.screen = 'lock'; this.banner = null; this.bannerAge = 0; this.holdFor = 2; this.bump(); return true;
         }
+        // ⚑ S434 — the preview's Back: to the group, where she was (her scroll kept); the group in front of her again does what
+        //   opening it does (the review asked for begins; what landed meanwhile is seen there)
+        if (this.screen === 'article') { this.screen = 'group'; this.openGroup(true); return true; }
         // ⚑ S428 (row 15) — "Review could not keep up." seen, closing the group is one of her two ways on (the update follows)
         if (this.screen === 'group' && this.endSeen && !this.endAnswered) this.endAnswered = 'close';
-        if (this.screen === 'photo') { this.screen = 'photos'; this.bump(); return true; } if (this.screen === 'photos' && this.photosFrom) { this.screen = this.photosFrom; this.photosFrom = null; this.bump(); return true; } this.screen = this.screen === 'group' || this.screen === 'message' || this.screen === 'evening' || this.screen === 'article' || this.personalOpen ? 'inbox' : 'home'; this.openMessage = null; this.bump(); return true;
+        if (this.screen === 'photo') { this.screen = 'photos'; this.bump(); return true; } if (this.screen === 'photos' && this.photosFrom) { this.screen = this.photosFrom; this.photosFrom = null; this.bump(); return true; } this.screen = this.screen === 'group' || this.screen === 'message' || this.screen === 'evening' || this.personalOpen ? 'inbox' : 'home'; this.openMessage = null; this.bump(); return true;
       case 'platform': this.screen = 'platform'; this.bump(); return true;
       case 'photos-prev': this.photoPage--; this.bump(); return true;
       case 'photos-next': this.photoPage++; this.bump(); return true;
@@ -1512,6 +1587,12 @@ export class PhoneE3 {
       case 'open-photos': this.photosFrom = this.screen; this.photoPage = 0; this.screen = 'photos'; this.bump(); return true;
       case 'open-photo-4': this.photosFrom = this.screen; this.photoIndex = 4; this.screen = 'photo'; this.bump(); return true;
       case 'walk': this.screen = 'walk'; this.bump(); return true;
+      // ⚑ S434 (UiB job 40 Part B item 3; his "Yes, a preview") — her tap on Bea's card: its preview, the messenger's own link reader,
+      //   in the phone. Only while the card is hers to read (landed, not greyed or removed by the review); it files nothing (Malta
+      //   files nothing), reads nothing (the last message's reading time counts only in the thread) and holds nothing back.
+      case 'malta-open':
+        if (this.screen !== 'group' || !this.maltaCardOpenable) return true;
+        this.screen = 'article'; this.banner = this.bannerFromGroup ? null : this.banner; this.bannerFromGroup = false; this.bump(); return true;
       // ⚑ S426 (beat 14; his call 4) — her forward, one press: it lands among theirs, a link with no words, and it stays (the review
       //   never reaches it). Nothing is filed. (S332's reply, `reply-bea`, is retired: 17847974.)
       case 'forward-link':
@@ -1866,8 +1947,8 @@ export class PhoneE3 {
     phoneWrap(ctx, m.home.platformNote, W - 28).forEach((ln, i) => ctx.fillText(ln, 14, y + 40 + i * 14));
   }
 
-  private openGroup(): void {
-    this.atNewest();
+  private openGroup(keepPlace = false): void {
+    if (!keepPlace) this.atNewest();   // ⚑ S434: back from Bea's card's preview, her place in the thread is kept
     this.markGroupSeen();
     veraDay.phoneAnswered = true;
     // ⚑ S428 (rows 10 and 13) — opening the group, however she opens it (its notification, its lock card, Messages), starts what

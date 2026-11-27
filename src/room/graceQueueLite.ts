@@ -401,7 +401,7 @@ const ARRIVAL = (updates as unknown as {
 
 const MALTA = d.phone.malta;
 /** ⚑ S428 — 2016's chain, named (the Start map's Now, Lambient's asked line): e3_mirror.json `chain` */
-const CHAIN = (mirrorCopy as unknown as { chain: Record<string, { label: string; hint: string }> & { lambientPhone: string } }).chain;
+const CHAIN = (mirrorCopy as unknown as { chain: Record<string, { label: string; hint: string }> & { lambientPhone: string; lambientNotes: string } }).chain;
 /** ⚑ S428 — whose messages the chain waits on (their threads are opened by "Take me there") */
 const MAM_FROM = mirrorCopy.events.find((e) => e.id === 'decision')?.from ?? 'Mam';
 const NUALA_FROM = mirrorCopy.events.find((e) => e.id === 'nuala')?.from ?? 'Nuala';
@@ -494,7 +494,9 @@ export class GraceQueueLite {
   }
   lambyGuidePaint: GuidePaint = { rings: [], balloon: false };
 
-  get guideSilent(): boolean { return this.kitPopin || this.personalQuiet || this.veraPage === 'record' || veraDay.quiet || this.startMap.active || this.phoneInHand || this.pauseOpen || !!this.saver
+  // ⚑ S434 — and while her Notes' notification waits (`memoryStage` 'notice'): Lambient says nothing unasked beside her own Notes, and its
+  //   button is answered (ask-only; the map's quiet beat had hidden it, so a press there did nothing)
+  get guideSilent(): boolean { return this.kitPopin || this.personalQuiet || this.memoryStage === 'notice' || this.veraPage === 'record' || veraDay.quiet || this.startMap.active || this.phoneInHand || this.pauseOpen || !!this.saver
     || ['dark', 'boot', 'install'].includes(this.mode) || this.mode === 'list' || this.playing
     || this.welcome !== null; }   // ⚑ S433 — the welcome is the platform's own voice: nothing of Lambient's is said unasked over it
   /**
@@ -1353,8 +1355,10 @@ export class GraceQueueLite {
     if (!this.fourJobsDone || !['board', 'done', 'list'].includes(this.mode) || this.phone.endAnswered) return null;
     const p = this.phone, glass = (screen: string): boolean => p.screenNow === screen && !this.floppy.open;
     const C = CHAIN as Record<string, { label: string; hint: string }>;
+    // ⚑ S434 (UiB job 40 Part B item 2) — at her Notes (their notification, the Notes open) Lambient's asked line is `lambientNotes`:
+    //   it says nothing of her phone or her Notes (they are hers; GracePlatform never sees them), where `lambientPhone` pointed her there
     const at = (key: string, take: string | null, onPhone: boolean): { step: string; label: string; hint: string; lambient: string; take: string | null } =>
-      ({ step: key, label: C[key].label, hint: C[key].hint, lambient: onPhone ? CHAIN.lambientPhone : C[key].hint, take });
+      ({ step: key, label: C[key].label, hint: C[key].hint, lambient: key === 'notesNotice' || key === 'notes' ? CHAIN.lambientNotes : onPhone ? CHAIN.lambientPhone : C[key].hint, take });
     const offBoard = !this.boardPlainBut();
     const stage = p.stageNow;
     if (stage === 'after') return at('end', glass('group') ? null : 'group', true);
@@ -1371,7 +1375,7 @@ export class GraceQueueLite {
     }
     if (this.memoryStage === 'notes') return at('notes', glass('notes') ? null : 'notes', true);
     if (this.memoryStage === 'notice') return at('notesNotice', 'notice', true);
-    if (this.veraPage === 'record') return at('page', null, false);
+    if (this.veraPage === 'record') return at(this.recordSent ? 'pageOwn' : 'page', null, false);   // ⚑ S434: turned only by her press
     if (this.memoryCard) return at('card', offBoard ? 'board' : null, false);
     if (this.memoryDeclined && !veraDay.recordOpened) return at('again', 'again', false);
     if (this.memoryDue) return at('card', 'board', false);
@@ -2606,8 +2610,8 @@ export class GraceQueueLite {
     this.lambyGuide?.press('lg-x'); this.startPanel.close(); this.pauseOpen = false;
     this.bump();
   }
-  /** ⚑ S425 — the page turns to her own words as she sent them, the cuts struck through (her press, or the piece's once the published
-   *  story has had its reading time); her Notes are due once those words have had theirs */
+  /** ⚑ S425 — the page turns to her own words as she sent them, the cuts struck through. ⚑ S434: on her press alone (See what you
+   *  wrote); the piece's own turn, once the published story had had its reading time, is retired (his "The automatic is 2026") */
   private turnMemory(): void {
     if (this.veraPage !== 'record' || this.recordSent) return;
     this.recordSent = true; this.memoryT = 0;
@@ -2636,11 +2640,11 @@ export class GraceQueueLite {
       if (!this.boardPlain) this.memoryLeft = true;
       else if (this.memoryLeft && !this.phone.voiceBusy) { this.memoryCard = 'again'; this.memoryLeft = false; this.bump(); }
     }
-    // beat 9 — the published story read, the page turns by itself to her own words (the piece takes her there; A2 row 5 kept as built)
-    if (this.veraPage === 'record') {
-      this.memoryT += dt;
-      if (!this.recordSent && this.memoryT >= readHold([vera.record.publishedText])) this.turnMemory();
-    }
+    // beat 9 — ⚑ S434 (UiB job 40 Part B item 1; his call 1 on job 38, "didint see that", and his rule "The automatic is 2026 not
+    //   2016"): the page waits for HER press, See what you wrote, to turn to her own words; it no longer turns by itself once the
+    //   published story has had its reading time (S425's turn, kept by S428 as A2 row 5). `memoryT` still counts each face's seconds
+    //   for the probes; nothing reads it to move the story.
+    if (this.veraPage === 'record') this.memoryT += dt;
     // beats 10–11 — ⚑ S428 (A2 rows 6–9): each on her act. Closing the page put the Notes notification on her phone (`closeMemory`).
     if (this.memoryStage === 'notice') {
       // row 7 — she opened it (the notification, or the Notes app): her Notes, and her line typing there (phoneE3)

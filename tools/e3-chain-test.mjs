@@ -186,12 +186,18 @@ pressId('pause-close'); run(0.2);
 assert.equal(q.memoryCard, 'again', 'row 5b: back on the board, the card again, Look back alone');
 assert.ok(!live().includes('memory-notnow'), 'row 5b: Look back alone');
 
-// ── row 5: Look back → the page; it turns to her own words in its reading time (kept), then waits ──
+// ── row 5: Look back → the page, on her story as published; ⚑ S434 (UiB job 40 B1; his call 1, "The automatic is 2026 not 2016"):
+//   it waits for HER press, See what you wrote, to turn to her own words (it turned by itself in its reading time before) ──
 pressId('memory-look'); assert.equal(q.veraPage, 'record', 'row 5: the memory page');
 const closeAt = () => { const r = draw().find((x) => x.id === 'memory-close'); return r ? r.x + r.w : -1; };
 const close0 = closeAt(), see0 = draw().find((x) => x.id === 'memory-see');
-run(40);
 loop('under the memory page');
+idle('row 5 (the page on her story as published: two minutes with no press, it does not turn)');
+assert.equal(q.memoryState.page, 'published', 'S434 B1: two minutes with no press, the page still shows her story as published');
+assert.ok(!q.guideAskable, 'S434 B1: no Lambient on the felt page');
+pressId('memory-see');
+assert.equal(q.memoryState.page, 'own', 'S434 B1: See what you wrote turns it to her own words');
+assert.ok(!live().includes('memory-see'), 'S434 B1: then Close alone');
 // ⚑ S429 (C4) — Close stays on the right in both states
 assert.ok(see0 && close0 > see0.x + see0.w, 'C4: Close to the right of See what you wrote');
 assert.equal(closeAt(), close0, `C4: Close stays where it was when the page turns (${close0})`);
@@ -201,6 +207,9 @@ assert.equal(P.screen, 'evening', 'row 5: nothing opened on the phone (Mam\'s th
 // ── row 6: closing the page → a Notes notification (the Notes do not open) ──
 pressId('memory-close');
 assert.equal(P.noticeId, 'notes', 'row 6: a Notes notification on the phone');
+// ⚑ S434 (UiB job 40 B2) — her Notes are her own: Lambient's asked line there says nothing of her phone or her Notes, and is answered
+assert.equal(step(), 'notesNotice'); assert.doesNotMatch(q.chainState.lambient, /phone|notes?\b/i, 'S434 B2: Lambient says nothing of her Notes');
+assert.ok(q.guideAskOnly, 'S434 B2: at her Notes\' notification Lambient\'s button is answered (ask-only), nothing said unasked');
 idle('row 6 (the Notes notification waits)');
 assert.notEqual(P.screen, 'notes', 'row 6: the Notes did not open by themselves');
 
@@ -233,6 +242,25 @@ assert.notEqual(P.screen, 'group', 'row 9: the group did not open by itself');
 // ── rows 10–11: opening it → the news, a message at a time (its own time); read → the kit pops in, and waits ──
 pressId('mirror:evening-banner');
 assert.equal(P.screen, 'group', 'row 10: the group opens');
+// ⚑ S434 (UiB job 40 B3; his "Yes, a preview") — Bea's card opens its preview on her tap, in the phone; nothing on the monitor; the
+//   news goes on landing (nothing held back) but the preview is not reading Bea's last message; Back returns to the group, her place kept
+{ let n = 0; while (P.newsN < 2 && n++ < 200) run(0.1);
+  assert.ok(live().includes('mirror:malta-open'), 'S434 B3: Bea\'s card is a press in the Handset Window');
+  const page0 = [q.mode, q.veraPage, q.openSurface?.id ?? null, q.kitPopin].join('|'), held0 = P.groupView.userScrolled;
+  pressId('mirror:malta-open');
+  assert.equal(P.screen, 'article', 'S434 B3: her tap opens the preview in the phone');
+  assert.equal([q.mode, q.veraPage, q.openSurface?.id ?? null, q.kitPopin].join('|'), page0, 'S434 B3: nothing opens on the monitor');
+  draw(); const pv = P.previewViews['180x310'];
+  assert.ok(pv && pv.dropped === 0 && pv.body >= 2 && pv.lines.every((l) => l.y1 <= pv.H), `S434 B3: the preview's lines all drawn whole (${pv?.body} body lines, ${pv?.dropped} left out)`);
+  assert.doesNotMatch(pv.lines.map((l) => l.t).join(' '), /Lambient|GracePlatform/, 'S434 B3: no Lambient and no platform voice in it');
+  run(120);   // two minutes in the preview: the news is the fiction's own time and lands; nothing else opens
+  assert.equal(P.screen, 'article', 'S434 B3: the preview stays until her Back');
+  assert.equal(P.newsN, 5, 'S434 B3: the news went on landing while the preview was open (nothing held back)');
+  assert.equal(P.stage, 'news', 'S434 B3: the preview does not count as reading Bea\'s last message');
+  assert.equal(q.kitPopin, false, 'S434 B3: no kit while the preview is open');
+  pressId('mirror:back');
+  assert.equal(P.screen, 'group', 'S434 B3: Back returns to the group');
+  assert.equal(P.groupView.userScrolled, held0, 'S434 B3: where she was'); }
 run(20);
 loop('under Bea\'s news');
 // ⚑ S429 (C1) — the group scrolls line by line: a line up (the wheel's and the stick's step) moves a line; ▲ goes back a page with no
@@ -302,6 +330,7 @@ assert.ok(q.guideAskable, 'B3: on a job page Lambient\'s button is drawn');
 // ── row 15: closing the group → the update ──
 idle('row 15 (the end, in the group, waits for her)');
 loop('at the end of 2016');
+assert.ok(!live().includes('mirror:malta-open'), 'S434 B3: the card the review removed is no longer a press');
 pressId('mirror:back');
 assert.equal(P.endAnswered, 'close', 'row 15: closing the group answers the end');
 assert.ok(q.updateReady, 'row 15: the update follows');
@@ -333,4 +362,5 @@ for (const [src, re, what] of [[gq, /const KIT_POPIN_AUTO\s*=/, 'KIT_POPIN_AUTO'
   assert.ok(q2.pauseOpen && q2.welcomeStep === null, 'W7: the decline route ends on This week too'); }
 console.log(`S433: the welcome's ${wRows} steps each waited two minutes on no press with nothing moving, and each moved one step on her press (Allow and Not now both); This week under the tiles; the lessons' NOW moments. OK.`);
 console.log(`2016's chain: ${rows} rows each waited two minutes on no press with nothing moving; rows 1–15 each moved by her press; the review ran through a reopened lesson, the game and a minimised window; Shut Down refused in view, Leave tall and clear of Start, Take me there; the clock the real time of day. OK.`);
+console.log('S434: the memory page waits two minutes on her story as published and turns on See what you wrote; Lambient says nothing of her Notes and answers there; Bea\'s card opens its preview in the phone, the news lands meanwhile, Back returns to the group. OK.');
 console.log('S429: the group scrolls a line at a time, ▲ a page, ▼ the newest, no band; Lesson 2\'s back clear of Trending; Lambient answers Maureen and the screen is on Annette at once; Close on the right; the phone button gone; Lambient\'s asked line speaks to the page; the music on from sign-in to the end, lowered under the game; the hour padded. OK.');
