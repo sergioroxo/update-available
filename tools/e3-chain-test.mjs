@@ -260,7 +260,12 @@ assert.equal(P.screen, 'group', 'row 10: the group opens');
   assert.equal(q.kitPopin, false, 'S434 B3: no kit while the preview is open');
   pressId('mirror:back');
   assert.equal(P.screen, 'group', 'S434 B3: Back returns to the group');
-  assert.equal(P.groupView.userScrolled, held0, 'S434 B3: where she was'); }
+  // ⚑ S434b — and the card she tapped stands whole in the Handset Window's list (the news landed meanwhile and pushed it up), its foot
+  //   above the ▼ pill's strip; the thread held there for her (then ▼ back to the newest, for the rows that follow)
+  draw(); const mt = P.mirrorThread, sl = mt?.slots?.n1;
+  assert.ok(sl && sl.y0 >= mt.vTop && sl.y1 <= mt.vBottom, `S434b: back from the preview, Bea's card whole in view (${JSON.stringify(sl)} in ${mt?.vTop}–${mt?.vBottom})`);
+  assert.ok(P.groupView.userScrolled || !held0, 'S434 B3: her place is hers');
+  pressId('mirror:scroll-down'); draw(); assert.equal(P.groupView.scrollBack, 0, 'S434b: ▼ back to the newest'); }
 run(20);
 loop('under Bea\'s news');
 // ⚑ S429 (C1) — the group scrolls line by line: a line up (the wheel's and the stick's step) moves a line; ▲ goes back a page with no

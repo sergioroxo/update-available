@@ -832,7 +832,8 @@ export class PhoneE3 {
   /** A second viewport shares state, but must not replace the physical screen's hit geometry. */
   drawMirrored(ctx: CanvasRenderingContext2D, W: number, H: number): Rect[] {
     const physical = this.rects;
-    this.draw(ctx, W, H);
+    this.mirrorPass = true;
+    try { this.draw(ctx, W, H); } finally { this.mirrorPass = false; }
     const mirrored = this.rects;
     this.rects = physical;
     return mirrored;
@@ -1275,6 +1276,12 @@ export class PhoneE3 {
   }
   /** ⚑ S426 — the thread was scrolled by the review (to the message in its hand), not by her */
   private scrollByPiece = false;
+  /** ⚑ S434b — the card to stand whole on the group's next draw in the Handset Window (back from its preview); and that draw */
+  private revealKey: string | null = null;
+  private mirrorPass = false;
+  /** ⚑ S434b — the probes' handle: the last thread drawn in the Handset Window: its list's top and foot (above the ▼ pill's strip when
+   *  one shows), the pill, and each message's slot on the glass (the phone's own pixels) */
+  mirrorThread: { vTop: number; vBottom: number; latest: boolean; whole: string[]; slots: Record<string, { y0: number; y1: number }> } | null = null;
   /** ⚑ S426e — she has scrolled up herself (▲): nothing that lands pulls her down; `unseen` messages have landed below her since */
   private userScrolled = false;
   private unseen = 0;
@@ -1540,6 +1547,7 @@ export class PhoneE3 {
 
   pressControl(id: string): boolean {
     const r = { id };
+    this.revealKey = null;   // ⚑ S434b — any other press: the reveal (back from the preview) is spent
     if (r.id.startsWith('lock-card:')) { this.openEvening(r.id.slice(10)); this.bump(); return true; }
     switch (r.id) {
       // ⚑ S428 — the phone's own notification (her Notes, the group's news, the review): its banner or its lock-screen card
@@ -1575,7 +1583,11 @@ export class PhoneE3 {
         }
         // ⚑ S434 — the preview's Back: to the group, where she was (her scroll kept); the group in front of her again does what
         //   opening it does (the review asked for begins; what landed meanwhile is seen there)
-        if (this.screen === 'article') { this.screen = 'group'; this.openGroup(true); return true; }
+        if (this.screen === 'article') {
+          const k = NEWS.findIndex((n) => n.kind === 'link2');
+          this.revealKey = k >= 0 && !this.removed.has('n' + k) ? 'n' + k : null;   // S434b: the card she tapped, whole in view
+          this.screen = 'group'; this.openGroup(true); return true;
+        }
         // ⚑ S428 (row 15) — "Review could not keep up." seen, closing the group is one of her two ways on (the update follows)
         if (this.screen === 'group' && this.endSeen && !this.endAnswered) this.endAnswered = 'close';
         if (this.screen === 'photo') { this.screen = 'photos'; this.bump(); return true; } if (this.screen === 'photos' && this.photosFrom) { this.screen = this.photosFrom; this.photosFrom = null; this.bump(); return true; } this.screen = this.screen === 'group' || this.screen === 'message' || this.screen === 'evening' || this.personalOpen ? 'inbox' : 'home'; this.openMessage = null; this.bump(); return true;
@@ -1721,6 +1733,22 @@ export class PhoneE3 {
         f = fit(this.scrollO, false);
       }
     } else if (held < 0 && this.scrollByPiece && !this.userScrolled) { this.scrollO = null; this.scrollByPiece = false; f = fit(null, true); }
+    // ⚑ S434b (the coordinator's frame 12: back from the preview with her place kept, Bea's card stood cut at the thread's foot, its fact
+    //   line hidden under the edge and the ▼ pill) — BACK FROM THE PREVIEW, THE CARD SHE TAPPED STANDS WHOLE: its whole slot (the card and
+    //   the gap under it) inside the list, its foot above the ▼ pill's strip when one shows, by the least shift from her place (down if
+    //   it was cut at the foot, up if at the top); her place is that, then (the place she was reading). Everything else as before: the
+    //   whole-lines rule cuts no other row (S429b). Measured on the Handset Window's own canvas (`mirrorPass`), once.
+    if (this.revealKey && this.mirrorPass) {
+      const i = items.findIndex((x) => x.key === this.revealKey);
+      this.revealKey = null;
+      if (i >= 0) {
+        const a = cum[i], b = cum[i] + items[i].h;
+        for (let k = 0; k < 3 && (a < f.O - 0.5 || b > f.O + f.V + 0.5); k++) {
+          this.scrollO = b - a > f.V || a < f.O - 0.5 ? a : b - f.V; this.userScrolled = true; this.scrollByPiece = false;
+          f = fit(this.scrollO, true);
+        }
+      }
+    }
     if (f.rest && this.scrollO !== null && !(held >= 0 && this.scrollByPiece)) { this.scrollO = null; f = fit(null, true); }
     if (this.scrollO === null) { this.unseen = 0; this.userScrolled = false; }
     this.scrollBack = this.scrollO === null ? 0 : Math.max(1, Math.round(f.restO - f.O));
@@ -1771,6 +1799,8 @@ export class PhoneE3 {
       return own.length > 0 && own.every((b) => b.y0 >= c0 && b.y1 <= c1);
     }).map((it) => it.key);
     this.thread = { O: f.O, V: f.V, restO: f.restO, minO, stops, firsts, spans };
+    if (this.mirrorPass) this.mirrorThread = { vTop: Math.round(f.vTop), vBottom: Math.round(f.vBottom), latest: f.latest, whole: [...this.threadWhole],
+      slots: Object.fromEntries(items.map((it, i) => [it.key, { y0: Math.round(f.vTop + cum[i] - f.O), y1: Math.round(f.vTop + cum[i] + it.h - f.O) }])) };
     this.threadView = { c0, c1, vTop: f.vTop, vBottom: f.vBottom, earlier: f.earlier, latest: f.latest, O: Math.round(f.O), restO: Math.round(f.restO),
       lines: on.filter((b) => b.y0 >= c0 && b.y1 <= c1).length };
     // ── the ways to look back, over the list's reserved strips (the bottom one stands down while the review holds the thread) ──

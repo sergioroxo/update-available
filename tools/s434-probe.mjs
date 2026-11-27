@@ -71,7 +71,7 @@ const phoneState = () => q(() => {
   const g = window.__graceQueue(), p = g.phone;
   return { screen: p.screen, stage: p.stage, newsN: p.newsN, notice: p.noticeId, noticeFrom: p.notice?.from ?? null, noticeText: p.notice?.text ?? null,
     banner: p.banner ? { from: p.banner.from, text: p.banner.text } : null, veil: p.veilBand, removed: [...(p.removed || [])], reviewing: p.reviewing ? { ...p.reviewing } : null,
-    view: p.groupView ? { ...p.groupView } : null, tv: p.threadView ? { ...p.threadView } : null, preview: p.screen === 'article' ? (p.previewViews?.['180x310'] ?? null) : null, mirrorBox: g.mirrorBox ? { ...g.mirrorBox } : null,
+    view: p.groupView ? { ...p.groupView } : null, tv: p.threadView ? { ...p.threadView } : null, preview: p.screen === 'article' ? (p.previewViews?.['180x310'] ?? null) : null, mirrorBox: g.mirrorBox ? { ...g.mirrorBox } : null, mt: p.mirrorThread ? JSON.parse(JSON.stringify(p.mirrorThread)) : null,
     platform: { mode: g.mode, page: g.veraPage ?? null, job: g.openSurface?.id ?? null, minimised: !!g.minimised, kitPopin: !!g.kitPopin, week: !!g.pauseOpen } };
 });
 
@@ -163,6 +163,20 @@ const cardT = vs.targets.find((t) => t.id === 'mirror:malta-open');
 check('3', 'Bea\'s card is a press in the Handset Window', !!cardT, cardT ? `${cardT.id} at ${JSON.stringify(cardT.pt)}` : vs.targets.filter((t) => t.id.startsWith('mirror:')).map((t) => t.id).join(','));
 check('3', 'the walk\'s chain never presses it (not in e3Wait)', !(vs.e3Wait || []).includes('mirror:malta-open'), JSON.stringify(vs.e3Wait));
 await shot('09', 'group-bea-card');
+// ⚑ S434b — whole in view: a message's slot (the card and the gap under it) inside the Handset Window's list, above the ▼ pill's strip
+const wholeIn = (st, key) => { const m = st.mt, sl = m?.slots?.[key]; return !!sl && sl.y0 >= m.vTop - 0.5 && sl.y1 <= m.vBottom + 0.5; };
+// ⚑ S434b — the case with no pill: at rest, the card whole; her tap, and Back at once: the card where it was, whole, and no ▼ pill
+if (cardT) {
+  const r0 = await phoneState();
+  await tryPress('mirror:malta-open');
+  const inPrev = (await phoneState()).screen === 'article';
+  if (inPrev) await tryPress('mirror:back');
+  await ff(page, 0.2);
+  const r1 = await phoneState();
+  check('3b', 'no pill: at rest, the card tapped and Back at once — the card whole where it was, no ▼ pill, the place unchanged',
+    inPrev && r1.screen === 'group' && wholeIn(r1, 'n1') && !r1.mt.latest && (r1.newsN !== r0.newsN || (r1.view?.scrollBack === r0.view?.scrollBack && r1.mt.slots.n1.y0 === r0.mt?.slots?.n1?.y0)),
+    { slot: r1.mt?.slots?.n1, list: [r1.mt?.vTop, r1.mt?.vBottom], pill: r1.mt?.latest, before: r0.mt?.slots?.n1 });
+}
 // her place: one line up (the wheel's step), so Back can prove it is kept
 await q(() => { const ph = window.__graceQueue().phone; ph.scrollLines(-1); });
 await ff(page, 0.2);
@@ -225,7 +239,11 @@ if (p.screen === 'article') await tryPress('mirror:back');
 await ff(page, 0.2);
 p = await phoneState();
 check('3', 'Back → the group', p.screen === 'group', p.screen);
-check('3', 'where she was: her scroll kept (her place held, what landed counted below her)', !!p.view?.userScrolled && !!before.view?.userScrolled && p.tv?.O === before.tv?.O, { before: before.tv?.O, after: p.tv?.O, unseen: p.view?.unseen });
+{ const s0 = before.mt?.slots?.n1, s1 = p.mt?.slots?.n1;
+  check('3b', 'Bea\'s card cut at the foot before her tap (her place, one line up): the case of frame 12', !!s0 && !(s0.y1 <= (before.mt?.vBottom ?? 0) + 0.5), { slot: s0, list: [before.mt?.vTop, before.mt?.vBottom] });
+  check('3b', 'back from the preview, the card she tapped stands whole in view, its foot above the ▼ pill', wholeIn(p, 'n1') && !!p.mt?.latest, { slot: s1, list: [p.mt?.vTop, p.mt?.vBottom], pill: p.mt?.latest, unseen: p.view?.unseen });
+  check('3', 'where she was: her place kept (hers, what landed counted below her), shifted only as far as the card needs', !!p.view?.userScrolled && !!s0 && !!s1 && Math.abs(s1.y0 - s0.y0) <= s1.y1 - s1.y0,
+    { shift: s0 && s1 ? s0.y0 - s1.y0 : null, slotHeight: s1 ? s1.y1 - s1.y0 : null, unseen: p.view?.unseen }); }
 await shot('12', 'back-in-group');
 await q(() => window.__graceQueue().phone.pressControl('scroll-down'));
 for (let i = 0; i < 40 && !(await e3(page)).kitPopin; i++) await ff(page, 1);
@@ -254,6 +272,7 @@ if ((await phoneState()).screen === 'article') await tryPress('mirror:back');
 await ff(page, 0.3);
 p = await phoneState();
 check('3', 'Back → the group, the card removed like the others', p.screen === 'group' && p.removed.includes('n1'), `${p.screen} · ${p.removed.join(',')}`);
+check('3b', 'the removal case: no reveal for a removed card; every line of the message in the review\'s hand whole in view (the review\'s own hold, S426/S429b)', !p.reviewing || (p.mt?.whole ?? []).includes(p.reviewing.key), { hand: p.reviewing, whole: p.mt?.whole, slot: p.reviewing ? p.mt?.slots?.[p.reviewing.key] : null, list: [p.mt?.vTop, p.mt?.vBottom] });
 check('3', 'the removed card is no longer a press', !(await live()).has('mirror:malta-open'));
 // the frame: once the review has moved on to Bea's next message, the thread shows the card folded among the others
 for (let i = 0; i < 60 && !['n2', 'n3'].includes((await phoneState()).reviewing?.key); i++) await ff(page, 0.25);
