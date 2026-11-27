@@ -119,10 +119,10 @@
  "yourFileSameSource": "the same source as {p}, above",
  "yourFileSourcesRow": "All sources, by era",
  "_docYourFile": "⚑ S144 — THE DOSSIER'S READING (docs/reinterp/THE_RECORD_PLAN_2026-09-15.md §2–3B). Frame voice: the game menu is the one place the piece may explain itself, because the frame never plays and a player who opens it is reading, not being played to. `yourFileEras` are the frame's names for the four people, plain.",
- "xrHow": "Point and pinch, or pull the trigger, to press, or touch a button with your fingertip. A controller's grip, away from a device, opens the menu.",
+ "xrHow": "Point and pull the trigger to press, or touch a button with your fingertip. A controller's grip, away from a device, opens the menu. Without a controller, pinch to press.",
  "controlsHeadsetLines": [
   "Turn your head to look around the room. You never walk.",
-  "Point and pull the trigger, or pinch, to press.",
+  "Point with a controller and pull the trigger to press. Without one, pinch your thumb and finger.",
   "Near a screen or handheld button, touch it with your fingertip.",
   "Point at a marker on the floor and press to move there.",
   "Grip a handheld, or pinch and hold, to carry it. Release to put it back.",
@@ -136,7 +136,7 @@
  "jumpConfirmBody": "You will go straight there and skip what comes between. You can jump back the same way.",
  "jumpConfirmYes": "Jump",
  "jumpConfirmNo": "Stay here",
- "xrSeat": "Sit comfortably. To press: point and pinch, pull the trigger, or touch it with a fingertip.",
+ "xrSeat": "Sit comfortably. To press: point and pull the trigger, or touch it with a fingertip.",
  "xrMenuHint": "Turn your left wrist to your face: the Menu tab is there. A controller's grip opens it too.",
  "xrDesk": "Match my table",
  "xrDeskAsk": "Lay one controller on your table and let go of it. Keep the other in your hand.",
@@ -145,6 +145,8 @@
  "_docS430xrDesk": "⚑ S430 (UiB job 39 B; his headset 26 Nov: \"it's too high … we need to certify that is using the controller instead of the hands\") — Match my table reads only a controller laid still on the table and let go of (src/frame/xrLayer.ts; a hand never counts), so `xrDeskAsk` and `xrDeskNone` name the controller first. Keeping the other one in hand keeps the headset from switching to hands while one is down. Was: 'Rest your hand flat on your table and hold it still.' / 'No table found. The desk stays where it was.' Claude's words; his edit wins.",
  "xrDeskOffer": "Sitting at a table? Open the Menu and choose Match my table.",
  "_docS407xrDeskOffer": "⚑ S407 (UiB job 32, E2) — `xrDeskOffer` is no longer shown: its banner ran into the CRT and was cut off (his headset 20 Nov, frame 212627), and Match my table is offered in the setup's How to look window now (setup.json look `table`). Kept for the record.",
+ "xrHandsOnly": "This works best with a controller. Pick one up, or pinch your thumb and finger to press.",
+ "_docS432xrHands": "⚑ S432 (UiB job 36, T96; his 26 Nov: \"Yes on the controllers as the intended means of interaction, with hands as backup\") — `xrHandsOnly` is the one line on the frame's plate the first time a hand presses (a pinch or a fingertip) while no controller is present: 8 s, once a visit, never on the headset's own switch to hands (a film watched with the controllers down stays bare; src/engine/app.ts `handsLine`). The lines that teach pressing name the trigger first: `xrHow` (was: 'Point and pinch, or pull the trigger, to press, or touch a button with your fingertip. A controller's grip, away from a device, opens the menu.'), `controlsHeadsetLines[1]` (was: 'Point and pull the trigger, or pinch, to press.'), `xrSeat` (was: 'Sit comfortably. To press: point and pinch, pull the trigger, or touch it with a fingertip.'). Claude's words; his edit wins.",
  "highlightsOn": "Navigation highlights: on",
  "highlightsOff": "Navigation highlights: off"
 }

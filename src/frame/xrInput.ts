@@ -90,6 +90,10 @@ export function mountXrInput(app: pc.Application, opts: {
   onDragMove?: (source: pc.XrInputSource, ray: Ray) => void;
   /** …and when the trigger / pinch lets go, or the source is lost */
   onDragEnd?: (source: pc.XrInputSource) => void;
+  /** ⚑ S432 / UiB job 36 (T96) — who pressed: a hand ('hand-alone' when no controller is present, else 'hand': a pinch, a fingertip
+   *  on a surface or on a held device's key, a pinch that takes or drags) or a controller ('controller': its trigger or its grip).
+   *  The frame's one line about hands hangs on it (app.ts); nothing else reads it. */
+  onPressBy?: (by: 'hand-alone' | 'hand' | 'controller') => void;
 }): XrInput {
   const xr = app.xr;
   const meshes = new Map<pc.XrInputSource, pc.Mesh>();
@@ -106,7 +110,7 @@ export function mountXrInput(app: pc.Application, opts: {
   const TIP = { rest: { color: new pc.Color().fromString(FRAME.dim), size: 0.006 },
     touch: { color: new pc.Color().fromString(ERA1.titleBlue), size: 0.013 },
     press: { color: new pc.Color().fromString(FRAME.bright), size: 0.022 } };
-  const gestures = new Map<pc.XrInputSource, { pinch: boolean; since: number; held: boolean; near: boolean; buttons: boolean[]; aim: Ray | null; drag: boolean }>();
+  const gestures = new Map<pc.XrInputSource, { pinch: boolean; since: number; held: boolean; near: boolean; buttons: boolean[]; aim: Ray | null; drag: boolean; contact: boolean }>();
   const wands = new Map<pc.XrInputSource, pc.Entity>();
   const mat = new pc.StandardMaterial();
   mat.useLighting = false;
@@ -130,8 +134,25 @@ export function mountXrInput(app: pc.Application, opts: {
   /** the hand that pressed last is the one the cursor follows */
   let primary: pc.XrInputSource | null = null;
 
+  /**
+   * ⚑ S432 / UiB job 36 (T96; his 26 Nov: "Yes on the controllers as the intended means of interaction, with hands as backup") —
+   * THE SOURCES, WATCHED HERE (add / remove land in this file): a controller is present while any `tracked-pointer` source with no
+   * hand is, in the hand or laid down and still tracked (Match my table's, xrLayer.ts). One asleep in a hand (the Quest switched to
+   * hands by itself) is no source at all, so it is absent. The switch to hands says nothing: only a press does (`pressedBy`).
+   * A system whose own press is the pinch (a `transient-pointer` source: Vision Pro) has no controller to pick up, so a hand there
+   * is never 'alone'. (PlayCanvas has no constant for that mode: the WebXR string.)
+   */
+  let transientSeen = false;
+  const controllerIn = (): boolean => { for (const s of wands.keys()) if (!s.hand && s.targetRayMode === pc.XRTARGETRAY_POINTER) return true; return false; };
+  const pressedBy = (src: pc.XrInputSource): void => {
+    if (!opts.onPressBy) return;
+    if (src.hand) opts.onPressBy(controllerIn() || transientSeen ? 'hand' : 'hand-alone');
+    else if (src.targetRayMode === pc.XRTARGETRAY_POINTER) opts.onPressBy('controller');
+  };
+
   const onAdd = (src: pc.XrInputSource): void => {
     if (src.targetRayMode === pc.XRTARGETRAY_GAZE) return;
+    if ((src.targetRayMode as string) === 'transient-pointer') transientSeen = true;   // S432
     const e = new pc.Entity('xr-wand');
     const mesh = new pc.Mesh(app.graphicsDevice); meshes.set(src, mesh);
     e.addComponent('render', { meshInstances: [new pc.MeshInstance(mesh, mat)], ...(opts.layers ? { layers: opts.layers } : {}) });
@@ -139,7 +160,7 @@ export function mountXrInput(app: pc.Application, opts: {
     app.root.addChild(e);
     wands.set(src, e);
     const dot = new pc.Entity('xr-cursor'); dot.setLocalScale(DOT, DOT, DOT); app.root.addChild(dot); dot.enabled = false; dots.set(src, dot);
-    gestures.set(src, { pinch: false, since: 0, held: false, near: false, buttons: [], aim: null, drag: false });
+    gestures.set(src, { pinch: false, since: 0, held: false, near: false, buttons: [], aim: null, drag: false, contact: false });
     if (src.hand) {
       const entity = new pc.Entity('xr-hand');
       app.root.addChild(entity); entity.enabled = false; hands.set(src, { entity, mesh });
@@ -171,6 +192,7 @@ export function mountXrInput(app: pc.Application, opts: {
   const onSelectEnd = (src: pc.XrInputSource): void => { if (!src.hand) endDrag(src); };
   const onSelectStart = (src: pc.XrInputSource): void => {
     if (src.hand) return;
+    pressedBy(src);   // S432: the trigger pulled (a controller in the hand) takes the hands' line down at once
     const r = rayOf(src);
     if (r && opts.onDragStart?.(src, r)) { primary = src; dragging.add(src); selectStart.delete(src); return; }
     if (r) selectStart.set(src, r); else selectStart.delete(src);
@@ -198,11 +220,13 @@ export function mountXrInput(app: pc.Application, opts: {
   const choose = (r: Ray, src?: pc.XrInputSource): void => {
     const who = src ?? primary; if (who) flashUntil.set(who, performance.now() + FLASH_MS);
     if (opts.menuOpen()) opts.onMenuSelect(r); else opts.onSelect(r);
+    if (src) pressedBy(src);   // S432: after the press itself (a hand's pinch or poke, a controller's select): the press works first
     const pad = src?.gamepad as (Gamepad & { hapticActuators?: { pulse?(v: number, ms: number): void }[] }) | null | undefined;
     try { pad?.hapticActuators?.[0]?.pulse?.(0.25, 12); } catch { /* no actuator: nothing */ }
   };
   const onSqueeze = (src: pc.XrInputSource): void => {
     primary = src; const r = rayOf(src); const state = gestures.get(src);
+    if (!src.hand) pressedBy(src);   // S432: a controller's grip is a controller in the hand (a hand's squeeze is not a press: S269)
     if (!opts.menuOpen() && r && opts.onGrab?.(src, r)) { if (state) state.held = true; return; }
     // ⚑ S269 (his: "if I move my hands quickly the menu appears") — a tracked hand reports a squeeze for a fist or a
     //   fast closing hand; the menu opens from a controller's grip or from the Menu tab, never from a hand
@@ -210,7 +234,7 @@ export function mountXrInput(app: pc.Application, opts: {
     opts.onSqueeze();
   };
   const release = (src: pc.XrInputSource): void => { const state = gestures.get(src); if (state?.held) opts.onRelease?.(src); if (state) state.held = false; };
-  const onEnd = (): void => { selectStart.clear(); for (const src of wands.keys()) { opts.onTouch?.(src, null); release(src); endDrag(src); const state = gestures.get(src); if (state?.drag) { state.drag = false; opts.onDragEnd?.(src); } if (state) state.pinch = false; } for (const e of [...wands.values(), ...dots.values()]) e.enabled = false; for (const h of hands.values()) h.entity.enabled = false; for (const t of tips.values()) t.entity.enabled = false; };
+  const onEnd = (): void => { selectStart.clear(); for (const src of wands.keys()) { opts.onTouch?.(src, null); release(src); endDrag(src); const state = gestures.get(src); if (state?.drag) { state.drag = false; opts.onDragEnd?.(src); } if (state) { state.pinch = false; state.contact = false; } } for (const e of [...wands.values(), ...dots.values()]) e.enabled = false; for (const h of hands.values()) h.entity.enabled = false; for (const t of tips.values()) t.entity.enabled = false; };
 
   if (xr) {
     xr.input.on('add', onAdd);
@@ -417,7 +441,7 @@ export function mountXrInput(app: pc.Application, opts: {
           e.enabled = false; if (hands.has(src)) hands.get(src)!.entity.enabled = false;
           const t = tips.get(src); if (t) t.entity.enabled = false;
           opts.onTouch?.(src, null);
-          release(src); endDrag(src); const state = gestures.get(src); if (state) { if (state.drag) { state.drag = false; opts.onDragEnd?.(src); } state.pinch = false; state.near = false; }
+          release(src); endDrag(src); const state = gestures.get(src); if (state) { if (state.drag) { state.drag = false; opts.onDragEnd?.(src); } state.pinch = false; state.near = false; state.contact = false; }
           continue;
         }
         e.enabled = true;
@@ -444,6 +468,9 @@ export function mountXrInput(app: pc.Application, opts: {
 
           const thumb = src.hand.getJointById('thumb-tip'), index = src.hand.getJointById('index-finger-tip');
           const contact = opts.onTouch?.(src, !opts.menuOpen() && index && src.hand.tracking ? index.getPosition() : null) ?? null;
+          // S432: a fingertip that comes onto a held device's key or glass has pressed it (heldDevice.ts `touch`, latched until withdrawn)
+          if (contact === true && !state.contact) pressedBy(src);
+          state.contact = contact === true;
           if (contact && !state.held) { state.pinch = false; state.aim = null; }
           if (thumb && index && src.hand.tracking) {
             const separation = thumb.getPosition().distance(index.getPosition());
@@ -452,8 +479,12 @@ export function mountXrInput(app: pc.Application, opts: {
             if (!contact && !state.pinch && separation < 0.022) {
               state.pinch = true; state.since = now; primary = src; state.aim = { p0: r.p0.clone(), p1: r.p1.clone() };
               state.drag = opts.onDragStart?.(src, r) ?? false;   // ⚑ S383: a pinch that closes on the scroll thumb takes it
+              if (state.drag) pressedBy(src);   // S432
             }
-            if (state.pinch && !state.held && !state.drag && now - state.since > 350 && !opts.menuOpen()) state.held = opts.onGrab?.(src, r) ?? false;
+            if (state.pinch && !state.held && !state.drag && now - state.since > 350 && !opts.menuOpen()) {
+              state.held = opts.onGrab?.(src, r) ?? false;
+              if (state.held) pressedBy(src);   // S432: a pinch held on a device takes it
+            }
             if (state.pinch && separation > 0.032) { if (state.drag) { state.drag = false; opts.onDragEnd?.(src); } else if (state.held) release(src); else choose(state.aim ?? r, src); state.pinch = false; state.aim = null; }
             // Poke is a short fingertip segment along the pointing direction. Latch until withdrawn.
             const tip = index.getPosition();

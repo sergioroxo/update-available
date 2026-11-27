@@ -30,6 +30,10 @@ let lastPhone = '', lastEra = '', lastAb = '';
 // ⚑ S430 — the headset's own acts (trial-watch `xrc`, `ab`): xr:recentre (the menu's row), xr:quest-recentre (the Meta button: the
 //   space's reset), xr:table (Match my table set the desk), ab:<normal|nobatch|noseatcull> (the popping A/B's address, on a change)
 const lastXr = { recentres: null, resets: null, tables: null };
+// ⚑ S432 — the hands (trial-watch `hands`): xr:hands-only when the last controller has gone and hands are in (the headset's own switch:
+//   nothing should show then), xr:controllers when a controller comes back, xr:hands-line when the hands' line goes up (once a visit, and
+//   only after a hand's press)
+let lastHands = { pads: -1, hands: 0, line: false };
 const tokenOf = (k, x) => {
   if (typeof x === 'string' || typeof x === 'number') return `ledger:${k}:${x}`;
   if (x && typeof x === 'object') {
@@ -54,6 +58,13 @@ for (const l of lines) {
       if (typeof v === 'number') lastXr[k] = v;
     }
     if (l.ab && l.ab !== lastAb) { tokens.push({ t: l.t, tok: `ab:${l.ab}` }); lastAb = l.ab; }
+    if (l.hands) {
+      const alone = (h) => h.pads === 0 && h.hands > 0;
+      if (alone(l.hands) && !alone(lastHands)) tokens.push({ t: l.t, tok: 'xr:hands-only' });
+      if (l.hands.pads > 0 && lastHands.pads === 0) tokens.push({ t: l.t, tok: 'xr:controllers' });
+      if (l.hands.line && !lastHands.line) tokens.push({ t: l.t, tok: 'xr:hands-line' });
+      lastHands = l.hands;
+    }
   }
   if (l.kind === 'start' || l.kind === 'connected' || l.kind === 'lost') tokens.push({ t: l.t, tok: `watch:${l.kind}` });
 }
