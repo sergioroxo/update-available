@@ -162,32 +162,36 @@ why it went black on 10 Nov. Meta's `metavr` stays optional, only with your yes 
 - If `adb exec-out screencap` turns out to give no picture of the VR view in the Quest, the cast pictures from the Mac's screen
   are the fallback (they are taken anyway).
 
-## The short run, 28 Nov 2026 morning (jobs 39 + 36) — planned by the orchestrator, S357he
+## The short run, 28 Nov 2026 morning (jobs 39 + 36, and job 40's welcome) — planned by the orchestrator, S357he
 
 *His words, 27 Nov: "When should we do another trial ?", then "Tomorrow morning". Jobs 39 + 36 are live (7c41eab8,
-27 Nov). About 20–30 minutes, 2016 only. The full run comes after job 40 is live.*
+27 Nov). About 20–30 minutes, 2016 only. The full run comes after job 40 is live.* *⚑ S357hi, 28 Nov: job 40 went
+live before the run at his "Now" (build 21c2b34), so step 4 opens with its welcome (40-A, 40-B); about 5 minutes more.*
 
 **Before:** the cable, casting and QuickTime as above (steps 1, 2, 4, 5). Close every old tab of the piece in the Quest
 Browser first. The orchestrator starts `trial-watch` and says when it sees the page.
 
 1. **The way in (new):** open **https://sergioroxo.github.io/update-available/?reinterp=1&era=3&debug=1** and press
-   **Enter VR** on the debug panel, top left. You arrive at Vera's seat in 2016, with no stars. The debug numbers are
+   **Enter VR** on the debug panel, top left. You arrive at Vera's seat in 2016, with no stars, at Sign in. The debug numbers are
    now below the desk's edge: look down to read them.
 2. **Recentre (39-A):** Menu → Recentre the view. Then hold the Meta button. Say: a cut or a fade? In the middle of the
    chair?
 3. **Match my table (39-B):** lay one controller on your table and let go; keep a hand in your lap. Say: does the desk
    meet your table? Too high or too low, and by how much?
-4. **2016 as it comes:** sign in, Lesson 1, the Mentor's message. Then **Lambient's own bubble** offers Heartwood
+4. **2016 as it comes:** sign in. **The welcome (40-A, new):** "Welcome to GracePlatform, Vera.", Show me around, then
+   Next through the tour (the board, a lesson, Lambient, the phone, the record) and This week's Begin. Say: does it feel
+   like being introduced to the system? **The lessons (40-B):** Step 2 (the testimony) says NOW, the one thing to do:
+   do you always know what to do? Then the Mentor's message. Then **Lambient's own bubble** offers Heartwood
    **(39-C)**: press **Bring it** with the trigger. Say: can you read the set beside the monitor, and its source line?
-   Then open **Lesson 2**: does the set go back?
+   Then open **Step 3** (the places list, once called Lesson 2): does the set go back?
 5. **The controller line (36-A):** at any moment, put both controllers down and press something with a pinch. Say: did
    one line show under the monitor, once? Then pick a controller up again.
 6. **The phone game (39-D):** play it in the Handset Window and read the fps below the desk: is it 72?
 7. **The popping (39-E):** at the seat, turn your head slowly left and right, then up and down, for half a minute. Three
    times: as it is; with `&nobatch=1` added to the address; with `&noseatcull=1`. Say which one stops the popping.
 
-**After:** the Mac's report (`tools/trial-report.mjs`), his words written down, the findings into job 40 if it is still
-building (or job 41).
+**After:** the Mac's report (`tools/trial-report.mjs`), his words written down, the findings into job 41 Part B
+(`UIB_JOB_41_2026-11-28.md`).
 
 ## The first run, 26 Nov 2026 (21:58–22:17, build 5d7cc91) — orchestrator S357gr
 
